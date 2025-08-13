@@ -1,6 +1,6 @@
 #pragma once
 
-#define HIP_ENABLE_WARP_SYNC_BUILTINS 1
+#define HIP_DISABLE_WARP_SYNC_BUILTINS 1
 #include <hip/hip_runtime.h>
 #include <hipblas/hipblas.h>
 #include <hip/hip_fp16.h>
@@ -200,6 +200,7 @@
 #endif
 
 typedef hip_bfloat16 nv_bfloat16;
+typedef short2 nv_bfloat162; // FIXME there is no 2x BF16 type being defined in bfloat16.h, ad-hoc compilation fix
 
 typedef int8_t int8x4_t __attribute__((ext_vector_type(4)));
 typedef uint8_t uint8x4_t __attribute__((ext_vector_type(4)));
