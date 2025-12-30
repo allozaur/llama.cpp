@@ -277,13 +277,8 @@
 			icon: Code,
 			fields: [
 				{
-					key: 'showToolCalls',
-					label: 'Show tool call labels',
-					type: 'checkbox'
-				},
-				{
-					key: 'disableReasoningParsing',
-					label: 'Disable reasoning content parsing',
+					key: 'disableReasoningFormat',
+					label: 'Show raw LLM output',
 					type: 'checkbox'
 				},
 				{

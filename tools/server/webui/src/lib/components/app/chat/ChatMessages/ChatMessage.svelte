@@ -79,40 +79,7 @@
 		return null;
 	});
 
-	let toolCallContent = $derived.by((): ApiChatCompletionToolCall[] | string | null => {
-		if (message.role === 'assistant') {
-			const trimmedToolCalls = message.toolCalls?.trim();
-
-			if (!trimmedToolCalls) {
-				return null;
-			}
-
-			try {
-				const parsed = JSON.parse(trimmedToolCalls);
-
-				if (Array.isArray(parsed)) {
-					return parsed as ApiChatCompletionToolCall[];
-				}
-			} catch {
-				// Harmony-only path: fall back to the raw string so issues surface visibly.
-			}
-
-			return trimmedToolCalls;
-		}
-		return null;
-	});
-
-	// Auto-start edit mode if this message is the pending edit target
-	$effect(() => {
-		const pendingId = pendingEditMessageId();
-
-		if (pendingId && pendingId === message.id && !isEditing) {
-			handleEdit();
-			clearPendingEditMessageId();
-		}
-	});
-
-	async function handleCancelEdit() {
+	function handleCancelEdit() {
 		isEditing = false;
 
 		// If canceling a new system message with placeholder content, remove it without deleting children
@@ -346,6 +313,5 @@
 		{showDeleteDialog}
 		{siblingInfo}
 		{thinkingContent}
-		{toolCallContent}
 	/>
 {/if}
