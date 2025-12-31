@@ -83,7 +83,7 @@
 
 	// Check if content contains agentic tool call markers
 	const isAgenticContent = $derived(
-		messageContent?.includes('<!-- AGENTIC_TOOL_CALL_START -->') ?? false
+		messageContent?.includes('<<<AGENTIC_TOOL_CALL_START>>>') ?? false
 	);
 
 	const processingState = useProcessingState();
@@ -261,7 +261,7 @@
 			{onConfirmDelete}
 			{onNavigateToSibling}
 			{onShowDeleteDialogChange}
-			showRawOutputSwitch={currentConfig.showRawOutputSwitch}
+			showRawOutputSwitch={currentConfig.disableReasoningFormat}
 			rawOutputEnabled={showRawOutput}
 			onRawOutputToggle={(enabled) => (showRawOutput = enabled)}
 		/>

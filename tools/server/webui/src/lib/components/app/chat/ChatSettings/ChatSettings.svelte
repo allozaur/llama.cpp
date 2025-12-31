@@ -278,7 +278,7 @@
 			fields: [
 				{
 					key: 'disableReasoningFormat',
-					label: 'Show raw LLM output',
+					label: 'Enable raw LLM output switch',
 					type: 'checkbox'
 				},
 				{
