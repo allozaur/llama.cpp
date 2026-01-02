@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { Paperclip } from '@lucide/svelte';
-	import { MessageSquare } from '@lucide/svelte';
+	import { Paperclip, Plus } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { FILE_TYPE_ICONS } from '$lib/constants/icons';
+	import { FileTypeCategory } from '$lib/enums';
+	import McpLogo from '$lib/components/app/misc/McpLogo.svelte';
 
 	interface Props {
 		class?: string;
 		disabled?: boolean;
 		hasAudioModality?: boolean;
 		hasVisionModality?: boolean;
-		onFileUpload?: () => void;
-		onSystemPromptClick?: () => void;
+		showMcpOption?: boolean;
+		onFileUpload?: (fileType?: FileTypeCategory) => void;
+		onMcpClick?: () => void;
 	}
 
 	let {
@@ -20,15 +22,16 @@
 		disabled = false,
 		hasAudioModality = false,
 		hasVisionModality = false,
+		showMcpOption = false,
 		onFileUpload,
-		onSystemPromptClick
+		onMcpClick
 	}: Props = $props();
 
-	const fileUploadTooltipText = $derived.by(() => {
-		return !hasVisionModality
-			? 'Text files and PDFs supported. Images, audio, and video require vision models.'
-			: 'Attach files';
-	});
+	const fileUploadTooltipText = 'Add files or MCP servers';
+
+	function handleFileUpload(fileType?: FileTypeCategory) {
+		onFileUpload?.(fileType);
+	}
 </script>
 
 <div class="flex items-center gap-1 {className}">
@@ -41,9 +44,9 @@
 						{disabled}
 						type="button"
 					>
-						<span class="sr-only">Attach files</span>
+						<span class="sr-only">{fileUploadTooltipText}</span>
 
-						<Paperclip class="h-4 w-4" />
+						<Plus class="h-4 w-4" />
 					</Button>
 				</Tooltip.Trigger>
 
@@ -121,23 +124,18 @@
 					</Tooltip.Content>
 				{/if}
 			</Tooltip.Root>
-			<DropdownMenu.Separator />
-			<Tooltip.Root>
-				<Tooltip.Trigger class="w-full">
-					<DropdownMenu.Item
-						class="flex cursor-pointer items-center gap-2"
-						onclick={() => onSystemPromptClick?.()}
-					>
-						<MessageSquare class="h-4 w-4" />
 
-						<span>System Prompt</span>
-					</DropdownMenu.Item>
-				</Tooltip.Trigger>
+			{#if showMcpOption}
+				<DropdownMenu.Separator />
+				<DropdownMenu.Item
+					class="flex cursor-pointer items-center gap-2"
+					onclick={() => onMcpClick?.()}
+				>
+					<McpLogo style="width: 1rem; height: 1rem;" />
 
-				<Tooltip.Content>
-					<p>Add a custom system message for this conversation</p>
-				</Tooltip.Content>
-			</Tooltip.Root>
+					<span>MCP Servers</span>
+				</DropdownMenu.Item>
+			{/if}
 		</DropdownMenu.Content>
 	</DropdownMenu.Root>
 </div>
