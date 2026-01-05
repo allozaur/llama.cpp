@@ -33,7 +33,7 @@
 		onFileUpload?: (files: File[]) => void;
 		onSend?: (message: string, files?: ChatUploadedFile[]) => Promise<boolean>;
 		onStop?: () => void;
-		onSystemPromptAdd?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
+		onSystemPromptAdd?: () => void;
 		showHelperText?: boolean;
 		uploadedFiles?: ChatUploadedFile[];
 	}
@@ -327,7 +327,7 @@
 			onFileUpload={handleFileUpload}
 			onMicClick={handleMicClick}
 			onStop={handleStop}
-			onSystemPromptClick={handleSystemPromptClick}
+			onSystemPromptClick={onSystemPromptAdd}
 		/>
 	</div>
 </form>

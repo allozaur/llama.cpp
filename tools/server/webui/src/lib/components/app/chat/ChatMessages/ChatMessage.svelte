@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { base } from '$app/paths';
 	import {
 		chatStore,
 		pendingEditMessageId,
@@ -79,7 +78,17 @@
 		return null;
 	});
 
-	function handleCancelEdit() {
+	// Auto-start edit mode if this message is the pending edit target
+	$effect(() => {
+		const pendingId = pendingEditMessageId();
+
+		if (pendingId && pendingId === message.id && !isEditing) {
+			handleEdit();
+			clearPendingEditMessageId();
+		}
+	});
+
+	async function handleCancelEdit() {
 		isEditing = false;
 
 		// If canceling a new system message with placeholder content, remove it without deleting children
@@ -87,7 +96,7 @@
 			const conversationDeleted = await removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
-				goto(`${base}/`);
+				goto('/');
 			}
 
 			return;
@@ -188,7 +197,7 @@
 				const conversationDeleted = await removeSystemPromptPlaceholder(message.id);
 				isEditing = false;
 				if (conversationDeleted) {
-					goto(`${base}/`);
+					goto('/');
 				}
 				return;
 			}

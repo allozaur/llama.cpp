@@ -17,6 +17,7 @@ import {
 import { SvelteMap } from 'svelte/reactivity';
 import { DEFAULT_CONTEXT } from '$lib/constants/default-context';
 import { getAgenticConfig } from '$lib/config/agentic';
+import { SYSTEM_MESSAGE_PLACEHOLDER } from '$lib/constants/ui';
 
 /**
  * chatStore - Active AI interaction and streaming state management
@@ -79,9 +80,6 @@ class ChatStore {
 	private isEditModeActive = $state(false);
 	private addFilesHandler: ((files: File[]) => void) | null = $state(null);
 	pendingEditMessageId = $state<string | null>(null);
-	// Draft preservation for navigation (e.g., when adding system prompt from welcome page)
-	private _pendingDraftMessage = $state<string>('');
-	private _pendingDraftFiles = $state<ChatUploadedFile[]>([]);
 
 	// ─────────────────────────────────────────────────────────────────────────────
 	// Loading State
