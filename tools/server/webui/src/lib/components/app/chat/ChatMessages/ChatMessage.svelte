@@ -10,6 +10,7 @@
 	import { DatabaseService } from '$lib/services';
 	import { config } from '$lib/stores/settings.svelte';
 	import { SYSTEM_MESSAGE_PLACEHOLDER } from '$lib/constants/ui';
+	import { MessageRole } from '$lib/enums';
 	import { copyToClipboard, isIMEComposing, formatMessageForClipboard } from '$lib/utils';
 	import ChatMessageAssistant from './ChatMessageAssistant.svelte';
 	import ChatMessageUser from './ChatMessageUser.svelte';
@@ -70,7 +71,7 @@
 	let textareaElement: HTMLTextAreaElement | undefined = $state();
 
 	let thinkingContent = $derived.by(() => {
-		if (message.role === 'assistant') {
+		if (message.role === MessageRole.ASSISTANT) {
 			const trimmedThinking = message.thinking?.trim();
 
 			return trimmedThinking ? trimmedThinking : null;
@@ -92,7 +93,7 @@
 		isEditing = false;
 
 		// If canceling a new system message with placeholder content, remove it without deleting children
-		if (message.role === 'system') {
+		if (message.role === MessageRole.SYSTEM) {
 			const conversationDeleted = await removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
@@ -145,7 +146,7 @@
 		isEditing = true;
 		// Clear temporary placeholder content for system messages
 		editedContent =
-			message.role === 'system' && message.content === SYSTEM_MESSAGE_PLACEHOLDER
+			message.role === MessageRole.SYSTEM && message.content === SYSTEM_MESSAGE_PLACEHOLDER
 				? ''
 				: message.content;
 		textareaElement?.focus();
@@ -188,7 +189,7 @@
 	}
 
 	async function handleSaveEdit() {
-		if (message.role === 'system') {
+		if (message.role === MessageRole.SYSTEM) {
 			// System messages: update in place without branching
 			const newContent = editedContent.trim();
 
@@ -207,7 +208,7 @@
 			if (index !== -1) {
 				conversationsStore.updateMessageAtIndex(index, { content: newContent });
 			}
-		} else if (message.role === 'user') {
+		} else if (message.role === MessageRole.USER) {
 			const finalExtras = await getMergedExtras();
 			onEditWithBranching?.(message, editedContent.trim(), finalExtras);
 		} else {
@@ -222,7 +223,7 @@
 	}
 
 	async function handleSaveEditOnly() {
-		if (message.role === 'user') {
+		if (message.role === MessageRole.USER) {
 			// For user messages, trim to avoid accidental whitespace
 			const finalExtras = await getMergedExtras();
 			onEditUserMessagePreserveResponses?.(message, editedContent.trim(), finalExtras);
@@ -249,7 +250,7 @@
 	}
 </script>
 
-{#if message.role === 'system'}
+{#if message.role === MessageRole.SYSTEM}
 	<ChatMessageSystem
 		bind:textareaElement
 		class={className}
@@ -270,7 +271,7 @@
 		{showDeleteDialog}
 		{siblingInfo}
 	/>
-{:else if message.role === 'user'}
+{:else if message.role === MessageRole.USER}
 	<ChatMessageUser
 		bind:textareaElement
 		class={className}

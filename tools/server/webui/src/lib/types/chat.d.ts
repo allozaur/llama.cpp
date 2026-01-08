@@ -1,9 +1,3 @@
-import type { ErrorDialogType } from '$lib/enums';
-import type { DatabaseMessage, DatabaseMessageExtra } from './database';
-
-export type ChatMessageType = 'root' | 'text' | 'think' | 'system';
-export type ChatRole = 'user' | 'assistant' | 'system';
-
 export interface ChatUploadedFile {
 	id: string;
 	name: string;
