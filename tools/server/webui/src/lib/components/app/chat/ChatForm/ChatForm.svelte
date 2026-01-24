@@ -12,7 +12,7 @@
 		onFileUpload?: (files: File[]) => void;
 		onSend?: (message: string, files?: ChatUploadedFile[]) => Promise<boolean>;
 		onStop?: () => void;
-		onSystemPromptAdd?: () => void;
+		onSystemPromptAdd?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
 		showHelperText?: boolean;
 		uploadedFiles?: ChatUploadedFile[];
 	}
@@ -32,8 +32,21 @@
 	}: Props = $props();
 
 	let inputAreaRef: ChatFormInputArea | undefined = $state(undefined);
-	let message = $state('');
+	let message = $state(initialMessage);
 	let previousIsLoading = $state(isLoading);
+	let previousInitialMessage = $state(initialMessage);
+
+	// Sync message when initialMessage prop changes (e.g., after draft restoration)
+	$effect(() => {
+		if (initialMessage !== previousInitialMessage) {
+			message = initialMessage;
+			previousInitialMessage = initialMessage;
+		}
+	});
+
+	function handleSystemPromptClick() {
+		onSystemPromptAdd?.({ message, files: uploadedFiles });
+	}
 
 	let hasLoadingAttachments = $derived(uploadedFiles.some((f) => f.isLoading));
 
@@ -101,7 +114,7 @@
 		onFilesAdd={handleFilesAdd}
 		{onStop}
 		onSubmit={handleSubmit}
-		onSystemPromptClick={onSystemPromptAdd}
+		onSystemPromptClick={handleSystemPromptClick}
 		onUploadedFileRemove={handleUploadedFileRemove}
 	/>
 </div>
