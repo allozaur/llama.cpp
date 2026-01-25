@@ -1,3 +1,5 @@
+import type { DatabaseMessageExtra } from './database';
+
 export interface ChatUploadedFile {
 	id: string;
 	name: string;
@@ -94,6 +96,9 @@ export interface ChatMessageToolCallTiming {
 	success: boolean;
 }
 
+/**
+ * Callbacks for streaming chat responses
+ */
 export interface ChatStreamCallbacks {
 	onChunk?: (chunk: string) => void;
 	onReasoningChunk?: (chunk: string) => void;
@@ -110,12 +115,18 @@ export interface ChatStreamCallbacks {
 	onError?: (error: Error) => void;
 }
 
+/**
+ * Error dialog state for displaying server/timeout errors
+ */
 export interface ErrorDialogState {
-	type: ErrorDialogType;
+	type: 'timeout' | 'server';
 	message: string;
 	contextInfo?: { n_prompt_tokens: number; n_ctx: number };
 }
 
+/**
+ * Live processing stats during prompt evaluation
+ */
 export interface LiveProcessingStats {
 	tokensProcessed: number;
 	totalTokens: number;
@@ -124,17 +135,26 @@ export interface LiveProcessingStats {
 	etaSecs?: number;
 }
 
+/**
+ * Live generation stats during token generation
+ */
 export interface LiveGenerationStats {
 	tokensGenerated: number;
 	timeMs: number;
 	tokensPerSecond: number;
 }
 
+/**
+ * Options for getting attachment display items
+ */
 export interface AttachmentDisplayItemsOptions {
 	uploadedFiles?: ChatUploadedFile[];
 	attachments?: DatabaseMessageExtra[];
 }
 
+/**
+ * Result of file processing operation
+ */
 export interface FileProcessingResult {
 	extras: DatabaseMessageExtra[];
 	emptyFiles: string[];

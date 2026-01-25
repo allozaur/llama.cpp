@@ -13,10 +13,7 @@ export { apiFetch, apiFetchWithParams, apiPost, type ApiFetchOptions } from './a
 export { validateApiKey } from './api-key-validation';
 
 // Attachment utilities
-export {
-	getAttachmentDisplayItems,
-	type AttachmentDisplayItemsOptions
-} from './attachment-display';
+export { getAttachmentDisplayItems } from './attachment-display';
 export { isTextFile, isImageFile, isPdfFile, isAudioFile } from './attachment-type';
 
 // Textarea utilities
@@ -46,9 +43,7 @@ export {
 	copyCodeToClipboard,
 	formatMessageForClipboard,
 	parseClipboardContent,
-	hasClipboardAttachments,
-	type ClipboardTextAttachment,
-	type ParsedClipboardContent
+	hasClipboardAttachments
 } from './clipboard';
 
 // File preview utilities
