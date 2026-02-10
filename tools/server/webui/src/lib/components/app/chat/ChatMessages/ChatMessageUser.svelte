@@ -127,11 +127,8 @@
 				data-multiline={isMultiline ? '' : undefined}
 			>
 				{#if currentConfig.renderUserContentAsMarkdown}
-					<div bind:this={messageElement} class="text-md">
-						<MarkdownContent
-							class="markdown-user-content text-primary-foreground"
-							content={message.content}
-						/>
+					<div bind:this={messageElement}>
+						<MarkdownContent class="markdown-user-content -my-4" content={message.content} />
 					</div>
 				{:else}
 					<span bind:this={messageElement} class="text-md whitespace-pre-wrap">
