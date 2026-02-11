@@ -1,5 +1,5 @@
-import type { ServerModelStatus, ServerRole } from '$lib/enums';
-import type { ChatMessagePromptProgress } from './chat';
+import type { ContentPartType, ServerModelStatus, ServerRole } from '$lib/enums';
+import type { ChatMessagePromptProgress, ChatRole } from './chat';
 
 export interface ApiChatCompletionToolFunction {
 	name: string;
@@ -13,7 +13,7 @@ export interface ApiChatCompletionTool {
 }
 
 export interface ApiChatMessageContentPart {
-	type: 'text' | 'image_url' | 'input_audio';
+	type: ContentPartType;
 	text?: string;
 	image_url?: {
 		url: string;
@@ -351,7 +351,7 @@ export interface ApiProcessingState {
 	tokensDecoded: number;
 	tokensRemaining: number;
 	contextUsed: number;
-	contextTotal: number;
+	contextTotal: number | null;
 	outputTokensUsed: number; // Total output tokens (thinking + regular content)
 	outputTokensMax: number; // Max output tokens allowed
 	temperature: number;

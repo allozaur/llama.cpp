@@ -3,8 +3,14 @@ import { AttachmentType } from '$lib/enums';
 import type {
 	DatabaseMessageExtra,
 	DatabaseMessageExtraTextFile,
-	DatabaseMessageExtraLegacyContext
-} from '$lib/types/database';
+	DatabaseMessageExtraLegacyContext,
+	DatabaseMessageExtraMcpPrompt,
+	DatabaseMessageExtraMcpResource,
+	ClipboardTextAttachment,
+	ClipboardMcpPromptAttachment,
+	ClipboardAttachment,
+	ParsedClipboardContent
+} from '$lib/types';
 
 /**
  * Copy text to clipboard with toast notification
@@ -69,23 +75,6 @@ export async function copyCodeToClipboard(
 }
 
 /**
- * Format for text attachments when copied to clipboard
- */
-export interface ClipboardTextAttachment {
-	type: typeof AttachmentType.TEXT;
-	name: string;
-	content: string;
-}
-
-/**
- * Parsed result from clipboard content
- */
-export interface ParsedClipboardContent {
-	message: string;
-	textAttachments: ClipboardTextAttachment[];
-}
-
-/**
  * Formats a message with text attachments for clipboard copying.
  *
  * Default format (asPlainText = false):
@@ -116,7 +105,7 @@ export function formatMessageForClipboard(
 	extras?: DatabaseMessageExtra[],
 	asPlainText: boolean = false
 ): string {
-	// Filter text-like attachments (TEXT, LEGACY_CONTEXT, and MCP_PROMPT types)
+	// Filter text-like attachments (TEXT, LEGACY_CONTEXT, MCP_PROMPT, and MCP_RESOURCE types)
 	const textAttachments =
 		extras?.filter(
 			(
@@ -124,10 +113,12 @@ export function formatMessageForClipboard(
 			): extra is
 				| DatabaseMessageExtraTextFile
 				| DatabaseMessageExtraLegacyContext
-				| DatabaseMessageExtraMcpPrompt =>
+				| DatabaseMessageExtraMcpPrompt
+				| DatabaseMessageExtraMcpResource =>
 				extra.type === AttachmentType.TEXT ||
 				extra.type === AttachmentType.LEGACY_CONTEXT ||
-				extra.type === AttachmentType.MCP_PROMPT
+				extra.type === AttachmentType.MCP_PROMPT ||
+				extra.type === AttachmentType.MCP_RESOURCE
 		) ?? [];
 
 	if (textAttachments.length === 0) {

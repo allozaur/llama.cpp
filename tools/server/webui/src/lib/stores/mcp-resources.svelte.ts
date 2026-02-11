@@ -11,6 +11,9 @@
  */
 
 import { SvelteMap } from 'svelte/reactivity';
+import { AttachmentType } from '$lib/enums';
+import { MCP_RESOURCE_CACHE_MAX_ENTRIES, MCP_RESOURCE_CACHE_TTL_MS } from '$lib/constants/cache';
+import { MCP_RESOURCE_ATTACHMENT_ID_PREFIX } from '$lib/constants/mcp-resource';
 import type {
 	MCPResource,
 	MCPResourceTemplate,
@@ -23,11 +26,8 @@ import type {
 	MCPServerResources
 } from '$lib/types';
 
-const MAX_CACHED_RESOURCES = 50;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
 function generateAttachmentId(): string {
-	return `res-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+	return `${MCP_RESOURCE_ATTACHMENT_ID_PREFIX}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 class MCPResourceStore {
@@ -62,6 +62,7 @@ class MCPResourceStore {
 		for (const serverRes of this._serverResources.values()) {
 			count += serverRes.resources.length;
 		}
+
 		return count;
 	}
 
@@ -70,6 +71,7 @@ class MCPResourceStore {
 		for (const serverRes of this._serverResources.values()) {
 			count += serverRes.templates.length;
 		}
+
 		return count;
 	}
 
@@ -133,6 +135,7 @@ class MCPResourceStore {
 	 */
 	setServerError(serverName: string, error: string): void {
 		const existing = this._serverResources.get(serverName);
+
 		if (existing) {
 			this._serverResources.set(serverName, { ...existing, loading: false, error });
 		} else {
@@ -158,6 +161,7 @@ class MCPResourceStore {
 	 */
 	getAllResourceInfos(): MCPResourceInfo[] {
 		const result: MCPResourceInfo[] = [];
+
 		for (const [serverName, serverRes] of this._serverResources) {
 			for (const resource of serverRes.resources) {
 				result.push({
@@ -172,6 +176,7 @@ class MCPResourceStore {
 				});
 			}
 		}
+
 		return result;
 	}
 
@@ -180,6 +185,7 @@ class MCPResourceStore {
 	 */
 	getAllTemplateInfos(): MCPResourceTemplateInfo[] {
 		const result: MCPResourceTemplateInfo[] = [];
+
 		for (const [serverName, serverRes] of this._serverResources) {
 			for (const template of serverRes.templates) {
 				result.push({
@@ -194,6 +200,7 @@ class MCPResourceStore {
 				});
 			}
 		}
+
 		return result;
 	}
 
@@ -202,18 +209,21 @@ class MCPResourceStore {
 	 */
 	clearServerResources(serverName: string): void {
 		this._serverResources.delete(serverName);
+
 		// Also clear cached content for this server's resources
 		for (const [uri, cached] of this._cachedResources) {
 			if (cached.resource.serverName === serverName) {
 				this._cachedResources.delete(uri);
 			}
 		}
+
 		// Clear subscriptions for this server
 		for (const [uri, sub] of this._subscriptions) {
 			if (sub.serverName === serverName) {
 				this._subscriptions.delete(uri);
 			}
 		}
+
 		console.log(`[MCPResources][${serverName}] Cleared all resources`);
 	}
 
@@ -230,9 +240,10 @@ class MCPResourceStore {
 	 */
 	cacheResourceContent(resource: MCPResourceInfo, content: MCPResourceContent[]): void {
 		// Enforce cache size limit
-		if (this._cachedResources.size >= MAX_CACHED_RESOURCES) {
+		if (this._cachedResources.size >= MCP_RESOURCE_CACHE_MAX_ENTRIES) {
 			// Remove oldest entry
 			const oldestKey = this._cachedResources.keys().next().value;
+
 			if (oldestKey) {
 				this._cachedResources.delete(oldestKey);
 			}
@@ -256,9 +267,11 @@ class MCPResourceStore {
 
 		// Check if cache is still valid
 		const age = Date.now() - cached.fetchedAt.getTime();
-		if (age > CACHE_TTL_MS && !cached.subscribed) {
+
+		if (age > MCP_RESOURCE_CACHE_TTL_MS && !cached.subscribed) {
 			// Cache expired and not subscribed, remove it
 			this._cachedResources.delete(uri);
+
 			return undefined;
 		}
 
@@ -467,6 +480,7 @@ class MCPResourceStore {
 				};
 			}
 		}
+
 		return undefined;
 	}
 
@@ -479,6 +493,7 @@ class MCPResourceStore {
 				return serverName;
 			}
 		}
+
 		return undefined;
 	}
 
@@ -523,6 +538,43 @@ class MCPResourceStore {
 		}
 
 		return parts.join('');
+	}
+
+	/**
+	 * Convert current resource attachments to DatabaseMessageExtra[] for persisting with a message.
+	 * Each attachment becomes a DatabaseMessageExtraMcpResource stored on the user message.
+	 */
+	toMessageExtras(): import('$lib/types').DatabaseMessageExtraMcpResource[] {
+		const extras: import('$lib/types').DatabaseMessageExtraMcpResource[] = [];
+
+		for (const attachment of this._attachments) {
+			if (attachment.error) continue;
+			if (!attachment.content || attachment.content.length === 0) continue;
+
+			const resourceName = attachment.resource.title || attachment.resource.name;
+			const contentParts: string[] = [];
+
+			for (const content of attachment.content) {
+				if ('text' in content && content.text) {
+					contentParts.push(content.text);
+				} else if ('blob' in content && content.blob) {
+					contentParts.push(`[Binary content: ${content.mimeType || 'unknown type'}]`);
+				}
+			}
+
+			if (contentParts.length > 0) {
+				extras.push({
+					type: AttachmentType.MCP_RESOURCE,
+					name: resourceName,
+					uri: attachment.resource.uri,
+					serverName: attachment.resource.serverName,
+					content: contentParts.join('\n'),
+					mimeType: attachment.resource.mimeType
+				});
+			}
+		}
+
+		return extras;
 	}
 }
 
