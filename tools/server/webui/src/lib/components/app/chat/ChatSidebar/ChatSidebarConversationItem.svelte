@@ -142,7 +142,7 @@
 					{
 						icon: Download,
 						label: 'Export',
-						onclick: (e: Event) => {
+						onclick: (e) => {
 							e.stopPropagation();
 							conversationsStore.downloadConversation(conversation.id);
 						},
