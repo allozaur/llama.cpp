@@ -5,7 +5,7 @@
 	import { conversationsStore } from '$lib/stores/conversations.svelte';
 	import { toolsStore } from '$lib/stores/tools.svelte';
 	import { McpServerCard, McpServerCardSkeleton } from '$lib/components/app/mcp';
-	import { DialogMcpServerAddNew } from '$lib/components/app/dialogs';
+	import { DialogMcpServerAddNew, DialogMcpServerAuthorize } from '$lib/components/app/dialogs';
 	import { HealthCheckStatus } from '$lib/enums';
 	import { fade } from 'svelte/transition';
 	import { onMount } from 'svelte';
@@ -23,6 +23,8 @@
 
 	let initialLoadComplete = $state(false);
 	let isAddingServer = $state(false);
+	let pendingAuthorizeServerId = $state<string | null>(null);
+	let showAuthorizeDialog = $derived(initialLoadComplete && pendingAuthorizeServerId);
 
 	onMount(() => {
 		if (page.url.searchParams.has('add')) {
@@ -52,6 +54,14 @@
 			initialLoadComplete = true;
 		}
 	});
+
+	let pendingAuthorizeServer = $derived(
+		pendingAuthorizeServerId ? mcpStore.getServerById(pendingAuthorizeServerId) : null
+	);
+
+	function handleServerAdded(serverId: string) {
+		pendingAuthorizeServerId = serverId;
+	}
 </script>
 
 <div in:fade={{ duration: 150 }} class="h-full max-h-[100dvh] overflow-y-auto">
@@ -69,7 +79,7 @@
 		</Button>
 	</div>
 
-	<DialogMcpServerAddNew bind:open={isAddingServer} />
+	<DialogMcpServerAddNew bind:open={isAddingServer} onServerAdded={handleServerAdded} />
 
 	<div class="grid gap-5 md:space-y-4 {className}">
 		{#if servers.length === 0 && !isAddingServer}
@@ -105,4 +115,16 @@
 			</div>
 		{/if}
 	</div>
+
+	<DialogMcpServerAuthorize
+		bind:open={showAuthorizeDialog}
+		server={pendingAuthorizeServer}
+		onOpenChange={(open: boolean) => {
+			showAuthorizeDialog = open;
+
+			if (!open) {
+				pendingAuthorizeServerId = null;
+			}
+		}}
+	/>
 </div>

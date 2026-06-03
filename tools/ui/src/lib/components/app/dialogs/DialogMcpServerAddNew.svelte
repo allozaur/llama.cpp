@@ -10,9 +10,10 @@
 	interface Props {
 		open: boolean;
 		onOpenChange?: (open: boolean) => void;
+		onServerAdded?: (serverId: string) => void;
 	}
 
-	let { open = $bindable(), onOpenChange }: Props = $props();
+	let { open = $bindable(), onOpenChange, onServerAdded }: Props = $props();
 
 	let newServerUrl = $state('');
 	let newServerHeaders = $state('');
@@ -52,6 +53,10 @@
 		});
 
 		conversationsStore.setMcpServerOverride(newServerId, true);
+
+		if (newServerOauth) {
+			onServerAdded?.(newServerId);
+		}
 
 		handleOpenChange(false);
 	}

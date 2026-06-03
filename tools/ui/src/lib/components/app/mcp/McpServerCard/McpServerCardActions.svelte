@@ -11,8 +11,14 @@
 		onDelete: () => void;
 	}
 
-	let { isHealthChecking, showAuthorize = false, onEdit, onRefresh, onAuthorize, onDelete }: Props =
-		$props();
+	let {
+		isHealthChecking,
+		showAuthorize = false,
+		onEdit,
+		onRefresh,
+		onAuthorize,
+		onDelete
+	}: Props = $props();
 </script>
 
 <div class="flex shrink-0 items-center gap-1">

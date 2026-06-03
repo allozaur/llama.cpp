@@ -5,7 +5,7 @@
 	import type { MCPServerSettingsEntry, HealthCheckState } from '$lib/types';
 	import { HealthCheckStatus } from '$lib/enums';
 	import { mcpStore } from '$lib/stores/mcp.svelte';
-	import { BrowserMcpOAuthProvider } from '$lib/services/mcp-oauth.service';
+	import { DialogMcpServerAuthorize } from '$lib/components/app/dialogs';
 	import {
 		McpServerCardActions,
 		McpServerCardDeleteDialog,
@@ -66,11 +66,10 @@
 		mcpStore.runHealthCheck(server);
 	}
 
-	function handleAuthorize() {
-		const authorizationWindow = window.open('about:blank', '_blank');
-		BrowserMcpOAuthProvider.beginInteractiveAuthorization(authorizationWindow);
+	let showAuthorizeDialog = $state(false);
 
-		mcpStore.runHealthCheck(server);
+	function handleAuthorize() {
+		showAuthorizeDialog = true;
 	}
 
 	async function startEditing() {
@@ -207,4 +206,10 @@
 	{displayName}
 	onOpenChange={(open) => (showDeleteDialog = open)}
 	onConfirm={onDelete}
+/>
+
+<DialogMcpServerAuthorize
+	bind:open={showAuthorizeDialog}
+	{server}
+	onOpenChange={(open: boolean) => (showAuthorizeDialog = open)}
 />

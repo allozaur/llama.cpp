@@ -131,18 +131,19 @@ function readSession(serverId: string): StoredMcpOAuthSession | undefined {
 	return loadState().sessions[serverId];
 }
 
-function writeSession(serverId: string, update: Partial<StoredMcpOAuthSession>): StoredMcpOAuthSession {
+function writeSession(
+	serverId: string,
+	update: Partial<StoredMcpOAuthSession>
+): StoredMcpOAuthSession {
 	const state = loadState();
 	const previous = state.sessions[serverId];
-	const base: StoredMcpOAuthSession =
-		previous ??
-		{
-			serverId,
-			serverUrl: update.serverUrl ?? '',
-			redirectUrl: update.redirectUrl ?? getDefaultRedirectUrl(),
-			returnUrl: update.returnUrl ?? getDefaultReturnUrl(),
-			createdAt: Date.now()
-		};
+	const base: StoredMcpOAuthSession = previous ?? {
+		serverId,
+		serverUrl: update.serverUrl ?? '',
+		redirectUrl: update.redirectUrl ?? getDefaultRedirectUrl(),
+		returnUrl: update.returnUrl ?? getDefaultReturnUrl(),
+		createdAt: Date.now()
+	};
 	const next: StoredMcpOAuthSession = {
 		...base,
 		...update,

@@ -11,8 +11,14 @@
 		onCancel: () => void;
 	}
 
-	let { serverId, serverUrl, serverUseProxy = false, serverOauth = false, onSave, onCancel }: Props =
-		$props();
+	let {
+		serverId,
+		serverUrl,
+		serverUseProxy = false,
+		serverOauth = false,
+		onSave,
+		onCancel
+	}: Props = $props();
 
 	let editUrl = $derived(serverUrl);
 	let editHeaders = $state('');
@@ -36,7 +42,12 @@
 		onSave(editUrl.trim(), editHeaders.trim(), editUseProxy, editOauth);
 	}
 
-	export function setInitialValues(url: string, headers: string, useProxy: boolean, oauth: boolean) {
+	export function setInitialValues(
+		url: string,
+		headers: string,
+		useProxy: boolean,
+		oauth: boolean
+	) {
 		editUrl = url;
 		editHeaders = headers;
 		editUseProxy = useProxy;

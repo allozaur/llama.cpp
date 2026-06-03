@@ -15,8 +15,36 @@
  *
  * Modal dialog for adding a new MCP server with URL and optional headers.
  * Validates URL format and integrates with mcpStore and conversationsStore.
+ * Triggers onServerAdded callback when a new OAuth server is added.
  */
 export { default as DialogMcpServerAddNew } from './DialogMcpServerAddNew.svelte';
+
+/**
+ * **DialogMcpServerAuthorize** - OAuth authorization confirmation dialog
+ *
+ * Alert dialog for confirming and initiating OAuth authorization for MCP servers.
+ * Displays server name and favicon, prompting user to authorize.
+ *
+ * **Architecture:**
+ * - Uses ShadCN AlertDialog
+ * - Shows server identity (name, favicon) for confirmation
+ * - Authorize button starts the OAuth flow via BrowserMcpOAuthProvider
+ *
+ * **Features:**
+ * - Server display with icon and name
+ * - OAuth authorization initiation
+ * - Health check triggered after authorization
+ *
+ * @example
+ * ```svelte
+ * <DialogMcpServerAuthorize
+ *   bind:open={showAuthorize}
+ *   {server}
+ *   onOpenChange={(open) => showAuthorize = open}
+ * />
+ * ```
+ */
+export { default as DialogMcpServerAuthorize } from './DialogMcpServerAuthorize.svelte';
 
 /**
  * **DialogExportSettings** - Settings export dialog with sensitive data warning
