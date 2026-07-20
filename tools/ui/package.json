@@ -17,6 +17,8 @@
 		"test": "npm run test:ui -- --run && npm run test:client -- --run && npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
 		"test:e2e:pwa": "playwright test tests/e2e/pwa.e2e.ts",
+		"codegen-demo-workflow": "playwright codegen --target=playwright-test --output=demo/recording.demo.ts http://localhost:8080/",
+		"generate-demo-videos": "playwright test --config=demo/playwright.config.ts",
 		"test:client": "vitest --project=client",
 		"test:unit": "vitest --project=unit",
 		"test:unit:pwa": "vitest --project=unit --run tests/unit/pwa.spec.ts",
