@@ -9,6 +9,7 @@
 
 import { SKILL_ICON } from './icons.constants';
 import Braces from '@lucide/svelte/icons/braces';
+import Brain from '@lucide/svelte/icons/brain';
 import Clock from '@lucide/svelte/icons/clock';
 import Eye from '@lucide/svelte/icons/eye';
 import FilePen from '@lucide/svelte/icons/file-pen';
@@ -36,6 +37,21 @@ export const TOOL_UI: Readonly<Record<BuiltInTool, ToolUiEntry>> = {
 	[BuiltInTool.BROWSER_LOAD_SKILL]: {
 		icon: SKILL_ICON,
 		label: 'Load skill',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_MEMORY_DROP]: {
+		icon: Brain,
+		label: 'Forget memory',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_MEMORY_OPEN]: {
+		icon: Brain,
+		label: 'Open memory',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_MEMORY_WRITE]: {
+		icon: Brain,
+		label: 'Write memory',
 		source: ToolSource.BROWSER
 	},
 	[BuiltInTool.BROWSER_READ_MEDIA]: { icon: Eye, label: 'Read media', source: ToolSource.BROWSER },

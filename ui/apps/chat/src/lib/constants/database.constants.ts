@@ -14,6 +14,7 @@ export const DB_NAME = STORAGE_APP_NAME;
 export const IDXDB_TABLES = {
 	conversations: 'conversations',
 	groups: 'groups',
+	memoryEntries: 'memoryEntries',
 	messages: 'messages',
 	prompts: 'prompts'
 } as const;
@@ -22,14 +23,16 @@ export const IDXDB_TABLES = {
 export const IDXDB_STORE_SCHEMAS = {
 	conversations: 'id, lastModified, currNode, name',
 	groups: 'id, updatedAt, name',
+	memoryEntries: 'name, updated',
 	messages: 'id, convId, type, role, timestamp, parent, children',
 	prompts: 'id, lastModified, name'
 } as const;
 
-/** Combined Dexie stores definition — keys are table names, values are schemas */
+/** Dexie stores of schema version 1 — keys are table names, values are schemas */
 export const IDXDB_STORES = {
 	[IDXDB_TABLES.conversations]: IDXDB_STORE_SCHEMAS.conversations,
 	[IDXDB_TABLES.groups]: IDXDB_STORE_SCHEMAS.groups,
+	[IDXDB_TABLES.memoryEntries]: IDXDB_STORE_SCHEMAS.memoryEntries,
 	[IDXDB_TABLES.messages]: IDXDB_STORE_SCHEMAS.messages,
 	[IDXDB_TABLES.prompts]: IDXDB_STORE_SCHEMAS.prompts
 } as const;
@@ -43,5 +46,13 @@ export const IDXDB_STORES_V1 = {
 /** Schema version that added the groups table. */
 export const IDXDB_VERSION_GROUPS = 2;
 
+/** Schema version that added the prompts table. */
+export const IDXDB_VERSION_PROMPTS = 3;
+
 /** Schema version new Dexie instances open the database at; bump with a new version block. */
-export const IDXDB_VERSION = 3;
+export const IDXDB_VERSION = 4;
+
+/** Dexie stores added by the latest schema version: the memory entries table */
+export const IDXDB_STORES_MEMORY = {
+	[IDXDB_TABLES.memoryEntries]: IDXDB_STORE_SCHEMAS.memoryEntries
+} as const;

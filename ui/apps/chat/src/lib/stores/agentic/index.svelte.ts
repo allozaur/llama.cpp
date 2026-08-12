@@ -20,7 +20,12 @@ import {
 	type ToolContext,
 	type ToolResult
 } from '@ggml-org/llama-harness';
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE, SETTINGS_KEYS } from '#lib/constants/index.ts';
+import {
+	DEFAULT_AGENTIC_CONFIG,
+	MEMORY_TOOL_NAMES,
+	NEWLINE,
+	SETTINGS_KEYS
+} from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -41,6 +46,7 @@ import {
 } from '#lib/enums/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
 import { ChatService } from '#lib/services/index.ts';
+import { MemoryService } from '#lib/services/memory.service.ts';
 import { ReadMediaService } from '#lib/services/read-media.service.ts';
 import { SandboxService } from '#lib/services/sandbox.service.ts';
 import { SearchChatsService } from '#lib/services/search-chats.service.ts';
@@ -501,6 +507,8 @@ class AgenticStore {
 			if (toolName === BuiltInTool.BROWSER_SEARCH_CHATS) {
 				return SearchChatsService.executeTool(args, conversationId);
 			}
+
+			if (MEMORY_TOOL_NAMES.has(toolName)) return MemoryService.executeTool(toolName, args);
 
 			if (toolName === BuiltInTool.BROWSER_READ_MEDIA) {
 				return ReadMediaService.executeTool(

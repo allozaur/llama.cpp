@@ -11,11 +11,13 @@ import { AGENTIC_ENABLED } from '#lib/constants/app.constants.ts';
 import {
 	buildBrowserInfoToolDefinition,
 	buildGetDatetimeToolDefinition,
+	buildMemoryToolDefinitions,
 	buildReadMediaToolDefinition,
 	buildSearchChatsToolDefinition,
 	DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
 	DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
 	HOME_TILDE,
+	parseMemoryGroups,
 	TOOL_GROUP_LABELS,
 	TOOL_SERVER_LABELS
 } from '#lib/constants/index.ts';
@@ -139,6 +141,13 @@ class ToolsStore {
 			// disabled by default, see searchChatsDefaultDisabledMigration
 			buildSearchChatsToolDefinition()
 		];
+
+		if (settingsStore.config.memoryEnabled) {
+			tools.push(
+				...buildMemoryToolDefinitions(parseMemoryGroups(String(settingsStore.config.memoryGroups)))
+			);
+		}
+
 		const readMedia = this.readMediaTool();
 
 		if (readMedia) tools.push(readMedia);
