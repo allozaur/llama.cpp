@@ -23,6 +23,7 @@ import { SvelteMap } from 'svelte/reactivity';
 
 export interface ProcessingTimingData {
 	cache_n: number;
+	predicted_ms?: number;
 	predicted_n: number;
 	predicted_per_second?: number;
 	prompt_ms?: number;
@@ -81,9 +82,12 @@ export class ChatProcessingStore {
 	parseTimingData(timingData: ProcessingTimingData): ApiProcessingState {
 		const cacheTokens = timingData.cache_n || 0,
 			predictedTokens = timingData.predicted_n || 0,
+			predictedMs = timingData.predicted_ms || undefined,
 			promptMs = timingData.prompt_ms || undefined,
 			promptTokens = timingData.prompt_n || 0,
-			tokensPerSecond = timingData.predicted_per_second || 0;
+			tokensPerSecond =
+				timingData.predicted_per_second ||
+				(predictedMs && predictedTokens ? (predictedTokens / predictedMs) * 1000 : 0);
 		const promptProgress = timingData.prompt_progress;
 		const contextTotal = this.getContextTotal();
 		const currentConfig = settingsStore.config;
@@ -104,6 +108,7 @@ export class ChatProcessingStore {
 			hasNextToken: predictedTokens > 0,
 			outputTokensMax,
 			outputTokensUsed,
+			predictedMs,
 			progressPercent,
 			promptMs,
 			promptProgress,
