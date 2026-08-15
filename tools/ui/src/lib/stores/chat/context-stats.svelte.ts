@@ -107,8 +107,19 @@ function deriveLiveStats(state: ApiProcessingState | null): LiveStats | null {
 }
 
 class ContextStatsStore {
-	// The canonical resolution lives in modelsStore.activeModelId.
-	activeModelId = $derived(modelsStore.activeModelId);
+	notebookMode = $state(false);
+
+	// The canonical resolution lives in modelsStore.activeModelId. The notebook
+	// has no conversation, so in router mode only an explicit selection counts.
+	activeModelId = $derived.by(() => {
+		if (this.notebookMode && serverStore.isRouterMode) {
+			const selected = modelsStore.models.find((m) => m.id === modelsStore.selectedModelId);
+
+			return selected?.model ?? null;
+		}
+
+		return modelsStore.activeModelId;
+	});
 
 	// shared by currentRead/Fresh/Cache/Output and cumulative so a per-chunk
 	// churn of activeMessages triggers exactly one scan instead of one per
@@ -118,6 +129,21 @@ class ContextStatsStore {
 	);
 
 	private cumulative = $derived.by(() => {
+		if (this.notebookMode) {
+			const state = chatStore.processing.activeState;
+			const output = state?.tokensDecoded ?? 0;
+			const predictedMs = state?.predictedMs ?? 0;
+			const averageTokensPerSecond =
+				predictedMs > 0 && output > 0 ? (output / predictedMs) * 1000 : null;
+
+			return {
+				averageTokensPerSecond,
+				cacheTotal: state?.cacheTokens ?? 0,
+				output,
+				read: state?.promptTokens ?? 0
+			};
+		}
+
 		const convId = conversationsStore.activeConversation?.id;
 		// A running agentic flow stamps llm totals on messages only when it
 		// exits, so read its live session totals instead.
@@ -170,12 +196,20 @@ class ContextStatsStore {
 	private liveStats = $derived(deriveLiveStats(chatStore.processing.activeState));
 
 	currentOutput = $derived.by(() => {
+		if (this.notebookMode) {
+			return this.liveStats?.outputTokens ?? 0;
+		}
+
 		if (this.liveStats && this.liveStats.outputTokens > 0) return this.liveStats.outputTokens;
 
 		return this.assistantTimings.lastTimings?.predicted_n ?? 0;
 	});
 
 	currentRead = $derived.by(() => {
+		if (this.notebookMode) {
+			return this.liveStats?.promptTokens ?? 0;
+		}
+
 		const timings = this.assistantTimings.lastTimings;
 
 		let read = 0;
@@ -212,6 +246,10 @@ class ContextStatsStore {
 	cumulativeRead = $derived(this.cumulative.read);
 
 	currentCache = $derived.by(() => {
+		if (this.notebookMode) {
+			return this.liveStats?.cacheTokens ?? 0;
+		}
+
 		const cached = this.assistantTimings.lastTimings?.cache_n ?? 0;
 
 		if (this.liveStats && this.liveStats.promptTokens > 0) {
@@ -222,6 +260,10 @@ class ContextStatsStore {
 	});
 
 	currentFresh = $derived.by(() => {
+		if (this.notebookMode) {
+			return this.liveStats?.freshTokens ?? 0;
+		}
+
 		const fresh = this.assistantTimings.lastTimings?.prompt_n ?? 0;
 
 		return Math.max(fresh, this.liveStats?.freshTokens ?? 0);
