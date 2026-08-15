@@ -16,7 +16,9 @@
 	$effect(() => {
 		const conv = conversationsStore.activeConversation;
 
-		untrack(() => chatStore.processing.setActiveConversation(conv?.id ?? null));
+		if (conv) {
+			untrack(() => chatStore.processing.setActiveConversation(conv.id));
+		}
 	});
 
 	$effect(() => {
