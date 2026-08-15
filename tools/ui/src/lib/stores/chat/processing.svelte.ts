@@ -82,7 +82,12 @@ export class ChatProcessingStore {
 	parseTimingData(timingData: ProcessingTimingData): ApiProcessingState {
 		const cacheTokens = timingData.cache_n || 0,
 			predictedTokens = timingData.predicted_n || 0,
-			predictedMs = timingData.predicted_ms || undefined,
+			rawPredictedMs = timingData.predicted_ms || undefined,
+			// a sub-millisecond predicted_ms on the first token yields a bogus tokens/s
+			predictedMs =
+				predictedTokens <= 1 && rawPredictedMs !== undefined && rawPredictedMs < 0.01
+					? undefined
+					: rawPredictedMs,
 			promptMs = timingData.prompt_ms || undefined,
 			promptTokens = timingData.prompt_n || 0,
 			tokensPerSecond =
