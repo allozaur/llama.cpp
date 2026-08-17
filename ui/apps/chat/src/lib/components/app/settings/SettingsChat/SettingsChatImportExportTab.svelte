@@ -4,14 +4,21 @@
 	import {
 		DialogConfirmation,
 		DialogConversationSelection,
-		DialogExportSettings
+		DialogExportSettings,
+		DialogSettingsImportPreview
 	} from '$lib/components/app';
+	import type { SettingsDiffEntry } from '$lib/components/app/dialogs/DialogSettingsImportPreview.svelte';
 	import SettingsGroup from '$lib/components/app/settings/SettingsGroup.svelte';
 	import { ConversationSelectionMode, FileExtensionText, HtmlInputType } from '$lib/enums';
+	import { computeSettingsDiff } from '$lib/hooks/use-drop-import.svelte';
 	import { ConversationTransferService, StorageModeService } from '$lib/services';
 	import { STORAGE_ADAPTERS } from '$lib/storage-adapters';
 	import { conversationsStore, groupsStore, serverStore, settingsStore } from '$lib/stores';
-	import type { StorageAdapterDefinition } from '$lib/types';
+	import type {
+		SettingsConfigType,
+		SettingsExportType,
+		StorageAdapterDefinition
+	} from '$lib/types';
 	import { createMessageCountMap } from '$lib/utils';
 	import { fade } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
@@ -73,6 +80,9 @@
 	let showSettingsImportSummary = $state(false);
 	let showSettingsExportDialog = $state(false);
 	let includeSensitiveData = $state(false);
+	let showSettingsImportPreview = $state(false);
+	let pendingSettingsImport = $state<SettingsExportType | null>(null);
+	let settingsImportDiff = $state<SettingsDiffEntry[]>([]);
 
 	function handleSettingsExport() {
 		showSettingsExportDialog = true;
@@ -130,11 +140,12 @@
 						return;
 					}
 
-					settingsStore.importSettings(data);
-
-					showSettingsImportSummary = true;
-					showSettingsExportSummary = false;
-					toast.success('Settings imported successfully');
+					pendingSettingsImport = data as SettingsExportType;
+					settingsImportDiff = computeSettingsDiff(
+						$state.snapshot(settingsStore.config) as SettingsConfigType,
+						data.config
+					);
+					showSettingsImportPreview = true;
 				} catch (err) {
 					console.error('Failed to import settings:', err);
 					toast.error('Failed to import settings');
@@ -146,6 +157,31 @@
 			console.error('Failed to open file picker:', err);
 			toast.error('Failed to open file picker');
 		}
+	}
+
+	function handleSettingsImportConfirm() {
+		showSettingsImportPreview = false;
+
+		if (!pendingSettingsImport) return;
+
+		try {
+			settingsStore.importSettings(pendingSettingsImport);
+
+			pendingSettingsImport = null;
+			settingsImportDiff = [];
+			showSettingsImportSummary = true;
+			showSettingsExportSummary = false;
+			toast.success('Settings imported successfully');
+		} catch (err) {
+			console.error('Failed to import settings:', err);
+			toast.error('Failed to import settings');
+		}
+	}
+
+	function handleSettingsImportCancel() {
+		showSettingsImportPreview = false;
+		pendingSettingsImport = null;
+		settingsImportDiff = [];
 	}
 
 	async function handleExportClick() {
@@ -380,6 +416,13 @@
 	bind:open={showSettingsExportDialog}
 	onCancel={handleSettingsExportCancel}
 	onConfirm={handleSettingsExportConfirm}
+/>
+
+<DialogSettingsImportPreview
+	bind:open={showSettingsImportPreview}
+	diff={settingsImportDiff}
+	onConfirm={handleSettingsImportConfirm}
+	onCancel={handleSettingsImportCancel}
 />
 
 <DialogConversationSelection
