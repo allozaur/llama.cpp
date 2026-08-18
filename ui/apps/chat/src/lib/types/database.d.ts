@@ -42,10 +42,6 @@ export interface DatabaseConversation {
 	pinned?: boolean;
 }
 
-export interface ExportedMemory {
-	entries: DatabaseMemoryEntry[];
-}
-
 export interface DatabaseMemoryEntry {
 	name: string;
 	description: string;
@@ -198,3 +194,7 @@ export type ExportedConversation = {
 };
 
 export type ExportedConversations = ExportedConversation | ExportedConversation[];
+
+export interface ExportedMemory {
+	entries: DatabaseMemoryEntry[];
+}
