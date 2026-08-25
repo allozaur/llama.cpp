@@ -93,7 +93,8 @@ RUN bash -c "source ${OpenVINO_DIR}/setupvars.sh && \
         -DGGML_NATIVE=OFF \
         -DGGML_BACKEND_DL=ON \
         -DGGML_CPU_ALL_VARIANTS=ON \
-        -DGGML_OPENVINO=ON && \
+        -DGGML_OPENVINO=ON \
+        -DLLAMA_BUILD_UI=ON && \
     cmake --build build/ReleaseOV --parallel "
 
 # Copy all necessary libraries (build outputs + OpenVINO runtime libs)

@@ -1,8 +1,10 @@
 # Provision UI assets and generate ui.cpp/ui.h.
 #
-# Asset provisioning priority:
+# When BUILD_UI=OFF, no UI is embedded and empty assets are generated.
+#
+# Asset provisioning priority (BUILD_UI=ON):
 #   1. Pre-built assets in SRC_DIST_DIR (manually built by user)
-#   2. If BUILD_UI=ON: npm build
+#   2. npm build
 #   3. If above did not produce assets and HF_ENABLED=ON: HF Bucket download
 #      of dist.tar.gz (verified against dist.tar.gz.sha256)
 
@@ -291,6 +293,15 @@ function(emit_files dist_dir)
         message(FATAL_ERROR "UI: llama-ui-embed failed (${rc})")
     endif()
 endfunction()
+
+# ---------------------------------------------------------------------------
+# 0. UI disabled: emit empty assets
+# ---------------------------------------------------------------------------
+if(NOT BUILD_UI)
+    message(STATUS "UI: LLAMA_BUILD_UI=OFF, building without an embedded UI")
+    emit_files("${UI_BINARY_DIR}/ui-disabled")
+    return()
+endif()
 
 # ---------------------------------------------------------------------------
 # 1. Priority 1: pre-built assets supplied in tools/ui/dist
