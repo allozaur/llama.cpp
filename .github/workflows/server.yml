@@ -90,7 +90,8 @@ jobs:
         id: cmake_build
         run: |
           cmake -B build \
-            -DGGML_SCHED_NO_REALLOC=ON
+            -DGGML_SCHED_NO_REALLOC=ON \
+            -DLLAMA_BUILD_UI=ON
           cmake --build build --config Release -j $(nproc) --target llama-server
 
       - name: Python setup
@@ -164,7 +165,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=cmake/x64-windows-llvm.cmake ^
             -DCMAKE_BUILD_TYPE=Release ^
             -DLLAMA_BUILD_BORINGSSL=ON ^
-            -DGGML_SCHED_NO_REALLOC=ON
+            -DGGML_SCHED_NO_REALLOC=ON ^
+            -DLLAMA_BUILD_UI=ON
           set /A NINJA_JOBS=%NUMBER_OF_PROCESSORS%-1
           cmake --build build --config Release -j %NINJA_JOBS% --target llama-server
 
