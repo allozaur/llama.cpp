@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
-	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
 	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
 	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Check, ChevronDown, ChevronRight, Info, Loader2, PencilRuler } from '@lucide/svelte';
@@ -8,8 +7,47 @@
 	import { useToolsPanel } from '$lib/hooks/use-tools-panel.svelte';
 	import { toolsStore } from '$lib/stores';
 	import type { ToolGroup } from '$lib/types';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	const toolsPanel = useToolsPanel();
+
+	// measured-px height transition for the tool groups (same technique as
+	// ModelsSelectorReasoningPanel): two plain lengths interpolate in every
+	// browser, no calc-size() support needed
+	const GROUP_TRANSITION_MS = 200;
+	const groupHeights = new SvelteMap<string, number>();
+	const groupEls = new SvelteMap<string, HTMLDivElement>();
+
+	function heightFor(group: ToolGroup): number {
+		return toolsPanel.expandedGroups.has(group.key) ? (groupHeights.get(group.key) ?? 0) : 0;
+	}
+
+	// the rows are plain buttons (not menu items), so they stay mounted always;
+	// visibility keeps collapsed rows out of the tab order
+	function groupElAction(el: HTMLElement, key: string) {
+		groupEls.set(key, el as HTMLDivElement);
+
+		return { destroy: () => groupEls.delete(key) };
+	}
+
+	$effect(() => {
+		for (const group of [...toolsPanel.categoryGroups, ...toolsPanel.providerGroups]) {
+			const isExpanded = toolsPanel.expandedGroups.has(group.key);
+
+			if (isExpanded && !groupHeights.has(group.key)) {
+				// newly expanded: measure after the rows are laid out
+				requestAnimationFrame(() => {
+					const el = groupEls.get(group.key);
+
+					if (el && toolsPanel.expandedGroups.has(group.key)) {
+						groupHeights.set(group.key, el.scrollHeight);
+					}
+				});
+			} else if (!isExpanded && groupHeights.has(group.key)) {
+				groupHeights.delete(group.key);
+			}
+		}
+	});
 </script>
 
 <DropdownMenu.Sub onOpenChange={(open) => open && toolsPanel.handleOpen()}>
@@ -82,13 +120,13 @@
 	{@const favicon = toolsPanel.getFavicon(group)}
 	{@const groupDisabled = toolsPanel.isGroupDisabled(group)}
 
-	<Collapsible.Root
-		onOpenChange={() => toolsPanel.toggleGroupExpanded(group.key)}
-		open={isExpanded}
-	>
+	<div>
 		<div class="flex items-center gap-1 {groupDisabled ? 'pointer-events-none opacity-50' : ''}">
-			<Collapsible.Trigger
+			<button
+				aria-expanded={isExpanded}
 				class="flex min-w-0 flex-1 items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted/50"
+				onclick={() => toolsPanel.toggleGroupExpanded(group.key)}
+				type="button"
 			>
 				{#if isExpanded}
 					<ChevronDown class="size-icon-sm shrink-0" />
@@ -114,7 +152,7 @@
 				<span class="ml-auto shrink-0 text-xs text-muted-foreground">
 					{toolsPanel.getEnabledToolCount(group)}/{group.tools.length}
 				</span>
-			</Collapsible.Trigger>
+			</button>
 
 			<Tooltip.Root>
 				<Tooltip.Trigger>
@@ -138,7 +176,13 @@
 			</Tooltip.Root>
 		</div>
 
-		<Collapsible.Content>
+		<div
+			use:groupElAction={group.key}
+			class="overflow-hidden"
+			style={`height: ${heightFor(group)}px; visibility: ${
+				isExpanded ? 'visible' : 'hidden'
+			}; transition: height ${GROUP_TRANSITION_MS}ms cubic-bezier(0.23, 1, 0.32, 1), visibility ${GROUP_TRANSITION_MS}ms;`}
+		>
 			<div class="ml-4 flex flex-col gap-0.5 border-l border-border/50 pl-2">
 				{#each group.tools as entry (entry.key)}
 					{@const enabled = toolsPanel.isToolEnabled(entry)}
@@ -166,6 +210,6 @@
 					</button>
 				{/each}
 			</div>
-		</Collapsible.Content>
-	</Collapsible.Root>
+		</div>
+	</div>
 {/snippet}
