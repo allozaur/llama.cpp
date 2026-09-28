@@ -2,8 +2,9 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Plus } from '@lucide/svelte';
 	import { BackendCard, DialogBackendForm } from '#lib/components/app/backends/index.ts';
+	import { BackendProtocol } from '#lib/constants/index.ts';
 	import { backendsModelsStore, backendsStore, serverStore } from '#lib/stores/index.ts';
-	import type { Backend, BackendProtocol } from '#lib/types/index.ts';
+	import type { Backend } from '#lib/types/index.ts';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -20,18 +21,18 @@
 			: backendsStore.external
 	);
 	// the bundled server belongs to the list whenever llama.cpp providers are in it
-	let showsLocal = $derived(protocol === undefined || protocol === 'llama.cpp');
+	let showsLocal = $derived(protocol === undefined || protocol === BackendProtocol.COMPAT);
 	let addTitle = $derived(
-		protocol === 'openai'
+		protocol === BackendProtocol.OPENAI
 			? 'Add a backend'
-			: protocol === 'llama.cpp'
+			: protocol === BackendProtocol.COMPAT
 				? 'Add a Llama-compatible backend'
 				: 'Add new provider'
 	);
 	let addDescription = $derived(
-		protocol === 'openai'
+		protocol === BackendProtocol.OPENAI
 			? 'Connect an OpenAI-compatible endpoint.'
-			: protocol === 'llama.cpp'
+			: protocol === BackendProtocol.COMPAT
 				? 'Point at another llama-server.'
 				: 'External llama-server or connect an OpenAI-compatible API.'
 	);
@@ -66,7 +67,7 @@
 	<DialogBackendForm
 		bind:open={isAdding}
 		backend={editing}
-		defaultProtocol={protocol ?? 'llama.cpp'}
+		defaultProtocol={protocol ?? BackendProtocol.COMPAT}
 		onOpenChange={handleOpenChange}
 		onSaved={() => void backendsModelsStore.loadAll()}
 	/>

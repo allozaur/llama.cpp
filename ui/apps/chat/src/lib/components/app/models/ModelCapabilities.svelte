@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isLocalOption } from './ModelsManager/utils';
 	import { ModelCapabilityIcons } from '@ggml-org/llama-ui/models';
 	import { MODEL_ID } from '#lib/constants/index.ts';
 	import { ModelCapability } from '#lib/enums/index.ts';
@@ -28,7 +29,7 @@
 	$effect(() => {
 		template = '';
 
-		if (!isNearViewport) return;
+		if (!isNearViewport || !isLocalOption(option)) return;
 
 		// only the chat template says whether tools and reasoning work, and the Hub
 		// carries it for a local GGUF whether the model is loaded or not

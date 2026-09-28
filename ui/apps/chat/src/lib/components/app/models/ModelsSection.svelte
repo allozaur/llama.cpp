@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { ChevronLeft, CircleAlert, Loader2 } from '@lucide/svelte';
+	import { BackendIcon } from '#lib/components/app/backends/index.ts';
 	import { CollapsibleSection } from '#lib/components/app/index.ts';
 	import { modelsStore } from '#lib/stores/index.ts';
+	import { getBackend } from '#lib/utils/api-base.ts';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
 		children: Snippet;
+		/** Renders the backend's logo in the header. */
+		backendId?: string;
 		/** Extra classes for the chevron, to line it up with a row's own control. */
 		chevronClass?: string;
 		/** Number shown next to the label, omitted when undefined. */
@@ -29,6 +33,7 @@
 	}
 
 	let {
+		backendId,
 		chevronClass = '',
 		children,
 		count,
@@ -78,6 +83,8 @@
 
 		{#if icon}
 			{@render icon()}
+		{:else if backendId}
+			<BackendIcon backend={getBackend(backendId)} class="h-3.5 w-3.5" />
 		{/if}
 
 		<span class="truncate">{label}</span>

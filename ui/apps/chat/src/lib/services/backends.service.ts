@@ -6,14 +6,9 @@
  * consumed by the backends settings UI and the per-backend model cache.
  */
 
-import { API_MODELS, LOCAL_BACKEND_ID } from '#lib/constants/index.ts';
+import { API_MODELS, BackendProtocol, LOCAL_BACKEND_ID } from '#lib/constants/index.ts';
 import { ModelsService } from '#lib/services/models.service.ts';
-import type {
-	ApiModelsListResponse,
-	Backend,
-	BackendProtocol,
-	ModelOption
-} from '#lib/types/index.ts';
+import type { ApiModelsListResponse, Backend, ModelOption } from '#lib/types/index.ts';
 import { isAbortError } from '#lib/utils/abort.ts';
 import { apiUrl } from '#lib/utils/api-base.ts';
 import { getAuthHeadersForBackend } from '#lib/utils/api-headers.ts';
@@ -54,7 +49,7 @@ export class BackendsService {
 	static async detectProtocol(backend: Backend): Promise<BackendProbe> {
 		const base = backend.baseUrl.trim().replace(/\/+$/, '');
 
-		if (!base) return { authRequired: false, protocol: 'openai' };
+		if (!base) return { authRequired: false, protocol: BackendProtocol.OPENAI };
 
 		try {
 			// llama-server answers /props with its build and generation defaults; a
@@ -67,10 +62,10 @@ export class BackendsService {
 			// a llama-server behind a key refuses before it says anything else, while
 			// an OpenAI-compatible endpoint has no /props to guard in the first place
 			if (response.status === 401) {
-				return { authRequired: true, protocol: 'llama.cpp' };
+				return { authRequired: true, protocol: BackendProtocol.COMPAT };
 			}
 
-			if (!response.ok) return { authRequired: false, protocol: 'openai' };
+			if (!response.ok) return { authRequired: false, protocol: BackendProtocol.OPENAI };
 
 			const body = (await response.json()) as Record<string, unknown>;
 			const isLlamaCpp =
@@ -78,10 +73,10 @@ export class BackendsService {
 
 			return {
 				authRequired: false,
-				protocol: isLlamaCpp ? 'llama.cpp' : 'openai'
+				protocol: isLlamaCpp ? BackendProtocol.COMPAT : BackendProtocol.OPENAI
 			};
 		} catch {
-			return { authRequired: false, protocol: 'openai' };
+			return { authRequired: false, protocol: BackendProtocol.OPENAI };
 		}
 	}
 
