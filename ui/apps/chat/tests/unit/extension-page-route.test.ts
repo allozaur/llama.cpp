@@ -4,11 +4,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$app/environment', () => ({ browser: true }));
-vi.mock('$lib/stores/init', () => ({ loadAppRoute: vi.fn(async () => {}) }));
+vi.mock('$lib/stores/init', () => ({
+	loadAppRoute: vi.fn(async () => {}),
+	startExtensions: vi.fn(async () => {})
+}));
 
 import { load } from '../../src/routes/[extensionPage]/+page';
 import { extensions } from '$lib/extensions';
-import { loadAppRoute } from '$lib/stores/init';
+import { loadAppRoute, startExtensions } from '$lib/stores/init';
 import type { Component } from 'svelte';
 
 const Page = (() => {}) as unknown as Component;
@@ -51,8 +54,9 @@ describe('extension page route', () => {
 
 		await expect(loadPath('fake-page')).resolves.toBeUndefined();
 		await expect(loadPath('other-page')).rejects.toMatchObject({ status: 404 });
-		// the stores start, and the API key is checked, before the path is looked up
+		// the stores hydrate, the API key is checked and the extensions start before the path is looked up
 		expect(loadAppRoute).toHaveBeenCalledWith(fetch);
+		expect(startExtensions).toHaveBeenCalled();
 
 		await extensions.setEnabled('fake-pages', false);
 

@@ -19,6 +19,7 @@ import {
 	SSE_DATA_PREFIX,
 	SSE_DONE_MARKER,
 	SSE_LINE_SEPARATOR,
+	STREAM_LIVE_TIMINGS_INTERVAL_MS,
 	STREAM_QUERY_PARAMS,
 	STREAM_RESUME_LOCALSTORAGE_KEY_PREFIX,
 	STREAM_VISIBILITY_KICK_MS
@@ -31,7 +32,10 @@ import {
 	ReasoningFormat,
 	StreamConnectionState
 } from '$lib/enums';
+import { getProtocolAdapter } from '$lib/services/protocols';
+import { extractModelName } from '$lib/services/protocols/openai';
 import { modelsStore } from '$lib/stores/models/index.svelte';
+import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { DatabaseMessageExtraMcpPrompt, DatabaseMessageExtraMcpResource } from '$lib/types';
 import type {
@@ -42,10 +46,12 @@ import type {
 } from '$lib/types/api';
 import type { OpenAIToolDefinition } from '$lib/types/mcp';
 import { isAbortError } from '$lib/utils/abort';
+import { apiChatUrl, apiUrl, getBackend } from '$lib/utils/api-base';
 import { ApiError } from '$lib/utils/api-fetch';
 import { getAuthHeaders, getJsonHeaders } from '$lib/utils/api-headers';
 import { formatAttachmentText } from '$lib/utils/formatters';
 import { streamIdentity } from '$lib/utils/stream-identity';
+import { buildTimingsFromUsage } from '$lib/utils/timings';
 
 interface ResumableStreamState {
 	bytesReceived: number;
@@ -86,9 +92,12 @@ export class ChatService {
 	 * @returns {Promise<boolean>} Promise that resolves to true if all slots are idle, false if any is processing
 	 */
 	static async areAllSlotsIdle(model?: string | null, signal?: AbortSignal): Promise<boolean> {
+		// the /slots endpoint only exists on llama.cpp servers
+		if (!serverStore.capabilities.slots) return true;
+
 		try {
 			const url = model ? `${API_SLOTS.LIST}?model=${encodeURIComponent(model)}` : API_SLOTS.LIST;
-			const res = await fetch(url, { signal });
+			const res = await fetch(apiUrl(url), { signal });
 
 			if (!res.ok) return true;
 
@@ -105,6 +114,8 @@ export class ChatService {
 	 */
 	static async cancelServerStream(conversationId: string, model?: string | null): Promise<void> {
 		if (!conversationId) return;
+
+		if (!serverStore.capabilities.resumableStreams) return;
 
 		try {
 			const id = streamIdentity(conversationId, model);
@@ -339,6 +350,10 @@ export class ChatService {
 	 * caller can pipe it through the SSE parser like a fresh stream.
 	 */
 	static async fetchStreamReplay(streamId: string): Promise<Response> {
+		if (!serverStore.capabilities.resumableStreams) {
+			return new Response(null, { status: 501, statusText: 'Not Implemented' });
+		}
+
 		const resp = await fetch(ChatService.buildStreamUrl(streamId, 0), {
 			headers: getAuthHeaders()
 		});
@@ -485,6 +500,17 @@ export class ChatService {
 		let toolCallIndexOffset = 0;
 		let hasOpenToolCallBatch = false;
 
+		// client side clock for backends that do not stream their own timings
+		const startedAt = Date.now();
+
+		let firstTokenAt: number | null = null;
+		let lastTokenAt: number | null = null;
+		let streamedTokens = 0;
+		let liveTimingsAt = 0;
+		let usage: ApiChatCompletionUsage | undefined;
+
+		// the protocol decides how payloads map onto canonical events
+		const streamReader = getProtocolAdapter(getBackend()).createStreamReader();
 		const finalizeOpenToolCallBatch = () => {
 			if (!hasOpenToolCallBatch) {
 				return;
@@ -522,6 +548,32 @@ export class ChatService {
 
 			if (!abortSignal?.aborted) {
 				onToolCallChunk?.(serializedToolCalls);
+			}
+		};
+		// backends that do not stream their own timings report progress from wall
+		// clock time and the streamed delta count, throttled to keep updates cheap
+		const markToken = () => {
+			firstTokenAt ??= Date.now();
+			lastTokenAt = Date.now();
+			streamedTokens++;
+
+			if (
+				serverStore.capabilities.props ||
+				Date.now() - liveTimingsAt < STREAM_LIVE_TIMINGS_INTERVAL_MS
+			) {
+				return;
+			}
+
+			liveTimingsAt = Date.now();
+
+			const liveTimings = buildTimingsFromUsage(
+				usage,
+				{ firstTokenAt, lastTokenAt, startedAt },
+				streamedTokens
+			);
+
+			if (liveTimings) {
+				ChatService.notifyTimings(liveTimings, undefined, onTimings);
 			}
 		};
 		const onVisibilityChange = () => {
@@ -625,59 +677,94 @@ export class ChatService {
 								continue;
 							}
 
+							let parsed: unknown;
+
 							try {
-								const parsed: ApiChatCompletionStreamChunk = JSON.parse(data);
-								const choice = parsed.choices?.[0];
+								parsed = JSON.parse(data);
+							} catch (parseError) {
+								console.error('Error parsing JSON chunk:', parseError);
 
-								if (choice?.finish_reason) finishReason = choice.finish_reason;
+								continue;
+							}
 
-								const content = choice?.delta?.content;
-								const reasoningContent = choice?.delta?.reasoning_content;
-								const toolCalls = choice?.delta?.tool_calls;
-								const timings = parsed.timings;
-								const promptProgress = parsed.prompt_progress;
-								const chunkModel = ChatService.extractModelName(parsed);
+							for (const event of streamReader.readChunk(parsed)) {
+								switch (event.type) {
+									case 'done':
+										streamFinished = true;
 
-								if (chunkModel && !modelEmitted) {
-									modelEmitted = true;
-									onModel?.(chunkModel);
+										break;
+
+									case 'error':
+										throw new Error(event.message);
+
+									case 'finish_reason':
+										finishReason = event.reason;
+
+										break;
+
+									case 'id':
+										if (!idEmitted) {
+											idEmitted = true;
+											onCompletionId?.(event.id);
+										}
+
+										break;
+
+									case 'model':
+										if (!modelEmitted) {
+											modelEmitted = true;
+											onModel?.(event.model);
+										}
+
+										break;
+
+									case 'prompt_progress':
+										ChatService.notifyTimings(undefined, event.progress, onTimings);
+
+										break;
+
+									case 'text':
+										finalizeOpenToolCallBatch();
+										aggregatedContent += event.text;
+
+										if (!abortSignal?.aborted) {
+											onChunk?.(event.text);
+										}
+
+										markToken();
+
+										break;
+
+									case 'thinking':
+										finalizeOpenToolCallBatch();
+										fullReasoningContent += event.text;
+
+										if (!abortSignal?.aborted) {
+											onReasoningChunk?.(event.text);
+										}
+
+										markToken();
+
+										break;
+
+									case 'timings':
+										ChatService.notifyTimings(event.timings, event.promptProgress, onTimings);
+										lastTimings = event.timings;
+
+										break;
+
+									case 'tool_calls':
+										processToolCallDelta(event.deltas);
+
+										break;
+
+									case 'usage':
+										// providers may split usage across chunks (some report input
+										// tokens on message_start and output tokens on message_delta)
+										usage = { ...usage, ...event.usage };
+
+										break;
 								}
-
-								if (parsed.id && !idEmitted) {
-									idEmitted = true;
-									onCompletionId?.(parsed.id);
-								}
-
-								if (promptProgress) {
-									ChatService.notifyTimings(undefined, promptProgress, onTimings);
-								}
-
-								if (timings) {
-									ChatService.notifyTimings(timings, promptProgress, onTimings);
-									lastTimings = timings;
-								}
-
-								if (content) {
-									finalizeOpenToolCallBatch();
-									aggregatedContent += content;
-
-									if (!abortSignal?.aborted) {
-										onChunk?.(content);
-									}
-								}
-
-								if (reasoningContent) {
-									finalizeOpenToolCallBatch();
-									fullReasoningContent += reasoningContent;
-
-									if (!abortSignal?.aborted) {
-										onReasoningChunk?.(reasoningContent);
-									}
-								}
-
-								processToolCallDelta(toolCalls);
-							} catch (e) {
-								console.error('Error parsing JSON chunk:', e);
 							}
 						}
 					}
@@ -748,6 +835,20 @@ export class ChatService {
 			if (streamFinished) {
 				finalizeOpenToolCallBatch();
 
+				// external backends report token counts only in the final usage chunk
+				if (!lastTimings && !serverStore.capabilities.props) {
+					lastTimings =
+						buildTimingsFromUsage(
+							usage,
+							{ firstTokenAt, lastTokenAt, startedAt },
+							streamedTokens
+						) ?? undefined;
+
+					if (lastTimings) {
+						ChatService.notifyTimings(lastTimings, undefined, onTimings);
+					}
+				}
+
 				if (conversationId) {
 					ChatService.clearStreamState(conversationId);
 				}
@@ -788,7 +889,9 @@ export class ChatService {
 	 * conv::model identity when a model was bound at POST time.
 	 */
 	static async lookupStreamSessions(conversationIds: string[]): Promise<ApiStreamSession[]> {
-		const resp = await fetch(API_STREAM.LOOKUP, {
+		if (!serverStore.capabilities.resumableStreams) return [];
+
+		const resp = await fetch(apiUrl(API_STREAM.LOOKUP), {
 			body: JSON.stringify({ conversation_ids: conversationIds }),
 			headers: getJsonHeaders(),
 			method: 'POST'
@@ -852,6 +955,9 @@ export class ChatService {
 		signal?: AbortSignal,
 		tools?: OpenAIToolDefinition[]
 	): Promise<ChatMessageTimings | null> {
+		// pre-encode warms the llama.cpp KV cache and posts llama.cpp-only fields
+		if (!serverStore.capabilities.props) return null;
+
 		const normalizedMessages: ApiChatMessageData[] =
 			await ChatService.normalizeMessagesForApi(messages);
 		const requestBody: Record<string, unknown> = {
@@ -879,7 +985,7 @@ export class ChatService {
 		}
 
 		try {
-			const response = await fetch(API_CHAT.COMPLETIONS, {
+			const response = await fetch(apiChatUrl(), {
 				body: JSON.stringify(requestBody),
 				headers: getJsonHeaders(),
 				method: 'POST',
@@ -918,6 +1024,8 @@ export class ChatService {
 	static async probeResumeStatus(streamId: string): Promise<number> {
 		if (!streamId) return 0;
 
+		if (!serverStore.capabilities.resumableStreams) return 0;
+
 		const ac = new AbortController();
 
 		try {
@@ -940,6 +1048,8 @@ export class ChatService {
 		model?: string | null
 	): Promise<Response | null> {
 		if (!conversationId) return null;
+
+		if (!serverStore.capabilities.resumableStreams) return null;
 
 		const state = ChatService.getStreamState(conversationId);
 		const from = state?.bytesReceived ?? 0;
@@ -1255,16 +1365,26 @@ export class ChatService {
 
 			// tag streaming requests with the conversation id, this single header is the opt in for the
 			// server side replay buffer and powers discoverActiveStream on tab reopen. with an explicit
-			// model the ::model suffix keeps the per model session distinct
-			if (stream && conversationId) {
+			// model the ::model suffix keeps the per model session distinct. external providers do not
+			// know the header and their CORS preflight rejects it, so only llama.cpp gets it
+			if (stream && conversationId && serverStore.capabilities.resumableStreams) {
 				headers[HEADERS.X_CONVERSATION_ID_HEADER] = streamIdentity(conversationId, options.model);
 				// persist the pending stream before the fetch: a reload during the model load or
 				// the prompt processing must still find its way back to the session once it exists
 				ChatService.saveStreamState(conversationId, 0, options.model ?? null);
 			}
 
-			const response = await fetch(API_CHAT.COMPLETIONS, {
-				body: JSON.stringify(requestBody),
+			// the protocol adapter owns the wire format: it strips llama.cpp-only
+			// fields, applies the backend's token cap field and adds the usage chunk
+			const backend = getBackend();
+			const wireBody = backend
+				? getProtocolAdapter(backend).buildChatRequest(
+						requestBody as unknown as Record<string, unknown>,
+						backend
+					)
+				: (requestBody as unknown as Record<string, unknown>);
+			const response = await fetch(apiChatUrl(), {
+				body: JSON.stringify(wireBody),
 				headers,
 				method: 'POST',
 				signal
@@ -1375,7 +1495,7 @@ export class ChatService {
 		if (model) body.model = model;
 
 		try {
-			const res = await fetch(API_CHAT.CONTROL, {
+			const res = await fetch(apiUrl(API_CHAT.CONTROL), {
 				body: JSON.stringify(body),
 				headers: getJsonHeaders(),
 				method: 'POST'
@@ -1406,62 +1526,7 @@ export class ChatService {
 		const query = `${STREAM_QUERY_PARAMS.CONV_ID}=${encodeURIComponent(streamId)}`;
 		const offset = from === undefined ? '' : `&${STREAM_QUERY_PARAMS.FROM}=${from}`;
 
-		return `${API_STREAM.BASE}?${query}${offset}`;
-	}
-
-	/**
-	 * Extracts model name from Chat Completions API response data.
-	 * Handles various response formats including streaming chunks and final responses.
-	 *
-	 * WORKAROUND: In single model mode, llama-server returns a default/incorrect model name
-	 * in the response. We override it with the actual model name from serverStore.
-	 *
-	 * @param data - Raw response data from the Chat Completions API
-	 * @returns Model name string if found, undefined otherwise
-	 * @private
-	 */
-	private static extractModelName(data: unknown): string | undefined {
-		const asRecord = (value: unknown): Record<string, unknown> | undefined => {
-			return typeof value === 'object' && value !== null
-				? (value as Record<string, unknown>)
-				: undefined;
-		};
-		const getTrimmedString = (value: unknown): string | undefined => {
-			return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-		};
-		const root = asRecord(data);
-
-		if (!root) return undefined;
-
-		// 1) root (some implementations provide `model` at the top level)
-		const rootModel = getTrimmedString(root.model);
-
-		if (rootModel) {
-			return rootModel;
-		}
-
-		// 2) streaming choice (delta) or final response (message)
-		const firstChoice = Array.isArray(root.choices) ? asRecord(root.choices[0]) : undefined;
-
-		if (!firstChoice) {
-			return undefined;
-		}
-
-		// priority: delta.model (first chunk) else message.model (final response)
-		const deltaModel = getTrimmedString(asRecord(firstChoice.delta)?.model);
-
-		if (deltaModel) {
-			return deltaModel;
-		}
-
-		const messageModel = getTrimmedString(asRecord(firstChoice.message)?.model);
-
-		if (messageModel) {
-			return messageModel;
-		}
-
-		// avoid guessing from non-standard locations (metadata, etc.)
-		return undefined;
+		return apiUrl(`${API_STREAM.BASE}?${query}${offset}`);
 	}
 
 	/**
@@ -1497,7 +1562,7 @@ export class ChatService {
 			}
 
 			const data: ApiChatCompletionResponse = JSON.parse(responseText);
-			const responseModel = ChatService.extractModelName(data);
+			const responseModel = extractModelName(data);
 
 			if (responseModel) {
 				onModel?.(responseModel);

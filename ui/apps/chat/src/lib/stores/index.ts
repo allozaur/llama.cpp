@@ -35,6 +35,10 @@ export { agenticStore } from './agentic/index.svelte';
 export { sidebarDragStore } from './sidebar-drag.svelte';
 export { conversationsStore } from './conversations/index.svelte';
 
+// BACKENDS
+export { backendsStore } from './backends.svelte';
+export { backendsModelsStore } from './backendsModels.svelte';
+
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 
