@@ -1,8 +1,9 @@
-import { withBase } from './base-path';
 import { error } from '@sveltejs/kit';
 import { HEADERS } from '#lib/constants/index.ts';
 import { MimeTypeApplication } from '#lib/enums/index.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
+import { apiUrl, getBackend } from '#lib/utils/api-base.ts';
+import { getBackendCapabilities } from '#lib/utils/backend.ts';
 import { browser } from '$app/env';
 
 /**
@@ -11,6 +12,13 @@ import { browser } from '$app/env';
  */
 export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<void> {
 	if (!browser) {
+		return;
+	}
+
+	// /props only exists on llama.cpp servers; external backends carry their own key
+	const backend = getBackend();
+
+	if (backend && !getBackendCapabilities(backend).props) {
 		return;
 	}
 
@@ -28,7 +36,7 @@ export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<vo
 			headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER}${apiKey}`;
 		}
 
-		const response = await fetch(withBase('/props'), { headers });
+		const response = await fetch(apiUrl('/props'), { headers });
 
 		if (!response.ok) {
 			if (response.status === 401 || response.status === 403) {
