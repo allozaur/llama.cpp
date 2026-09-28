@@ -3,13 +3,14 @@
 	import ModelDraftSidecars from '../ModelDraftSidecars.svelte';
 	import ModelsManagerStatusCell from './ModelsManagerStatusCell.svelte';
 	import { modelRowActions } from './row-actions';
-	import { configuredContext, isRowControlClick } from './utils';
+	import { canLoadOption, configuredContext, isRowControlClick } from './utils';
 	import { MoreHorizontal } from '@lucide/svelte';
 	import { ContextMenuActions, DropdownMenuActions } from '$lib/components/app';
 	import { Badge } from '$lib/components/ui/badge';
 	import { MODEL_ROW_GRID_CLASS, MODEL_ROW_TRAILING_CELL_CLASS } from '$lib/constants';
 	import { modelsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
+	import { getBackend } from '$lib/utils/api-base';
 
 	interface Props {
 		isFavorite: (option: ModelOption) => boolean;
@@ -17,18 +18,30 @@
 		onDelete: (option: ModelOption) => void;
 		onSelect: (option: ModelOption) => void;
 		selected: boolean;
+		/** Badge the backend name instead of the quant, for a provider group. */
+		showProvider?: boolean;
 		/** Left padding in px, from the nesting depth. */
 		indent?: number;
 	}
 
-	let { indent = 0, isFavorite, onDelete, onSelect, option, selected }: Props = $props();
+	let {
+		indent = 0,
+		isFavorite,
+		onDelete,
+		onSelect,
+		option,
+		selected,
+		showProvider = false
+	}: Props = $props();
 
 	let favorite = $derived(isFavorite(option));
 	let isHidden = $derived(modelsStore.isHidden(option.id));
 	let quant = $derived(option.parsedId?.quantization ?? option.model);
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
-	let actions = $derived(modelRowActions(option, favorite, isHidden, onDelete));
+	let actions = $derived(
+		modelRowActions(option, { canLoad: canLoadOption(option), favorite, isHidden }, { onDelete })
+	);
 	let contextMenuOpen = $state(false);
 </script>
 
@@ -58,7 +71,9 @@
 			style="padding-left: {indent}px"
 			type="button"
 		>
-			<Badge class="h-5 shrink-0 px-1.5 text-[10px]" variant="secondary">{quant}</Badge>
+			<Badge class="h-5 shrink-0 px-1.5 text-[10px]" variant="secondary">
+				{showProvider ? (getBackend(option.backendId)?.name ?? quant) : quant}
+			</Badge>
 
 			<ModelDraftSidecars draftSidecars={option.draftSidecars} />
 
