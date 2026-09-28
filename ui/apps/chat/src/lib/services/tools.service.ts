@@ -5,12 +5,17 @@
  * No reactive state; consumed by toolsStore.
  */
 
-import { API_TOOLS, HEADERS, HOME_TILDE, SEARCH } from '#lib/constants/index.ts';
+import { API_TOOLS, HEADERS, HOME_TILDE, LOCAL_BACKEND_ID, SEARCH } from '#lib/constants/index.ts';
 import { BuiltInTool, GlobSearchType, ToolResponseField } from '#lib/enums/index.ts';
 import type { GlobEntry, ServerToolInfo, ToolExecutionResult } from '#lib/types/index.ts';
 import { getJsonHeaders } from '#lib/utils/api-headers.ts';
-import { apiFetch, buildCaseInsensitiveGlob, joinPath, lastPathSegment } from '#lib/utils/index.ts';
-import { serverUrl } from '#lib/utils/server-config.ts';
+import {
+	apiFetch,
+	apiUrl,
+	buildCaseInsensitiveGlob,
+	joinPath,
+	lastPathSegment
+} from '#lib/utils/index.ts';
 import { parseSseJsonStream, type SseJsonEvent } from '#lib/utils/sse.ts';
 
 export class ToolsService {
@@ -28,6 +33,7 @@ export class ToolsService {
 		cwd?: string
 	): Promise<ToolExecutionResult> {
 		const result = await apiFetch<Record<string, unknown>>(API_TOOLS.EXECUTE, {
+			backendId: LOCAL_BACKEND_ID,
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: cwd ? { [HEADERS.X_TOOL_CWD_HEADER]: cwd } : undefined,
 			method: 'POST',
@@ -67,6 +73,7 @@ export class ToolsService {
 		if (respType) headers[HEADERS.X_RESP_TYPE_HEADER] = respType;
 
 		return apiFetch<Record<string, unknown>>(API_TOOLS.EXECUTE, {
+			backendId: LOCAL_BACKEND_ID,
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: Object.keys(headers).length > 0 ? headers : undefined,
 			method: 'POST',
@@ -80,7 +87,8 @@ export class ToolsService {
 	 * @returns Array of tool definitions in OpenAI-compatible format
 	 */
 	static async list(): Promise<ServerToolInfo[]> {
-		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST);
+		// pinned to the local server: server tools do not exist on other backends
+		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST, { backendId: LOCAL_BACKEND_ID });
 	}
 
 	/**
@@ -133,11 +141,11 @@ export class ToolsService {
 		signal?: AbortSignal,
 		cwd?: string
 	): AsyncGenerator<ToolStreamEvent> {
-		const headers = getJsonHeaders();
+		const headers = getJsonHeaders(LOCAL_BACKEND_ID);
 
 		if (cwd) headers[HEADERS.X_TOOL_CWD_HEADER] = cwd;
 
-		const response = await fetch(serverUrl(API_TOOLS.EXECUTE), {
+		const response = await fetch(apiUrl(API_TOOLS.EXECUTE, LOCAL_BACKEND_ID), {
 			body: JSON.stringify({ params, stream: true, tool: toolName }),
 			headers,
 			method: 'POST',
