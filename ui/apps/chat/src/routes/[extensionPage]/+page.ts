@@ -1,12 +1,14 @@
 import type { PageLoad } from './$types';
 import { error } from '@sveltejs/kit';
 import { extensions } from '#lib/extensions/index.ts';
-import { loadAppRoute } from '#lib/stores/init.ts';
+import { loadAppRoute, startExtensions } from '#lib/stores/init.ts';
 
 export const load: PageLoad = async ({ fetch, params }) => {
 	await loadAppRoute(fetch);
+	// the rest of the startup runs after this load, so the extensions are started here
+	await startExtensions();
 
-	// the extensions are active by now: a path none of them has a page for is the app's 404
+	// a path none of them has a page for is the app's 404
 	if (!extensions.contributions('pages').some((page) => page.path === params.extensionPage)) {
 		error(404, 'Not Found');
 	}

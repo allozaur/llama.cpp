@@ -15,7 +15,7 @@
 	let error = $derived(serverStore.error);
 	let loading = $derived(serverStore.loading);
 	let model = $derived(modelsStore.singleModelName);
-	let serverData = $derived(serverStore.props);
+	let serverData = $derived(serverStore.localProps);
 
 	function getStatusColor() {
 		if (loading) return 'status-lamp orb-warning';

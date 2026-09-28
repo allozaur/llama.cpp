@@ -15,13 +15,16 @@ import {
 	chatStore,
 	contextStatsStore,
 	conversationsStore,
-	modelsStore
+	modelsStore,
+	serverStore
 } from '#lib/stores/index.ts';
 import type { DatabaseMessage } from '#lib/types/index.ts';
 import { page } from '$app/state';
 
 export interface UseContextGaugeReturn {
 	readonly activeModelId: string | null;
+	/** Whether the active backend can load the model it is serving. */
+	readonly canLoadActiveModel: boolean;
 	readonly isActiveModelLoaded: boolean;
 	readonly isActiveModelLoading: boolean;
 	readonly contextTotal: number | null;
@@ -100,6 +103,9 @@ export function useContextGauge(): UseContextGaugeReturn {
 			contextStatsStore.averageTokensPerSecond !== null ||
 			transientDetails.length > 0
 	);
+	// loading is a llama.cpp router feature, and the gauge tracks the active model,
+	// so the active backend decides whether a load is possible at all
+	const canLoadActiveModel = $derived(serverStore.isRouterMode);
 
 	async function loadModel() {
 		const modelId = contextStatsStore.activeModelId;
@@ -119,6 +125,9 @@ export function useContextGauge(): UseContextGaugeReturn {
 		},
 		get averageTokensPerSecond() {
 			return contextStatsStore.averageTokensPerSecond;
+		},
+		get canLoadActiveModel() {
+			return canLoadActiveModel;
 		},
 		get colorLevel() {
 			return colorLevel;
