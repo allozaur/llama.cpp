@@ -8,7 +8,7 @@
  * fetching model props from the server on demand if they are not cached yet.
  */
 
-import { conversationsStore, modelsStore, serverStore } from '#lib/stores/index.ts';
+import { backendsStore, conversationsStore, modelsStore, serverStore } from '#lib/stores/index.ts';
 import type { DatabaseMessage } from '#lib/types/database.js';
 import { getConversationModel } from '#lib/utils/index.ts';
 
@@ -24,10 +24,15 @@ export function useChatFormModel() {
 	// points the selection at the model that produced it
 	$effect(() => {
 		if (conversationModel && conversationModel !== lastSyncedConversationModel) {
-			if (modelsStore.models.some((m) => m.model === conversationModel)) {
+			const option = modelsStore.models.find((m) => m.model === conversationModel);
+
+			// only sync models served by the active backend; a model from another
+			// backend must not yank the active tab (and trigger a full backend
+			// switch) just because the conversation used it
+			if (option && option.backendId === backendsStore.active.id) {
 				modelsStore.selectedModelName = conversationModel;
 				modelsStore.selectModelByName(conversationModel);
-			} else {
+			} else if (!option) {
 				modelsStore.selectedModelName = null;
 				modelsStore.clearSelection();
 			}

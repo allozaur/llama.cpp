@@ -1,18 +1,19 @@
 <script lang="ts">
 	import BackendIcon from './BackendIcon.svelte';
+	import { Logo } from '@ggml-org/llama-ui/app/misc';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Card from '@ggml-org/llama-ui/ui/card';
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { Pencil, RotateCw, Server, Trash2 } from '@lucide/svelte';
 	import { DialogConfirmation } from '#lib/components/app/dialogs/index.ts';
-	import { Logo } from '@ggml-org/llama-ui/app/misc';
+	import { BackendProtocol } from '#lib/constants/index.ts';
 	import { backendsModelsStore } from '#lib/stores/backendsModels.svelte.ts';
-	import type { Backend, BackendProtocol } from '#lib/types/index.ts';
+	import type { Backend } from '#lib/types/index.ts';
 
 	const PROTOCOL_LABELS: Record<BackendProtocol, string> = {
-		'llama.cpp': 'Llama-compatible',
-		openai: 'OpenAI-compatible'
+		[BackendProtocol.COMPAT]: 'Llama-compatible',
+		[BackendProtocol.OPENAI]: 'OpenAI-compatible'
 	};
 
 	const CARD_ICON_CLASS = 'h-5 w-5';
