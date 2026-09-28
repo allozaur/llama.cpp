@@ -10,12 +10,27 @@
 		ModelsSelectorOption,
 		ModelsSelectorTriggerIcon
 	} from '$lib/components/app';
-	import { DROPDOWN_MENU_CONTENT_SEARCH_SELECTOR, MODEL_ICON, SETTINGS_KEYS } from '$lib/constants';
+	import { DialogBackendForm } from '$lib/components/app/backends';
+	import {
+		DROPDOWN_MENU_CONTENT_SEARCH_SELECTOR,
+		LOCAL_BACKEND_ID,
+		MODEL_ICON,
+		SETTINGS_KEYS
+	} from '$lib/constants';
 	import { KeyboardKey, ServerModelStatus } from '$lib/enums';
 	import { useChatFormModel } from '$lib/hooks/use-chat-form-model.svelte';
 	import { useModelsSelector } from '$lib/hooks/use-models-selector.svelte';
-	import { deviceStore, modelsStore, serverStore, settingsStore, uiStore } from '$lib/stores';
+	import {
+		backendsModelsStore,
+		backendsStore,
+		deviceStore,
+		modelsStore,
+		serverStore,
+		settingsStore,
+		uiStore
+	} from '$lib/stores';
 	import { type ModelItem, modelLoadFraction } from '$lib/utils';
+	import { rawModelId } from '$lib/utils/model-option-id';
 	import { untrack } from 'svelte';
 
 	interface Props {
@@ -44,10 +59,18 @@
 		(settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME] ?? true) &&
 			(!isMobile || settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME_ON_MOBILE] === true)
 	);
-	let isOffline = $derived(!!serverStore.error);
+	// the provider this selector is pointed at, which is the one its colours report
+	let selectorError = $derived.by(() => {
+		const backendId = backendsStore.active.id;
+
+		return backendId === LOCAL_BACKEND_ID
+			? Boolean(serverStore.error)
+			: backendsModelsStore.get(backendId).error !== null;
+	});
 
 	let isOpen = $state(false);
 	let highlightedId = $state<string | null>(null);
+	let showAddBackend = $state(false);
 
 	const formModel = useChatFormModel();
 
@@ -109,6 +132,9 @@
 		for (const group of ms.groupedFilteredOptions.available) {
 			for (const item of group.items) order.push(item.option.id);
 		}
+		for (const provider of ms.groupedFilteredOptions.providers) {
+			for (const item of provider.items) order.push(item.option.id);
+		}
 
 		return order;
 	});
@@ -143,11 +169,20 @@
 			return;
 		}
 
-		const status = modelsStore.getModelStatus(modelId);
+		// an option id is backend-qualified, the router lists the raw model id
+		const rawId = rawModelId(modelId);
+		const status = modelsStore.getModelStatus(rawId);
 
 		if (status === ServerModelStatus.LOADING) return;
 
-		await modelsStore.status.unload(modelId);
+		await modelsStore.status.unload(rawId);
+	}
+
+	function handleAddBackend() {
+		isOpen = false;
+
+		// let the menu finish closing before the dialog takes focus
+		setTimeout(() => (showAddBackend = true), 0);
 	}
 
 	function handleSearchKeyDown(event: KeyboardEvent) {
@@ -282,7 +317,17 @@
 		{/if}
 
 		{#if ms.isEmpty}
-			<p class="px-4 py-3 text-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{#if ms.searchTerm}
+				<p class="px-4 py-3 text-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{:else}
+				<button
+					class="cursor-pointer px-4 py-3 text-left text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					onclick={handleAddBackend}
+					type="button"
+				>
+					No models yet. Add a backend to get started.
+				</button>
+			{/if}
 		{/if}
 
 		<ModelsSelectorList
@@ -291,6 +336,8 @@
 			favorites={ms.favoriteItems}
 			groups={ms.groupedFilteredOptions}
 			loaded={ms.loadedItems}
+			onProviderBack={ms.isProviderView ? ms.closeProvider : undefined}
+			onProviderOpen={ms.openProvider}
 			onSelect={ms.handleSelect}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-2 mb-1 px-2 py-2.5 text-sm font-semibold text-foreground/80 select-none"
@@ -343,9 +390,11 @@
 		<ModelsSelectorDropdown
 			bind:open={isOpen}
 			currentModel={displayModel}
-			disabled={disabled || isOffline}
+			{disabled}
+			error={selectorError}
 			{highlightedId}
 			{ms}
+			onAddBackend={handleAddBackend}
 			onHighlight={(id) => (highlightedId = id)}
 			onModelKeyAction={(id, unload) => void handleModelKeyAction(id, unload)}
 			onSearchKeyDown={handleSearchKeyDown}
@@ -420,3 +469,8 @@
 		</Tooltip.Trigger>
 	</Tooltip.Root>
 {/if}
+
+<DialogBackendForm
+	bind:open={showAddBackend}
+	onSaved={(backend) => void ms.showBackendModels(backend.id)}
+/>

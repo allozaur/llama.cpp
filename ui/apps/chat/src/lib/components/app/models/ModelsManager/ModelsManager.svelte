@@ -11,13 +11,14 @@
 		splitHiddenQuants
 	} from './utils';
 	import { LOCAL_BACKEND_ID, type ModalityKey, MODELS_TABLE_GROUP_LABELS } from '$lib/constants';
-	import { ModelCapability, ModelsTableGroupKind } from '$lib/enums';
-	import { modelsStore, uiStore } from '$lib/stores';
+	import { ModelCapability, ModelsTableGroupKind, ModelsTableProviderKind } from '$lib/enums';
+	import { backendsStore, modelsStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { filterModelOptions } from '$lib/utils';
+	import { getBackend } from '$lib/utils/api-base';
+	import { getBackendCapabilities } from '$lib/utils/backend';
 	import type { Snippet } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
-	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		class?: string;
@@ -28,6 +29,7 @@
 	let { class: className, toolbarEnd }: Props = $props();
 
 	let filter = $state('');
+	let providerFilter = $state<string[]>([]);
 	let contextLimit = $state(0);
 	let modalityFilter = $state<ModalityKey[]>([]);
 	let capabilityFilter = $state<ModelCapability[]>([]);
@@ -47,6 +49,8 @@
 	let isFavorite = $derived((option: ModelOption) =>
 		modelsStore.favoriteModelIds.has(option.model)
 	);
+	// every filter but the provider one, so a provider count does not fall to zero
+	// the moment that provider is the one being looked at
 	let matching = $derived.by(() => {
 		// the term matches what the selector search matches: name, model, aliases and tags
 		const searched = filterModelOptions(allModels, filter);
@@ -76,6 +80,24 @@
 			return context === null || context >= contextLimit;
 		});
 	});
+	let visible = $derived.by(() =>
+		providerFilter.length === 0
+			? matching
+			: matching.filter((option) => providerFilter.includes(option.backendId ?? LOCAL_BACKEND_ID))
+	);
+	// the rail counts follow the active view and filter, so it always says how many
+	// repos each provider contributes to what the table is showing
+	let providerCounts = $derived.by(() => {
+		const counts: Record<string, number> = {};
+
+		for (const entry of groupModelQuants(matching)) {
+			const backendId = entry.base.backendId ?? LOCAL_BACKEND_ID;
+
+			counts[backendId] = (counts[backendId] ?? 0) + 1;
+		}
+
+		return counts;
+	});
 
 	// recently used models lead their section, the rest keep the server's order
 	let rank = $derived.by(() => {
@@ -90,11 +112,15 @@
 		Math.min(...entry.quants.map((quant) => rank.get(quant.id) ?? Number.MAX_SAFE_INTEGER));
 	const byRecency = (list: ModelQuantGroup[]) =>
 		rank.size === 0 ? list : [...list].sort((a, b) => rankOf(a) - rankOf(b));
-	// one entry per repo, so a model with several quants takes a single table row
-	let entries = $derived(byRecency(groupModelQuants(matching)));
+	// one entry per repo, so a model with several quants takes a single table row;
+	// loaded models lead the table, then favorites, then one block per provider
+	let entries = $derived(byRecency(groupModelQuants(visible)));
 	let groups = $derived.by(() => {
-		// a loaded quant is a model of its own: its repo keeps the quants left behind
-		const isLoaded = (option: ModelOption) => modelsStore.isModelLoaded(option.model);
+		// a loaded quant is a model of its own: its repo keeps the quants left behind.
+		// Only llama-compat servers report a load state.
+		const isLoaded = (option: ModelOption) =>
+			getBackendCapabilities(getBackend(option.backendId)).loadUnload &&
+			modelsStore.isModelLoaded(option.model);
 		// a tracked download stands in its own section, so it is not listed twice
 		const isDownload = (option: ModelOption) =>
 			modelsStore.status.isDownloadInProgress(option.model) ||
@@ -138,23 +164,57 @@
 		const { hidden, local } = splitHiddenQuants(localRest, (option) =>
 			modelsStore.isHidden(option.id)
 		);
+		const byBackend = new SvelteMap<string, ModelQuantGroup[]>();
+
+		for (const entry of local) {
+			const backendId = entry.base.backendId ?? LOCAL_BACKEND_ID;
+
+			if (!byBackend.has(backendId)) byBackend.set(backendId, []);
+
+			byBackend.get(backendId)!.push(entry);
+		}
+
 		const ordered: ModelsTableGroup[] = [];
-		// loaded models lead the table, then favorites, then the local block
-		const pushSection = (kind: ModelsTableGroupKind, items: ModelQuantGroup[]): void => {
+		// loaded models lead the table, then favorites, then one block per backend
+		const pushSection = (
+			kind: ModelsTableGroup['kind'],
+			items: ModelQuantGroup[],
+			provider?: { id: string; label: string }
+		): void => {
 			if (items.length === 0) return;
 
+			const isLocal = kind === ModelsTableGroupKind.LOCAL;
+
 			ordered.push({
+				backendId: provider?.id ?? (isLocal ? LOCAL_BACKEND_ID : null),
+				isLocal,
 				items,
-				key: kind === ModelsTableGroupKind.LOCAL ? LOCAL_BACKEND_ID : kind,
+				key: provider?.id ?? (isLocal ? LOCAL_BACKEND_ID : kind),
 				kind,
-				label: MODELS_TABLE_GROUP_LABELS[kind]
+				label: provider?.label ?? MODELS_TABLE_GROUP_LABELS[kind as ModelsTableGroupKind]
 			});
 		};
 
 		pushSection(ModelsTableGroupKind.LOADED, loaded);
 		pushSection(ModelsTableGroupKind.DOWNLOADING, downloads);
 		pushSection(ModelsTableGroupKind.FAVORITES, favorites);
-		pushSection(ModelsTableGroupKind.LOCAL, local);
+
+		const localItems = byBackend.get(LOCAL_BACKEND_ID);
+
+		if (localItems?.length) pushSection(ModelsTableGroupKind.LOCAL, localItems);
+
+		for (const backend of backendsStore.enabled) {
+			if (backend.id === LOCAL_BACKEND_ID) continue;
+
+			const items = byBackend.get(backend.id);
+
+			if (items?.length)
+				pushSection(ModelsTableProviderKind.PROVIDER, items, {
+					id: backend.id,
+					label: backend.name
+				});
+		}
+
 		pushSection(ModelsTableGroupKind.HIDDEN, hidden);
 
 		return ordered;
@@ -197,9 +257,11 @@
 			bind:contextLimit
 			bind:filter
 			bind:modalities={modalityFilter}
+			bind:providers={providerFilter}
 			{groups}
 			{isFavorite}
 			onSelect={(option) => uiStore.openModelDetails(option.id)}
+			{providerCounts}
 			{selectedId}
 			{toolbarEnd}
 		/>

@@ -7,12 +7,13 @@
 	import { Pencil, RotateCw, Server, Trash2 } from '@lucide/svelte';
 	import { DialogConfirmation } from '$lib/components/app/dialogs';
 	import Logo from '$lib/components/app/misc/Logo.svelte';
+	import { BackendProtocol } from '$lib/constants';
 	import { backendsModelsStore } from '$lib/stores/backendsModels.svelte';
-	import type { Backend, BackendProtocol } from '$lib/types';
+	import type { Backend } from '$lib/types';
 
 	const PROTOCOL_LABELS: Record<BackendProtocol, string> = {
-		'llama.cpp': 'Llama-compatible',
-		openai: 'OpenAI-compatible'
+		[BackendProtocol.COMPAT]: 'Llama-compatible',
+		[BackendProtocol.OPENAI]: 'OpenAI-compatible'
 	};
 
 	const CARD_ICON_CLASS = 'h-5 w-5';
