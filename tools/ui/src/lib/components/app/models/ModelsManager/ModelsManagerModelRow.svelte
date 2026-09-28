@@ -7,7 +7,12 @@
 	import ModelId from '../ModelId.svelte';
 	import ModelsManagerStatusCell from './ModelsManagerStatusCell.svelte';
 	import { modelRowActions } from './row-actions';
-	import { configuredContext, downloadProgressFor, isRowControlClick } from './utils';
+	import {
+		canLoadOption,
+		configuredContext,
+		downloadProgressFor,
+		isRowControlClick
+	} from './utils';
 	import { Heart, MoreHorizontal } from '@lucide/svelte';
 	import { ContextMenuActions, DropdownMenuActions } from '$lib/components/app';
 	import { MODEL_ROW_GRID_CLASS, MODEL_ROW_TRAILING_CELL_CLASS } from '$lib/constants';
@@ -55,7 +60,13 @@
 	}
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
-	let actions = $derived(modelRowActions(option, favorite, isHidden, onDelete, download));
+	let actions = $derived(
+		modelRowActions(
+			option,
+			{ canLoad: canLoadOption(option), download, favorite, isHidden },
+			{ onDelete }
+		)
+	);
 	let contextMenuOpen = $state(false);
 </script>
 
