@@ -1,5 +1,10 @@
 import { LOCAL_BACKEND_ID, type ModalityKey } from '#lib/constants/index.ts';
-import { ModelCapability, ModelGroupKind, ModelsTableGroupKind } from '#lib/enums/index.ts';
+import {
+	ModelCapability,
+	ModelGroupKind,
+	ModelsTableGroupKind,
+	ModelsTableProviderKind
+} from '#lib/enums/index.ts';
 import { HuggingFaceService, ModelsService } from '#lib/services/index.ts';
 import { modelsStore } from '#lib/stores/index.ts';
 import type {
@@ -9,6 +14,7 @@ import type {
 	ModelSidecarBadge
 } from '#lib/types/models.js';
 import { getBackend } from '#lib/utils/api-base.ts';
+import { getBackendCapabilities } from '#lib/utils/backend.ts';
 import { detectThinkingSupport, detectToolUseSupport, repoOf } from '#lib/utils/index.ts';
 
 /** One repo of the table, with the rows it ships as. */
@@ -95,7 +101,7 @@ export interface ModelsTableGroup {
 	isLocal?: boolean;
 	key: string;
 	/** Manager sections use the kind constants, provider blocks their own kinds. */
-	kind: ModelsTableGroupKind | 'compat' | 'provider';
+	kind: ModelsTableGroupKind | ModelsTableProviderKind;
 	label: string;
 }
 
@@ -105,13 +111,6 @@ const ROW_CONTROL_SELECTOR = 'button, a, input, [role="menuitem"]';
 /** Whether a click on a model row landed on one of its own controls. */
 export function isRowControlClick(event: MouseEvent): boolean {
 	return event.target instanceof Element && event.target.closest(ROW_CONTROL_SELECTOR) !== null;
-}
-
-/** Context the model runs with: what a loaded model reports. */
-export function configuredContext(option: ModelOption): number | null {
-	return modelsStore.isModelRunning(option.model)
-		? modelsStore.props.getModelContextSize(option.model)
-		: null;
 }
 
 /**
@@ -132,6 +131,20 @@ export function modelCapability(option: ModelOption, capability: ModelCapability
 	return capability === ModelCapability.TOOL_USE
 		? detectToolUseSupport(template)
 		: detectThinkingSupport(template);
+}
+
+/** Context the model runs with: what a loaded local model reports. */
+export function configuredContext(option: ModelOption): number | null {
+	if (!isLocalOption(option)) return null;
+
+	return modelsStore.isModelRunning(option.model)
+		? modelsStore.props.getModelContextSize(option.model)
+		: null;
+}
+
+/** True when the backend that serves the model can load and unload it. */
+export function canLoadOption(option: ModelOption): boolean {
+	return getBackendCapabilities(getBackend(option.backendId)).loadUnload;
 }
 
 export function servedByLabel(option: ModelOption): string {

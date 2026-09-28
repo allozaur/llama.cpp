@@ -86,6 +86,7 @@ export {
 	filterModelOptions,
 	groupFavoriteOptions,
 	groupModelOptions,
+	groupProviderOptions,
 	windowLocalGroups,
 	type GroupedModelOptions,
 	type ModelItem,
