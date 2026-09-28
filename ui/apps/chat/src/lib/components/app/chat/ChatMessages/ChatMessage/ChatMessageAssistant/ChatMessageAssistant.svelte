@@ -203,7 +203,6 @@
 				<ChatMessageAssistantModel
 					{displayedModel}
 					isLoading={chatStore.isLoading}
-					{isRouter}
 					{onRegenerate}
 				/>
 

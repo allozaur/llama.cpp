@@ -2,7 +2,7 @@ import { getBackend } from './api-base';
 import { redactValue } from './redact';
 import { CORS_PROXY, HEADERS } from '#lib/constants/index.ts';
 import { MimeTypeApplication } from '#lib/enums/index.ts';
-import { getProtocolAdapter } from '#lib/services/protocols';
+import { getProtocolAdapter } from '#lib/services/protocols/index.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type { Backend } from '#lib/types/index.ts';
 

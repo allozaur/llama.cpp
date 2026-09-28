@@ -26,6 +26,7 @@
 		CHAT_FORM_MOVE_TO_BOTTOM_IN_MS,
 		CHAT_FORM_MOVE_TO_BOTTOM_OUT_MS
 	} from '#lib/constants/index.ts';
+	import { useBackendAvailability } from '#lib/hooks/use-backend-availability.svelte.ts';
 	import { useChatScreenActiveModel } from '#lib/hooks/use-chat-screen-active-model.svelte.ts';
 	import { useChatScreenDragAndDrop } from '#lib/hooks/use-chat-screen-drag-and-drop.svelte.ts';
 	import { useChatScreenFileUpload } from '#lib/hooks/use-chat-screen-file-upload.svelte.ts';
@@ -77,8 +78,10 @@
 	let formWrapper: HTMLElement | undefined = $state();
 	let chatScreenForm: ChatScreenForm | undefined = $state();
 	let activeErrorDialog = $derived(chatStore.errorDialogState);
-	let isServerLoading = $derived(serverStore.loading);
-	let hasPropsError = $derived(!!serverStore.error);
+	// no local server in this deployment: never block on its probe
+	let isServerLoading = $derived(serverStore.loading && !serverStore.localServerMissing);
+	const availability = useBackendAvailability();
+	let hasPropsError = $derived(availability.isOffline);
 	let isCurrentConversationLoading = $derived(chatStore.isLoading || chatStore.isStreaming());
 	let chatFormBottomPosition = $derived.by(() => {
 		if (!deviceStore.isMobile) return CHAT_FORM_BOTTOM_OFFSET.desktop;
