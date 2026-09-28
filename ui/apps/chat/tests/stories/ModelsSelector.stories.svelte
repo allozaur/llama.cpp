@@ -101,7 +101,8 @@
 				items: [availableModels[4]],
 				orgName: 'intel'
 			}
-		]
+		],
+		providers: []
 	};
 
 	function handleSelect(modelId: string) {
