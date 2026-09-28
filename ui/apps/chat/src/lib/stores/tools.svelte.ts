@@ -26,6 +26,8 @@ import {
 } from '#lib/extensions/index.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
+import { backendsStore } from '#lib/stores/backends.svelte.ts';
+import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type {
@@ -260,6 +262,15 @@ class ToolsStore {
 	}
 
 	async fetchServerTools(): Promise<void> {
+		// the /tools endpoint only exists on the local llama.cpp server, so the
+		// list follows the built-in backend rather than the selected model
+		if (!serverStore.hasLocalServer || !backendsStore.local.enabled) {
+			this._serverTools = [];
+			this.cwdAwareTools = new SvelteSet();
+
+			return;
+		}
+
 		if (this._loading) return;
 
 		this._loading = true;
