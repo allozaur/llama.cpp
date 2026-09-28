@@ -21,6 +21,7 @@
 	import { filterModelOptions } from '#lib/utils/index.ts';
 	import type { Snippet } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		class?: string;
