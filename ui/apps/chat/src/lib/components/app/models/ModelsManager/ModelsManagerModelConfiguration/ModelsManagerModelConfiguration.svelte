@@ -214,34 +214,34 @@
 						onSave={() => onSave(draft)}
 					/>
 				</Tabs.Content>
+
+				<div class="mt-4 border-t border-border/30 pt-3 pb-2">
+				{#if removeBlockedReason}
+					<!-- a disabled button takes no pointer events, so the wrapper holds the hover -->
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<div {...props}>
+									{@render deleteButton()}
+								</div>
+							{/snippet}
+						</Tooltip.Trigger>
+
+						<Tooltip.Content class="max-w-64">
+							<p>{removeBlockedReason}</p>
+						</Tooltip.Content>
+					</Tooltip.Root>
+
+					<!-- a phone has no hover, so the reason sits under the button -->
+					{#if deviceStore.isMobile}
+						<p class="px-3 pt-1 text-xs text-muted-foreground">{removeBlockedReason}</p>
+					{/if}
+				{:else}
+					{@render deleteButton()}
+				{/if}
+				</div>
 			</div>
 		</Tabs.Root>
-
-		<div class="border-t border-border/30 px-4 pt-3 pb-4">
-			{#if removeBlockedReason}
-				<!-- a disabled button takes no pointer events, so the wrapper holds the hover -->
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<div {...props}>
-								{@render deleteButton()}
-							</div>
-						{/snippet}
-					</Tooltip.Trigger>
-
-					<Tooltip.Content class="max-w-64">
-						<p>{removeBlockedReason}</p>
-					</Tooltip.Content>
-				</Tooltip.Root>
-
-				<!-- a phone has no hover, so the reason sits under the button -->
-				{#if deviceStore.isMobile}
-					<p class="px-3 pt-1 text-xs text-muted-foreground">{removeBlockedReason}</p>
-				{/if}
-			{:else}
-				{@render deleteButton()}
-			{/if}
-		</div>
 	{/if}
 
 	<!-- a phone keeps the actions at the bottom of its screen, in reach of the thumb -->
