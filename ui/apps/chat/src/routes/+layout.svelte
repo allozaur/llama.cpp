@@ -3,7 +3,6 @@
 	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { GlassKey, MenuIcon, SidebarNavigation } from '$lib/components/app';
 	import { PwaMetaTags, PwaRefreshAlert } from '$lib/components/pwa';
@@ -35,6 +34,7 @@
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
 	import { applySurfaceTheme, hapticTap, resolveTabView } from '$lib/utils';
+	import { apiUrl } from '$lib/utils/api-base';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -181,6 +181,11 @@
 	});
 
 	function checkApiKey() {
+		// the stored key authenticates the llama.cpp server serving this UI
+		if (!serverStore.capabilities.props) {
+			return;
+		}
+
 		const apiKey = settingsStore.config.apiKey;
 
 		// Without a stored key there is nothing to re-validate here; the keyless
@@ -201,7 +206,7 @@
 					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey.trim()}`
 				};
 
-				fetch(`${base}/props`, { headers })
+				fetch(apiUrl('/props'), { headers })
 					.then((response) => {
 						if (response.status === 401 || response.status === 403) {
 							window.location.reload();
@@ -264,37 +269,17 @@
 		});
 	}
 
-	// Fetch router models when in router mode (for status and modalities)
-	// Wait for models to be loaded first, run only once
-	let routerModelsFetched = false;
-
-	$effect(() => {
-		const isRouter = serverStore.isRouterMode;
-		const modelsCount = modelsStore.models.length;
-
-		// Only fetch router models once when we have models loaded and in router mode
-		if (isRouter && modelsCount > 0 && !routerModelsFetched) {
-			routerModelsFetched = true;
-
-			untrack(() => {
-				modelsStore.fetchRouterModels();
-			});
-		}
-	});
-
-	// Live model status and load progress via the /models/sse feed (router mode)
+	// Live model status and load progress via the /models/sse feed (router mode).
+	// The feed is kept for the session: switching to an external backend and back
+	// must not tear it down and reconnect on every tab switch.
 	$effect(() => {
 		if (!browser) return;
 
-		if (!serverStore.isRouterMode) return;
+		if (!serverStore.localIsRouter) return;
 
 		untrack(() => {
 			modelsStore.status.subscribe();
 		});
-
-		return () => {
-			modelsStore.status.unsubscribe();
-		};
 	});
 
 	// Monitor API key changes and redirect to error page if removed or changed when required
