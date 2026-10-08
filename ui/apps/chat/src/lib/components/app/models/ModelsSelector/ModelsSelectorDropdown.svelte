@@ -291,6 +291,7 @@ manager's other entry points -->
 			onSelect={ms.handleSelect}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-1 mb-1 px-2 py-2 text-body-sm font-semibold text-foreground/80 select-none"
+			selected={ms.selectedItems}
 			{showOrgName}
 		/>
 	</div>
