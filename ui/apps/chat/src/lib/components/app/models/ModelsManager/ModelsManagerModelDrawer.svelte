@@ -1,10 +1,19 @@
 <script lang="ts">
 	import ModelsManagerModelConfiguration from './ModelsManagerModelConfiguration/ModelsManagerModelConfiguration.svelte';
-	import { downloadGroups, findModelOption } from './utils';
+	import {
+		downloadGroups,
+		findModelOption,
+		isCustomized,
+		loadExtraArgs,
+		loadOverrides,
+		type ModelOverride,
+		saveOverrides
+	} from './utils';
 	import * as Drawer from '$lib/components/ui/drawer';
 	import { conversationsStore, deviceStore, modelsStore, serverStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { untrack } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	// tracked downloads are not in the listing yet
 	let downloads = $derived(
@@ -23,6 +32,8 @@
 	let isSwapping = $state(false);
 	let fade = $state<'open' | 'swap'>('open');
 	let shownOption = $derived(findModelOption(shownId, modelsStore.models, downloads));
+	// per-model load and inference settings, keyed by the qualified model id
+	let overrides = $state<Record<string, ModelOverride>>(loadOverrides());
 
 	$effect(() => {
 		const option = selected;
@@ -83,7 +94,13 @@
 			return;
 		}
 
-		await modelsStore.status.load(option.model);
+		await modelsStore.status.load(option.model, loadExtraArgs(overrides[option.id]));
+	}
+
+	function saveOverride(option: ModelOption, override: ModelOverride): void {
+		overrides = { ...overrides, [option.id]: override };
+		saveOverrides(overrides);
+		toast.success(`Saved settings for ${option.name}`);
 	}
 
 	/** Close the drawer, the picker and the models page, then focus the composer. */
@@ -154,11 +171,14 @@
 			{#if shownOption}
 				{#key shownId}
 					<ModelsManagerModelConfiguration
+						isCustomized={isCustomized(overrides[shownOption.id])}
 						onClose={() => uiStore.closeModelDetails()}
+						onSave={(override) => saveOverride(shownOption, override)}
 						onToggleLoad={() => void toggleLoad(shownOption)}
 						onUseInChat={() => void useInChat(shownOption)}
 						onUseInNewChat={() => void useInNewChat(shownOption)}
 						option={shownOption}
+						override={overrides[shownOption.id]}
 					/>
 				{/key}
 			{/if}
