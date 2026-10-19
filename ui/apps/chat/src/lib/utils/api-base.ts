@@ -7,8 +7,8 @@
  * store, which keeps URL resolution free of store dependencies.
  */
 
-import { backendChatUrl, backendModelsUrl } from './backend';
-import { serverUrl } from './server-config';
+import { backendChatUrl, backendModelsUrl, backendOrigin, isLocalBackend } from './backend';
+import { withBase } from './base-path';
 import { API_ABSOLUTE_URL_PROTOCOLS, API_CHAT, API_MODELS } from '#lib/constants/index.ts';
 import type { Backend } from '#lib/types/index.ts';
 
@@ -40,21 +40,32 @@ export function getBackend(backendId?: string): Backend | undefined {
 	return snapshot.backends.find((backend) => backend.id === id);
 }
 
-/** API root for a backend, or an empty string for the local backend. */
+/** Every registered backend, in list order. */
+export function getBackends(): Backend[] {
+	return resolveBackends?.().backends ?? [];
+}
+
+/**
+ * API root for a backend: its own base URL, the synthetic tunnel origin of a
+ * remote backend, or an empty string for the local one.
+ */
 export function getBackendBaseUrl(backendId?: string): string {
-	return getBackend(backendId)?.baseUrl.trim() ?? '';
+	const backend = getBackend(backendId);
+
+	return backend ? backendOrigin(backend) : '';
 }
 
 /**
  * Request target for a backend's chat completions endpoint. Returns a relative
- * path for the local backend and an absolute URL for external ones, so callers
- * can pass the result straight to `fetch` (or `apiFetch`, which resolves
- * relative paths against the base).
+ * path for the local backend and an absolute URL for every other one — its own
+ * base URL, or the tunnel origin of a remote backend — so callers can hand the
+ * result straight to `fetch` (or to `apiFetch`, which resolves relative paths
+ * against the base).
  */
 export function apiChatUrl(backendId?: string): string {
 	const backend = getBackend(backendId);
 
-	if (backend?.baseUrl.trim()) {
+	if (backend && !isLocalBackend(backend)) {
 		return backendChatUrl(backend);
 	}
 
@@ -68,7 +79,7 @@ export function apiChatUrl(backendId?: string): string {
 export function apiModelsUrl(backendId?: string): string {
 	const backend = getBackend(backendId);
 
-	if (backend?.baseUrl.trim()) {
+	if (backend && !isLocalBackend(backend)) {
 		return backendModelsUrl(backend);
 	}
 
@@ -78,8 +89,8 @@ export function apiModelsUrl(backendId?: string): string {
 /**
  * Absolute URL for an API path on a backend.
  *
- * Absolute URLs pass through untouched. Paths on the local backend go to the
- * server config.json names, else keep the base-path-relative form.
+ * Absolute URLs pass through untouched. Paths on the local backend keep the
+ * existing base-path-relative form, so serving under a subpath still works.
  * Paths on external backends resolve against the backend's API root.
  */
 export function apiUrl(path: string, backendId?: string): string {
@@ -90,8 +101,7 @@ export function apiUrl(path: string, backendId?: string): string {
 	const baseUrl = getBackendBaseUrl(backendId);
 
 	if (!baseUrl) {
-		// the built-in server: the app's own origin, or the one config.json names
-		return serverUrl(path);
+		return withBase(path);
 	}
 
 	const root = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;

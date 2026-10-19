@@ -1,11 +1,12 @@
 // direct imports, not via the barrel, to avoid circular deps
-import { backendsStore } from './backends.svelte';
-import { backendsModelsStore } from './backendsModels.svelte';
 import { conversationsStore } from './conversations/index.svelte';
 import { groupsStore } from './groups.svelte';
 import { serverStore } from './llama-server.svelte';
 import { modelsStore } from './models/index.svelte';
 import { permissionsStore } from './permissions.svelte';
+import { remoteAccessStore } from './remote-access.svelte';
+import { serversStore } from './servers.svelte';
+import { serversModelsStore } from './serversModels.svelte';
 import { settingsStore } from './settings/index.svelte';
 import { tabsStore } from './tabs.svelte';
 import { toolsStore } from './tools.svelte';
@@ -14,8 +15,10 @@ import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
 import { extensions } from '#lib/extensions/registry.svelte.ts';
 import { MigrationService } from '#lib/services/migration.service.ts';
 import { validateApiKey } from '#lib/utils/api-key-validation.ts';
+import { isLocalServer, isRemoteServer } from '#lib/utils/servers.ts';
 import { browser } from '$app/env';
 
+let activeTunnel: Promise<void> | null = null;
 let hydration: Promise<void> | null = null;
 let extensionsStarted: Promise<void> | null = null;
 let startup: Promise<void> | null = null;
@@ -32,8 +35,36 @@ async function requestPersistentStorage(): Promise<void> {
 }
 
 /**
+ * Open the tunnel of the server the app opens with, when it is a remote one.
+ *
+ * Deliberately not awaited: the app paints with the server card reading
+ * Connecting, and its models arrive when the handshake lands. Servers that are
+ * merely enabled are left for the moment one of their models is picked.
+ *
+ * Runs once per session: startup asks twice - once before the local server is
+ * known to exist, once after - and the second ask is the same tunnel.
+ */
+function connectActiveServer(): void {
+	const active = serversStore.active;
+
+	if (activeTunnel || !isRemoteServer(active)) return;
+
+	activeTunnel = remoteAccessStore
+		.connect(active.id)
+		// the closed tunnel is exactly why the startup prefetch skipped this
+		// server, so both lists are asked for once it is open
+		.then(async () => {
+			await serversModelsStore.refresh(active.id);
+			await modelsStore.switchServer();
+		})
+		.catch(() => {
+			// the server card carries the failure and offers a retry
+		});
+}
+
+/**
  * Read the stored state the first request needs: migrations, the settings that
- * carry the API key, and the backend that request goes to.
+ * carry the API key, and the server that request goes to.
  *
  * Separate from {@link initStores} so a `load` can await it. The requests
  * `initStores` starts belong after a load, where plain `window.fetch` is the
@@ -46,7 +77,15 @@ export function hydrateStores(): Promise<void> {
 		await MigrationService.runAllMigrations();
 
 		settingsStore.initialize();
-		backendsStore.initialize();
+
+		// the tunnel transport goes in before anything can ask for a model list: a
+		// request aimed at a server's tunnel origin must never reach the server
+		// that happens to serve this UI
+		remoteAccessStore.installInterceptor();
+
+		serversStore.initialize();
+
+		connectActiveServer();
 	})();
 
 	return hydration;
@@ -80,9 +119,15 @@ export function initStores(): Promise<void> {
 
 		void requestPersistentStorage();
 
-		// prefetch every backend's model list in the background; failures are
-		// per-backend and never block startup
-		void backendsModelsStore.loadAll().then(() => modelsStore.warmHubDetails());
+		// the servers the page was published with, asked for alongside the rest of
+		// the startup rather than ahead of it, and loaded as they join the list
+		const presets = serversStore
+			.addPresetServers()
+			.then((ids) => Promise.all(ids.map((id) => serversModelsStore.ensureLoaded(id))));
+
+		// prefetch every server's model list in the background; failures are
+		// per-server and never block startup
+		void serversModelsStore.loadAll().then(() => modelsStore.warmHubDetails());
 
 		permissionsStore.initialize();
 		toolsStore.initialize();
@@ -90,7 +135,23 @@ export function initStores(): Promise<void> {
 		// the local server state backs the installation facts and decides whether
 		// /tools exists at all, so probe it first and only then list the tools;
 		// otherwise they stay empty until the tools menu is opened
-		void serverStore.prefetchLocalState().then(() => toolsStore.fetchServerTools());
+		void Promise.all([serverStore.prefetchLocalState(), presets]).then(async () => {
+			// a build served without a local server has no local server to fall
+			// back on, so the active server is only settled once that is known
+			connectActiveServer();
+
+			void toolsStore.fetchServerTools();
+
+			// the page asked the local server for its models before it was known to
+			// be missing; the server the app falls back on, such as one the page was
+			// published with, answers instead (a remote one does once its tunnel opens)
+			const active = serversStore.active;
+
+			if (serverStore.localServerMissing && !isLocalServer(active) && !isRemoteServer(active)) {
+				await modelsStore.switchServer();
+				await modelsStore.ensureFirstModelSelected();
+			}
+		});
 
 		await startExtensions();
 
