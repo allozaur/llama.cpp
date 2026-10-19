@@ -12,7 +12,14 @@ import type { ApiModelsListResponse, Backend, ModelOption } from '$lib/types';
 import { isAbortError } from '$lib/utils/abort';
 import { apiUrl } from '$lib/utils/api-base';
 import { getAuthHeadersForBackend } from '$lib/utils/api-headers';
-import { backendModelsUrl, readModelContextLength } from '$lib/utils/backend';
+import {
+	backendModelsUrl,
+	backendOrigin,
+	isLocalBackend,
+	isReachableBackend,
+	isRemoteBackend,
+	readModelContextLength
+} from '$lib/utils/backend';
 
 /** Models returned by a backend, plus the failure detail when the call fails. */
 export interface BackendModelsResult {
@@ -46,14 +53,20 @@ export class BackendsService {
 	 * @param signal - Optional abort signal for a cancelled request.
 	 */
 	static async listModels(backend: Backend, signal?: AbortSignal): Promise<BackendModelsResult> {
-		// the local backend has no base URL; its models endpoint is base relative
-		const url = backend.baseUrl.trim()
-			? backendModelsUrl(backend)
-			: apiUrl(API_MODELS.LIST, LOCAL_BACKEND_ID);
-
-		if (!backend.baseUrl.trim() && backend.id !== LOCAL_BACKEND_ID) {
-			return { error: 'Backend URL is required', models: [], ok: false, status: null };
+		if (!isReachableBackend(backend)) {
+			return {
+				error: isRemoteBackend(backend) ? 'Access code is required' : 'Backend URL is required',
+				models: [],
+				ok: false,
+				status: null
+			};
 		}
+
+		// the local backend has no origin of its own; its models endpoint is base
+		// relative, and a remote one is answered over its tunnel
+		const url = isLocalBackend(backend)
+			? apiUrl(API_MODELS.LIST, LOCAL_BACKEND_ID)
+			: backendModelsUrl(backend);
 
 		try {
 			const response = await fetch(url, {
@@ -96,7 +109,11 @@ export class BackendsService {
 	 * the key it was started with, so a 401 there means the form needs one.
 	 */
 	static async probe(backend: Backend): Promise<BackendProbe> {
-		const base = backend.baseUrl.trim().replace(/\/+$/, '');
+		// a remote provider has no URL to ask about: its code is tested by opening
+		// the tunnel, which is what the form's connection test does
+		if (isRemoteBackend(backend)) return { authRequired: false };
+
+		const base = backendOrigin(backend).replace(/\/+$/, '');
 
 		if (!base) return { authRequired: false };
 

@@ -14,6 +14,8 @@ export {
 	ToolCallType
 } from './agentic.enums';
 
+export { BackendKind, TunnelStatus } from './backend.enums';
+
 export {
 	ChatMessageStatsView,
 	ChatMessageStatisticsMode,
