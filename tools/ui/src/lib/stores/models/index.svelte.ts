@@ -9,9 +9,9 @@
 
 import { browser } from '$app/environment';
 import {
-	BackendProtocol,
 	FAVORITE_MODELS_LOCALSTORAGE_KEY,
 	HIDDEN_MODELS_LOCALSTORAGE_KEY,
+	LOCAL_BACKEND_ID,
 	MODEL_GROUP_OPEN_LOCALSTORAGE_KEY,
 	RECENT_MODEL_LIMIT,
 	RECENT_MODELS_LOCALSTORAGE_KEY,
@@ -28,7 +28,7 @@ import { type ModelPropsHost, ModelPropsManager } from '$lib/stores/models/props
 import { type ModelStatusHost, ModelStatusManager } from '$lib/stores/models/status.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import type { ParsedModelId } from '$lib/types/models';
-import { getBackendCapabilities, readModelContextLength } from '$lib/utils/backend';
+import { readModelContextLength } from '$lib/utils/backend';
 import { getConversationModel } from '$lib/utils/conversation-utils';
 import { repoOf } from '$lib/utils/model-names';
 import { backendIdFromModelId, qualifyModelId, rawModelId } from '$lib/utils/model-option-id';
@@ -640,7 +640,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		// local props describe the server the UI is served from; keep them while
 		// an external backend is active instead of dropping and refetching
-		if (backend.protocol === BackendProtocol.COMPAT) {
+		if (backend.id === LOCAL_BACKEND_ID) {
 			serverStore.restoreLocalState();
 		} else {
 			serverStore.cacheLocalState();
@@ -656,7 +656,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			return;
 		}
 
-		if (backend.protocol === BackendProtocol.COMPAT && !serverStore.props) {
+		if (backend.id === LOCAL_BACKEND_ID && !serverStore.props) {
 			// first visit to the local tab in this session
 			await serverStore.fetch({ background: true });
 		}
@@ -666,11 +666,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		// the local router rows carry the load statuses; the startup prefetch
 		// already returned them, so a tab switch rebuilds the list from memory
-		if (
-			backend.protocol === BackendProtocol.COMPAT &&
-			this.routerModels.length === 0 &&
-			cached.raw
-		) {
+		if (backend.id === LOCAL_BACKEND_ID && this.routerModels.length === 0 && cached.raw) {
 			this.routerModels = cached.raw.data;
 			this.activeModels = this.buildModelOptions(cached.raw);
 		}
@@ -718,8 +714,6 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		const repos: string[] = [];
 
 		for (const backend of backendsStore.enabled) {
-			if (!getBackendCapabilities(backend).props) continue;
-
 			for (const option of backendsModelsStore.get(backend.id).models) {
 				const repo = repoOf(option.model);
 
@@ -881,12 +875,6 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 				}
 			} else {
 				this.activeModels = await this.fetchModelModeInternal();
-
-				// external backends expose a selectable list; pick a default so the
-				// first send and title generation have a model to target
-				if (!serverStore.capabilities.props && !this.selectedModelName) {
-					await this.ensureFirstModelSelected();
-				}
 			}
 		} catch (error) {
 			this.activeModels = [];

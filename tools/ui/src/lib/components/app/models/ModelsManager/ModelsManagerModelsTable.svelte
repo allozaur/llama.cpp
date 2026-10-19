@@ -12,7 +12,6 @@
 	import {
 		ArrowDown,
 		ArrowUp,
-		CheckCircle2,
 		ChevronDown,
 		ChevronUp,
 		Download,
@@ -388,8 +387,6 @@
 						<Heart class="size-icon-sm shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.LOADED}
 						<Power class="size-icon-sm shrink-0" />
-					{:else if group.kind === ModelsTableGroupKind.SELECTED}
-						<CheckCircle2 class="size-icon-sm shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.HIDDEN}
 						<EyeOff class="size-icon-sm shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.LOCAL}
