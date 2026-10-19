@@ -6,8 +6,8 @@
  * with an external backend configured, the UI stays usable.
  */
 
-import { LOCAL_BACKEND_ID } from '$lib/constants';
-import { backendsModelsStore, backendsStore, serverStore } from '$lib/stores';
+import { backendsModelsStore, backendsStore, remoteAccessStore, serverStore } from '$lib/stores';
+import { isLocalBackend, isRemoteBackend } from '$lib/utils/backend';
 
 export interface BackendAvailability {
 	readonly hasAvailableBackend: boolean;
@@ -19,10 +19,13 @@ export function useBackendAvailability(): BackendAvailability {
 		// no connection error at all: nothing to report
 		if (!serverStore.error) return true;
 
-		// the local server failed, but an external backend may still be usable
+		// the local server failed, but another provider may still be usable; a
+		// remote one is only usable while its tunnel is open
 		return backendsStore.enabled.some(
 			(backend) =>
-				backend.id !== LOCAL_BACKEND_ID && backendsModelsStore.get(backend.id).error === null
+				!isLocalBackend(backend) &&
+				backendsModelsStore.get(backend.id).error === null &&
+				(!isRemoteBackend(backend) || remoteAccessStore.isConnected(backend.id))
 		);
 	});
 

@@ -1,40 +1,66 @@
 /**
- * Backend list parsing, defaults and endpoint URLs.
+ * Provider list parsing, defaults and endpoint URLs.
  *
- * External backends are persisted in settings as a JSON list. Malformed
+ * External providers are persisted in settings as a JSON list. Malformed
  * entries are dropped instead of throwing so a corrupted settings value can
  * never break URL resolution.
+ *
+ * A remote provider has no URL of its own: it is reached through a WebRTC
+ * tunnel and addressed by a synthetic origin that carries its id
+ * (`tunnelOrigin`). The host suffix is reserved, so the address can never be
+ * mistaken for a real server, and a request that escapes the tunnel transport
+ * fails in the browser instead of reaching the server serving this UI.
  */
 
 import {
 	BACKEND_ID_PREFIX,
+	CODE_CHARS,
+	CODE_LENGTHS,
 	DEFAULT_BACKEND_CHAT_PATH,
 	DEFAULT_BACKEND_MODELS_PATH,
 	FAVICON_SERVICE_URL,
-	LOCAL_BACKEND_ID
+	LOCAL_BACKEND_ID,
+	TUNNEL_HOST_SUFFIX
 } from '$lib/constants';
+import { BackendKind } from '$lib/enums';
 import type { Backend } from '$lib/types';
+
+/** Icon size requested from the favicon service, shown at 16px. */
+const FAVICON_SIZE = 64;
+/** Longest host label a provider id can be shortened to (DNS label limit). */
+const HOST_LABEL_MAX = 63;
 
 /** Absolute chat completions URL for a backend. */
 export function backendChatUrl(backend: Backend): string {
-	return joinBackendUrl(backend.baseUrl, DEFAULT_BACKEND_CHAT_PATH);
+	return joinBackendUrl(backendOrigin(backend), DEFAULT_BACKEND_CHAT_PATH);
 }
 
 /** Absolute models listing URL for a backend. */
 export function backendModelsUrl(backend: Backend): string {
-	return joinBackendUrl(backend.baseUrl, DEFAULT_BACKEND_MODELS_PATH);
+	return joinBackendUrl(backendOrigin(backend), DEFAULT_BACKEND_MODELS_PATH);
 }
 
-/** Icon size requested from the favicon service, shown at 16px. */
-const FAVICON_SIZE = 64;
+/**
+ * Origin a backend's requests are addressed at: its own base URL, or the
+ * synthetic tunnel origin of a remote provider. Empty for the built-in
+ * backend, whose requests stay on the origin serving this UI.
+ */
+export function backendOrigin(backend: Backend): string {
+	if (isRemoteBackend(backend)) return tunnelOrigin(backend.id);
+
+	return backend.baseUrl.trim().replace(/\/+$/, '');
+}
 
 /**
  * Favicon of a backend's root domain, used when no bundled mark matches. Hosts
  * rarely serve a favicon themselves, so the subdomain is dropped
  * (`api.z.ai` -> `z.ai`) and the icon is requested through a favicon service.
- * Returns null when the URL carries no usable host.
+ * Returns null when the URL carries no usable host, which is always the case
+ * for a remote provider: a tunnel serves no favicon.
  */
 export function backendFaviconUrl(baseUrl: string): string | null {
+	if (isTunnelHost(hostOf(baseUrl))) return null;
+
 	try {
 		const labels = new URL(baseUrl).hostname.split('.');
 		const root = labels.length > 2 ? labels.slice(-2).join('.') : labels.join('.');
@@ -45,6 +71,14 @@ export function backendFaviconUrl(baseUrl: string): string | null {
 	}
 }
 
+/**
+ * The access code of a remote provider, trimmed of the spacing a user tends to
+ * paste with. Empty when the value is not a usable code.
+ */
+export function codeOf(backend?: Backend | null): string {
+	return normalizeShareCode(backend?.code ?? '');
+}
+
 /** The built-in backend pointing at the server that serves this UI. */
 export function createLocalBackend(apiKey?: string, enabled = true): Backend {
 	return {
@@ -52,8 +86,202 @@ export function createLocalBackend(apiKey?: string, enabled = true): Backend {
 		baseUrl: '',
 		enabled,
 		id: LOCAL_BACKEND_ID,
+		kind: BackendKind.LOCAL,
 		name: 'Local'
 	};
+}
+
+/** A remote llama.cpp server, reached through the tunnel of its access code. */
+export function createRemoteBackend(code: string, id: string, name?: string): Backend {
+	return {
+		baseUrl: '',
+		code: normalizeShareCode(code),
+		enabled: true,
+		id,
+		kind: BackendKind.REMOTE,
+		name: name?.trim() || 'Remote server'
+	};
+}
+
+/** A llama.cpp server answering on its own base URL. */
+export function createUrlBackend(
+	baseUrl: string,
+	id: string,
+	name?: string,
+	apiKey?: string,
+	headers?: Record<string, string>
+): Backend {
+	return {
+		apiKey,
+		baseUrl: baseUrl.trim().replace(/\/+$/, ''),
+		enabled: true,
+		headers: headers && Object.keys(headers).length > 0 ? headers : undefined,
+		id,
+		kind: BackendKind.URL,
+		name: name?.trim() || hostOf(baseUrl) || baseUrl.trim()
+	};
+}
+
+/** Whether the built-in backend is the one serving this UI. */
+export function isLocalBackend(backend?: Backend | null): boolean {
+	return !backend || backend.kind === BackendKind.LOCAL;
+}
+
+/** Whether a backend is reached through a WebRTC tunnel. */
+export function isRemoteBackend(backend?: Backend | null): boolean {
+	return backend?.kind === BackendKind.REMOTE;
+}
+
+/**
+ * Whether a backend can be reached at all: the built-in one always, a remote
+ * one with a valid access code, and a URL one with a URL that parses and does
+ * not squat on the tunnel host suffix.
+ */
+export function isReachableBackend(backend: Backend): boolean {
+	if (isLocalBackend(backend)) return true;
+
+	if (isRemoteBackend(backend)) return Boolean(codeOf(backend));
+
+	const baseUrl = backend.baseUrl.trim();
+
+	if (!baseUrl || isTunnelHost(hostOf(baseUrl))) return false;
+
+	return isHttpUrl(baseUrl);
+}
+
+/** Host of a URL, empty when it does not parse. */
+export function hostOf(url: string): string {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return '';
+	}
+}
+
+/** Whether a value parses as an http(s) URL. */
+export function isHttpUrl(value: string): boolean {
+	try {
+		const { protocol } = new URL(value);
+
+		return protocol === 'http:' || protocol === 'https:';
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Strip the spacing from a pasted access code and check it against the alphabet
+ * llama-server generates its code from. Empty when the value is not a code.
+ */
+export function normalizeShareCode(code: string): string {
+	const code_ = code.replace(/\s/g, '');
+
+	if (code_.length !== CODE_LENGTHS.SHARE) return '';
+
+	for (const char of code_) {
+		if (!CODE_CHARS.includes(char)) return '';
+	}
+
+	return code_;
+}
+
+/**
+ * Host label a provider's tunnel origin carries. Exported so a host coming back
+ * from the transport can be matched against a provider without un-sanitizing it.
+ */
+export function tunnelHostLabel(backendId: string): string {
+	return hostLabel(backendId);
+}
+
+/**
+ * Host label of a tunnel origin, or null when the request is not addressed at
+ * one. The label is a provider id in its hostname-safe form, which is how
+ * `tunnelOrigin` wrote it.
+ */
+export function parseTunnelOrigin(url: RequestInfo | URL): string | null {
+	const href = url instanceof URL ? url.href : typeof url === 'string' ? url : url.url;
+	const host = hostOf(href);
+
+	if (!isTunnelHost(host)) return null;
+
+	return host.slice(0, host.length - TUNNEL_HOST_SUFFIX.length - 1);
+}
+
+function joinBackendUrl(origin: string, path: string): string {
+	const suffix = path.startsWith('/') ? path : `/${path}`;
+
+	return `${origin}${suffix}`;
+}
+
+/** Hostname-safe form of a provider id; both sides of the comparison use it. */
+function hostLabel(backendId: string): string {
+	return (
+		backendId
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9-]/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, HOST_LABEL_MAX) || 'provider'
+	);
+}
+
+function isTunnelHost(host: string): boolean {
+	return host === TUNNEL_HOST_SUFFIX || host.endsWith(`.${TUNNEL_HOST_SUFFIX}`);
+}
+
+function parseBackendEntry(entry: unknown, index: number): Backend | null {
+	if (!entry || typeof entry !== 'object') return null;
+
+	const raw = entry as Record<string, unknown>;
+	const id =
+		typeof raw.id === 'string' && raw.id.trim()
+			? raw.id.trim()
+			: `${BACKEND_ID_PREFIX}-${index + 1}`;
+	const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : '';
+	const enabled = raw.enabled !== false;
+	const headers = parseBackendHeaders(raw.headers);
+	const code = typeof raw.code === 'string' ? normalizeShareCode(raw.code) : '';
+	const baseUrl = typeof raw.baseUrl === 'string' ? raw.baseUrl.trim().replace(/\/+$/, '') : '';
+
+	// a remote provider is its code; without a usable one it is nothing
+	if (raw.kind === BackendKind.REMOTE) {
+		if (!code) return null;
+
+		return {
+			baseUrl: '',
+			code,
+			enabled,
+			headers,
+			id,
+			kind: BackendKind.REMOTE,
+			name: name || 'Remote server'
+		};
+	}
+
+	// the local backend is built in and never persisted
+	if (!baseUrl || id === LOCAL_BACKEND_ID) return null;
+
+	// a URL provider must not squat on the host the tunnel transport routes
+	if (isTunnelHost(hostOf(baseUrl)) || !isHttpUrl(baseUrl)) return null;
+
+	return {
+		baseUrl,
+		enabled,
+		headers,
+		id,
+		kind: BackendKind.URL,
+		name: name || hostOf(baseUrl)
+	};
+}
+
+function parseBackendHeaders(raw: unknown): Record<string, string> | undefined {
+	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+
+	const entries = Object.entries(raw as Record<string, unknown>)
+		.filter(([, value]) => typeof value === 'string' && value.trim() !== '')
+		.map(([key, value]) => [key.trim(), (value as string).trim()] as const);
+
+	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 }
 
 /**
@@ -89,50 +317,6 @@ export function parseBackendsSettings(rawBackends: unknown): Backend[] {
 	});
 }
 
-function joinBackendUrl(baseUrl: string, path: string): string {
-	const base = baseUrl.replace(/\/+$/, '');
-	const suffix = path.startsWith('/') ? path : `/${path}`;
-
-	return `${base}${suffix}`;
-}
-
-function parseBackendEntry(entry: unknown, index: number): Backend | null {
-	if (!entry || typeof entry !== 'object') return null;
-
-	const raw = entry as Record<string, unknown>;
-	const baseUrl = typeof raw.baseUrl === 'string' ? raw.baseUrl.trim() : '';
-
-	// the local backend is built in and never persisted
-	if (!baseUrl || raw.id === LOCAL_BACKEND_ID) return null;
-
-	const id =
-		typeof raw.id === 'string' && raw.id.trim()
-			? raw.id.trim()
-			: `${BACKEND_ID_PREFIX}-${index + 1}`;
-	const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : baseUrl;
-	const apiKey =
-		typeof raw.apiKey === 'string' && raw.apiKey.trim() ? raw.apiKey.trim() : undefined;
-
-	return {
-		apiKey,
-		baseUrl,
-		enabled: raw.enabled !== false,
-		headers: parseBackendHeaders(raw.headers),
-		id,
-		name
-	};
-}
-
-function parseBackendHeaders(raw: unknown): Record<string, string> | undefined {
-	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
-
-	const entries = Object.entries(raw as Record<string, unknown>)
-		.filter(([, value]) => typeof value === 'string' && value.trim() !== '')
-		.map(([key, value]) => [key.trim(), (value as string).trim()] as const);
-
-	return entries.length > 0 ? Object.fromEntries(entries) : undefined;
-}
-
 /**
  * Read a model's context size out of one `/v1/models` entry. A server leaves it
  * unknown when it has not loaded the model, and a model-mode listing reports the
@@ -156,4 +340,9 @@ export function readModelContextLength(value: unknown): number | undefined {
 	}
 
 	return undefined;
+}
+
+/** Origin a remote provider's requests are addressed at. */
+export function tunnelOrigin(backendId: string): string {
+	return `https://${hostLabel(backendId)}.${TUNNEL_HOST_SUFFIX}`;
 }

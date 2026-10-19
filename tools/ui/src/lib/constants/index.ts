@@ -5,6 +5,7 @@ export * from './agentic.constants';
 export * from './api-endpoints.constants';
 export * from './app.constants';
 export * from './backend.constants';
+export * from './webrtc.constants';
 export * from './chat-tabs.constants';
 export * from './database.constants';
 export * from './reasoning-effort.constants';
