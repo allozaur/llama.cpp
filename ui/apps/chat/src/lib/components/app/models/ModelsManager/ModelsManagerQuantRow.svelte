@@ -3,7 +3,7 @@
 	import ModelDraftSidecars from '../ModelDraftSidecars.svelte';
 	import ModelsManagerStatusCell from './ModelsManagerStatusCell.svelte';
 	import { modelRowActions } from './row-actions';
-	import { canLoadOption, configuredContext, isRowControlClick } from './utils';
+	import { configuredContext, isRowControlClick } from './utils';
 	import { MoreHorizontal } from '@lucide/svelte';
 	import { ContextMenuActions, DropdownMenuActions } from '$lib/components/app';
 	import { Badge } from '$lib/components/ui/badge';
@@ -39,9 +39,7 @@
 	let quant = $derived(option.parsedId?.quantization ?? option.model);
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
-	let actions = $derived(
-		modelRowActions(option, { canLoad: canLoadOption(option), favorite, isHidden }, { onDelete })
-	);
+	let actions = $derived(modelRowActions(option, { favorite, isHidden }, { onDelete }));
 	let contextMenuOpen = $state(false);
 </script>
 

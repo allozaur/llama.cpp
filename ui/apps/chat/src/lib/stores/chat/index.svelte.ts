@@ -452,11 +452,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			const modelName = modelsStore.selectedModelName;
 
 			if (modelName) apiOptions.model = modelName;
-		} else if (!serverStore.capabilities.props) {
-			// external backends need an explicit model on every request
-			const modelName = modelsStore.activeModelId;
-
-			if (modelName) apiOptions.model = modelName;
 		}
 
 		if (currentConfig.systemMessage) apiOptions.systemMessage = currentConfig.systemMessage;
@@ -985,9 +980,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			const conversationModel = getConversationModel(allMessages);
 
 			effectiveModel = modelOverride || modelsStore.selectedModelName || conversationModel;
-		} else if (!serverStore.capabilities.props) {
-			// external backends are not router mode but still require a model
-			effectiveModel = modelOverride || modelsStore.activeModelId;
 		}
 
 		// a router serves the props the request options read once the model is loaded, so the
@@ -1465,10 +1457,9 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		assistantContent: string,
 		convId: string
 	): Promise<void> {
-		const effectiveModel =
-			serverStore.isRouterMode || !serverStore.capabilities.props
-				? (modelsStore.activeModelId ?? undefined)
-				: undefined;
+		const effectiveModel = serverStore.isRouterMode
+			? (modelsStore.activeModelId ?? undefined)
+			: undefined;
 		const configValue = settingsStore.config;
 		const titlePromptTemplate =
 			typeof configValue.titleGenerationPrompt === 'string' &&
