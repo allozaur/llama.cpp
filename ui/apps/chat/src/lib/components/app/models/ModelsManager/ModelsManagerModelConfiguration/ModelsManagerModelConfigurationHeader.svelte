@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { canLoadOption } from '../utils';
 	import ModelsManagerModelConfigurationActions from './ModelsManagerModelConfigurationActions.svelte';
 	import { Button } from '@ggml/llama-ui/ui/button';
 	import { X } from '@lucide/svelte';
@@ -127,7 +126,6 @@
 	<!-- a phone floats the actions at the bottom of the pane, where the thumb is -->
 	{#if !isMobile}
 		<ModelsManagerModelConfigurationActions
-			canToggleLoad={canLoadOption(option)}
 			{isDownload}
 			{isDownloadPaused}
 			{isLoaded}
