@@ -7,12 +7,7 @@
 	import ModelVoiceRole from '../ModelVoiceRole.svelte';
 	import ModelsManagerStatusCell from './ModelsManagerStatusCell.svelte';
 	import { modelRowActions } from './row-actions';
-	import {
-		canLoadOption,
-		configuredContext,
-		downloadProgressFor,
-		isRowControlClick
-	} from './utils';
+	import { configuredContext, downloadProgressFor, isRowControlClick } from './utils';
 	import { ModelDownloadProgressBar } from '@ggml-org/llama-ui/models';
 	import { Heart, Mic, MoreHorizontal } from '@lucide/svelte';
 	import { ContextMenuActions, DropdownMenuActions } from '#lib/components/app/index.ts';
@@ -66,13 +61,7 @@
 	}
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
-	let actions = $derived(
-		modelRowActions(
-			option,
-			{ canLoad: canLoadOption(option), download, favorite, isHidden },
-			{ onDelete }
-		)
-	);
+	let actions = $derived(modelRowActions(option, { download, favorite, isHidden }, { onDelete }));
 	let contextMenuOpen = $state(false);
 </script>
 
