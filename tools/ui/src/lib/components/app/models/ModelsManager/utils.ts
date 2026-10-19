@@ -15,6 +15,7 @@ import type {
 } from '$lib/types/models';
 import { detectThinkingSupport, detectToolUseSupport, repoOf } from '$lib/utils';
 import { getBackend } from '$lib/utils/api-base';
+import { isLocalBackend } from '$lib/utils/backend';
 
 /** One repo of the table, with the rows it ships as. */
 export interface ModelQuantGroup {
@@ -144,7 +145,7 @@ export function configuredContext(option: ModelOption): number | null {
 export function servedByLabel(option: ModelOption): string {
 	const backend = getBackend(option.backendId);
 
-	if (!backend || backend.id === LOCAL_BACKEND_ID) return 'This server';
+	if (!backend || isLocalBackend(backend)) return 'This server';
 
 	return backend.name;
 }

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Plus } from '@lucide/svelte';
+	import { Plus, Radio } from '@lucide/svelte';
 	import { BackendCard, DialogBackendForm } from '$lib/components/app/backends';
 	import { Button } from '$lib/components/ui/button';
-	import { backendsModelsStore, backendsStore, serverStore } from '$lib/stores';
+	import { BackendKind } from '$lib/enums';
+	import { backendsModelsStore, backendsStore, remoteAccessStore, serverStore } from '$lib/stores';
 	import type { Backend } from '$lib/types';
 	import { fade } from 'svelte/transition';
 
@@ -12,13 +13,17 @@
 
 	let { class: className }: Props = $props();
 
-	let backends = $derived(backendsStore.external);
+	let providers = $derived(backendsStore.external);
+	/** Nothing to talk to: the page has no server and no provider was paired. */
+	let isEmpty = $derived(serverStore.localServerMissing && providers.length === 0);
 
 	let isAdding = $state(false);
 	let editing = $state<Backend | null>(null);
+	let addingKind = $state<BackendKind | undefined>(undefined);
 
-	function handleAdd() {
+	function handleAdd(kind?: BackendKind) {
 		editing = null;
+		addingKind = kind;
 		isAdding = true;
 	}
 
@@ -44,7 +49,9 @@
 	<DialogBackendForm
 		bind:open={isAdding}
 		backend={editing}
+		defaultKind={addingKind}
 		onOpenChange={handleOpenChange}
+		onPaired={() => void backendsModelsStore.loadAll()}
 		onSaved={() => void backendsModelsStore.loadAll()}
 	/>
 
@@ -56,13 +63,15 @@
 		/>
 	{/if}
 
-	{#each backends as backend (backend.id)}
+	{#each providers as backend (backend.id)}
 		<BackendCard
 			{backend}
+			onConnect={() => void backendsModelsStore.connectAndLoad(backend.id)}
 			onDelete={() => {
 				backendsStore.removeBackend(backend.id);
 				void backendsModelsStore.loadAll();
 			}}
+			onDisconnect={() => remoteAccessStore.disconnect(backend.id)}
 			onEdit={() => handleEdit(backend)}
 			onToggle={(enabled) => {
 				backendsStore.updateBackend(backend.id, { enabled });
@@ -74,12 +83,33 @@
 	<div
 		class="flex w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed p-6"
 	>
-		<Button onclick={handleAdd} size="sm">
-			<Plus />
+		{#if isEmpty}
+			<Radio class="h-8 w-8 text-muted-foreground" />
 
-			Add new provider
-		</Button>
+			<div class="max-w-sm space-y-1 text-center">
+				<p class="text-sm font-medium">This page has no server of its own</p>
 
-		<p class="text-xs text-muted-foreground">Point at another llama-server.</p>
+				<p class="text-xs text-muted-foreground">
+					Start one with <span class="font-mono">llama-server --connect</span> and paste the access code
+					it prints, or point at a llama-server by its URL.
+				</p>
+			</div>
+
+			<Button onclick={() => handleAdd(BackendKind.REMOTE)} size="sm">
+				<Radio />
+
+				Pair a remote server
+			</Button>
+		{:else}
+			<Button onclick={() => handleAdd()} size="sm">
+				<Plus />
+
+				Add new provider
+			</Button>
+
+			<p class="text-xs text-muted-foreground">
+				Point at another llama-server, or pair one by its access code.
+			</p>
+		{/if}
 	</div>
 </div>
