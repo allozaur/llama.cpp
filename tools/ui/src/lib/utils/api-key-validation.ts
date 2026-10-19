@@ -1,34 +1,36 @@
 import { error } from '@sveltejs/kit';
 import { browser } from '$app/environment';
-import { HEADERS } from '$lib/constants';
+import { HEADERS, LOCAL_BACKEND_ID } from '$lib/constants';
 import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import { apiUrl } from '$lib/utils/api-base';
 
 /**
- * Validates API key by making a request to the server props endpoint
- * Throws SvelteKit errors for authentication failures or server issues
+ * Validates the stored API key against the server serving this UI.
+ *
+ * Pinned to the built-in provider, the way the model status feed is: with a
+ * remote provider active, probing *that* server with this key would raise the
+ * API key splash over a credential that belongs to a different machine. The
+ * providers a user added carry their own key, and their failures surface on
+ * their own card instead.
+ *
+ * Throws SvelteKit errors for authentication failures or server issues.
  */
 export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<void> {
 	if (!browser) {
 		return;
 	}
 
-	const apiKey = settingsStore.config.apiKey;
+	const headers: Record<string, string> = { [HEADERS.CONTENT_TYPE]: MimeTypeApplication.JSON };
+	// Probe /props even without a stored key: on a server started with --api-key
+	// the unauthenticated request returns 401 and surfaces the API key splash,
+	// which is the onboarding path for entering the key.
+	const apiKey = settingsStore.config.apiKey?.toString().trim();
+
+	if (apiKey) headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER}${apiKey}`;
 
 	try {
-		const headers: Record<string, string> = {
-			[HEADERS.CONTENT_TYPE]: MimeTypeApplication.JSON
-		};
-
-		// Probe /props even without a stored key: on a server started with
-		// --api-key the unauthenticated request returns 401 and surfaces the
-		// API key splash, which is the onboarding path for entering the key.
-		if (apiKey) {
-			headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER}${apiKey}`;
-		}
-
-		const response = await fetch(apiUrl('/props'), { headers });
+		const response = await fetch(apiUrl('/props', LOCAL_BACKEND_ID), { headers });
 
 		if (!response.ok) {
 			if (response.status === 401 || response.status === 403) {
@@ -40,12 +42,10 @@ export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<vo
 			return;
 		}
 	} catch (err) {
-		// If it's already a SvelteKit error, re-throw it
-		if (err && typeof err === 'object' && 'status' in err) {
-			throw err;
-		}
+		// a SvelteKit error already carries its status; anything else is the local
+		// server being unreachable, which the provider cards report instead
+		if (err && typeof err === 'object' && 'status' in err) throw err;
 
-		// Network or other errors
 		console.warn('Cannot connect to server for API key validation:', err);
 	}
 }
