@@ -14,7 +14,6 @@ import type {
 	ModelSidecarBadge
 } from '#lib/types/models.js';
 import { getBackend } from '#lib/utils/api-base.ts';
-import { getBackendCapabilities } from '#lib/utils/backend.ts';
 import { detectThinkingSupport, detectToolUseSupport, repoOf } from '#lib/utils/index.ts';
 
 /** One repo of the table, with the rows it ships as. */
@@ -140,11 +139,6 @@ export function configuredContext(option: ModelOption): number | null {
 	return modelsStore.isModelRunning(option.model)
 		? modelsStore.props.getModelContextSize(option.model)
 		: null;
-}
-
-/** True when the backend that serves the model can load and unload it. */
-export function canLoadOption(option: ModelOption): boolean {
-	return getBackendCapabilities(getBackend(option.backendId)).loadUnload;
 }
 
 export function servedByLabel(option: ModelOption): string {
