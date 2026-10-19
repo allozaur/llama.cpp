@@ -569,10 +569,11 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		// model list, no matter which form the caller passed
 		const qualifiedId = qualifyModelId(backendId, rawId);
 
-		// a model from another backend makes that backend active first
+		// a model from another backend makes that backend active first; a remote
+		// one is only reachable once its tunnel is open, so the switch asks for it
 		if (backendId !== backendsStore.active.id) {
 			backendsStore.setActive(backendId);
-			await backendsModelsStore.ensureLoaded(backendId);
+			await backendsModelsStore.connectAndLoad(backendId);
 			await this.switchBackend();
 		}
 

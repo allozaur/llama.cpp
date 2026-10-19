@@ -8,7 +8,7 @@
  */
 
 import { SETTING_CONFIG_DEFAULT, SETTINGS_KEYS } from '#lib/constants/index.ts';
-import { ColorMode } from '#lib/enums/index.ts';
+import { BackendKind, ColorMode } from '#lib/enums/index.ts';
 import { ParameterSyncService } from '#lib/services/parameter-sync.service.ts';
 import { SettingsService } from '#lib/services/settings.service.ts';
 import { deviceStore } from '#lib/stores/device.svelte.ts';
@@ -89,6 +89,28 @@ class SettingsStore {
 			includeSensitiveData
 				? { ...this.config }
 				: Object.fromEntries(Object.entries(this.config).filter(([key]) => key !== 'apiKey'));
+
+		// Providers each carry a credential: an API key, or the access code that
+		// opens a tunnel to someone's machine. Keys go unless the user opts in; a
+		// remote provider without its code is meaningless, so it goes whole.
+		if (SETTINGS_KEYS.BACKENDS in configToExport && !includeSensitiveData) {
+			try {
+				const backends = JSON.parse(configToExport[SETTINGS_KEYS.BACKENDS] as string) as Array<
+					Record<string, unknown>
+				>;
+				const safeBackends = backends
+					.filter((backend) => backend.kind !== BackendKind.REMOTE)
+					.map((backend) => {
+						delete backend.apiKey;
+
+						return backend;
+					});
+
+				configToExport[SETTINGS_KEYS.BACKENDS] = JSON.stringify(safeBackends);
+			} catch {
+				delete (configToExport as Record<string, unknown>)[SETTINGS_KEYS.BACKENDS];
+			}
+		}
 
 		// Handle MCP servers: exclude custom headers unless user opts in
 		if ('mcpServers' in configToExport && !includeSensitiveData) {
