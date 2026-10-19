@@ -14,6 +14,7 @@ export {
 	apiUrl,
 	getBackend,
 	getBackendBaseUrl,
+	getBackends,
 	type BackendsSnapshot
 } from './api-base';
 export {
@@ -28,9 +29,26 @@ export {
 	backendChatUrl,
 	backendFaviconUrl,
 	backendModelsUrl,
+	backendOrigin,
+	codeOf,
 	createLocalBackend,
-	parseBackendsSettings
+	createRemoteBackend,
+	createUrlBackend,
+	hostOf,
+	isHttpUrl,
+	isLocalBackend,
+	isReachableBackend,
+	isRemoteBackend,
+	normalizeShareCode,
+	parseBackendsSettings,
+	parseTunnelOrigin,
+	readModelContextLength,
+	tunnelHostLabel,
+	tunnelOrigin
 } from './backend';
+
+// Camera access code scanning (native BarcodeDetector where the browser has one)
+export { scanFrameForCode, supportsQrScan } from './qr-scan';
 
 // Attachment utilities
 export { getAttachmentDisplayItems, isMcpPrompt, isMcpResource } from './attachment-display';
