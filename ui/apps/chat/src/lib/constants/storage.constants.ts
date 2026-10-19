@@ -62,6 +62,8 @@ export const DISMISSED_RECOMMENDED_BACKENDS_LOCALSTORAGE_KEY = `${STORAGE_APP_NA
 export const STREAM_RESUME_LOCALSTORAGE_KEY_PREFIX = `${STORAGE_APP_NAME}.streamResume.`;
 
 // Deprecated old key names (kept for backward compat while users migrate)
+/** @deprecated Remote providers are settings-backed now; the demo build kept them here */
+export const LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY = 'llama_servers';
 /** @deprecated Use {@link ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY} instead */
 export const DEPRECATED_ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.alwaysAllowedTools`;
 /** @deprecated Use {@link CONFIG_LOCALSTORAGE_KEY} instead */

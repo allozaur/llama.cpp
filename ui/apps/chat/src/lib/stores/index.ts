@@ -42,6 +42,9 @@ export { backendsModelsStore } from './backendsModels.svelte';
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 
+// REMOTE ACCESS (WebRTC tunnels to remote providers)
+export { remoteAccessStore } from './remote-access.svelte';
+
 // MODELS
 export { modelsStore } from './models/index.svelte';
 
