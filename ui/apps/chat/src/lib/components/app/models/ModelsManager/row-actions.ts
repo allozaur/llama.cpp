@@ -12,8 +12,6 @@ import type { ModelOption } from '#lib/types/models.js';
 import { repoOf } from '#lib/utils/index.ts';
 
 interface RowState {
-	/** Backend can load and unload the model. */
-	canLoad: boolean;
 	/** Download state, when the row stands for a tracked download. */
 	download?: ModelRowDownloadState | null;
 	favorite: boolean;
@@ -30,7 +28,7 @@ export function modelRowActions(
 	state: RowState,
 	handlers: RowHandlers
 ): MenuAction[] {
-	const { canLoad, download, favorite, isHidden } = state;
+	const { download, favorite, isHidden } = state;
 	// the details pane is keyed by repo, not by `<repo>:<quant>`; the entry exists only
 	// while Discover is on
 	const viewInDiscover = uiStore.isDiscoverEnabled
@@ -76,19 +74,15 @@ export function modelRowActions(
 			label: favorite ? 'Remove from favorites' : 'Add to favorites',
 			onclick: () => modelsStore.toggleFavorite(option.model)
 		},
-		...(canLoad
-			? [
-					{
-						disabled: removeBlockedReason !== null,
-						icon: Trash2,
-						label: 'Delete from disk',
-						onclick: () => handlers.onDelete(option),
-						separator: true,
-						tooltip: removeBlockedReason ?? undefined,
-						variant: 'destructive' as const
-					}
-				]
-			: []),
+		{
+			disabled: removeBlockedReason !== null,
+			icon: Trash2,
+			label: 'Delete from disk',
+			onclick: () => handlers.onDelete(option),
+			separator: true,
+			tooltip: removeBlockedReason ?? undefined,
+			variant: 'destructive' as const
+		},
 		{
 			icon: isHidden ? Eye : EyeOff,
 			label: isHidden ? 'Unhide model' : 'Hide model',
