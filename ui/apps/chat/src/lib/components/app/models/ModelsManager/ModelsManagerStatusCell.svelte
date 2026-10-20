@@ -22,7 +22,7 @@
 	// a row served by this UI loads through it in router mode only; a row of
 	// another server always loads through that server
 	let canToggleLoad = $derived(
-		!option.backendId || option.backendId === LOCAL_BACKEND_ID ? serverStore.localIsRouter : true
+		!option.serverId || option.serverId === LOCAL_BACKEND_ID ? serverStore.localIsRouter : true
 	);
 </script>
 

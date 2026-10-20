@@ -32,8 +32,8 @@ export interface ApiFetchOptions extends Omit<RequestInit, 'headers'> {
 	 * Default: false (uses JSON headers with Content-Type: application/json)
 	 */
 	authOnly?: boolean;
-	/** Backend to target; defaults to the active one. */
-	backendId?: string;
+	/** Server to target; defaults to the active one. */
+	serverId?: string;
 	/**
 	 * Additional headers to merge with default headers.
 	 */
@@ -61,10 +61,10 @@ export interface ApiFetchOptions extends Omit<RequestInit, 'headers'> {
  * ```
  */
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-	const { authOnly = false, backendId, headers: customHeaders, ...fetchOptions } = options;
-	const baseHeaders = authOnly ? getAuthHeaders(backendId) : getJsonHeaders(backendId);
+	const { authOnly = false, headers: customHeaders, serverId, ...fetchOptions } = options;
+	const baseHeaders = authOnly ? getAuthHeaders(serverId) : getJsonHeaders(serverId);
 	const headers = { ...baseHeaders, ...customHeaders };
-	const url = apiUrl(path, backendId);
+	const url = apiUrl(path, serverId);
 
 	let response;
 
@@ -107,7 +107,7 @@ export async function apiFetchWithParams<T>(
 	params: Record<string, string>,
 	options: ApiFetchOptions = {}
 ): Promise<T> {
-	const url = new URL(apiUrl(basePath, options.backendId), window.location.href);
+	const url = new URL(apiUrl(basePath, options.serverId), window.location.href);
 
 	for (const [key, value] of Object.entries(params)) {
 		if (value !== undefined && value !== null) {

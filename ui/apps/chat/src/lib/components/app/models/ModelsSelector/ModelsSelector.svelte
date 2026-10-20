@@ -4,7 +4,6 @@
 	import ModelsSelectorReasoningBadge from './ModelsSelectorReasoningBadge.svelte';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { ChevronDown, Loader2 } from '@lucide/svelte';
-	import { DialogBackendForm } from '#lib/components/app/backends/index.ts';
 	import {
 		ChatFormActionReasoning,
 		ModelId,
@@ -14,6 +13,7 @@
 		ModelsSelectorOption,
 		ModelsSelectorTriggerIcon
 	} from '#lib/components/app/index.ts';
+	import { DialogServerForm } from '#lib/components/app/servers/index.ts';
 	import {
 		DROPDOWN_MENU_CONTENT_SEARCH_SELECTOR,
 		LOCAL_BACKEND_ID,
@@ -24,10 +24,10 @@
 	import { useChatFormModel } from '#lib/hooks/use-chat-form-model.svelte.ts';
 	import { useModelsSelector } from '#lib/hooks/use-models-selector.svelte.ts';
 	import {
-		backendsModelsStore,
-		backendsStore,
 		deviceStore,
 		modelsStore,
+		serversModelsStore,
+		serversStore,
 		serverStore,
 		settingsStore,
 		uiStore
@@ -65,18 +65,18 @@
 		(settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME] ?? true) &&
 			(!isMobile || settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME_ON_MOBILE] === true)
 	);
-	// the provider this selector is pointed at, which is the one its colours report
+	// the server this selector is pointed at, which is the one its colours report
 	let selectorError = $derived.by(() => {
-		const backendId = backendsStore.active.id;
+		const serverId = serversStore.active.id;
 
-		return backendId === LOCAL_BACKEND_ID
+		return serverId === LOCAL_BACKEND_ID
 			? Boolean(serverStore.error)
-			: backendsModelsStore.get(backendId).error !== null;
+			: serversModelsStore.get(serverId).error !== null;
 	});
 
 	let isOpen = $state(false);
 	let highlightedId = $state<string | null>(null);
-	let showAddBackend = $state(false);
+	let showAddServer = $state(false);
 
 	const formModel = useChatFormModel();
 
@@ -138,8 +138,8 @@
 		for (const group of ms.groupedFilteredOptions.available) {
 			for (const item of group.items) order.push(item.option.id);
 		}
-		for (const provider of ms.groupedFilteredOptions.providers) {
-			for (const item of provider.items) order.push(item.option.id);
+		for (const server of ms.groupedFilteredOptions.servers) {
+			for (const item of server.items) order.push(item.option.id);
 		}
 
 		return order;
@@ -175,7 +175,7 @@
 			return;
 		}
 
-		// an option id is backend-qualified, the router lists the raw model id
+		// an option id is server-qualified, the router lists the raw model id
 		const rawId = rawModelId(modelId);
 		const status = modelsStore.getModelStatus(rawId);
 
@@ -184,11 +184,11 @@
 		await modelsStore.status.unload(rawId);
 	}
 
-	function handleAddBackend() {
+	function handleAddServer() {
 		isOpen = false;
 
 		// let the menu finish closing before the dialog takes focus
-		setTimeout(() => (showAddBackend = true), 0);
+		setTimeout(() => (showAddServer = true), 0);
 	}
 
 	function handleSearchKeyDown(event: KeyboardEvent) {
@@ -337,10 +337,10 @@
 			{:else}
 				<button
 					class="cursor-pointer px-4 py-3 text-left text-body-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-					onclick={handleAddBackend}
+					onclick={handleAddServer}
 					type="button"
 				>
-					No models yet. Add a backend to get started.
+					No models yet. Add a server to get started.
 				</button>
 			{/if}
 		{/if}
@@ -351,9 +351,9 @@
 			favorites={ms.favoriteItems}
 			groups={ms.groupedFilteredOptions}
 			loaded={ms.loadedItems}
-			onProviderBack={ms.isProviderView ? ms.closeProvider : undefined}
-			onProviderOpen={ms.openProvider}
 			onSelect={ms.handleSelect}
+			onServerBack={ms.isServerView ? ms.closeServer : undefined}
+			onServerOpen={ms.openServer}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-2 mb-1 px-2 py-2.5 text-body-sm font-semibold text-foreground/80 select-none"
 			{showOrgName}
@@ -410,7 +410,7 @@
 			error={selectorError}
 			{highlightedId}
 			{ms}
-			onAddBackend={handleAddBackend}
+			onAddServer={handleAddServer}
 			onHighlight={(id) => (highlightedId = id)}
 			onModelKeyAction={(id, unload) => void handleModelKeyAction(id, unload)}
 			onSearchKeyDown={handleSearchKeyDown}
@@ -498,7 +498,7 @@
 	{/if}
 {/if}
 
-<DialogBackendForm
-	bind:open={showAddBackend}
-	onSaved={(backend) => void ms.showBackendModels(backend.id)}
+<DialogServerForm
+	bind:open={showAddServer}
+	onSaved={(server) => void ms.showServerModels(server.id)}
 />

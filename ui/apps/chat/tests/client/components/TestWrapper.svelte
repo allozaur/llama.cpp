@@ -4,8 +4,8 @@
 </script>
 
 <!--
-	Test wrapper that provides necessary context providers for component testing.
-	This mirrors the providers from +layout.svelte.
+	Test wrapper that provides necessary context servers for component testing.
+	This mirrors the servers from +layout.svelte.
 -->
 <Tooltip.Provider>
 	<Page />

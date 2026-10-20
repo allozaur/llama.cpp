@@ -27,10 +27,10 @@ import {
 } from '#lib/extensions/index.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
-// direct imports between stores, not via the barrel, to avoid circular deps
-import { backendsStore } from '#lib/stores/backends.svelte.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '#lib/stores/servers.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type {
 	OpenAIToolDefinition,
@@ -267,8 +267,9 @@ class ToolsStore {
 
 	async fetchServerTools(): Promise<void> {
 		// the /tools endpoint only exists on the local llama.cpp server, so the
-		// list follows the built-in backend rather than the selected model
-		if (!serverStore.hasLocalServer || !backendsStore.local.enabled) {
+		// list follows the built-in server rather than the selected model
+		if (!serverStore.hasLocalServer || !serversStore.local.enabled) {
+			this._serverToolInfos = [];
 			this._serverTools = [];
 			this.cwdAwareTools = new SvelteSet();
 

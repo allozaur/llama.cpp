@@ -21,19 +21,19 @@ import {
 import { ReasoningEffort, ServerModelSource, ServerModelStatus } from '#lib/enums/index.ts';
 import { HuggingFaceService } from '#lib/services/huggingface.service.ts';
 import { ModelsService } from '#lib/services/models.service.ts';
-// direct imports between stores, not via the barrel, to avoid circular deps
-import { backendsStore } from '#lib/stores/backends.svelte.ts';
-import { backendsModelsStore } from '#lib/stores/backendsModels.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { type ModelPropsHost, ModelPropsManager } from '#lib/stores/models/props.svelte.ts';
 import { type ModelStatusHost, ModelStatusManager } from '#lib/stores/models/status.svelte.ts';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '#lib/stores/servers.svelte.ts';
+import { serversModelsStore } from '#lib/stores/serversModels.svelte.ts';
 import type { ApiModelDataEntry } from '#lib/types/index.ts';
 import type { ParsedModelId } from '#lib/types/models.js';
-import { readModelContextLength } from '#lib/utils/backend.ts';
 import { getConversationModel } from '#lib/utils/conversation-utils.ts';
 import { repoOf } from '#lib/utils/model-names.ts';
-import { backendIdFromModelId, qualifyModelId, rawModelId } from '#lib/utils/model-option-id.ts';
+import { qualifyModelId, rawModelId, serverIdFromModelId } from '#lib/utils/model-option-id.ts';
+import { readModelContextLength } from '#lib/utils/servers.ts';
 import { browser } from '$app/env';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
@@ -74,8 +74,12 @@ function loadHiddenModels(): Set<string> {
 
 	try {
 		const raw = localStorage.getItem(HIDDEN_MODELS_LOCALSTORAGE_KEY);
+		const ids = raw ? (JSON.parse(raw) as string[]) : [];
 
-		return raw ? new SvelteSet(JSON.parse(raw) as string[]) : new SvelteSet<string>();
+		// ids saved before models were qualified by server all belonged to the local one
+		return new SvelteSet(
+			ids.map((id) => (serverIdFromModelId(id) ? id : qualifyModelId(LOCAL_BACKEND_ID, id)))
+		);
 	} catch {
 		return new SvelteSet<string>();
 	}
@@ -99,7 +103,7 @@ function loadGroupOpenState(): SvelteMap<string, boolean> {
 	}
 }
 
-/** Recently used backend-qualified ids, most recent first. */
+/** Recently used server-qualified ids, most recent first. */
 function loadRecentModels(): string[] {
 	if (!browser) return [];
 
@@ -126,10 +130,10 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	hiddenModelIds = $state<Set<string>>(loadHiddenModels());
 	loading = $state(false);
 	/**
-	 * Every selectable model across enabled backends. The active backend's
+	 * Every selectable model across enabled servers. The active server's
 	 * models come from {@link activeModels}; the rest come from the background
-	 * prefetch cache. Ids are backend-qualified so the same model name on two
-	 * backends stays distinct.
+	 * prefetch cache. Ids are server-qualified so the same model name on two
+	 * servers stays distinct.
 	 */
 	/**
 	 * Computed once per state change. Rows reach this through per-model props
@@ -137,31 +141,31 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 * selector quadratic in the size of the catalog.
 	 */
 	models = $derived.by((): ModelOption[] => {
-		const activeBackendId = backendsStore.active.id;
+		const activeServerId = serversStore.active.id;
 		const merged: ModelOption[] = [];
 		const seen = new SvelteSet<string>();
-		const push = (option: ModelOption, backendId: string) => {
-			const id = qualifyModelId(backendId, rawModelId(option.id));
+		const push = (option: ModelOption, serverId: string) => {
+			const id = qualifyModelId(serverId, rawModelId(option.id));
 
-			// a backend can be listed twice while a switch is in flight: the rows
-			// of the previous backend are still in activeModels
+			// a server can be listed twice while a switch is in flight: the rows
+			// of the previous server are still in activeModels
 			if (seen.has(id)) return;
 
 			seen.add(id);
-			merged.push({ ...option, backendId, id });
+			merged.push({ ...option, id, serverId });
 		};
 
 		for (const option of this.activeModels) {
-			// keep the backend an option was built for: rows from the previous
-			// backend must not be relabelled while a switch is in flight
-			push(option, option.backendId ?? activeBackendId);
+			// keep the server an option was built for: rows from the previous
+			// server must not be relabelled while a switch is in flight
+			push(option, option.serverId ?? activeServerId);
 		}
 
-		for (const backend of backendsStore.enabled) {
-			if (backend.id === activeBackendId) continue;
+		for (const server of serversStore.enabled) {
+			if (server.id === activeServerId) continue;
 
-			for (const option of backendsModelsStore.get(backend.id).models) {
-				push(option, option.backendId ?? backend.id);
+			for (const option of serversModelsStore.get(server.id).models) {
+				push(option, option.serverId ?? server.id);
 			}
 		}
 
@@ -195,7 +199,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 */
 	get activeModelId(): string | null {
 		if (!serverStore.isRouterMode) {
-			// external backends expose a selectable list; prefer the user's pick
+			// external servers expose a selectable list; prefer the user's pick
 			const selected = this.selectedModelId
 				? this.models.find((m) => m.id === this.selectedModelId)
 				: undefined;
@@ -349,7 +353,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			return;
 		}
 
-		// favorites are shared across backends, so a stored id may belong to another one
+		// favorites are shared across servers, so a stored id may belong to another one
 		const favorite = this.favoriteModelIds.values().next()?.value;
 		const favoriteOption = favorite
 			? availableModels.find((m) => m.id === favorite || m.model === favorite)
@@ -366,16 +370,23 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	}
 
 	/**
-	 * Make the backend serving `modelName` active when it is not already.
+	 * Make the server serving `modelName` active when it is not already.
 	 * A conversation keeps the model that generated it, which can belong to a
-	 * backend other than the active one.
+	 * server other than the active one.
 	 */
-	async ensureModelBackend(modelName: string): Promise<void> {
-		const option = this.models.find((model) => model.model === modelName);
+	async ensureModelServer(modelName: string): Promise<void> {
+		const options = this.models.filter((model) => model.model === modelName && model.serverId);
 
-		if (!option?.backendId || option.backendId === backendsStore.active.id) return;
+		// the same model name can be served by several servers: stay on the active one
+		// when it has it, rather than switching to whichever server is listed first
+		if (
+			options.length === 0 ||
+			options.some((model) => model.serverId === serversStore.active.id)
+		) {
+			return;
+		}
 
-		await this.selectModelById(option.id);
+		await this.selectModelById(options[0].id);
 	}
 
 	/**
@@ -473,20 +484,20 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	}
 
 	/**
-	 * Load state a model's own backend reports. Only the local server has a status
-	 * feed, so an external backend answers from its own model listing.
+	 * Load state a model's own server reports. Only the local server has a status
+	 * feed, so an external server answers from its own model listing.
 	 */
 	getModelStatus(modelId: string): ServerModelStatus | null {
 		// the local feed reports the models its router serves: a same-named entry
-		// on a remote provider must not shadow it
+		// on a remote server must not shadow it
 		const model = this.routerModels.find((m) => m.id === modelId);
 
 		if (model) return (model.status?.value as ServerModelStatus) ?? null;
 
-		// a model the local router does not serve belongs to a backend, and the
-		// first enabled backend listing it owns the state
-		for (const backend of backendsStore.enabled) {
-			const option = backendsModelsStore.get(backend.id).models.find((m) => m.model === modelId);
+		// a model the local router does not serve belongs to a server, and the
+		// first enabled server listing it owns the state
+		for (const server of serversStore.enabled) {
+			const option = serversModelsStore.get(server.id).models.find((m) => m.model === modelId);
 
 			if (option) return (option.status?.value as ServerModelStatus) ?? null;
 		}
@@ -499,8 +510,13 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 * hidden by the user, so an automatic pick never lands on one it doesn't show.
 	 */
 	getVisibleModels(): ModelOption[] {
+		const activeServerId = serversStore.active.id;
+
+		// the active server's rows carry raw ids, hidden ones are saved server-qualified
 		return this.activeModels.filter(
-			(option) => this.props.getModelProps(option.model)?.ui !== false && !this.isHidden(option.id)
+			(option) =>
+				this.props.getModelProps(option.model)?.ui !== false &&
+				!this.isHidden(qualifyModelId(option.serverId ?? activeServerId, rawModelId(option.id)))
 		);
 	}
 
@@ -563,18 +579,18 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	async selectModelById(modelId: string, options?: { recordRecent?: boolean }): Promise<void> {
 		if (!modelId || this.updating) return;
 
-		const backendId = backendIdFromModelId(modelId) ?? backendsStore.active.id;
+		const serverId = serverIdFromModelId(modelId) ?? serversStore.active.id;
 		const rawId = rawModelId(modelId);
-		// the selection is stored backend-qualified, matching the aggregated
+		// the selection is stored server-qualified, matching the aggregated
 		// model list, no matter which form the caller passed
-		const qualifiedId = qualifyModelId(backendId, rawId);
+		const qualifiedId = qualifyModelId(serverId, rawId);
 
-		// a model from another backend makes that backend active first; a remote
+		// a model from another server makes that server active first; a remote
 		// one is only reachable once its tunnel is open, so the switch asks for it
-		if (backendId !== backendsStore.active.id) {
-			backendsStore.setActive(backendId);
-			await backendsModelsStore.connectAndLoad(backendId);
-			await this.switchBackend();
+		if (serverId !== serversStore.active.id) {
+			serversStore.setActive(serverId);
+			await serversModelsStore.connectAndLoad(serverId);
+			await this.switchServer();
 		}
 
 		if (this.selectedModelId === qualifiedId) {
@@ -712,35 +728,35 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	}
 
 	/**
-	 * Activate a backend for the selector tabs. Everything comes from memory:
+	 * Activate a server for the selector tabs. Everything comes from memory:
 	 * the model list and router rows are prefetched at startup and the local
-	 * server state is kept while an external backend is active. The selection
+	 * server state is kept while an external server is active. The selection
 	 * is left alone, switching tabs must not pick a model.
 	 */
-	async switchBackend(): Promise<void> {
+	async switchServer(): Promise<void> {
 		this.error = null;
 
-		const backend = backendsStore.active;
+		const server = serversStore.active;
 
 		// local props describe the server the UI is served from; keep them while
-		// an external backend is active instead of dropping and refetching
-		if (backend.id === LOCAL_BACKEND_ID) {
+		// an external server is active instead of dropping and refetching
+		if (server.id === LOCAL_BACKEND_ID) {
 			serverStore.restoreLocalState();
 		} else {
 			serverStore.cacheLocalState();
 			serverStore.clear();
 		}
 
-		const cached = backendsModelsStore.get(backend.id);
+		const cached = serversModelsStore.get(server.id);
 
 		if (!cached.loaded) {
-			// nothing prefetched for this backend (startup prefetch failed): load it once
+			// nothing prefetched for this server (startup prefetch failed): load it once
 			await this.fetch(true);
 
 			return;
 		}
 
-		if (backend.id === LOCAL_BACKEND_ID && !serverStore.props) {
+		if (server.id === LOCAL_BACKEND_ID && !serverStore.props) {
 			// first visit to the local tab in this session
 			await serverStore.fetch({ background: true });
 		}
@@ -750,7 +766,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		// the local router rows carry the load statuses; the startup prefetch
 		// already returned them, so a tab switch rebuilds the list from memory
-		if (backend.id === LOCAL_BACKEND_ID && this.routerModels.length === 0 && cached.raw) {
+		if (server.id === LOCAL_BACKEND_ID && this.routerModels.length === 0 && cached.raw) {
 			this.routerModels = cached.raw.data;
 			this.activeModels = this.buildModelOptions(cached.raw);
 		}
@@ -797,8 +813,8 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		const repos: string[] = [];
 
-		for (const backend of backendsStore.enabled) {
-			for (const option of backendsModelsStore.get(backend.id).models) {
+		for (const server of serversStore.enabled) {
+			for (const option of serversModelsStore.get(server.id).models) {
 				const repo = repoOf(option.model);
 
 				if (repo?.includes('/') && !repos.includes(repo)) repos.push(repo);
@@ -849,13 +865,10 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 					return {
 						aliases: item.aliases ?? [],
-						// stamp the backend here so the option keeps its origin even
-						// after another backend becomes active
-						backendId: backendsStore.active.id,
 						capabilities: rawCapabilities.filter((value: unknown): value is string =>
 							Boolean(value)
 						),
-						// external backends report the context in their listing, so the
+						// external servers report the context in their listing, so the
 						// gauge keeps working when the list is rebuilt on reload
 						contextLength: readModelContextLength(item),
 						description: details?.description,
@@ -867,6 +880,9 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 						model: modelId,
 						name: this.toDisplayName(displayNameSource),
 						parsedId: ModelsService.parseModelId(modelId),
+						// stamp the server here so the option keeps its origin even
+						// after another server becomes active
+						serverId: serversStore.active.id,
 						tags: item.tags ?? []
 					};
 				})

@@ -26,14 +26,14 @@
 		ms: UseModelsSelectorReturn;
 		currentModel?: string | null;
 		disabled?: boolean;
-		/** The provider behind this selector is unreachable. */
+		/** The server behind this selector is unreachable. */
 		error?: boolean;
 		/** Model id the list highlights from the keyboard; the owner tracks it. */
 		highlightedId?: string | null;
 		/** Bind the menu's open state, so the owner sees the close too. */
 		open?: boolean;
 		showOrgName?: boolean;
-		onAddBackend?: () => void;
+		onAddServer?: () => void;
 		onHighlight?: (id: string | null) => void;
 		onManageModels?: () => void;
 		onModelKeyAction?: (modelId: string, unload: boolean) => void;
@@ -48,7 +48,7 @@
 		error = false,
 		highlightedId = null,
 		ms,
-		onAddBackend,
+		onAddServer,
 		onHighlight,
 		onManageModels,
 		onModelKeyAction,
@@ -272,10 +272,10 @@ manager's other entry points -->
 			{:else}
 				<button
 					class="cursor-pointer px-4 py-3 text-left text-body-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-					onclick={() => onAddBackend?.()}
+					onclick={() => onAddServer?.()}
 					type="button"
 				>
-					No models yet. Add a backend to get started.
+					No models yet. Add a server to get started.
 				</button>
 			{/if}
 		{/if}
@@ -286,9 +286,9 @@ manager's other entry points -->
 			favorites={ms.favoriteItems}
 			groups={ms.groupedFilteredOptions}
 			loaded={ms.loadedItems}
-			onProviderBack={ms.isProviderView ? ms.closeProvider : undefined}
-			onProviderOpen={ms.openProvider}
 			onSelect={ms.handleSelect}
+			onServerBack={ms.isServerView ? ms.closeServer : undefined}
+			onServerOpen={ms.openServer}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-1 mb-1 px-2 py-2 text-body-sm font-semibold text-foreground/80 select-none"
 			{showOrgName}

@@ -171,7 +171,7 @@ export class ChatStreamManager {
 	}
 
 	/**
-	 * Resync the activity ledger's remote set from the backend. Called by the layout at mount and
+	 * Resync the activity ledger's remote set from the server. Called by the layout at mount and
 	 * on visibilitychange, no polling. A snapshot semantic: stale entries for sessions that
 	 * finalized while the browser was elsewhere are dropped naturally.
 	 */
