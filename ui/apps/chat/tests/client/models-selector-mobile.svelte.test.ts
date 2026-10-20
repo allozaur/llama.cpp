@@ -34,7 +34,7 @@ describe('model picker drawer on a phone', () => {
 		vi.spyOn(ModelsService, 'list').mockResolvedValue({
 			data: [{ id: option.model }, { id: other.model }]
 		} as never);
-		// the models read through the providers data layer on this layer of the stack
+		// the models read through the servers data layer on this layer of the stack
 		modelsStore.activeModels = [option, other];
 		await modelsStore.selectModelById(option.id);
 		await page.viewport(PHONE.width, PHONE.height);

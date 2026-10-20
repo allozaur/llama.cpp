@@ -23,7 +23,7 @@ import { page } from '$app/state';
 
 export interface UseContextGaugeReturn {
 	readonly activeModelId: string | null;
-	/** Whether the active backend can load the model it is serving. */
+	/** Whether the active server can load the model it is serving. */
 	readonly canLoadActiveModel: boolean;
 	readonly isActiveModelLoaded: boolean;
 	readonly isActiveModelLoading: boolean;
@@ -104,7 +104,7 @@ export function useContextGauge(): UseContextGaugeReturn {
 			transientDetails.length > 0
 	);
 	// loading is a llama.cpp router feature, and the gauge tracks the active model,
-	// so the active backend decides whether a load is possible at all
+	// so the active server decides whether a load is possible at all
 	const canLoadActiveModel = $derived(serverStore.isRouterMode);
 
 	async function loadModel() {

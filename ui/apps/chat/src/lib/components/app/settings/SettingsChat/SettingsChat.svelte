@@ -68,7 +68,7 @@
 	});
 
 	// Snapshot used to persist only the fields edited in this dialog. Config keys
-	// that other surfaces write directly (backends, MCP servers) must not be
+	// that other surfaces write directly (servers, MCP servers) must not be
 	// clobbered by the dialog's save.
 	let baseline: SettingsConfigType = $state({ ...settingsStore.config });
 
