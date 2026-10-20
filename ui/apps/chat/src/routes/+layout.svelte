@@ -27,6 +27,7 @@
 		deviceStore,
 		mcpStore,
 		modelsStore,
+		remoteAccessStore,
 		serverStore,
 		settingsStore,
 		tabsStore,
@@ -228,6 +229,10 @@
 		if (document.visibilityState !== 'visible') return;
 
 		void chatStore.syncRemoteRunningStreams();
+
+		// mobile browsers drop a peer connection when the tab is backgrounded, so a
+		// tunnel that was open is asked for again on the way back
+		remoteAccessStore.recoverChannels();
 	}
 
 	$effect(() => {
