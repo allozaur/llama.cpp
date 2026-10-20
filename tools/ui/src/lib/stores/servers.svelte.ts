@@ -85,8 +85,8 @@ class ServersStore {
 	 * worth running (the servers dialog tests it, startup only tests the
 	 * server the app opens with).
 	 */
-	addRemoteServer(code: string, name?: string, id?: string): Server {
-		const server = createRemoteServer(code, id ?? uuid(), name);
+	addRemoteServer(code: string, name?: string, id?: string, apiKey?: string): Server {
+		const server = createRemoteServer(code, id ?? uuid(), name, apiKey);
 
 		this.saveExternal([...this.external, server]);
 
