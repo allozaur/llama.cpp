@@ -4,9 +4,9 @@
 // model from.
 
 import DialogServersWrapper from './components/DialogServersWrapper.svelte';
-import { SidebarNavigationActions } from '$lib/components/app';
+import { ChatScreenServerError, SidebarNavigationActions } from '$lib/components/app';
 import { CODE_CHARS, CODE_LENGTHS, SETTINGS_KEYS } from '$lib/constants';
-import { serversStore, settingsStore } from '$lib/stores';
+import { serversStore, serverStore, settingsStore, uiStore } from '$lib/stores';
 import { getAuthHeadersForServer } from '$lib/utils/api-headers';
 import { createRemoteServer, createUrlServer } from '$lib/utils/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -122,5 +122,27 @@ describe('server credentials', () => {
 
 		expect(serversStore.external.find((server) => server.id === 'r1')?.code).toBe(CODE);
 		expect(createRemoteServer(CODE, 'r2', 'Office').code).toBe(CODE);
+	});
+});
+
+describe('a chat with no server at all', () => {
+	beforeEach(() => {
+		settingsStore.updateConfig(SETTINGS_KEYS.SERVERS, '[]');
+		serverStore.error = 'Connection refused';
+	});
+
+	afterEach(() => {
+		serverStore.error = null;
+		uiStore.serversOpen = false;
+	});
+
+	it('offers pairing as the way out', async () => {
+		const screen = render(ChatScreenServerError);
+
+		await expect.element(screen.getByText('Server unavailable')).toBeVisible();
+
+		await screen.getByRole('button', { name: 'Pair a remote server' }).click();
+
+		expect(uiStore.serversOpen).toBe(true);
 	});
 });
