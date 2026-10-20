@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { AlertTriangle, Loader2, RefreshCw } from '@lucide/svelte';
+	import { AlertTriangle, Loader2, RefreshCw, Server } from '@lucide/svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { useBackendAvailability } from '$lib/hooks/use-backend-availability.svelte';
-	import { serversStore, serverStore } from '$lib/stores';
+	import { serversStore, serverStore, uiStore } from '$lib/stores';
 
 	const availability = useBackendAvailability();
 
@@ -40,7 +40,19 @@
 			</Alert.Title>
 
 			{#if !isLoadingModel}
-				<Alert.Description>{serverStore.error}</Alert.Description>
+				<Alert.Description class="flex flex-col items-start gap-2">
+					<span>{serverStore.error}</span>
+
+					<!--nothing here can serve a request: pairing one is the way out-->
+					<button
+						class="flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
+						onclick={() => uiStore.openServers()}
+					>
+						<Server class="h-3 w-3" />
+
+						Pair a remote server
+					</button>
+				</Alert.Description>
 			{/if}
 		</Alert.Root>
 	</div>
