@@ -27,3 +27,26 @@ export enum TunnelStatus {
 	/** No tunnel for this server, none attempted. */
 	IDLE = 'idle'
 }
+
+/**
+ * State a server card reports: its tunnel and the server behind it composed.
+ * A remote server has two things that can fail, and the tunnel wins, since a
+ * closed tunnel makes the listing meaningless. A remote server nobody
+ * connected to yet is idle, which is a choice the user made, not a failure.
+ */
+export enum ServerCardState {
+	/** The channel dropped, or the handshake failed. */
+	CHANNEL_DOWN = 'channel_down',
+	/** The server is being asked for its models. */
+	CHECKING = 'checking',
+	/** Handshake in progress. */
+	CONNECTING = 'connecting',
+	/** Remote server with no channel, none attempted. */
+	IDLE = 'idle',
+	/** Nothing to report. */
+	NONE = 'none',
+	/** Listing answered. */
+	ONLINE = 'online',
+	/** Channel up, or no channel to fail, and the server did not answer. */
+	UNREACHABLE = 'unreachable'
+}
