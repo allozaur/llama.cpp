@@ -98,6 +98,6 @@ export { default as SettingsChatToolsTab } from './SettingsChat/SettingsChatTool
 export { default as SettingsChatPermissionRules } from './SettingsChat/SettingsChatPermissionRules.svelte';
 
 /**
- * Providers panel for chat settings. Switches between the llama.cpp and
+ * Servers panel for chat settings. Switches between the llama.cpp and
  * OpenAI-compatible protocols and lists the endpoints configured for each.
  */

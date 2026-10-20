@@ -96,8 +96,8 @@ export const STATS_UNITS = {
 
 export const DEFAULT_MOBILE_BREAKPOINT = 768;
 
-/** Models listed per remote provider before the "+ X more" line; search covers the rest. */
-export const REMOTE_PROVIDER_MODEL_LIMIT = 12;
+/** Models listed per remote server before the "+ X more" line; search covers the rest. */
+export const REMOTE_SERVER_MODEL_LIMIT = 12;
 
 /** Model rows mounted before the list scrolls; a local catalog can hold hundreds. */
 export const MODEL_ROW_WINDOW = 50;

@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Plus, Radio } from '@lucide/svelte';
-	import { BackendCard, DialogBackendForm } from '#lib/components/app/backends/index.ts';
-	import { BackendKind } from '#lib/enums/index.ts';
+	import { DialogServerForm, ServerCard } from '#lib/components/app/servers/index.ts';
+	import { ServerKind } from '#lib/enums/index.ts';
 	import {
-		backendsModelsStore,
-		backendsStore,
 		remoteAccessStore,
+		serversModelsStore,
+		serversStore,
 		serverStore
 	} from '#lib/stores/index.ts';
-	import type { Backend } from '#lib/types/index.ts';
+	import type { Server } from '#lib/types/index.ts';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -18,22 +18,22 @@
 
 	let { class: className }: Props = $props();
 
-	let providers = $derived(backendsStore.external);
-	/** Nothing to talk to: the page has no server and no provider was paired. */
-	let isEmpty = $derived(serverStore.localServerMissing && providers.length === 0);
+	let servers = $derived(serversStore.external);
+	/** Nothing to talk to: the page has no server and no server was paired. */
+	let isEmpty = $derived(serverStore.localServerMissing && servers.length === 0);
 
 	let isAdding = $state(false);
-	let editing = $state<Backend | null>(null);
-	let addingKind = $state<BackendKind | undefined>(undefined);
+	let editing = $state<Server | null>(null);
+	let addingKind = $state<ServerKind | undefined>(undefined);
 
-	function handleAdd(kind?: BackendKind) {
+	function handleAdd(kind?: ServerKind) {
 		editing = null;
 		addingKind = kind;
 		isAdding = true;
 	}
 
-	function handleEdit(backend: Backend) {
-		editing = backend;
+	function handleEdit(server: Server) {
+		editing = server;
 		isAdding = true;
 	}
 
@@ -51,37 +51,37 @@
 	class={['grid gap-4', className]}
 	style="grid-template-columns: repeat(auto-fill, minmax(min(25rem, calc(100dvw - 4rem)), 1fr));"
 >
-	<DialogBackendForm
+	<DialogServerForm
 		bind:open={isAdding}
-		backend={editing}
 		defaultKind={addingKind}
 		onOpenChange={handleOpenChange}
-		onPaired={() => void backendsModelsStore.loadAll()}
-		onSaved={() => void backendsModelsStore.loadAll()}
+		onPaired={() => void serversModelsStore.loadAll()}
+		onSaved={() => void serversModelsStore.loadAll()}
+		server={editing}
 	/>
 
 	{#if !serverStore.localServerMissing}
-		<BackendCard
-			backend={backendsStore.local}
+		<ServerCard
 			isLocal
-			onToggle={(enabled) => backendsStore.setLocalEnabled(enabled)}
+			onToggle={(enabled) => serversStore.setLocalEnabled(enabled)}
+			server={serversStore.local}
 		/>
 	{/if}
 
-	{#each providers as backend (backend.id)}
-		<BackendCard
-			{backend}
-			onConnect={() => void backendsModelsStore.connectAndLoad(backend.id)}
+	{#each servers as server (server.id)}
+		<ServerCard
+			onConnect={() => void serversModelsStore.connectAndLoad(server.id)}
 			onDelete={() => {
-				backendsStore.removeBackend(backend.id);
-				void backendsModelsStore.loadAll();
+				serversStore.removeServer(server.id);
+				void serversModelsStore.loadAll();
 			}}
-			onDisconnect={() => remoteAccessStore.disconnect(backend.id)}
-			onEdit={() => handleEdit(backend)}
+			onDisconnect={() => remoteAccessStore.disconnect(server.id)}
+			onEdit={() => handleEdit(server)}
 			onToggle={(enabled) => {
-				backendsStore.updateBackend(backend.id, { enabled });
-				void backendsModelsStore.loadAll();
+				serversStore.updateServer(server.id, { enabled });
+				void serversModelsStore.loadAll();
 			}}
+			{server}
 		/>
 	{/each}
 
@@ -100,7 +100,7 @@
 				</p>
 			</div>
 
-			<Button onclick={() => handleAdd(BackendKind.REMOTE)} size="sm">
+			<Button onclick={() => handleAdd(ServerKind.REMOTE)} size="sm">
 				<Radio />
 
 				Pair a remote server
@@ -109,7 +109,7 @@
 			<Button onclick={() => handleAdd()} size="sm">
 				<Plus />
 
-				Add new provider
+				Add new server
 			</Button>
 
 			<p class="text-xs text-muted-foreground">

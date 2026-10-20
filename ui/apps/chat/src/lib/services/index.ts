@@ -20,12 +20,12 @@
  */
 
 /**
- * **BackendsService** - Backend connectivity checks
+ * **ServersService** - Server connectivity checks
  *
- * Probes an external backend's models endpoint to validate its URL and
+ * Probes an external server's models endpoint to validate its URL and
  * credentials before it is saved. Stateless.
  */
-export { BackendsService } from './backends.service';
+export { ServersService } from './servers.service';
 
 /**
  * **ChatService** - Chat Completions API communication layer

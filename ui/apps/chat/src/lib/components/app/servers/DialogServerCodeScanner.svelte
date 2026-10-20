@@ -2,8 +2,8 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Dialog from '@ggml-org/llama-ui/ui/dialog';
 	import { Camera, CameraOff } from '@lucide/svelte';
-	import { normalizeShareCode } from '#lib/utils/backend.ts';
 	import { scanFrameForCode } from '#lib/utils/qr-scan.ts';
+	import { normalizeShareCode } from '#lib/utils/servers.ts';
 
 	/** How often to ask the detector for a frame; the call is slow. */
 	const SCAN_INTERVAL_MS = 350;

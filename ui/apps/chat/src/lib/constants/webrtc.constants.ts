@@ -1,13 +1,13 @@
 /**
- * Remote provider transport constants.
+ * Remote server transport constants.
  *
- * A remote provider is addressed by a synthetic origin whose host carries its
- * id (`https://<providerId>.remote.llamacpp.invalid`). The suffix is reserved
+ * A remote server is addressed by a synthetic origin whose host carries its
+ * id (`https://<serverId>.remote.llamacpp.invalid`). The suffix is reserved
  * by RFC 6761, so a request that ever escapes the tunnel transport dies in the
  * browser instead of reaching the server that happens to serve this UI.
  */
 
-/** Reserved host suffix of a remote provider's synthetic origin. */
+/** Reserved host suffix of a remote server's synthetic origin. */
 export const TUNNEL_HOST_SUFFIX = 'remote.llamacpp.invalid';
 
 /**
