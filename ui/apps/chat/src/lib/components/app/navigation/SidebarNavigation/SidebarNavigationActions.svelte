@@ -41,7 +41,8 @@
 	}: Props = $props();
 
 	// the models manager stays desktop-only: a phone picks its models in the selector; a phone
-	// reaches search from the round key at the top of the sidebar instead. Models and MCP
+	// reaches search from the round key at the top of the sidebar instead. Servers is the
+	// exception a phone cannot do without: it is the only door to pairing. Models and MCP
 	// wait behind their settings
 	const actions = $derived(
 		items.filter(

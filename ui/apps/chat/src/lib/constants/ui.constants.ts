@@ -7,6 +7,7 @@ import {
 } from './keyboard-shortcuts.constants';
 import { ROUTES } from './routes.constants';
 import Search from '@lucide/svelte/icons/search';
+import Server from '@lucide/svelte/icons/server';
 import Settings from '@lucide/svelte/icons/settings';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
@@ -175,6 +176,12 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
+	},
+	{
+		action: SidebarAction.SERVERS,
+		activeRouteId: ROUTES.SERVERS,
+		icon: Server,
+		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,

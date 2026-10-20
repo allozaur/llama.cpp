@@ -81,6 +81,9 @@ class UiStore {
 	/** Open state of the Discover dialog. */
 	discoverModelsOpen = $state(false);
 
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
+
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -233,6 +236,11 @@ class UiStore {
 		void goto(resolve(ROUTES.MODELS));
 	}
 
+	/** Open the servers dialog, where a server is paired or pointed at. */
+	openServers(): void {
+		this.serversOpen = true;
+	}
+
 	/**
 	 * Puts sections in the order the user gave them. One never moved, such as a
 	 * section that was empty until now, keeps its default place: right before the next section in
@@ -269,6 +277,7 @@ class UiStore {
 		// with the hash router, the page's hash is its resolved URL
 		this.modelsReturnRoute = (page.url.hash as ResolvedPathname) || resolve(ROUTES.START);
 	}
+
 	/** Ask the composer to take focus, e.g. after a dialog closes onto the chat. */
 	requestComposerFocus(): void {
 		this.composerFocusRequested = true;
