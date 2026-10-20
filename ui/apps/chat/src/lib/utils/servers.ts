@@ -92,8 +92,14 @@ export function createLocalServer(apiKey?: string, enabled = true): Server {
 }
 
 /** A remote llama.cpp server, reached through the tunnel of its access code. */
-export function createRemoteServer(code: string, id: string, name?: string): Server {
+export function createRemoteServer(
+	code: string,
+	id: string,
+	name?: string,
+	apiKey?: string
+): Server {
 	return {
+		apiKey,
 		baseUrl: '',
 		code: normalizeShareCode(code),
 		enabled: true,
@@ -242,12 +248,17 @@ function parseServerEntry(entry: unknown, index: number): Server | null {
 	const headers = parseServerHeaders(raw.headers);
 	const code = typeof raw.code === 'string' ? normalizeShareCode(raw.code) : '';
 	const baseUrl = typeof raw.baseUrl === 'string' ? raw.baseUrl.trim().replace(/\/+$/, '') : '';
+	// a server's key is its credential: dropping it here would silently turn
+	// every request into an unauthenticated one
+	const apiKey =
+		typeof raw.apiKey === 'string' && raw.apiKey.trim() ? raw.apiKey.trim() : undefined;
 
 	// a remote server is its code; without a usable one it is nothing
 	if (raw.kind === ServerKind.REMOTE) {
 		if (!code) return null;
 
 		return {
+			apiKey,
 			baseUrl: '',
 			code,
 			enabled,
@@ -265,6 +276,7 @@ function parseServerEntry(entry: unknown, index: number): Server | null {
 	if (isTunnelHost(hostOf(baseUrl)) || !isHttpUrl(baseUrl)) return null;
 
 	return {
+		apiKey,
 		baseUrl,
 		enabled,
 		headers,
