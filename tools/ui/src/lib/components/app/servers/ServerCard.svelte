@@ -3,6 +3,7 @@
 	import {
 		Copy,
 		Pencil,
+		QrCode,
 		Radio,
 		RotateCw,
 		Server as ServerGlyph,
@@ -19,6 +20,7 @@
 	import { remoteAccessStore, serversModelsStore, serverStore } from '$lib/stores';
 	import type { Server } from '$lib/types';
 	import { copyToClipboard } from '$lib/utils';
+	import { qrCodeDataUrl } from '$lib/utils/qr-code';
 	import { isRemoteServer, normalizeShareCode } from '$lib/utils/server';
 	import { serverCardStatusOf } from '$lib/utils/server-status';
 
@@ -49,6 +51,8 @@
 
 	let showCode = $state(false);
 	let showDelete = $state(false);
+	/** Whether the host's code is shown as a QR, ready to be scanned off this screen. */
+	let showHostQr = $state(false);
 	let remote = $derived(isRemoteServer(server));
 
 	let modelsState = $derived(serversModelsStore.get(server.id));
@@ -78,6 +82,7 @@
 	let hostCode = $derived(
 		isLocal ? normalizeShareCode(serverStore.localProps?.connect_code ?? '') : ''
 	);
+	let hostQr = $derived(hostCode ? qrCodeDataUrl(hostCode) : null);
 	let displayUrl = $derived(server.baseUrl || 'This server');
 	let metaText = $derived(isLocal ? 'Built-in' : remote ? 'Peer-to-peer' : 'llama.cpp server');
 
@@ -186,6 +191,18 @@
 
 				<div class="flex shrink-0 items-center gap-1">
 					<Button
+						aria-label={showHostQr
+							? 'Hide the access code QR code'
+							: 'Show the access code as a QR code'}
+						class="relative h-6 w-6 after:absolute after:-inset-0.5 after:content-['']"
+						onclick={() => (showHostQr = !showHostQr)}
+						size="icon"
+						variant="ghost"
+					>
+						<QrCode class="h-3 w-3" />
+					</Button>
+
+					<Button
 						aria-label="Copy the access code"
 						class="relative h-6 w-6 after:absolute after:-inset-0.5 after:content-['']"
 						onclick={() => handleCopy(hostCode, 'Access code copied')}
@@ -200,6 +217,14 @@
 					</Button>
 				</div>
 			</div>
+
+			{#if showHostQr && hostQr}
+				<div class="flex flex-col items-center gap-1.5">
+					<img alt="Access code QR code" class="size-40" src={hostQr} />
+
+					<p class="text-xs text-muted-foreground">Scan it with the other device.</p>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
