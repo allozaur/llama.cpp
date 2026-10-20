@@ -16,7 +16,7 @@ export {
 	ToolCallType
 } from './agentic.enums';
 
-export { ServerKind, TunnelStatus } from './servers.enums';
+export { ServerKind, ServerCardState, TunnelStatus } from './servers.enums';
 
 export {
 	ChatMessageStatsView,
