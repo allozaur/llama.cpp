@@ -23,6 +23,8 @@
 		server?: Server | null;
 		/** Kind a new server starts on; the form still switches between them. */
 		defaultKind?: ServerKind;
+		/** Access code a new pairing starts from, e.g. the one this machine advertises. */
+		defaultCode?: string;
 		onOpenChange?: (open: boolean) => void;
 		/** A remote server was paired; its tunnel is open. */
 		onPaired?: (server: Server) => void;
@@ -31,6 +33,7 @@
 	}
 
 	let {
+		defaultCode,
 		defaultKind,
 		onOpenChange,
 		onPaired,
@@ -75,7 +78,9 @@
 	$effect(() => {
 		if (!open) return;
 
-		draft = server ? { ...server } : createServer(defaultKind);
+		draft = server
+			? { ...server }
+			: { ...createServer(defaultKind), code: normalizeShareCode(defaultCode ?? '') };
 		testResult = null;
 		testing = false;
 		pairing = false;
