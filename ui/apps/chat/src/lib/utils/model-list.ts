@@ -12,10 +12,10 @@ export interface OrgGroup {
 	items: ModelItem[];
 }
 
-/** One remote backend's section on the remote view. */
-export interface ProviderGroup {
-	backendId: string;
-	/** Models the provider lists without any search filtering. */
+/** One remote server's section on the remote view. */
+export interface ServerGroup {
+	serverId: string;
+	/** Models the server lists without any search filtering. */
 	catalog: number;
 	error: string | null;
 	/** Rows to render, capped by the display limit. */
@@ -28,8 +28,8 @@ export interface ProviderGroup {
 
 export interface GroupedModelOptions {
 	available: OrgGroup[];
-	/** Remote backends, one section each. */
-	providers: ProviderGroup[];
+	/** Remote servers, one section each. */
+	servers: ServerGroup[];
 }
 
 function matchesModality(option: ModelOption, term: string): boolean {
@@ -65,8 +65,8 @@ export function filterModelOptions(options: ModelOption[], searchTerm: string): 
 }
 
 /**
- * Favorite models across every backend, in list order: the favorites tab spans
- * all backends, so they come from the full option list.
+ * Favorite models across every server, in list order: the favorites tab spans
+ * all servers, so they come from the full option list.
  */
 export function groupFavoriteOptions(
 	options: ModelOption[],
@@ -121,18 +121,18 @@ export function groupModelOptions(filteredOptions: ModelOption[]): GroupedModelO
 		else available.unshift({ items, orgName: null });
 	}
 
-	return { available, providers: [] };
+	return { available, servers: [] };
 }
 
 /**
- * Remote backends as sections, one per backend, in the given order. Each section
+ * Remote servers as sections, one per server, in the given order. Each section
  * keeps at most `limit` rows; `matched` carries the full count so the caller can
  * offer the rest.
  */
-export function groupProviderOptions(
+export function groupServerOptions(
 	options: ModelOption[],
-	providers: {
-		backendId: string;
+	servers: {
+		serverId: string;
 		catalog: number;
 		error: string | null;
 		loading: boolean;
@@ -140,28 +140,28 @@ export function groupProviderOptions(
 	}[],
 	limit = Infinity,
 	recentIds: readonly string[] = []
-): ProviderGroup[] {
-	const byBackend = new Map<string, ModelItem[]>();
+): ServerGroup[] {
+	const byServer = new Map<string, ModelItem[]>();
 	const rank = new Map<string, number>();
 
 	recentIds.forEach((id, index) => rank.set(id, index));
 
 	const rankOf = (id: string) => rank.get(id) ?? Number.MAX_SAFE_INTEGER;
-	// recently used models lead their section, the rest keep the backend's order
+	// recently used models lead their section, the rest keep the server's order
 	const byRecency = (items: ModelItem[]) =>
 		rank.size === 0 ? items : [...items].sort((a, b) => rankOf(a.option.id) - rankOf(b.option.id));
 
 	for (const option of options) {
-		const backendId = option.backendId ?? '';
+		const serverId = option.serverId ?? '';
 
-		if (!byBackend.has(backendId)) byBackend.set(backendId, []);
+		if (!byServer.has(serverId)) byServer.set(serverId, []);
 
-		byBackend.get(backendId)!.push({ option });
+		byServer.get(serverId)!.push({ option });
 	}
 
-	return providers.map((provider) => {
-		const items = byRecency(byBackend.get(provider.backendId) ?? []);
+	return servers.map((server) => {
+		const items = byRecency(byServer.get(server.serverId) ?? []);
 
-		return { ...provider, items: items.slice(0, limit), matched: items.length };
+		return { ...server, items: items.slice(0, limit), matched: items.length };
 	});
 }

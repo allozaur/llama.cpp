@@ -20,10 +20,10 @@
 
 	let { entry, expanded, indent = 0, onToggle }: Props = $props();
 
-	let providerCount = $derived(new Set(entry.quants.map((option) => option.backendId ?? '')).size);
+	let serverCount = $derived(new Set(entry.quants.map((option) => option.serverId ?? '')).size);
 	let groupLabel = $derived(
-		entry.kind === ModelGroupKind.PROVIDERS
-			? `${providerCount} provider${providerCount === 1 ? '' : 's'}`
+		entry.kind === ModelGroupKind.SERVERS
+			? `${serverCount} server${serverCount === 1 ? '' : 's'}`
 			: entry.kind === ModelGroupKind.VARIANTS
 				? `${entry.quants.length} variants`
 				: `${entry.quants.length} quants available`

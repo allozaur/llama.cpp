@@ -13,7 +13,7 @@ import type {
 } from '#lib/types/api.js';
 import type { ChatMessagePromptProgress, ChatMessageTimings } from '#lib/types/chat.js';
 
-/** One canonical delta decoded from a backend's stream payload. */
+/** One canonical delta decoded from a server's stream payload. */
 export type ChatStreamEvent =
 	| { type: 'done' }
 	| { type: 'error'; message: string }

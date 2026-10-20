@@ -4,7 +4,7 @@
  * Single owner of the "is this conversation doing something" state:
  * - `local`  - this browser is piping a stream (send, server-stream attach,
  *              or resume-wait while the owning model loads)
- * - `remote` - the backend reports a running session, no local pipe yet
+ * - `remote` - the server reports a running session, no local pipe yet
  *              (global snapshot on mount / visibilitychange)
  *
  * The union of both drives the sidebar spinners (`loadingConvs`); `local`
@@ -21,7 +21,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 export class ChatActivityStore {
 	/** Convs this browser is piping a stream for (send, attach, resume-wait). */
 	private local = new SvelteSet<string>();
-	/** Convs the backend reports as having a running session (snapshot sync). */
+	/** Convs the server reports as having a running session (snapshot sync). */
 	private remote = new SvelteSet<string>();
 	/** Convs with any activity, the union the sidebar spinners render. */
 	loadingConvs = $derived.by(() => {
@@ -40,7 +40,7 @@ export class ChatActivityStore {
 	private compacting = new SvelteMap<string, string>();
 
 	/**
-	 * Apply a backend snapshot of running sessions (mount / visibilitychange).
+	 * Apply a server snapshot of running sessions (mount / visibilitychange).
 	 * Diffed so unchanged entries do not re-trigger reactivity.
 	 */
 	applyRemoteSnapshot(running: Iterable<string>): void {
