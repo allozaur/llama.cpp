@@ -28,6 +28,11 @@ export const WEBRTC_TIMEOUTS = {
 	CONNECT_MS: 30_000,
 	/** Deadline for gathering ICE candidates before the offer goes out */
 	ICE_GATHER_MS: 10_000,
+	/**
+	 * Wait before reconnecting the channels a backgrounded tab lost. The network
+	 * is not always back the moment the tab is.
+	 */
+	RECOVER_MS: 2_000,
 	/** Deadline for the WebSocket handshake with a tracker */
 	TRACKER_CONNECT_MS: 10_000
 } as const;
