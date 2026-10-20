@@ -207,6 +207,9 @@ export class ModelStatusManager {
 
 		return result;
 	});
+	/** Feed reader of the active server when it is not the built-in one. */
+	private serverAbort: AbortController | null = null;
+	private serverReaderId: string | null = null;
 	// /models/sse feed state, the single source of truth for status and load progress
 	private statusAbort: AbortController | null = null;
 	private statusReaderActive = false;
@@ -617,6 +620,28 @@ export class ModelStatusManager {
 	}
 
 	/**
+	 * Read the status feed of the active server, when it is not the built-in one.
+	 *
+	 * A remote router reports its load progress over its own feed, which the
+	 * tunnel carries like any other request; the operations that wait on a load
+	 * keep their polling as the fallback. Pass null to close it.
+	 */
+	subscribeServer(serverId: string | null): void {
+		if (this.serverReaderId === serverId) return;
+
+		this.serverAbort?.abort();
+		this.serverAbort = null;
+		this.serverReaderId = serverId;
+
+		if (!serverId) return;
+
+		const abort = new AbortController();
+
+		this.serverAbort = abort;
+		void this.runStatusReader(abort.signal, serverId);
+	}
+
+	/**
 	 * A model the server lists as incomplete is a download that never finished: it
 	 * runs in no tab and carries no progress. Offer it as paused with the sidecars
 	 * it pulls, and re-posting the model resumes it from the files already on disk.
@@ -690,6 +715,7 @@ export class ModelStatusManager {
 		this.statusReaderActive = false;
 		this.statusAbort?.abort();
 		this.statusAbort = null;
+		this.subscribeServer(null);
 		this.loadProgress.clear();
 		this.downloadProgress.clear();
 		this.failedDownloads.clear();
@@ -905,8 +931,8 @@ export class ModelStatusManager {
 		void this.host.fetchRouterModels();
 	}
 
-	private async runStatusReader(signal: AbortSignal): Promise<void> {
-		await ModelsService.watchModelEvents(signal, (event) => this.applyStatusEvent(event));
+	private async runStatusReader(signal: AbortSignal, serverId?: string): Promise<void> {
+		await ModelsService.watchModelEvents(signal, (event) => this.applyStatusEvent(event), serverId);
 	}
 
 	/**
