@@ -15,6 +15,8 @@
 		canScan?: boolean;
 		/** Invalid access code, when the draft carries one. */
 		codeError?: string | null;
+		/** The endpoint answered /props as something other than a llama.cpp server. */
+		endpointError?: string | null;
 		id: string;
 		onChange: (patch: Partial<Server>) => void;
 		onScan?: () => void;
@@ -25,6 +27,7 @@
 		apiKeyRequired = false,
 		canScan = false,
 		codeError = null,
+		endpointError = null,
 		id,
 		onChange,
 		onScan,
@@ -113,6 +116,8 @@
 
 			{#if urlError}
 				<p class="mt-1.5 text-xs text-destructive">{urlError}</p>
+			{:else if endpointError}
+				<p class="mt-1.5 text-xs text-destructive">{endpointError}</p>
 			{/if}
 		</div>
 	{/if}
