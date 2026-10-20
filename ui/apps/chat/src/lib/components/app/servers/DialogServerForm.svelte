@@ -185,7 +185,7 @@
 		if (isEdit) {
 			serversStore.updateServer(id, { ...draft, code, kind: ServerKind.REMOTE, name });
 		} else {
-			serversStore.addRemoteServer(code, name, id);
+			serversStore.addRemoteServer(code, name, id, draft.apiKey?.trim() || undefined);
 		}
 
 		draft = { ...draft, code, kind: ServerKind.REMOTE, name };

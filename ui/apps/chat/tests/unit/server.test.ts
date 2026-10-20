@@ -100,6 +100,30 @@ describe('stored server list', () => {
 		expect(server.baseUrl).toBe('https://example.com/llama');
 	});
 
+	it('keeps the API key of a stored server', () => {
+		const [server] = parseServersSettings([
+			{ apiKey: 'sk-secret', baseUrl: 'https://example.com', id: 'u1', name: 'Office' }
+		]);
+
+		// the key is the credential of that server: dropping it here turns every
+		// request into an unauthenticated one
+		expect(server.apiKey).toBe('sk-secret');
+	});
+
+	it('keeps the API key of a stored remote server', () => {
+		const [server] = parseServersSettings([
+			{ apiKey: 'sk-secret', code: CODE, id: 'r1', kind: 'remote', name: 'Home' }
+		]);
+
+		expect(server.apiKey).toBe('sk-secret');
+	});
+
+	it('carries the API key of a remote server the form builds', () => {
+		const server = createRemoteServer(CODE, 'r1', 'Home', 'sk-secret');
+
+		expect(server.apiKey).toBe('sk-secret');
+	});
+
 	it('reads a remote entry and drops one without a usable code', () => {
 		const servers = parseServersSettings([
 			{ code: CODE, id: 'r1', kind: 'remote', name: 'Home' },
