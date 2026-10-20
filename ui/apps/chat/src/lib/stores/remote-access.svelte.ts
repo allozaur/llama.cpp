@@ -39,6 +39,11 @@ class RemoteAccessStore {
 
 	/** In-flight handshakes by server id, so a second caller joins the first. */
 	private attempts = new Map<string, Promise<void>>();
+	/**
+	 * Handshake count by server id, bumped when an attempt is dropped, so an
+	 * answer that lands after the user gave up is not stored.
+	 */
+	private generation = new Map<string, number>();
 	private originalFetch: typeof window.fetch | null = null;
 	/** Live tunnels by server id. */
 	private tunnels = new Map<string, ClientTunnel>();
@@ -57,7 +62,8 @@ class RemoteAccessStore {
 
 		if (running) return running;
 
-		const attempt = this.open(serverId).finally(() => {
+		const generation = this.generationOf(serverId);
+		const attempt = this.open(serverId, generation).finally(() => {
 			if (this.attempts.get(serverId) === attempt) this.attempts.delete(serverId);
 		});
 
@@ -68,6 +74,8 @@ class RemoteAccessStore {
 
 	/** Close a server's tunnel and forget its state; the server itself stays. */
 	disconnect(serverId: string): void {
+		// a handshake still running must land on nothing: the channel is not wanted
+		this.dropAttempt(serverId);
 		this.tunnels.get(serverId)?.disconnect();
 		this.tunnels.delete(serverId);
 		this.errorMessage[serverId] = '';
@@ -196,13 +204,26 @@ class RemoteAccessStore {
 		this.originalFetch = null;
 	}
 
+	/**
+	 * Give up on a server's handshake: a later answer must land on nothing, and a
+	 * caller asking again must start over instead of joining the dropped attempt.
+	 */
+	private dropAttempt(serverId: string): void {
+		this.generation.set(serverId, this.generationOf(serverId) + 1);
+		this.attempts.delete(serverId);
+	}
+
 	/** Server whose tunnel origin carries this host label. */
 	private findByHostLabel(label: string): Server | undefined {
 		return remoteServers().find((server) => tunnelHostLabel(server.id) === label);
 	}
 
+	private generationOf(serverId: string): number {
+		return this.generation.get(serverId) ?? 0;
+	}
+
 	/** Handshake a server's tunnel is not already running. */
-	private async open(serverId: string): Promise<void> {
+	private async open(serverId: string, generation: number): Promise<void> {
 		const server = getServers().find((candidate) => candidate.id === serverId);
 
 		if (!isRemoteServer(server) || !codeOf(server)) {
@@ -212,17 +233,22 @@ class RemoteAccessStore {
 		this.status[serverId] = TunnelStatus.CONNECTING;
 		this.errorMessage[serverId] = '';
 
+		// a dropped attempt must report nothing: the channel belongs to whoever asked
+		// for it last, and this one may land after that
+		const stillWanted = () => generation === this.generationOf(serverId);
 		const code = codeOf(server);
 		const tunnel = new ClientTunnel(
 			code.slice(0, CODE_LENGTHS.ROOM),
 			code.slice(CODE_LENGTHS.ROOM),
 			{
 				onConnected: () => {
-					this.status[serverId] = TunnelStatus.CONNECTED;
+					if (stillWanted()) this.status[serverId] = TunnelStatus.CONNECTED;
 				},
 				onDisconnected: () => {
 					// the channel died: the server stays registered, its requests fail
 					// loudly until it is reconnected
+					if (!stillWanted()) return;
+
 					this.status[serverId] = TunnelStatus.ERROR;
 					this.errorMessage[serverId] = 'Disconnected from the host';
 					this.tunnels.delete(serverId);
@@ -233,11 +259,25 @@ class RemoteAccessStore {
 
 		try {
 			await tunnel.connect();
+
+			// dropped while the handshake ran: the user is done with this channel, so
+			// the answer must not bring it back
+			if (!stillWanted()) {
+				tunnel.disconnect();
+
+				return;
+			}
+
 			this.tunnels.set(serverId, tunnel);
 			this.status[serverId] = TunnelStatus.CONNECTED;
 			this.releaseWaiters(serverId);
 		} catch (error: unknown) {
 			tunnel.disconnect();
+
+			// dropped while the handshake ran: the state the user asked for stands,
+			// and the failure belongs to an attempt nobody waits on any more
+			if (!stillWanted()) throw error;
+
 			this.tunnels.delete(serverId);
 			this.status[serverId] = TunnelStatus.ERROR;
 			this.errorMessage[serverId] = error instanceof Error ? error.message : String(error);
