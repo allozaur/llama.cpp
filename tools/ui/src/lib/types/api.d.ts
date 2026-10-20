@@ -300,6 +300,11 @@ export interface ApiLlamaCppServerProps {
 	webui_settings?: Record<string, string | number | boolean>;
 	ui_settings?: Record<string, string | number | boolean>;
 	cors_proxy_enabled?: boolean;
+	/**
+	 * Access code a host started with `--connect` offers, so another device can
+	 * pair with it. Absent on a server that does not run a host.
+	 */
+	connect_code?: string;
 }
 
 export interface ApiChatCompletionRequest {
