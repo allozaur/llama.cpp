@@ -46,12 +46,13 @@ export {
 	tunnelHostLabel,
 	tunnelOrigin
 } from './server';
+export { serverCardStatusOf } from './server-status';
+export type { ServerCardFacts, ServerCardStatus } from './server-status';
 
 // Camera access code scanning (native BarcodeDetector where the browser has one)
 export { scanFrameForCode, supportsQrScan } from './qr-scan';
-// What a server card reports about its tunnel and its listing
-export { serverCardStatusOf } from './server-status';
-export type { ServerCardFacts, ServerCardStatus } from './server-status';
+// Access code as a QR code, the other end of the scanner above
+export { qrCodeDataUrl } from './qr-code';
 
 // Attachment utilities
 export { getAttachmentDisplayItems, isMcpPrompt, isMcpResource } from './attachment-display';
