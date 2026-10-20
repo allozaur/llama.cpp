@@ -12,6 +12,7 @@ import type { ApiModelsListResponse, ModelOption, Server } from '#lib/types/inde
 import { isAbortError } from '#lib/utils/abort.ts';
 import { apiUrl } from '#lib/utils/api-base.ts';
 import { getAuthHeadersForServer } from '#lib/utils/api-headers.ts';
+import { isLlamaCppProps } from '#lib/utils/server-props.ts';
 import {
 	isLocalServer,
 	isReachableServer,
@@ -20,6 +21,9 @@ import {
 	serverModelsUrl,
 	serverOrigin
 } from '#lib/utils/servers.ts';
+
+/** What a check reports about an endpoint that is not a llama.cpp server. */
+const NOT_LLAMA_CPP = 'This endpoint is not a llama.cpp server: /props answered something else';
 
 /** Models returned by a server, plus the failure detail when the call fails. */
 export interface ServerModelsResult {
@@ -35,6 +39,11 @@ export interface ServerModelsResult {
 export interface ServerProbe {
 	/** The endpoint refused the request for want of a key, so it wants one. */
 	authRequired: boolean;
+	/**
+	 * Whether the endpoint answered /props like a llama.cpp server. Null while it
+	 * did not answer at all: a key-protected or hidden /props decides nothing.
+	 */
+	llamaCpp: boolean | null;
 }
 
 /** Outcome of a server connectivity check. */
@@ -105,17 +114,19 @@ export class ServersService {
 	}
 
 	/**
-	 * Ask a server whether it wants an API key. A llama-server guards /props with
-	 * the key it was started with, so a 401 there means the form needs one.
+	 * Ask a server whether it wants an API key, and whether it is a llama.cpp
+	 * server at all. A llama-server guards /props with the key it was started
+	 * with, so a 401 there means the form needs one; an endpoint that answers
+	 * something else there is not one this UI can drive.
 	 */
 	static async probe(server: Server): Promise<ServerProbe> {
 		// a remote server has no URL to ask about: its code is tested by opening
 		// the tunnel, which is what the form's connection test does
-		if (isRemoteServer(server)) return { authRequired: false };
+		if (isRemoteServer(server)) return { authRequired: false, llamaCpp: null };
 
 		const base = serverOrigin(server).replace(/\/+$/, '');
 
-		if (!base) return { authRequired: false };
+		if (!base) return { authRequired: false, llamaCpp: null };
 
 		try {
 			const response = await fetch(`${base}/props`, {
@@ -123,20 +134,35 @@ export class ServersService {
 				signal: AbortSignal.timeout(5000)
 			});
 
-			return { authRequired: response.status === 401 };
+			if (response.status === 401) return { authRequired: true, llamaCpp: null };
+
+			if (!response.ok) return { authRequired: false, llamaCpp: null };
+
+			return { authRequired: false, llamaCpp: isLlamaCppProps(await response.json()) };
 		} catch {
-			return { authRequired: false };
+			return { authRequired: false, llamaCpp: null };
 		}
 	}
 
 	/**
-	 * Check that a server answers on its models endpoint.
+	 * Check that a server answers on its models endpoint, and that it is a
+	 * llama.cpp server.
 	 *
 	 * @param server - Server to probe. Does not need to be registered yet.
 	 * @param signal - Optional abort signal for a cancelled test.
 	 */
 	static async test(server: Server, signal?: AbortSignal): Promise<ServerTestResult> {
 		const result = await ServersService.listModels(server, signal);
+
+		if (result.ok) {
+			const probe = await ServersService.probe(server);
+
+			// only a definite answer counts: an endpoint whose /props cannot be read
+			// is reported by the models listing above, not accused here
+			if (probe.llamaCpp === false) {
+				return { error: NOT_LLAMA_CPP, ok: false, status: result.status };
+			}
+		}
 
 		return {
 			error: result.error,
