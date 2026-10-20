@@ -446,16 +446,18 @@ export class ModelsService {
 	 */
 	static async watchModelEvents(
 		signal: AbortSignal,
-		onEvent: (event: ApiModelsSseEvent) => void
+		onEvent: (event: ApiModelsSseEvent) => void,
+		serverId?: string
 	): Promise<void> {
+		// a llama.cpp server serves its feed at its own origin, so the request is
+		// pinned to the server it is about
+		const id = serverId ?? LOCAL_BACKEND_ID;
 		const decoder = new TextDecoder();
 
 		while (!signal.aborted) {
 			try {
-				// the status feed only exists on the local llama.cpp server; pin the
-				// request so an active external server cannot redirect it
-				const response = await fetch(apiUrl(API_MODELS.SSE, LOCAL_BACKEND_ID), {
-					headers: getAuthHeaders(LOCAL_BACKEND_ID),
+				const response = await fetch(apiUrl(API_MODELS.SSE, id), {
+					headers: getAuthHeaders(id),
 					signal
 				});
 
