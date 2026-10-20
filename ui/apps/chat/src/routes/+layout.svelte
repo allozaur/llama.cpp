@@ -24,6 +24,8 @@
 		deviceStore,
 		modelsStore,
 		remoteAccessStore,
+		serversModelsStore,
+		serversStore,
 		serverStore,
 		settingsStore,
 		tabsStore,
@@ -33,6 +35,7 @@
 	import { initStores } from '#lib/stores/init.ts';
 	import { apiUrl } from '#lib/utils/api-base.ts';
 	import { applySurfaceTheme, hapticTap, resolveTabView } from '#lib/utils/index.ts';
+	import { isLocalServer, isRemoteServer } from '#lib/utils/servers.ts';
 	import { browser } from '$app/env';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -281,6 +284,23 @@
 		untrack(() => {
 			modelsStore.status.subscribe();
 		});
+	});
+
+	// The active server's own feed, when it is not the built-in one: a llama.cpp
+	// server serves /models/sse at its origin, so a router behind a tunnel animates
+	// its loads the way a local one does. It follows that server being reachable,
+	// and the operations that wait on a load keep their polling as the fallback.
+	$effect(() => {
+		if (!browser) return;
+
+		const server = serversStore.active;
+		const reachable =
+			!isLocalServer(server) &&
+			(isRemoteServer(server)
+				? remoteAccessStore.isConnected(server.id)
+				: serversModelsStore.get(server.id).loaded);
+
+		untrack(() => modelsStore.status.subscribeServer(reachable ? server.id : null));
 	});
 
 	// Monitor API key changes and redirect to error page if removed or changed when required
