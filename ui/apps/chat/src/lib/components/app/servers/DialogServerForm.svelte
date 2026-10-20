@@ -3,11 +3,20 @@
 	import ServerForm from './ServerForm.svelte';
 	import { Button } from '@ggml/llama-ui/ui/button';
 	import * as Dialog from '@ggml/llama-ui/ui/dialog';
+	import {
+		Drawer,
+		DrawerContent,
+		DrawerDescription,
+		DrawerFooter,
+		DrawerHeader,
+		DrawerTitle
+	} from '@ggml/llama-ui/ui/drawer';
+	import { CheckCircle2, Loader2, PlugZap, QrCode, XCircle } from '@lucide/svelte';
 	import { CODE_LENGTHS, SERVER_ID_PREFIX } from '$lib/constants';
 	import { ServerKind } from '$lib/enums';
 	import { ServersService } from '$lib/services';
 	import type { ServerTestResult } from '$lib/services/servers.service';
-	import { remoteAccessStore, serversStore } from '$lib/stores';
+	import { deviceStore, remoteAccessStore, serversStore } from '$lib/stores';
 	import type { Server } from '$lib/types';
 	import { uuid } from '$lib/utils';
 	import { supportsQrScan } from '$lib/utils/qr-scan';
@@ -54,6 +63,14 @@
 	let isRemote = $derived(isRemoteServer(draft));
 	let canScan = $derived(supportsQrScan());
 	let code = $derived(normalizeShareCode(draft.code ?? ''));
+	let title = $derived(
+		isEdit ? 'Edit Server' : isRemote ? 'Pair a remote server' : 'Add New Server'
+	);
+	let description = $derived(
+		isRemote
+			? 'Point at a llama-server started with --connect, by its access code.'
+			: 'Point at another llama-server.'
+	);
 	let urlError = $derived.by(() => {
 		const url = draft.baseUrl.trim();
 
@@ -216,143 +233,163 @@
 	}
 </script>
 
-<Dialog.Root onOpenChange={handleOpenChange} {open}>
-	<Dialog.Content class="max-w-2xl!">
-		<Dialog.Header>
-			<Dialog.Title class="select-none">
-				{isEdit ? 'Edit Server' : isRemote ? 'Pair a remote server' : 'Add New Server'}
-			</Dialog.Title>
+{#snippet fields()}
+	<div class="space-y-4 py-4">
+		<ServerForm
+			{apiKeyRequired}
+			{canScan}
+			{codeError}
+			id="server"
+			onChange={handleChange}
+			onScan={() => (showScanner = true)}
+			server={draft}
+			{urlError}
+		/>
+	</div>
 
-			<Dialog.Description>
-				{isRemote
-					? 'Point at a llama-server started with --connect, by its access code.'
-					: 'Point at another llama-server.'}
-			</Dialog.Description>
-		</Dialog.Header>
+	<DialogServerCodeScanner
+		bind:open={showScanner}
+		onCode={(scanned) => handleChange({ code: scanned })}
+	/>
 
-		<form class="contents" onsubmit={handleSubmit}>
-			<div class="space-y-4 py-4">
-				<ServerForm
-					{apiKeyRequired}
-					{canScan}
-					{codeError}
-					id="server"
-					onChange={handleChange}
-					onScan={() => (showScanner = true)}
-					server={draft}
-					{urlError}
-				/>
+	<!-- the last thing before the actions: what the endpoint said when asked -->
+	<div
+		aria-live="polite"
+		class="mb-3 flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3"
+	>
+		{#if pairing}
+			<Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+
+			<div class="min-w-0">
+				<p class="text-sm font-medium">Pairing</p>
+
+				<p class="text-xs text-muted-foreground">Opening the tunnel to that server.</p>
 			</div>
+		{:else if testing}
+			<Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
 
-			<DialogServerCodeScanner
-				bind:open={showScanner}
-				onCode={(scanned) => handleChange({ code: scanned })}
-			/>
+			<div class="min-w-0">
+				<p class="text-sm font-medium">Testing connection</p>
 
-			<!-- the last thing before the actions: what the endpoint said when asked -->
-			<div
-				aria-live="polite"
-				class="mb-3 flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3"
-			>
-				{#if pairing}
-					<Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium">Pairing</p>
-
-						<p class="text-xs text-muted-foreground">Opening the tunnel to that server.</p>
-					</div>
-				{:else if testing}
-					<Loader2 class="mt-0.5 h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium">Testing connection</p>
-
-						<p class="text-xs text-muted-foreground">
-							Asking {hostOf(draft.baseUrl)} for the models it serves.
-						</p>
-					</div>
-				{:else if pairError}
-					<XCircle class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium text-destructive">Pairing failed</p>
-
-						<p class="text-xs break-words text-muted-foreground">{pairError}</p>
-
-						<p class="mt-1 text-xs text-muted-foreground">
-							The server is saved; retry from its card.
-						</p>
-					</div>
-				{:else if testResult?.ok}
-					<CheckCircle2 class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium">Connected</p>
-
-						<p class="text-xs text-muted-foreground">
-							{testResult.modelCount ?? 0}
-							model{(testResult.modelCount ?? 0) === 1 ? '' : 's'} available.
-						</p>
-					</div>
-				{:else if testResult}
-					<XCircle class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium text-destructive">Connection failed</p>
-
-						<p class="text-xs break-words text-muted-foreground">
-							{testResult.error ?? 'The endpoint did not answer.'}{testResult.status
-								? ` (HTTP ${testResult.status})`
-								: ''}
-						</p>
-					</div>
-				{:else}
-					{#if isRemote}
-						<QrCode class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-					{:else}
-						<PlugZap class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-					{/if}
-
-					<div class="min-w-0">
-						<p class="text-sm font-medium">
-							{isRemote ? 'Not paired yet' : 'Connection not tested'}
-						</p>
-
-						<p class="text-xs text-muted-foreground">
-							{isRemote
-								? 'Pairing saves the server and connects to it.'
-								: 'Test it to list the models this server serves.'}
-						</p>
-					</div>
-				{/if}
+				<p class="text-xs text-muted-foreground">
+					Asking {hostOf(draft.baseUrl)} for the models it serves.
+				</p>
 			</div>
+		{:else if pairError}
+			<XCircle class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
 
-			<Dialog.Footer>
-				<Button onclick={() => handleOpenChange(false)} size="sm" variant="secondary">
-					Cancel
-				</Button>
+			<div class="min-w-0">
+				<p class="text-sm font-medium text-destructive">Pairing failed</p>
 
-				{#if isRemote}
-					<Button disabled={!canSave || pairing} onclick={handlePair} size="sm" type="button">
-						{isEdit ? 'Save and reconnect' : 'Pair'}
-					</Button>
-				{:else}
-					<Button
-						disabled={testing || Boolean(urlError)}
-						onclick={handleTest}
-						size="sm"
-						type="button"
-						variant="outline"
-					>
-						Test connection
-					</Button>
+				<p class="text-xs break-words text-muted-foreground">{pairError}</p>
 
-					<Button disabled={!canSave} size="sm" type="submit">
-						{isEdit ? 'Save' : 'Add'}
-					</Button>
-				{/if}
-			</Dialog.Footer>
-		</form>
-	</Dialog.Content>
-</Dialog.Root>
+				<p class="mt-1 text-xs text-muted-foreground">The server is saved; retry from its card.</p>
+			</div>
+		{:else if testResult?.ok}
+			<CheckCircle2 class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+
+			<div class="min-w-0">
+				<p class="text-sm font-medium">Connected</p>
+
+				<p class="text-xs text-muted-foreground">
+					{testResult.modelCount ?? 0}
+					model{(testResult.modelCount ?? 0) === 1 ? '' : 's'} available.
+				</p>
+			</div>
+		{:else if testResult}
+			<XCircle class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+
+			<div class="min-w-0">
+				<p class="text-sm font-medium text-destructive">Connection failed</p>
+
+				<p class="text-xs break-words text-muted-foreground">
+					{testResult.error ?? 'The endpoint did not answer.'}{testResult.status
+						? ` (HTTP ${testResult.status})`
+						: ''}
+				</p>
+			</div>
+		{:else}
+			{#if isRemote}
+				<QrCode class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+			{:else}
+				<PlugZap class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+			{/if}
+
+			<div class="min-w-0">
+				<p class="text-sm font-medium">
+					{isRemote ? 'Not paired yet' : 'Connection not tested'}
+				</p>
+
+				<p class="text-xs text-muted-foreground">
+					{isRemote
+						? 'Pairing saves the server and connects to it.'
+						: 'Test it to list the models this server serves.'}
+				</p>
+			</div>
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet actions()}
+	<Button onclick={() => handleOpenChange(false)} size="sm" variant="secondary">Cancel</Button>
+
+	{#if isRemote}
+		<Button disabled={!canSave || pairing} onclick={handlePair} size="sm" type="button">
+			{isEdit ? 'Save and reconnect' : 'Pair'}
+		</Button>
+	{:else}
+		<Button
+			disabled={testing || Boolean(urlError)}
+			onclick={handleTest}
+			size="sm"
+			type="button"
+			variant="outline"
+		>
+			Test connection
+		</Button>
+
+		<Button disabled={!canSave} size="sm" type="submit">
+			{isEdit ? 'Save' : 'Add'}
+		</Button>
+	{/if}
+{/snippet}
+
+{#if deviceStore.isMobile}
+	<!--
+		A form this tall is a bottom sheet on a phone: it keeps the field the
+		keyboard covers out of the way, and the actions within thumb reach.
+	-->
+	<Drawer bind:open onOpenChange={handleOpenChange}>
+		<DrawerContent class="overflow-hidden">
+			<DrawerHeader>
+				<DrawerTitle class="select-none">{title}</DrawerTitle>
+
+				<DrawerDescription>{description}</DrawerDescription>
+			</DrawerHeader>
+
+			<form class="contents" onsubmit={handleSubmit}>
+				<div class="min-h-0 flex-1 overflow-y-auto px-4">
+					{@render fields()}
+				</div>
+
+				<DrawerFooter>{@render actions()}</DrawerFooter>
+			</form>
+		</DrawerContent>
+	</Drawer>
+{:else}
+	<Dialog.Root onOpenChange={handleOpenChange} {open}>
+		<Dialog.Content class="max-w-2xl!">
+			<Dialog.Header>
+				<Dialog.Title class="select-none">{title}</Dialog.Title>
+
+				<Dialog.Description>{description}</Dialog.Description>
+			</Dialog.Header>
+
+			<form class="contents" onsubmit={handleSubmit}>
+				{@render fields()}
+
+				<Dialog.Footer>{@render actions()}</Dialog.Footer>
+			</form>
+		</Dialog.Content>
+	</Dialog.Root>
+{/if}
