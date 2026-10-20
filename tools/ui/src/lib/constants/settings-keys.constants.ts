@@ -10,8 +10,8 @@ export const SETTINGS_KEYS = {
 	ALWAYS_SHOW_TOOL_CALL_CONTENT: 'alwaysShowToolCallContent',
 	API_KEY: 'apiKey',
 	AUTO_MIC_ON_EMPTY: 'autoMicOnEmpty',
+	// llama.cpp's own flag: "backend" here is the compute backend, not a server
 	BACKEND_SAMPLING: 'backend_sampling',
-	BACKENDS: 'backends',
 	COMPACTION_PRESERVED_STEPS: 'compactionPreservedSteps',
 	COMPACTION_PROMPT: 'compactionPrompt',
 	CONVERSATION_TABS: 'conversationTabs',
@@ -56,6 +56,8 @@ export const SETTINGS_KEYS = {
 	REPEAT_PENALTY: 'repeat_penalty',
 	SAMPLERS: 'samplers',
 	SEND_ON_ENTER: 'sendOnEnter',
+	// the server list is stored under the key it shipped with, so the value is not its name
+	SERVERS: 'backends',
 	SHOW_AGENTIC_TURN_STATS: 'showAgenticTurnStats',
 	SHOW_BUILD_VERSION: 'showBuildVersion',
 	SHOW_FULL_PATH_IN_MENTIONS: 'showFullPathInMentions',

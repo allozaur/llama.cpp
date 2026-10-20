@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Backend } from '$lib/types';
-	import { backendFaviconUrl } from '$lib/utils';
+	import type { Server } from '$lib/types';
+	import { serverFaviconUrl } from '$lib/utils';
 	import type { Snippet } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
@@ -8,15 +8,15 @@
 	const failedFavicons = new SvelteSet<string>();
 
 	interface Props {
-		backend?: Backend;
+		server?: Server;
 		class?: string;
-		/** Rendered when the backend serves no favicon. */
+		/** Rendered when the server serves no favicon. */
 		fallback?: Snippet;
 	}
 
-	let { backend, class: className = 'size-4', fallback }: Props = $props();
+	let { class: className = 'size-4', fallback, server }: Props = $props();
 
-	let faviconUrl = $derived(backend ? backendFaviconUrl(backend.baseUrl) : null);
+	let faviconUrl = $derived(server ? serverFaviconUrl(server.baseUrl) : null);
 </script>
 
 {#if faviconUrl && !failedFavicons.has(faviconUrl)}

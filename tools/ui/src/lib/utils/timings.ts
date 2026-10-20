@@ -1,5 +1,5 @@
 /**
- * Client side timing fallback for backends that do not report their own.
+ * Client side timing fallback for servers that do not report their own.
  *
  * llama.cpp streams per-token timings; OpenAI-compatible servers
  * do not. Token counts come from the usage block of the final chunk (or the

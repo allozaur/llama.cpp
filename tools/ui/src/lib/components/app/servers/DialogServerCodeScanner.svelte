@@ -2,8 +2,8 @@
 	import { Camera, CameraOff } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { normalizeShareCode } from '$lib/utils/backend';
 	import { scanFrameForCode } from '$lib/utils/qr-scan';
+	import { normalizeShareCode } from '$lib/utils/server';
 
 	/** How often to ask the detector for a frame; the call is slow. */
 	const SCAN_INTERVAL_MS = 350;

@@ -102,7 +102,7 @@
 				orgName: 'intel'
 			}
 		],
-		providers: []
+		servers: []
 	};
 
 	function handleSelect(modelId: string) {

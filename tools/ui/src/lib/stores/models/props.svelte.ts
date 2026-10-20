@@ -18,9 +18,9 @@ import {
 } from '$lib/constants';
 import { FileTypeCategory, ModelModality, ReasoningEffort } from '$lib/enums';
 import { PropsService } from '$lib/services/props.service';
-// direct imports between stores, not via the barrel, to avoid circular deps
-import { backendsStore } from '$lib/stores/backends.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '$lib/stores/servers.svelte';
 import type { ReasoningEffortLevel } from '$lib/types';
 // deep imports, not the '$lib/utils' barrel: it re-exports modules that reach back
 // into the stores, and going through it here would read a half-built module
@@ -40,7 +40,7 @@ const PROPS_FETCH_RETRY_COOLDOWN_MS = 30_000;
 export interface ModelPropsHost {
 	/** Model rows the manager mirrors fetched modalities onto. */
 	activeModels: ModelOption[];
-	/** Every enabled backend's models, used to resolve a model's owner. */
+	/** Every enabled server's models, used to resolve a model's owner. */
 	readonly models: ModelOption[];
 	readonly selectedModelName: string | null;
 	readonly loadedModelIds: string[];
@@ -168,7 +168,7 @@ export class ModelPropsManager {
 	 * @returns Props data or null if fetch failed or model not loaded
 	 */
 	async fetchModelProps(modelId: string): Promise<ApiLlamaCppServerProps | null> {
-		// props not loaded yet (mid backend switch): the server role and model
+		// props not loaded yet (mid server switch): the server role and model
 		// load state are not trustworthy, so do not guess
 		if (!serverStore.props) return null;
 
@@ -176,13 +176,13 @@ export class ModelPropsManager {
 
 		if (cached) return cached;
 
-		// never ask a server about a model another backend serves; a name that
-		// exists on two backends resolves to the active one's entry first
+		// never ask a server about a model another server serves; a name that
+		// exists on two servers resolves to the active one's entry first
 		const option = this.host.models.find(
 			(m) => m.model === modelId || m.id === modelId || rawModelId(m.id) === modelId
 		);
 
-		if (option?.backendId && option.backendId !== backendsStore.active.id) return null;
+		if (option?.serverId && option.serverId !== serversStore.active.id) return null;
 
 		if (serverStore.isRouterMode && !this.host.isModelLoaded(modelId)) {
 			return null;
@@ -226,7 +226,7 @@ export class ModelPropsManager {
 
 		if (typeof nCtx === 'number') return nCtx;
 
-		// external backends report the context in their model listing, when they report one
+		// external servers report the context in their model listing, when they report one
 		const model = this.host.activeModels.find((m) => m.model === modelId || m.id === modelId);
 
 		return model?.contextLength ?? null;

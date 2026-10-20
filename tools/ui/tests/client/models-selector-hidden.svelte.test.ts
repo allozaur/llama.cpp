@@ -12,7 +12,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 
 function option(model: string): ModelOption {
-	return { backendId: LOCAL_BACKEND_ID, capabilities: [], id: model, model, name: model };
+	return { capabilities: [], id: model, model, name: model, serverId: LOCAL_BACKEND_ID };
 }
 
 function routerEntry(id: string, status: ServerModelStatus): ApiModelDataEntry {

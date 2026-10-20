@@ -10,7 +10,7 @@
 	import { MODEL_ROW_GRID_CLASS, MODEL_ROW_TRAILING_CELL_CLASS } from '$lib/constants';
 	import { modelsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
-	import { getBackend } from '$lib/utils/api-base';
+	import { getServer } from '$lib/utils/api-base';
 
 	interface Props {
 		isFavorite: (option: ModelOption) => boolean;
@@ -18,8 +18,8 @@
 		onDelete: (option: ModelOption) => void;
 		onSelect: (option: ModelOption) => void;
 		selected: boolean;
-		/** Badge the backend name instead of the quant, for a provider group. */
-		showProvider?: boolean;
+		/** Badge the server name instead of the quant, for a server group. */
+		showServer?: boolean;
 		/** Left padding in px, from the nesting depth. */
 		indent?: number;
 	}
@@ -31,7 +31,7 @@
 		onSelect,
 		option,
 		selected,
-		showProvider = false
+		showServer = false
 	}: Props = $props();
 
 	let favorite = $derived(isFavorite(option));
@@ -70,7 +70,7 @@
 			type="button"
 		>
 			<Badge class="h-5 shrink-0 px-1.5 text-[10px]" variant="secondary">
-				{showProvider ? (getBackend(option.backendId)?.name ?? quant) : quant}
+				{showServer ? (getServer(option.serverId)?.name ?? quant) : quant}
 			</Badge>
 
 			<ModelDraftSidecars draftSidecars={option.draftSidecars} />
