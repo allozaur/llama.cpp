@@ -984,12 +984,12 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		firstUserMessageContent?: string
 	): Promise<void> {
 		// a conversation keeps the model that generated it, which can belong to
-		// another backend; make that backend active so the request is not sent to
+		// another server; make that server active so the request is not sent to
 		// a server that does not serve the model
 		const requestedModel = modelOverride ?? getConversationModel(allMessages);
 
 		if (requestedModel) {
-			await modelsStore.ensureModelBackend(requestedModel);
+			await modelsStore.ensureModelServer(requestedModel);
 		}
 
 		// the ::model suffix in the stream identity is only for router mode, where it routes to the

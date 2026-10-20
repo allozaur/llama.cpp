@@ -211,7 +211,7 @@
 
 	onMount(() => {
 		updateFavicon();
-		// snapshot of every backend running stream on first load, populates the sidebar spinners
+		// snapshot of every server running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet
 		void chatStore.syncRemoteRunningStreams();
 	});
@@ -260,7 +260,7 @@
 	}
 
 	// Live model status and load progress via the /models/sse feed (router mode).
-	// The feed is kept for the session: switching to an external backend and back
+	// The feed is kept for the session: switching to an external server and back
 	// must not tear it down and reconnect on every tab switch.
 	$effect(() => {
 		if (!browser) return;

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { ChevronDown, Server } from '@lucide/svelte';
+	import { ChevronDown, Server as ServerGlyph } from '@lucide/svelte';
 	import { Logo, ScrollCarousel } from '$lib/components/app';
-	import { BackendIcon } from '$lib/components/app/backends';
+	import { ServerIcon } from '$lib/components/app/servers';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Select from '$lib/components/ui/select';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group';
@@ -20,30 +20,31 @@
 	} from '$lib/constants';
 	import { ModelCapability } from '$lib/enums';
 	import { modelsStore } from '$lib/stores';
-	import type { Backend } from '$lib/types/backend';
+	import type { Server } from '$lib/types/server';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	interface Props {
-		backends: Backend[];
+		/** Servers the filter can offer: the enabled ones. */
+		availableServers: Server[];
 		/** Capabilities a model must have every one of. */
 		capabilities?: ModelCapability[];
 		/** Smallest context a model must support; 0 keeps every model. */
 		contextLimit?: number;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
-		/** Backend ids to keep; empty keeps every provider. */
-		providers?: string[];
-		/** Repos each provider contributes to the current search, shown in the menu. */
-		providerCounts?: Record<string, number>;
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
+		/** Repos each server contributes to the current search, shown in the menu. */
+		serverCounts?: Record<string, number>;
 	}
 
 	let {
-		backends,
+		availableServers,
 		capabilities = $bindable<ModelCapability[]>([]),
 		contextLimit = $bindable(0),
 		modalities = $bindable<ModalityKey[]>([]),
-		providerCounts = {},
-		providers = $bindable<string[]>([])
+		serverCounts = {},
+		servers = $bindable<string[]>([])
 	}: Props = $props();
 
 	const CONTEXT_STEPS: { label: string; value: number }[] = [
@@ -96,32 +97,32 @@
 		modalities = values.filter((value): value is ModalityKey => MODALITY_VALUES.has(value));
 	}
 
-	// none selected means every provider, so the label names the selection
-	let providerLabel = $derived(
-		providers.length === 0
-			? 'All providers'
-			: providers.length === 1
-				? (backends.find((backend) => backend.id === providers[0])?.name ?? '1 provider')
-				: `${providers.length} providers`
+	// none selected means every server, so the label names the selection
+	let serverLabel = $derived(
+		servers.length === 0
+			? 'All servers'
+			: servers.length === 1
+				? (availableServers.find((server) => server.id === servers[0])?.name ?? '1 server')
+				: `${servers.length} servers`
 	);
 	let contextLabel = $derived(
 		CONTEXT_STEPS.find((step) => step.value === contextLimit)?.label ?? CONTEXT_STEPS[0].label
 	);
 
-	function toggleProvider(id: string, checked: boolean | 'indeterminate'): void {
-		providers = checked === true ? [...providers, id] : providers.filter((entry) => entry !== id);
+	function toggleServer(id: string, checked: boolean | 'indeterminate'): void {
+		servers = checked === true ? [...servers, id] : servers.filter((entry) => entry !== id);
 	}
 </script>
 
-{#snippet providerMark(backend: Backend)}
-	{#if backend.id === LOCAL_BACKEND_ID}
-		<BackendIcon {backend} class="h-3.5 w-3.5">
+{#snippet serverMark(server: Server)}
+	{#if server.id === LOCAL_BACKEND_ID}
+		<ServerIcon class="h-3.5 w-3.5" {server}>
 			{#snippet fallback()}
 				<Logo class="shrink-0" style="--size: 0.875rem" />
 			{/snippet}
-		</BackendIcon>
+		</ServerIcon>
 	{:else}
-		<BackendIcon {backend} class="h-3.5 w-3.5" />
+		<ServerIcon class="h-3.5 w-3.5" {server} />
 	{/if}
 {/snippet}
 
@@ -135,7 +136,7 @@
 	gapSize="2"
 	innerClass="items-center"
 >
-	{#if backends.length > 1}
+	{#if availableServers.length > 1}
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
@@ -144,9 +145,9 @@
 						class="inline-flex items-center whitespace-nowrap {FILTER_TRIGGER_CLASS}"
 						type="button"
 					>
-						<Server class="h-3.5 w-3.5" />
+						<ServerGlyph class="h-3.5 w-3.5" />
 
-						{providerLabel}
+						{serverLabel}
 
 						<ChevronDown class="h-3.5 w-3.5 opacity-60" />
 					</button>
@@ -155,28 +156,26 @@
 
 			<DropdownMenu.Content align="start" class="min-w-48">
 				<DropdownMenu.Group>
-					<DropdownMenu.GroupHeading>Providers</DropdownMenu.GroupHeading>
+					<DropdownMenu.GroupHeading>Servers</DropdownMenu.GroupHeading>
 
-					{#each backends as backend (backend.id)}
+					{#each availableServers as server (server.id)}
 						<DropdownMenu.CheckboxItem
-							checked={providers.includes(backend.id)}
-							onCheckedChange={(checked) => toggleProvider(backend.id, checked)}
+							checked={servers.includes(server.id)}
+							onCheckedChange={(checked) => toggleServer(server.id, checked)}
 						>
-							{@render providerMark(backend)}
+							{@render serverMark(server)}
 
-							{backend.name}
+							{server.name}
 
-							<DropdownMenu.Shortcut>{providerCounts[backend.id] ?? 0}</DropdownMenu.Shortcut>
+							<DropdownMenu.Shortcut>{serverCounts[server.id] ?? 0}</DropdownMenu.Shortcut>
 						</DropdownMenu.CheckboxItem>
 					{/each}
 				</DropdownMenu.Group>
 
-				{#if providers.length > 0}
+				{#if servers.length > 0}
 					<DropdownMenu.Separator />
 
-					<DropdownMenu.Item onSelect={() => (providers = [])}
-						>Show every provider</DropdownMenu.Item
-					>
+					<DropdownMenu.Item onSelect={() => (servers = [])}>Show every server</DropdownMenu.Item>
 				{/if}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BackendIcon from './BackendIcon.svelte';
-	import { Pencil, Radio, RotateCw, Server, Trash2, WifiOff } from '@lucide/svelte';
+	import ServerIcon from './ServerIcon.svelte';
+	import { Pencil, Radio, RotateCw, Server as ServerGlyph, Trash2, WifiOff } from '@lucide/svelte';
 	import { DialogConfirmation } from '$lib/components/app/dialogs';
 	import Logo from '$lib/components/app/misc/Logo.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -8,45 +8,45 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { TunnelStatus } from '$lib/enums';
-	import { backendsModelsStore, remoteAccessStore } from '$lib/stores';
-	import type { Backend } from '$lib/types';
-	import { isRemoteBackend } from '$lib/utils/backend';
+	import { remoteAccessStore, serversModelsStore } from '$lib/stores';
+	import type { Server } from '$lib/types';
+	import { isRemoteServer } from '$lib/utils/server';
 
 	const CARD_ICON_CLASS = 'h-5 w-5';
 
 	interface Props {
-		backend: Backend;
+		server: Server;
 		isLocal?: boolean;
-		onConnect?: (backend: Backend) => void;
+		onConnect?: (server: Server) => void;
 		onDelete?: () => void;
-		onDisconnect?: (backend: Backend) => void;
+		onDisconnect?: (server: Server) => void;
 		onEdit?: () => void;
 		onToggle?: (enabled: boolean) => void;
 	}
 
 	let {
-		backend,
 		isLocal = false,
 		onConnect,
 		onDelete,
 		onDisconnect,
 		onEdit,
-		onToggle
+		onToggle,
+		server
 	}: Props = $props();
 
 	let showDelete = $state(false);
-	let remote = $derived(isRemoteBackend(backend));
+	let remote = $derived(isRemoteServer(server));
 	let showCode = $state(false);
 
 	/**
-	 * A remote provider has two things that can fail: its tunnel and the server
+	 * A remote server has two things that can fail: its tunnel and the server
 	 * behind it. The tunnel wins, since a closed tunnel makes the listing
-	 * meaningless. A remote provider nobody connected to yet is idle, which is a
+	 * meaningless. A remote server nobody connected to yet is idle, which is a
 	 * choice the user made, not a failure.
 	 */
-	let tunnel = $derived(remote ? remoteAccessStore.statusOf(backend.id) : TunnelStatus.IDLE);
-	let tunnelError = $derived(remote ? remoteAccessStore.errorOf(backend.id) : '');
-	let modelsState = $derived(backendsModelsStore.get(backend.id));
+	let tunnel = $derived(remote ? remoteAccessStore.statusOf(server.id) : TunnelStatus.IDLE);
+	let tunnelError = $derived(remote ? remoteAccessStore.errorOf(server.id) : '');
+	let modelsState = $derived(serversModelsStore.get(server.id));
 	let isConnecting = $derived(remote && tunnel === TunnelStatus.CONNECTING);
 	let isIdle = $derived(
 		remote &&
@@ -56,7 +56,7 @@
 			!modelsState.error
 	);
 	let isChecking = $derived(
-		backend.enabled &&
+		server.enabled &&
 			!isConnecting &&
 			!isIdle &&
 			!modelsState.loaded &&
@@ -64,58 +64,58 @@
 			!tunnelError
 	);
 	let isOnline = $derived(
-		backend.enabled &&
+		server.enabled &&
 			modelsState.loaded &&
 			!modelsState.error &&
 			(!remote || tunnel === TunnelStatus.CONNECTED)
 	);
 	let isOffline = $derived(
-		backend.enabled && (tunnel === TunnelStatus.ERROR || (!isIdle && !!modelsState.error))
+		server.enabled && (tunnel === TunnelStatus.ERROR || (!isIdle && !!modelsState.error))
 	);
 	let hasStatus = $derived(isChecking || isConnecting || isOnline || isOffline || isIdle);
 	let modelCount = $derived(modelsState.models.length);
-	let displayUrl = $derived(backend.baseUrl || 'This server');
+	let displayUrl = $derived(server.baseUrl || 'This server');
 	let metaText = $derived(isLocal ? 'Built-in' : remote ? 'Peer-to-peer' : 'llama.cpp server');
 	/** What the failure is about: the tunnel, or the server behind it. */
 	let errorText = $derived(tunnelError || modelsState.error || '');
 
 	$effect(() => {
-		// kick off the probe for providers the prefetch has not covered yet; a remote
-		// provider is left alone until its tunnel is open, which is a user action
+		// kick off the probe for servers the prefetch has not covered yet; a remote
+		// server is left alone until its tunnel is open, which is a user action
 		if (isChecking && !remote && !modelsState.loading) {
-			void backendsModelsStore.ensureLoaded(backend.id);
+			void serversModelsStore.ensureLoaded(server.id);
 		}
 	});
 
 	function handleRetry() {
 		if (remote) {
-			onConnect?.(backend);
+			onConnect?.(server);
 
 			return;
 		}
 
-		backendsModelsStore.clear(backend.id);
-		void backendsModelsStore.ensureLoaded(backend.id);
+		serversModelsStore.clear(server.id);
+		void serversModelsStore.ensureLoaded(server.id);
 	}
 </script>
 
 <Card.Root class="!gap-3 bg-muted/30 p-4">
 	<div class="flex items-start justify-between gap-3">
 		<div class="flex min-w-0 items-center gap-2">
-			<BackendIcon {backend} class={CARD_ICON_CLASS}>
+			<ServerIcon class={CARD_ICON_CLASS} {server}>
 				{#snippet fallback()}
 					{#if isLocal}
 						<Logo class={CARD_ICON_CLASS} style="--size: 1.25rem" />
 					{:else if remote}
 						<Radio class={CARD_ICON_CLASS} />
 					{:else}
-						<Server class={CARD_ICON_CLASS} />
+						<ServerGlyph class={CARD_ICON_CLASS} />
 					{/if}
 				{/snippet}
-			</BackendIcon>
+			</ServerIcon>
 
 			<div class="min-w-0">
-				<p class="truncate leading-5 font-medium">{backend.name}</p>
+				<p class="truncate leading-5 font-medium">{server.name}</p>
 
 				{#if remote}
 					<button
@@ -123,7 +123,7 @@
 						onclick={() => (showCode = !showCode)}
 						title={showCode ? 'Hide the access code' : 'Show the access code'}
 					>
-						{showCode ? (backend.code ?? '') : '•'.repeat(backend.code?.length ?? 40)}
+						{showCode ? (server.code ?? '') : '•'.repeat(server.code?.length ?? 40)}
 					</button>
 				{:else}
 					<p class="truncate text-xs text-muted-foreground">{displayUrl}</p>
@@ -132,8 +132,8 @@
 		</div>
 
 		<Switch
-			aria-label={backend.enabled ? 'Disable backend' : 'Enable backend'}
-			checked={backend.enabled}
+			aria-label={server.enabled ? 'Disable server' : 'Enable server'}
+			checked={server.enabled}
 			onCheckedChange={(value) => onToggle?.(value)}
 		/>
 	</div>
@@ -191,16 +191,16 @@
 
 		<div class="flex shrink-0 items-center gap-1">
 			{#if isIdle}
-				<Button class="h-7 px-2" onclick={() => onConnect?.(backend)} size="sm" variant="secondary">
+				<Button class="h-7 px-2" onclick={() => onConnect?.(server)} size="sm" variant="secondary">
 					Connect
 				</Button>
 			{/if}
 
 			{#if remote && tunnel === TunnelStatus.CONNECTED}
 				<Button
-					aria-label="Disconnect this provider"
+					aria-label="Disconnect this server"
 					class="relative h-7 w-7 after:absolute after:-inset-0.5 after:content-['']"
-					onclick={() => onDisconnect?.(backend)}
+					onclick={() => onDisconnect?.(server)}
 					size="icon"
 					variant="ghost"
 				>
@@ -210,7 +210,7 @@
 
 			{#if !isLocal}
 				<Button
-					aria-label="Edit backend"
+					aria-label="Edit server"
 					class="relative h-7 w-7 after:absolute after:-inset-0.5 after:content-['']"
 					onclick={() => onEdit?.()}
 					size="icon"
@@ -220,7 +220,7 @@
 				</Button>
 
 				<Button
-					aria-label="Delete backend"
+					aria-label="Delete server"
 					class="hover:text-destructive-foreground relative h-7 w-7 text-destructive after:absolute after:-inset-0.5 after:content-[''] hover:bg-destructive/10"
 					onclick={() => (showDelete = true)}
 					size="icon"
@@ -237,13 +237,13 @@
 	bind:open={showDelete}
 	confirmText="Delete"
 	description={remote
-		? 'This removes the provider and forgets its access code.'
-		: 'This removes the provider and its stored API key.'}
+		? 'This removes the server and forgets its access code.'
+		: 'This removes the server and its stored API key.'}
 	onCancel={() => (showDelete = false)}
 	onConfirm={() => {
 		showDelete = false;
 		onDelete?.();
 	}}
-	title={remote ? 'Forget this provider?' : 'Delete provider?'}
+	title={remote ? 'Forget this server?' : 'Delete server?'}
 	variant="destructive"
 />

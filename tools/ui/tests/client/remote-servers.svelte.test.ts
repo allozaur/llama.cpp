@@ -1,11 +1,11 @@
-// Guards the transport rule the whole remote-provider feature leans on: a request
-// addressed at a provider's tunnel origin is answered by that provider's tunnel or
+// Guards the transport rule the whole remote-server feature leans on: a request
+// addressed at a server's tunnel origin is answered by that server's tunnel or
 // refused out loud - it never quietly reaches the server serving this UI.
 
 import { CODE_CHARS, CODE_LENGTHS, SETTINGS_KEYS } from '$lib/constants';
 import { TunnelStatus } from '$lib/enums';
-import { backendsStore, remoteAccessStore, settingsStore } from '$lib/stores';
-import { tunnelOrigin } from '$lib/utils/backend';
+import { remoteAccessStore, serversStore, settingsStore } from '$lib/stores';
+import { tunnelOrigin } from '$lib/utils/server';
 import { afterEach, expect, it } from 'vitest';
 
 /** A code of the right length, drawn from the alphabet llama-server generates from. */
@@ -18,15 +18,15 @@ const originalFetch = window.fetch;
 let passthrough: string[] = [];
 
 /**
- * Register one remote provider, swap `window.fetch` for a recorder, and install
+ * Register one remote server, swap `window.fetch` for a recorder, and install
  * the tunnel transport over it. Returns the recorded requests.
  */
 function withTransport(url: string): Promise<Response> {
 	settingsStore.updateConfig(
-		SETTINGS_KEYS.BACKENDS,
+		SETTINGS_KEYS.SERVERS,
 		JSON.stringify([{ code: CODE, id: 'r1', kind: 'remote', name: 'Home' }])
 	);
-	backendsStore.initialize();
+	serversStore.initialize();
 
 	passthrough = [];
 
@@ -46,19 +46,19 @@ afterEach(() => {
 	window.fetch = originalFetch;
 });
 
-it('starts a paired provider idle', () => {
+it('starts a paired server idle', () => {
 	settingsStore.updateConfig(
-		SETTINGS_KEYS.BACKENDS,
+		SETTINGS_KEYS.SERVERS,
 		JSON.stringify([{ code: CODE, id: 'r1', kind: 'remote', name: 'Home' }])
 	);
-	backendsStore.initialize();
+	serversStore.initialize();
 
 	expect(remoteAccessStore.statusOf('r1')).toBe(TunnelStatus.IDLE);
 	expect(remoteAccessStore.isConnected('r1')).toBe(false);
 	expect(remoteAccessStore.isConnecting('r1')).toBe(false);
 });
 
-it('refuses a provider it has no tunnel for', async () => {
+it('refuses a server it has no tunnel for', async () => {
 	const request = withTransport(`${tunnelOrigin('r1')}/props`);
 
 	await expect(request).rejects.toThrow(/is not connected/);
@@ -67,10 +67,10 @@ it('refuses a provider it has no tunnel for', async () => {
 	expect(passthrough).toEqual([]);
 });
 
-it('refuses a tunnel origin no provider owns', async () => {
+it('refuses a tunnel origin no server owns', async () => {
 	const request = withTransport('https://ghost.remote.llamacpp.invalid/v1/models');
 
-	await expect(request).rejects.toThrow(/No remote provider is registered/);
+	await expect(request).rejects.toThrow(/No remote server is registered/);
 	expect(passthrough).toEqual([]);
 });
 

@@ -15,7 +15,7 @@ import type { ApiModelDataEntry, ModelOption } from '$lib/types';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 function option(model: string, id = model): ModelOption {
-	return { backendId: LOCAL_BACKEND_ID, capabilities: [], id, model, name: model };
+	return { capabilities: [], id, model, name: model, serverId: LOCAL_BACKEND_ID };
 }
 
 function routerEntry(id: string, status: ServerModelStatus): ApiModelDataEntry {
@@ -102,9 +102,9 @@ describe('downloadGroups', () => {
 
 		// the sub-lines carry the sidecars, so the inline badges stay empty
 		expect(groups[0].base).toMatchObject({
-			backendId: LOCAL_BACKEND_ID,
 			draftSidecars: [],
-			model: 'org/Qwen3-8B:Q4_K_M'
+			model: 'org/Qwen3-8B:Q4_K_M',
+			serverId: LOCAL_BACKEND_ID
 		});
 		expect(groups[0].sidecarBadges).toEqual([
 			{ kind: ModelDraftSidecar.MTP, quant: 'Q8_0', repo: 'org/Qwen3-8B' }

@@ -1,5 +1,5 @@
 export * from './actions';
-export * from './backends';
+export * from './servers';
 export * from './badges';
 export * from './chat';
 export * from './content';

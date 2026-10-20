@@ -1,32 +1,32 @@
-import { getBackend } from './api-base';
+import { getServer } from './api-base';
 import { redactValue } from './redact';
 import { CORS_PROXY, HEADERS } from '$lib/constants';
 import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
-import type { Backend } from '$lib/types';
+import type { Server } from '$lib/types';
 
 /**
- * Get authorization headers for API requests to a backend.
+ * Get authorization headers for API requests to a server.
  */
-export function getAuthHeaders(backendId?: string): Record<string, string> {
-	const backend = getBackend(backendId);
+export function getAuthHeaders(serverId?: string): Record<string, string> {
+	const server = getServer(serverId);
 
-	if (backend) return getAuthHeadersForBackend(backend);
+	if (server) return getAuthHeadersForServer(server);
 
-	// no backends resolver yet (early startup, or a non-browser call): keep the
-	// pre-backends behaviour and authenticate against the serving origin
+	// no servers resolver yet (early startup, or a non-browser call): keep the
+	// pre-servers behaviour and authenticate against the serving origin
 	const apiKey = settingsStore.config.apiKey?.toString().trim();
 
 	return apiKey ? { [HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey}` } : {};
 }
 
 /**
- * Get authorization headers for a backend object, including one that is not
- * registered yet (used on the add-backend form).
+ * Get authorization headers for a server object, including one that is not
+ * registered yet (used on the add-server form).
  */
-export function getAuthHeadersForBackend(backend: Backend): Record<string, string> {
-	const headers: Record<string, string> = { ...(backend.headers ?? {}) };
-	const apiKey = backend.apiKey?.trim();
+export function getAuthHeadersForServer(server: Server): Record<string, string> {
+	const headers: Record<string, string> = { ...(server.headers ?? {}) };
+	const apiKey = server.apiKey?.trim();
 
 	if (apiKey) headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER}${apiKey}`;
 
@@ -36,10 +36,10 @@ export function getAuthHeadersForBackend(backend: Backend): Record<string, strin
 /**
  * Get standard JSON headers with optional authorization
  */
-export function getJsonHeaders(backendId?: string): Record<string, string> {
+export function getJsonHeaders(serverId?: string): Record<string, string> {
 	return {
 		[HEADERS.CONTENT_TYPE]: MimeTypeApplication.JSON,
-		...getAuthHeaders(backendId)
+		...getAuthHeaders(serverId)
 	};
 }
 

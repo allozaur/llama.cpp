@@ -16,7 +16,7 @@
 
 	let { class: className = '', hideModalities = false, option }: Props = $props();
 
-	// a listing that declares its capabilities (Ollama-compatible backends) needs no lookup
+	// a listing that declares its capabilities (Ollama-compatible servers) needs no lookup
 	let declared = $derived(option.capabilities);
 	let isNearViewport = $state(false);
 	let template = $state('');
