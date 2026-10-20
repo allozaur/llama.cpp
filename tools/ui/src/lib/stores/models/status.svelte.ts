@@ -22,11 +22,11 @@ import {
 } from '$lib/enums';
 import { HuggingFaceService } from '$lib/services/huggingface.service';
 import { ModelsService } from '$lib/services/models.service';
-import { backendsStore } from '$lib/stores/backends.svelte';
-// direct imports between stores, not via the barrel, to avoid circular deps
-import { backendsModelsStore } from '$lib/stores/backendsModels.svelte';
 import type { ModelPropsManager } from '$lib/stores/models/props.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
+import { serversStore } from '$lib/stores/servers.svelte';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversModelsStore } from '$lib/stores/serversModels.svelte';
 // explicit type imports: the app.d.ts globals resolve to `any`, so import the real types
 import type {
 	ApiModelsSseDownloadProgressData,
@@ -35,7 +35,7 @@ import type {
 } from '$lib/types';
 import type { ModelSidecarBadge } from '$lib/types/models';
 import { repoOf } from '$lib/utils/model-names';
-import { backendIdFromModelId } from '$lib/utils/model-option-id';
+import { serverIdFromModelId } from '$lib/utils/model-option-id';
 import { isAuxSidecar, isDraftSidecar, sidecarFromFileToken } from '$lib/utils/sidecars';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
@@ -51,14 +51,14 @@ const REMOTE_STATUS_POLL_MS = 2000;
 
 export interface ModelStatusHost {
 	error: string | null;
-	/** Load state a model's own backend reports, local or external. */
+	/** Load state a model's own server reports, local or external. */
 	getModelStatus(modelId: string): ServerModelStatus | null;
 	readonly props: ModelPropsManager;
 	/** Router model rows the status feed updates. */
 	routerModels: ApiModelDataEntry[];
 	fetchRouterModels(): Promise<void>;
 	isModelLoaded(modelId: string): boolean;
-	switchBackend(): Promise<void>;
+	switchServer(): Promise<void>;
 	toDisplayName(id: string): string;
 }
 
@@ -277,16 +277,16 @@ export class ModelStatusManager {
 	 * settled status, so no waiter is registered here.
 	 */
 	async cancelLoad(modelId: string): Promise<void> {
-		const backendId = this.backendIdFor(modelId);
+		const serverId = this.serverIdFor(modelId);
 
 		// the local server takes unload requests in router mode only; a remote
-		// backend cancels on its own
-		if (backendId === LOCAL_BACKEND_ID && !serverStore.localIsRouter) return;
+		// server cancels on its own
+		if (serverId === LOCAL_BACKEND_ID && !serverStore.localIsRouter) return;
 
 		this.subscribe();
 
 		try {
-			await ModelsService.unload(modelId, backendId);
+			await ModelsService.unload(modelId, serverId);
 			toast.info(`Load cancelled: ${this.host.toDisplayName(modelId)}`);
 		} catch (error) {
 			toast.error(`Failed to cancel load: ${this.host.toDisplayName(modelId)}`);
@@ -343,7 +343,7 @@ export class ModelStatusManager {
 		await this.ensureLocalTarget();
 
 		// read once the target has moved: the listing describes the server taking the
-		// download, not the backend the row was clicked from
+		// download, not the server the row was clicked from
 		const registered = this.host.routerModels.find(
 			(m) => downloadIdKey(m.id) === downloadIdKey(model)
 		);
@@ -518,8 +518,8 @@ export class ModelStatusManager {
 	}
 
 	async load(modelId: string, extraArgs?: string[]): Promise<void> {
-		const backendId = this.backendIdFor(modelId);
-		const isLocal = backendId === LOCAL_BACKEND_ID;
+		const serverId = this.serverIdFor(modelId);
+		const isLocal = serverId === LOCAL_BACKEND_ID;
 
 		if (this.host.isModelLoaded(modelId)) return;
 
@@ -538,12 +538,12 @@ export class ModelStatusManager {
 		reachedLoaded.catch(() => {});
 
 		try {
-			await ModelsService.load(modelId, extraArgs, backendId);
+			await ModelsService.load(modelId, extraArgs, serverId);
 
 			if (isLocal) {
 				await reachedLoaded;
 			} else {
-				await this.waitForRemoteStatus(backendId, modelId, ServerModelStatus.LOADED);
+				await this.waitForRemoteStatus(serverId, modelId, ServerModelStatus.LOADED);
 			}
 
 			toast.success(`Model loaded: ${this.host.toDisplayName(modelId)}`);
@@ -607,7 +607,7 @@ export class ModelStatusManager {
 		if (this.statusReaderActive) return;
 
 		// the feed reports the local server's models, so the local server's role
-		// decides, not the active backend's
+		// decides, not the active server's
 		if (!serverStore.localIsRouter) return;
 
 		this.statusReaderActive = true;
@@ -646,8 +646,8 @@ export class ModelStatusManager {
 	}
 
 	async unload(modelId: string): Promise<void> {
-		const backendId = this.backendIdFor(modelId);
-		const isLocal = backendId === LOCAL_BACKEND_ID;
+		const serverId = this.serverIdFor(modelId);
+		const isLocal = serverId === LOCAL_BACKEND_ID;
 
 		if (!this.host.isModelLoaded(modelId)) return;
 
@@ -665,12 +665,12 @@ export class ModelStatusManager {
 		reachedUnloaded.catch(() => {});
 
 		try {
-			await ModelsService.unload(modelId, backendId);
+			await ModelsService.unload(modelId, serverId);
 
 			if (isLocal) {
 				await reachedUnloaded;
 			} else {
-				await this.waitForRemoteStatus(backendId, modelId, ServerModelStatus.UNLOADED);
+				await this.waitForRemoteStatus(serverId, modelId, ServerModelStatus.UNLOADED);
 			}
 
 			toast.info(`Model unloaded: ${this.host.toDisplayName(modelId)}`);
@@ -836,36 +836,17 @@ export class ModelStatusManager {
 		}
 	}
 
-	/**
-	 * Backend a model belongs to: the one its qualified id names, else whichever
-	 * enabled backend lists it. Loading an external llama-server's model must not
-	 * become a request to the server this UI is served from.
-	 */
-	private backendIdFor(modelId: string): string {
-		const qualified = backendIdFromModelId(modelId);
-
-		if (qualified) return qualified;
-
-		for (const backend of backendsStore.enabled) {
-			const state = backendsModelsStore.get(backend.id);
-
-			if (state.models.some((option) => option.model === modelId)) return backend.id;
-		}
-
-		return backendsStore.active.id;
-	}
-
 	private deletePausedDownload(repoWithTag: string): boolean {
 		return this.pausedDownloads.delete(repoWithTag);
 	}
+
 	private async ensureLocalTarget(): Promise<void> {
-		if (backendsStore.active.id === LOCAL_BACKEND_ID) return;
+		if (serversStore.active.id === LOCAL_BACKEND_ID) return;
 
-		backendsStore.setActive(LOCAL_BACKEND_ID);
-		await backendsModelsStore.ensureLoaded(LOCAL_BACKEND_ID);
-		await this.host.switchBackend();
+		serversStore.setActive(LOCAL_BACKEND_ID);
+		await serversModelsStore.ensureLoaded(LOCAL_BACKEND_ID);
+		await this.host.switchServer();
 	}
-
 	/** True when the option is the model itself, or a sidecar its download pulls. */
 	private pullsSidecar(repoWithTag: string): boolean {
 		const { model, sidecar } = downloadTarget(repoWithTag);
@@ -904,6 +885,25 @@ export class ModelStatusManager {
 		await ModelsService.watchModelEvents(signal, (event) => this.applyStatusEvent(event));
 	}
 
+	/**
+	 * Server a model belongs to: the one its qualified id names, else whichever
+	 * enabled server lists it. Loading an external llama-server's model must not
+	 * become a request to the server this UI is served from.
+	 */
+	private serverIdFor(modelId: string): string {
+		const qualified = serverIdFromModelId(modelId);
+
+		if (qualified) return qualified;
+
+		for (const server of serversStore.enabled) {
+			const state = serversModelsStore.get(server.id);
+
+			if (state.models.some((option) => option.model === modelId)) return server.id;
+		}
+
+		return serversStore.active.id;
+	}
+
 	private setPausedDownload(repoWithTag: string, progress: ModelDownloadProgress | null): void {
 		this.pausedDownloads.set(repoWithTag, progress);
 	}
@@ -935,19 +935,19 @@ export class ModelStatusManager {
 	}
 
 	/**
-	 * Wait for an external backend to report a status. Its changes never reach the
+	 * Wait for an external server to report a status. Its changes never reach the
 	 * local feed, so its own listing is asked again until the status lands or the
 	 * deadline passes, which leaves the last answer in place.
 	 */
 	private async waitForRemoteStatus(
-		backendId: string,
+		serverId: string,
 		modelId: string,
 		target: ServerModelStatus
 	): Promise<void> {
 		const deadline = Date.now() + REMOTE_STATUS_TIMEOUT_MS;
 
 		while (Date.now() < deadline) {
-			await backendsModelsStore.refresh(backendId);
+			await serversModelsStore.refresh(serverId);
 
 			const status = this.host.getModelStatus(modelId);
 

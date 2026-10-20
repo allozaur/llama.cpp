@@ -8,7 +8,7 @@
  * from the server on demand if they are not cached yet.
  */
 
-import { backendsStore, conversationsStore, modelsStore, serverStore } from '$lib/stores';
+import { conversationsStore, modelsStore, serversStore, serverStore } from '$lib/stores';
 import type { DatabaseMessage } from '$lib/types/database';
 import { getConversationModel } from '$lib/utils';
 
@@ -26,10 +26,10 @@ export function useChatFormModel() {
 		if (conversationModel && conversationModel !== lastSyncedConversationModel) {
 			const option = modelsStore.models.find((m) => m.model === conversationModel);
 
-			// only sync models served by the active backend; a model from another
-			// backend must not yank the active tab (and trigger a full backend
+			// only sync models served by the active server; a model from another
+			// server must not yank the active tab (and trigger a full server
 			// switch) just because the conversation used it
-			if (option && option.backendId === backendsStore.active.id) {
+			if (option && option.serverId === serversStore.active.id) {
 				modelsStore.selectedModelName = conversationModel;
 				modelsStore.selectModelByName(conversationModel);
 			} else if (!option) {

@@ -2,12 +2,12 @@
  * Backend availability for connection error states.
  *
  * The server error banner and the offline affordances should only appear when
- * no backend can serve requests. The active backend failing is not enough:
- * with an external backend configured, the UI stays usable.
+ * nothing can serve requests. The local server failing is not enough: with an
+ * external server configured, the UI stays usable.
  */
 
-import { backendsModelsStore, backendsStore, remoteAccessStore, serverStore } from '$lib/stores';
-import { isLocalBackend, isRemoteBackend } from '$lib/utils/backend';
+import { remoteAccessStore, serversModelsStore, serversStore, serverStore } from '$lib/stores';
+import { isLocalServer, isRemoteServer } from '$lib/utils/server';
 
 export interface BackendAvailability {
 	readonly hasAvailableBackend: boolean;
@@ -19,13 +19,13 @@ export function useBackendAvailability(): BackendAvailability {
 		// no connection error at all: nothing to report
 		if (!serverStore.error) return true;
 
-		// the local server failed, but another provider may still be usable; a
+		// the local server failed, but another server may still be usable; a
 		// remote one is only usable while its tunnel is open
-		return backendsStore.enabled.some(
-			(backend) =>
-				!isLocalBackend(backend) &&
-				backendsModelsStore.get(backend.id).error === null &&
-				(!isRemoteBackend(backend) || remoteAccessStore.isConnected(backend.id))
+		return serversStore.enabled.some(
+			(server) =>
+				!isLocalServer(server) &&
+				serversModelsStore.get(server.id).error === null &&
+				(!isRemoteServer(server) || remoteAccessStore.isConnected(server.id))
 		);
 	});
 

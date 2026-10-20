@@ -14,7 +14,7 @@
 	import { conversationsStore, deviceStore, uiStore } from '$lib/stores';
 
 	interface Props {
-		/** A provider that cannot load or unload has no button to offer. */
+		/** A server that cannot load or unload has no button to offer. */
 		canToggleLoad?: boolean;
 		isDownload?: boolean;
 		isDownloadPaused?: boolean;

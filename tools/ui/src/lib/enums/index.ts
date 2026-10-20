@@ -14,7 +14,7 @@ export {
 	ToolCallType
 } from './agentic.enums';
 
-export { BackendKind, TunnelStatus } from './backend.enums';
+export { ServerKind, TunnelStatus } from './servers.enums';
 
 export {
 	ChatMessageStatsView,
@@ -84,7 +84,7 @@ export {
 	ModelGroupKind,
 	ModelRowDownloadState,
 	ModelsTableGroupKind,
-	ModelsTableProviderKind,
+	ModelsTableServerKind,
 	ModelsTableSortKey
 } from './model.enums';
 

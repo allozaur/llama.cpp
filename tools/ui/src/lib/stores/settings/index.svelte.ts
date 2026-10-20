@@ -9,7 +9,7 @@
 
 import { browser } from '$app/environment';
 import { SETTING_CONFIG_DEFAULT, SETTINGS_KEYS } from '$lib/constants';
-import { BackendKind, ColorMode } from '$lib/enums';
+import { ColorMode, ServerKind } from '$lib/enums';
 import { ParameterSyncService } from '$lib/services/parameter-sync.service';
 import { SettingsService } from '$lib/services/settings.service';
 import { deviceStore } from '$lib/stores/device.svelte';
@@ -89,25 +89,25 @@ class SettingsStore {
 				? { ...this.config }
 				: Object.fromEntries(Object.entries(this.config).filter(([key]) => key !== 'apiKey'));
 
-		// Providers each carry a credential: an API key, or the access code that
+		// Servers each carry a credential: an API key, or the access code that
 		// opens a tunnel to someone's machine. Keys go unless the user opts in; a
-		// remote provider without its code is meaningless, so it goes whole.
-		if (SETTINGS_KEYS.BACKENDS in configToExport && !includeSensitiveData) {
+		// remote server without its code is meaningless, so it goes whole.
+		if (SETTINGS_KEYS.SERVERS in configToExport && !includeSensitiveData) {
 			try {
-				const backends = JSON.parse(configToExport[SETTINGS_KEYS.BACKENDS] as string) as Array<
+				const servers = JSON.parse(configToExport[SETTINGS_KEYS.SERVERS] as string) as Array<
 					Record<string, unknown>
 				>;
-				const safeBackends = backends
-					.filter((backend) => backend.kind !== BackendKind.REMOTE)
-					.map((backend) => {
-						delete backend.apiKey;
+				const safeServers = servers
+					.filter((server) => server.kind !== ServerKind.REMOTE)
+					.map((server) => {
+						delete server.apiKey;
 
-						return backend;
+						return server;
 					});
 
-				configToExport[SETTINGS_KEYS.BACKENDS] = JSON.stringify(safeBackends);
+				configToExport[SETTINGS_KEYS.SERVERS] = JSON.stringify(safeServers);
 			} catch {
-				delete (configToExport as Record<string, unknown>)[SETTINGS_KEYS.BACKENDS];
+				delete (configToExport as Record<string, unknown>)[SETTINGS_KEYS.SERVERS];
 			}
 		}
 

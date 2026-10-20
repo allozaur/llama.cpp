@@ -27,10 +27,10 @@ export class ToolsService {
 		cwd?: string
 	): Promise<ToolExecutionResult> {
 		const result = await apiFetch<Record<string, unknown>>(API_TOOLS.EXECUTE, {
-			backendId: LOCAL_BACKEND_ID,
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: cwd ? { [HEADERS.X_TOOL_CWD_HEADER]: cwd } : undefined,
 			method: 'POST',
+			serverId: LOCAL_BACKEND_ID,
 			signal
 		});
 
@@ -67,10 +67,10 @@ export class ToolsService {
 		if (respType) headers[HEADERS.X_RESP_TYPE_HEADER] = respType;
 
 		return apiFetch<Record<string, unknown>>(API_TOOLS.EXECUTE, {
-			backendId: LOCAL_BACKEND_ID,
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: Object.keys(headers).length > 0 ? headers : undefined,
 			method: 'POST',
+			serverId: LOCAL_BACKEND_ID,
 			signal
 		});
 	}
@@ -81,8 +81,8 @@ export class ToolsService {
 	 * @returns Array of tool definitions in OpenAI-compatible format
 	 */
 	static async list(): Promise<ServerToolInfo[]> {
-		// pinned to the local server: server tools do not exist on other backends
-		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST, { backendId: LOCAL_BACKEND_ID });
+		// pinned to the local server: server tools do not exist on other servers
+		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST, { serverId: LOCAL_BACKEND_ID });
 	}
 
 	/**
@@ -136,7 +136,7 @@ export class ToolsService {
 		cwd?: string
 	): AsyncGenerator<ToolStreamEvent> {
 		// The tool runs where the tokens are generated, so it follows the active
-		// provider: running it on the machine next to the server that happens to
+		// server: running it on the machine next to the server that happens to
 		// serve this UI would hand the wrong sandbox to a remote model.
 		const headers = getJsonHeaders();
 

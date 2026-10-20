@@ -8,10 +8,10 @@ import { apiUrl } from '$lib/utils/api-base';
 /**
  * Validates the stored API key against the server serving this UI.
  *
- * Pinned to the built-in provider, the way the model status feed is: with a
- * remote provider active, probing *that* server with this key would raise the
+ * Pinned to the built-in server, the way the model status feed is: with a
+ * remote server active, probing *that* server with this key would raise the
  * API key splash over a credential that belongs to a different machine. The
- * providers a user added carry their own key, and their failures surface on
+ * servers a user added carry their own key, and their failures surface on
  * their own card instead.
  *
  * Throws SvelteKit errors for authentication failures or server issues.
@@ -43,7 +43,7 @@ export async function validateApiKey(fetch: typeof globalThis.fetch): Promise<vo
 		}
 	} catch (err) {
 		// a SvelteKit error already carries its status; anything else is the local
-		// server being unreachable, which the provider cards report instead
+		// server being unreachable, which the server cards report instead
 		if (err && typeof err === 'object' && 'status' in err) throw err;
 
 		console.warn('Cannot connect to server for API key validation:', err);

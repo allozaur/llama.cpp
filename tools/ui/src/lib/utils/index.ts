@@ -12,40 +12,40 @@ export {
 	apiChatUrl,
 	apiModelsUrl,
 	apiUrl,
-	getBackend,
-	getBackendBaseUrl,
-	getBackends,
-	type BackendsSnapshot
+	getServer,
+	getServerBaseUrl,
+	getServers,
+	type ServersSnapshot
 } from './api-base';
 export {
 	getAuthHeaders,
-	getAuthHeadersForBackend,
+	getAuthHeadersForServer,
 	getJsonHeaders,
 	sanitizeHeaders
 } from './api-headers';
 export { ApiError, apiDelete, apiFetch, apiFetchWithParams, apiPost } from './api-fetch';
 export { validateApiKey } from './api-key-validation';
 export {
-	backendChatUrl,
-	backendFaviconUrl,
-	backendModelsUrl,
-	backendOrigin,
+	serverChatUrl,
+	serverFaviconUrl,
+	serverModelsUrl,
+	serverOrigin,
 	codeOf,
-	createLocalBackend,
-	createRemoteBackend,
-	createUrlBackend,
+	createLocalServer,
+	createRemoteServer,
+	createUrlServer,
 	hostOf,
 	isHttpUrl,
-	isLocalBackend,
-	isReachableBackend,
-	isRemoteBackend,
+	isLocalServer,
+	isReachableServer,
+	isRemoteServer,
 	normalizeShareCode,
-	parseBackendsSettings,
+	parseServersSettings,
 	parseTunnelOrigin,
 	readModelContextLength,
 	tunnelHostLabel,
 	tunnelOrigin
-} from './backend';
+} from './server';
 
 // Camera access code scanning (native BarcodeDetector where the browser has one)
 export { scanFrameForCode, supportsQrScan } from './qr-scan';
@@ -90,7 +90,7 @@ export {
 	filterModelOptions,
 	groupFavoriteOptions,
 	groupModelOptions,
-	groupProviderOptions,
+	groupServerOptions,
 	windowLocalGroups,
 	type GroupedModelOptions,
 	type ModelItem,
@@ -158,8 +158,8 @@ export {
 // Model name utilities
 export { isValidModelName, normalizeModelName, orgOf, repoOf } from './model-names';
 
-// Backend-qualified model option ids
-export { backendIdFromModelId, qualifyModelId, rawModelId } from './model-option-id';
+// Server-qualified model option ids
+export { serverIdFromModelId, qualifyModelId, rawModelId } from './model-option-id';
 export { groupModelFamilies, modelFamilyKey, type ModelFamilyGroup } from './model-families';
 
 // Sidecar token utilities

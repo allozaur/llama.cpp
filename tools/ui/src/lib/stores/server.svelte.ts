@@ -10,7 +10,7 @@ import { LOCAL_BACKEND_ID } from '$lib/constants';
 import { ServerRole } from '$lib/enums';
 import { PropsService } from '$lib/services/props.service';
 import { ApiError } from '$lib/utils';
-import { getBackend } from '$lib/utils/api-base';
+import { getServer } from '$lib/utils/api-base';
 
 const LOADING_RETRY_INTERVAL_MS = 1000;
 
@@ -27,7 +27,7 @@ class ServerStore {
 	 * resolves: the bundled build is served by one, the hosted PWA is not.
 	 */
 	private localAvailable: boolean | null = null;
-	/** Local server state kept alive while an external backend is active. */
+	/** Local server state kept alive while an external server is active. */
 	private localState: { props: ApiLlamaCppServerProps | null; role: ServerRole | null } | null =
 		null;
 	private retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -57,25 +57,25 @@ class ServerStore {
 
 	/**
 	 * Local server state. The local server is the base of the installation, so
-	 * its props and role come from the mirror while another backend is active
+	 * its props and role come from the mirror while another server is active
 	 * instead of following the selected model.
 	 */
 	private get localFacts(): { props: ApiLlamaCppServerProps | null; role: ServerRole | null } {
-		// no resolvable backend (early startup, non-browser call): props belong to
+		// no resolvable server (early startup, non-browser call): props belong to
 		// the origin serving this UI, which is the local server
-		const backendId = getBackend()?.id ?? LOCAL_BACKEND_ID;
+		const serverId = getServer()?.id ?? LOCAL_BACKEND_ID;
 
-		if (backendId === LOCAL_BACKEND_ID) return { props: this.props, role: this.role };
+		if (serverId === LOCAL_BACKEND_ID) return { props: this.props, role: this.role };
 
 		return this.localState ?? { props: null, role: null };
 	}
 
-	/** The local server runs as a router, independent of the active backend. */
+	/** The local server runs as a router, independent of the active server. */
 	get localIsRouter(): boolean {
 		return this.localFacts.role === ServerRole.ROUTER;
 	}
 
-	/** Props of the local server, from the active backend or the cache. */
+	/** Props of the local server, from the active server or the cache. */
 	get localProps(): ApiLlamaCppServerProps | null {
 		return this.localFacts.props;
 	}
@@ -90,7 +90,7 @@ class ServerStore {
 	}
 
 	/**
-	 * Keep the local server state before switching to an external backend, so
+	 * Keep the local server state before switching to an external server, so
 	 * switching back restores it instead of asking the server again.
 	 */
 	cacheLocalState(): void {
@@ -118,12 +118,12 @@ class ServerStore {
 	 * splash and the chat screen every retry tick.
 	 */
 	async fetch({ background = false }: { background?: boolean } = {}): Promise<void> {
-		// props and role describe one server. a fetch started for another backend
+		// props and role describe one server. a fetch started for another server
 		// must not be reused, and its response must not commit once the active
-		// backend has changed while it was in flight
-		const backendId = getBackend()?.id;
+		// server has changed while it was in flight
+		const serverId = getServer()?.id;
 
-		if (this.fetchPromise && this.fetchBackendId === backendId) return this.fetchPromise;
+		if (this.fetchPromise && this.fetchBackendId === serverId) return this.fetchPromise;
 
 		this.clearRetryTimer();
 
@@ -141,28 +141,28 @@ class ServerStore {
 			try {
 				const props = await PropsService.fetch();
 
-				// the active backend changed while this request was in flight
-				if (getBackend()?.id !== backendId) return;
+				// the active server changed while this request was in flight
+				if (getServer()?.id !== serverId) return;
 
 				this.props = props;
 				this.error = null;
 				this.status = null;
 				this.detectRole(props);
 
-				if (backendId === LOCAL_BACKEND_ID) {
+				if (serverId === LOCAL_BACKEND_ID) {
 					this.localAvailable = true;
 					// mirror the local facts as they arrive: a later clear() must not
 					// be able to wipe what the local server told us
 					this.localState = { props, role: this.role };
 				}
 			} catch (error: unknown) {
-				if (getBackend()?.id !== backendId) return;
+				if (getServer()?.id !== serverId) return;
 
 				this.error = error instanceof Error ? error.message : String(error);
 				this.status = error instanceof ApiError ? error.status : null;
 				console.error('Error fetching server properties:', error);
 
-				if (backendId === LOCAL_BACKEND_ID) this.localAvailable = false;
+				if (serverId === LOCAL_BACKEND_ID) this.localAvailable = false;
 
 				if (this.status === 503) {
 					this.scheduleRetry();
@@ -175,9 +175,9 @@ class ServerStore {
 		})();
 
 		this.fetchPromise = promise;
-		this.fetchBackendId = backendId;
+		this.fetchBackendId = serverId;
 
-		// a backend switch clears the in-flight handle; only the fetch that is
+		// a server switch clears the in-flight handle; only the fetch that is
 		// still the current one may release it
 		void promise
 			.catch(() => {})
@@ -208,7 +208,7 @@ class ServerStore {
 			this.localAvailable = true;
 		} catch {
 			// no local server in this deployment: mark it missing so the local
-			// backend drops out of the enabled list
+			// server drops out of the enabled list
 			this.localAvailable = false;
 		}
 	}
