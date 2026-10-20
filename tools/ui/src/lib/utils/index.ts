@@ -48,6 +48,8 @@ export {
 } from './server';
 export { serverCardStatusOf } from './server-status';
 export type { ServerCardFacts, ServerCardStatus } from './server-status';
+// Whether an endpoint is a llama.cpp server at all
+export { isLlamaCppProps } from './server-props';
 
 // Camera access code scanning (native BarcodeDetector where the browser has one)
 export { scanFrameForCode, supportsQrScan } from './qr-scan';
