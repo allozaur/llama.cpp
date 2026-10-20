@@ -5,7 +5,7 @@
 // server, so these are cheap to check and expensive to lose.
 
 import { CODE_CHARS, CODE_LENGTHS } from '$lib/constants';
-import { ServerKind } from '$lib/enums';
+import { ServerCardState, ServerKind, TunnelStatus } from '$lib/enums';
 import {
 	createLocalServer,
 	createRemoteServer,
@@ -20,6 +20,7 @@ import {
 	tunnelHostLabel,
 	tunnelOrigin
 } from '$lib/utils/server';
+import { type ServerCardFacts, serverCardStatusOf } from '$lib/utils/server-status';
 import { describe, expect, it } from 'vitest';
 
 /** A code of the right length, drawn from the alphabet llama-server generates from. */
@@ -138,5 +139,86 @@ describe('reachability', () => {
 		expect(isReachableServer(createUrlServer('https://example.com', 'u1'))).toBe(true);
 		expect(isReachableServer(createUrlServer('not a url', 'u2'))).toBe(false);
 		expect(isReachableServer(createUrlServer('', 'u3'))).toBe(false);
+	});
+});
+
+/** Facts of a server that was never listed and never connected. */
+function facts(overrides: Partial<ServerCardFacts> = {}): ServerCardFacts {
+	return {
+		enabled: true,
+		modelCount: 0,
+		modelsError: '',
+		modelsLoaded: false,
+		modelsLoading: false,
+		remote: false,
+		tunnel: TunnelStatus.IDLE,
+		tunnelError: '',
+		...overrides
+	};
+}
+
+describe('card status', () => {
+	it('names a running handshake', () => {
+		const status = serverCardStatusOf(facts({ remote: true, tunnel: TunnelStatus.CONNECTING }));
+
+		expect(status.state).toBe(ServerCardState.CONNECTING);
+		expect(status.label).toBe('Connecting');
+		expect(status.detail).toBe('Opening the tunnel to the host.');
+	});
+
+	it('keeps an idle remote server a choice, not a failure', () => {
+		const status = serverCardStatusOf(facts({ remote: true, tunnel: TunnelStatus.IDLE }));
+
+		expect(status.state).toBe(ServerCardState.IDLE);
+		expect(status.label).toBe('Not connected');
+		expect(status.detail).toBe('Paste the code the host prints, or press Connect.');
+	});
+
+	it('carries the transport sentence of a dropped channel', () => {
+		const status = serverCardStatusOf(
+			facts({
+				remote: true,
+				tunnel: TunnelStatus.ERROR,
+				tunnelError: 'authentication failed: invalid passcode'
+			})
+		);
+
+		expect(status.state).toBe(ServerCardState.CHANNEL_DOWN);
+		expect(status.label).toBe('Channel down');
+		expect(status.detail).toBe('authentication failed: invalid passcode');
+	});
+
+	it('reports a listing that failed behind an open channel as unreachable', () => {
+		const status = serverCardStatusOf(
+			facts({ modelsError: 'host refused', remote: true, tunnel: TunnelStatus.CONNECTED })
+		);
+
+		expect(status.state).toBe(ServerCardState.UNREACHABLE);
+		expect(status.label).toBe('Unreachable');
+		expect(status.detail).toBe('host refused');
+	});
+
+	it('counts the models of a server that answered', () => {
+		expect(serverCardStatusOf(facts({ modelCount: 1, modelsLoaded: true })).label).toBe('1 model');
+		expect(serverCardStatusOf(facts({ modelCount: 4, modelsLoaded: true })).label).toBe('4 models');
+	});
+
+	it('says what is being checked, tunnel or not', () => {
+		const direct = serverCardStatusOf(facts({ modelsLoading: true }));
+		const tunneled = serverCardStatusOf(
+			facts({ modelsLoading: true, remote: true, tunnel: TunnelStatus.CONNECTED })
+		);
+
+		expect(direct.label).toBe('Checking');
+		expect(direct.detail).toBe('Asking the server for the models it serves.');
+		expect(tunneled.detail).toBe('Asking the host for the models it serves.');
+	});
+
+	it('reports nothing for a server that is switched off', () => {
+		const status = serverCardStatusOf(facts({ enabled: false, modelsError: 'host refused' }));
+
+		expect(status.state).toBe(ServerCardState.NONE);
+		expect(status.label).toBe('');
+		expect(status.detail).toBe('');
 	});
 });
