@@ -94,6 +94,9 @@ class UiStore {
 	/** Open state of the Discover dialog. */
 	discoverModelsOpen = $state(false);
 
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
+
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -232,6 +235,11 @@ class UiStore {
 		this.projectPicker = options;
 	}
 
+	/** Open the servers dialog, where a server is paired or pointed at. */
+	openServers(): void {
+		this.serversOpen = true;
+	}
+
 	/**
 	 * Puts sections in the order the user gave them. One never moved, such as a
 	 * new group or project, keeps its default place: right before the next section in
@@ -267,6 +275,7 @@ class UiStore {
 
 		this.modelsReturnRoute = page.url.hash || ROUTES.START;
 	}
+
 	/** Ask the composer to take focus, e.g. after a dialog closes onto the chat. */
 	requestComposerFocus(): void {
 		this.composerFocusRequested = true;

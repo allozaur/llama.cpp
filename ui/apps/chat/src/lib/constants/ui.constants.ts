@@ -6,7 +6,7 @@ import {
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
 import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
-import { Search, Settings, SquarePen } from '@lucide/svelte';
+import { Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
 
@@ -184,6 +184,11 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
+	},
+	{
+		action: SidebarAction.SERVERS,
+		icon: Server,
+		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,
