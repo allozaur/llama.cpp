@@ -16,18 +16,18 @@ export interface ModelOption {
 	id: string;
 	name: string;
 	model: string;
-	/** Backend that serves this model; set on the aggregated option list. */
-	backendId?: string;
+	/** Server that serves this model; set on the aggregated option list. */
+	serverId?: string;
 	description?: string;
 	capabilities: string[];
-	/** Context size reported by the provider's model listing, when it reports one. */
+	/** Context size reported by the server's model listing, when it reports one. */
 	contextLength?: number;
 	/** Draft sidecars downloaded alongside the model, e.g. `mtp` or `dflash`. */
 	draftSidecars?: ModelSidecarBadge[];
 	modalities?: ModelModalities;
 	details?: ApiModelDetails['details'];
 	meta?: ApiModelDataEntry['meta'];
-	/** Load state the provider's own listing reports, when it reports one. */
+	/** Load state the server's own listing reports, when it reports one. */
 	status?: ApiModelDataEntry['status'];
 	parsedId?: ParsedModelId;
 	aliases?: string[];

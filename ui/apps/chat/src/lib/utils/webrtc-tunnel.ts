@@ -6,11 +6,11 @@
  * authenticates the client on the data channel after the WebRTC handshake.
  *
  * The client sends an offer, authenticates via pass code, then every request
- * addressed at the provider's tunnel origin is forwarded through the data
+ * addressed at the server's tunnel origin is forwarded through the data
  * channel to the host running llama-connect next to its local server.
  *
- * One instance serves exactly one provider, and `remoteAccessStore` owns them:
- * a provider is addressed by its tunnel origin, so the request path the host
+ * One instance serves exactly one server, and `remoteAccessStore` owns them:
+ * a server is addressed by its tunnel origin, so the request path the host
  * receives is already clean and needs no base-path handling.
  */
 
@@ -369,7 +369,7 @@ export class ClientTunnel {
 			return Promise.reject(new DOMException('Aborted', 'AbortError'));
 		}
 
-		// Requests reach the tunnel addressed at the provider's tunnel origin, so
+		// Requests reach the tunnel addressed at the server's tunnel origin, so
 		// the path is already the one the host's server serves: nothing to strip.
 		const reqUrl = new URL(request.url);
 		const path = reqUrl.pathname + reqUrl.search;

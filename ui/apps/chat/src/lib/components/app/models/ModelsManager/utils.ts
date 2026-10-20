@@ -3,7 +3,7 @@ import {
 	ModelCapability,
 	ModelGroupKind,
 	ModelsTableGroupKind,
-	ModelsTableProviderKind
+	ModelsTableServerKind
 } from '$lib/enums';
 import { HuggingFaceService, ModelsService } from '$lib/services';
 import { modelsStore } from '$lib/stores';
@@ -14,8 +14,8 @@ import type {
 	ModelSidecarBadge
 } from '$lib/types/models';
 import { detectThinkingSupport, detectToolUseSupport, repoOf } from '$lib/utils';
-import { getBackend } from '$lib/utils/api-base';
-import { isLocalBackend } from '$lib/utils/backend';
+import { getServer } from '$lib/utils/api-base';
+import { isLocalServer } from '$lib/utils/server';
 
 /** One repo of the table, with the rows it ships as. */
 export interface ModelQuantGroup {
@@ -56,14 +56,14 @@ export function downloadGroups(
 ): ModelQuantGroup[] {
 	return entries.map((entry) => {
 		const listed = models.find((candidate) => candidate.model === entry.repoWithTag);
-		// the synthesized option carries backendId, which ModelOption drops on
+		// the synthesized option carries serverId, which ModelOption drops on
 		// assignment, so the callers spread it instead of typing this as one
 		const option = listed ?? {
-			backendId: LOCAL_BACKEND_ID,
 			capabilities: [],
 			id: entry.repoWithTag,
 			model: entry.repoWithTag,
-			name: entry.repoWithTag
+			name: entry.repoWithTag,
+			serverId: LOCAL_BACKEND_ID
 		};
 		// a draft still coming down badges the id, an on-disk one keeps its sub-line
 		const sidecars = sidecarsFor(repoOf(entry.repoWithTag));
@@ -94,14 +94,14 @@ export function findModelOption(
 
 /** One collapsible block of the manager's table. */
 export interface ModelsTableGroup {
-	/** Backend the block belongs to, when it is tied to one. */
-	backendId?: string | null;
+	/** Server the block belongs to, when it is tied to one. */
+	serverId?: string | null;
 	/** One entry per repo, its quants hanging off it. */
 	items: ModelQuantGroup[];
 	isLocal?: boolean;
 	key: string;
-	/** Manager sections use the kind constants, provider blocks their own kinds. */
-	kind: ModelsTableGroupKind | ModelsTableProviderKind;
+	/** Manager sections use the kind constants, server blocks their own kinds. */
+	kind: ModelsTableGroupKind | ModelsTableServerKind;
 	label: string;
 }
 
@@ -143,15 +143,15 @@ export function configuredContext(option: ModelOption): number | null {
 }
 
 export function servedByLabel(option: ModelOption): string {
-	const backend = getBackend(option.backendId);
+	const server = getServer(option.serverId);
 
-	if (!backend || isLocalBackend(backend)) return 'This server';
+	if (!server || isLocalServer(server)) return 'This server';
 
-	return backend.name;
+	return server.name;
 }
 
 /**
- * Context a model reports: the provider listing first, then the cached Hub record.
+ * Context a model reports: the server listing first, then the cached Hub record.
  * Null while neither of them has answered.
  */
 export function modelContextLength(option: ModelOption): number | null {
@@ -163,19 +163,19 @@ export function modelContextLength(option: ModelOption): number | null {
 }
 
 export function isLocalOption(option: ModelOption): boolean {
-	return (option.backendId ?? LOCAL_BACKEND_ID) === LOCAL_BACKEND_ID;
+	return (option.serverId ?? LOCAL_BACKEND_ID) === LOCAL_BACKEND_ID;
 }
 
 /** Fold the quants of one repo into a single entry, so the table shows one row per model. */
-export function groupModelQuants(models: ModelOption[], mergeProviders = false): ModelQuantGroup[] {
+export function groupModelQuants(models: ModelOption[], mergeServers = false): ModelQuantGroup[] {
 	const groups = new Map<string, ModelQuantGroup>();
 
 	for (const option of models) {
 		const repo = repoOf(option.model);
-		// groups stay within one backend, so the same repo served by two providers
+		// groups stay within one server, so the same repo served by two servers
 		// is not read as two quants of one model. The OAI-compat block asks for the
-		// opposite: one repo, one row per provider that serves it.
-		const key = mergeProviders ? repo : `${option.backendId ?? ''}::${repo}`;
+		// opposite: one repo, one row per server that serves it.
+		const key = mergeServers ? repo : `${option.serverId ?? ''}::${repo}`;
 		const group = groups.get(key);
 
 		if (group) {
@@ -192,9 +192,9 @@ export function groupModelQuants(models: ModelOption[], mergeProviders = false):
 		const modelIds = group.quants.map((option) => option.model);
 
 		// the very same id twice is not a quant set; keep those rows apart, unless
-		// the group exists to list the providers that serve it
+		// the group exists to list the servers that serve it
 		if (
-			kind !== ModelGroupKind.PROVIDERS &&
+			kind !== ModelGroupKind.SERVERS &&
 			modelIds.length > 1 &&
 			modelIds.every((model) => model === modelIds[0])
 		) {
@@ -211,11 +211,11 @@ export function groupModelQuants(models: ModelOption[], mergeProviders = false):
 	});
 }
 
-/** What a group folds: providers, quants, or variants of one repo. */
+/** What a group folds: servers, quants, or variants of one repo. */
 function groupKind(quants: ModelOption[]): ModelGroupKind {
-	const backends = new Set(quants.map((option) => option.backendId ?? ''));
+	const servers = new Set(quants.map((option) => option.serverId ?? ''));
 
-	if (backends.size > 1) return ModelGroupKind.PROVIDERS;
+	if (servers.size > 1) return ModelGroupKind.SERVERS;
 
 	const isQuant = quants.every(
 		(option) => (option.parsedId ?? ModelsService.parseModelId(option.model)).quantization

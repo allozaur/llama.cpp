@@ -715,7 +715,7 @@ export class ChatService {
 										break;
 
 									case 'usage':
-										// providers may split usage across chunks (some report input
+										// servers may split usage across chunks (some report input
 										// tokens on message_start and output tokens on message_delta)
 										usage = { ...usage, ...event.usage };
 
