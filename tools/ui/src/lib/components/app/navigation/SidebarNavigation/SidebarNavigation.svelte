@@ -13,6 +13,7 @@
 		DialogProject,
 		DialogProjectPicker,
 		DialogSearch,
+		DialogServers,
 		DialogSettingsChat,
 		Logo,
 		ModelsManagerModelDrawer,
@@ -550,6 +551,10 @@
 				else openDialog(() => (mcpDialogOpen = true));
 
 				break;
+			case SidebarAction.SERVERS:
+				openDialog(() => uiStore.openServers());
+
+				break;
 			case SidebarAction.SETTINGS:
 				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
 				else openDialog(() => (settingsDialogOpen = true));
@@ -776,6 +781,8 @@
 <DialogProject />
 
 <DialogProjectPicker />
+
+<DialogServers bind:open={uiStore.serversOpen} />
 
 <style>
 	aside {
