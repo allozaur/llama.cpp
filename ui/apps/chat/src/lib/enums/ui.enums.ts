@@ -22,6 +22,7 @@ export enum SidebarAction {
 	NEW_CHAT = 'new-chat',
 	PROJECTS = 'projects',
 	SEARCH = 'search',
+	SERVERS = 'servers',
 	SETTINGS = 'settings'
 }
 

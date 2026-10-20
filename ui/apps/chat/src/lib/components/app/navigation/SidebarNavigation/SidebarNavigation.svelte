@@ -10,6 +10,7 @@
 		DialogProject,
 		DialogProjectPicker,
 		DialogSearch,
+		DialogServers,
 		DialogSettingsChat,
 		Logo,
 		ModelsManagerModelDrawer,
@@ -550,6 +551,10 @@
 				openDialog(() => uiStore.openModelsManager());
 
 				break;
+			case SidebarAction.SERVERS:
+				openDialog(() => uiStore.openServers());
+
+				break;
 			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
 				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
@@ -806,6 +811,8 @@
 <DialogProject />
 
 <DialogProjectPicker />
+
+<DialogServers bind:open={uiStore.serversOpen} />
 
 <style>
 	aside {
