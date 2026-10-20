@@ -6,19 +6,19 @@ import ModelsManagerRepoRow from '$lib/components/app/models/ModelsManager/Model
 import type { ModelQuantGroup } from '$lib/components/app/models/ModelsManager/utils';
 import { LOCAL_BACKEND_ID } from '$lib/constants';
 import { ModelGroupKind, ServerRole } from '$lib/enums';
-import { backendsStore } from '$lib/stores/backends.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
+import { serversStore } from '$lib/stores/servers.svelte';
 import type { ModelOption } from '$lib/types/models';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 const option: ModelOption = {
-	backendId: LOCAL_BACKEND_ID,
 	capabilities: [],
 	id: 'org/Qwen3-8B:Q4_K_M',
 	model: 'org/Qwen3-8B:Q4_K_M',
-	name: 'Qwen3-8B'
+	name: 'Qwen3-8B',
+	serverId: LOCAL_BACKEND_ID
 };
 const entry: ModelQuantGroup = {
 	base: option,
@@ -37,9 +37,9 @@ describe('manager model row', () => {
 
 	beforeEach(() => {
 		selected = [];
-		// the row resolves the backend that serves it, and only offers a load control on
+		// the row resolves the server that serves it, and only offers a load control on
 		// a router server
-		backendsStore.initialize();
+		serversStore.initialize();
 		serverStore.role = ServerRole.ROUTER;
 	});
 

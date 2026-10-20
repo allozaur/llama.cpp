@@ -7,7 +7,7 @@ import { MimeTypeImage } from '$lib/enums';
  *
  * For JPEGs the EXIF orientation is baked into the pixels in the same canvas
  * pass, the browser applies the rotation when decoding so naturalWidth and
- * naturalHeight already describe the upright image. Backends decoding with
+ * naturalHeight already describe the upright image. Servers decoding with
  * stb_image ignore EXIF, see ggml-org/llama.cpp#20870. Images that need
  * neither capping nor rotation pass through untouched, so at most one
  * re-encode ever happens.

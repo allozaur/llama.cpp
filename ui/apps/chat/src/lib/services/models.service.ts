@@ -197,13 +197,13 @@ export class ModelsService {
 	 *
 	 * @param modelId - Model identifier to load
 	 * @param extraArgs - Optional additional arguments to pass to the model instance
-	 * @param backendId - Backend serving the model; the active one when omitted
+	 * @param serverId - Server serving the model; the active one when omitted
 	 * @returns Load response from the server
 	 */
 	static async load(
 		modelId: string,
 		extraArgs?: string[],
-		backendId?: string
+		serverId?: string
 	): Promise<ApiModelsLoadResponse> {
 		const payload: { model: string; extra_args?: string[] } = { model: modelId };
 
@@ -211,7 +211,7 @@ export class ModelsService {
 			payload.extra_args = extraArgs;
 		}
 
-		return apiPost<ApiModelsLoadResponse>(API_MODELS.LOAD, payload, { backendId });
+		return apiPost<ApiModelsLoadResponse>(API_MODELS.LOAD, payload, { serverId });
 	}
 
 	/**
@@ -431,11 +431,11 @@ export class ModelsService {
 	 * before unloading completes — use polling to await actual unload status.
 	 *
 	 * @param modelId - Model identifier to unload
-	 * @param backendId - Backend serving the model; the active one when omitted
+	 * @param serverId - Server serving the model; the active one when omitted
 	 * @returns Unload response from the server
 	 */
-	static async unload(modelId: string, backendId?: string): Promise<ApiModelsUnloadResponse> {
-		return apiPost<ApiModelsUnloadResponse>(API_MODELS.UNLOAD, { model: modelId }, { backendId });
+	static async unload(modelId: string, serverId?: string): Promise<ApiModelsUnloadResponse> {
+		return apiPost<ApiModelsUnloadResponse>(API_MODELS.UNLOAD, { model: modelId }, { serverId });
 	}
 
 	/**
@@ -453,7 +453,7 @@ export class ModelsService {
 		while (!signal.aborted) {
 			try {
 				// the status feed only exists on the local llama.cpp server; pin the
-				// request so an active external backend cannot redirect it
+				// request so an active external server cannot redirect it
 				const response = await fetch(apiUrl(API_MODELS.SSE, LOCAL_BACKEND_ID), {
 					headers: getAuthHeaders(LOCAL_BACKEND_ID),
 					signal

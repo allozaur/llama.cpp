@@ -37,8 +37,8 @@ export type {
 	ApiStreamSession
 } from './api';
 
-// Backend types
-export type { Backend } from './backend';
+// Server types
+export type { Server } from './server';
 
 // HuggingFace types
 export type {

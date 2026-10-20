@@ -35,14 +35,14 @@ export { agenticStore } from './agentic/index.svelte';
 export { sidebarDragStore } from './sidebar-drag.svelte';
 export { conversationsStore } from './conversations/index.svelte';
 
-// BACKENDS
-export { backendsStore } from './backends.svelte';
-export { backendsModelsStore } from './backendsModels.svelte';
-
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 
-// REMOTE ACCESS (WebRTC tunnels to remote providers)
+// SERVERS
+export { serversStore } from './servers.svelte';
+export { serversModelsStore } from './serversModels.svelte';
+
+// REMOTE ACCESS (WebRTC tunnels to remote servers)
 export { remoteAccessStore } from './remote-access.svelte';
 
 // MODELS

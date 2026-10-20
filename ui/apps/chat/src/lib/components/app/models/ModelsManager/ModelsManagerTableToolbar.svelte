@@ -6,7 +6,7 @@
 	import { SearchInput } from '$lib/components/app/forms';
 	import { type ModalityKey } from '$lib/constants';
 	import { ModelCapability } from '$lib/enums';
-	import { backendsStore, deviceStore } from '$lib/stores';
+	import { deviceStore, serversStore } from '$lib/stores';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -17,10 +17,10 @@
 		filter?: string;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
-		/** Repos each provider contributes to the current search, for the filter menu. */
-		providerCounts?: Record<string, number>;
-		/** Backend ids to keep; empty keeps every provider. */
-		providers?: string[];
+		/** Repos each server contributes to the current search, for the filter menu. */
+		serverCounts?: Record<string, number>;
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
 		/** Rendered at the toolbar's right end, past the filters. */
 		toolbarEnd?: Snippet;
 	}
@@ -30,13 +30,13 @@
 		contextLimit = $bindable(0),
 		filter = $bindable(''),
 		modalities = $bindable<ModalityKey[]>([]),
-		providerCounts = {},
-		providers = $bindable<string[]>([]),
+		serverCounts = {},
+		servers = $bindable<string[]>([]),
 		toolbarEnd
 	}: Props = $props();
 
 	let hasFilters = $derived(
-		hasActiveFilters(contextLimit, modalities, capabilities) || providers.length > 0
+		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
 	);
 	let filterInput = $state<HTMLInputElement | null>(null);
 
@@ -73,16 +73,16 @@
 		bind:capabilities
 		bind:contextLimit
 		bind:modalities
-		bind:providers
-		backends={backendsStore.enabled}
-		{providerCounts}
+		bind:servers
+		availableServers={serversStore.enabled}
+		{serverCounts}
 	/>
 
 	{#if hasFilters}
 		<Button
 			class="gap-1.5 text-muted-foreground"
 			onclick={() => {
-				providers = [];
+				servers = [];
 				contextLimit = 0;
 				modalities = [];
 				capabilities = [];

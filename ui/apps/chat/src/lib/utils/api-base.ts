@@ -1,104 +1,104 @@
 /**
- * API base resolution for backends.
+ * API base resolution for servers.
  *
- * The UI can talk to more than one backend endpoint. Services build request
- * URLs through {@link apiUrl} so a request always targets the right backend.
- * The backends store registers a resolver here; this module never imports the
+ * The UI can talk to more than one server endpoint. Services build request
+ * URLs through {@link apiUrl} so a request always targets the right server.
+ * The servers store registers a resolver here; this module never imports the
  * store, which keeps URL resolution free of store dependencies.
  */
 
-import { backendChatUrl, backendModelsUrl, backendOrigin, isLocalBackend } from './backend';
+import { isLocalServer, serverChatUrl, serverModelsUrl, serverOrigin } from './server';
 import { base } from '$app/paths';
 import { API_ABSOLUTE_URL_PROTOCOLS, API_CHAT, API_MODELS } from '$lib/constants';
-import type { Backend } from '$lib/types';
+import type { Server } from '$lib/types';
 
-/** Backend list and active selection as exposed to URL resolution. */
-export interface BackendsSnapshot {
+/** Server list and active selection as exposed to URL resolution. */
+export interface ServersSnapshot {
 	activeId: string;
-	backends: Backend[];
+	servers: Server[];
 }
 
-type BackendsResolver = () => BackendsSnapshot;
+type ServersResolver = () => ServersSnapshot;
 
-let resolveBackends: BackendsResolver | null = null;
+let resolveServers: ServersResolver | null = null;
 
-/** Registered once by the backends store. */
-export function setBackendsResolver(resolver: BackendsResolver | null): void {
-	resolveBackends = resolver;
+/** Registered once by the servers store. */
+export function setServersResolver(resolver: ServersResolver | null): void {
+	resolveServers = resolver;
 }
 
 /**
- * Look up a backend by id, defaulting to the active one.
+ * Look up a server by id, defaulting to the active one.
  */
-export function getBackend(backendId?: string): Backend | undefined {
-	const snapshot = resolveBackends?.();
+export function getServer(serverId?: string): Server | undefined {
+	const snapshot = resolveServers?.();
 
 	if (!snapshot) return undefined;
 
-	const id = backendId ?? snapshot.activeId;
+	const id = serverId ?? snapshot.activeId;
 
-	return snapshot.backends.find((backend) => backend.id === id);
+	return snapshot.servers.find((server) => server.id === id);
 }
 
-/** Every registered backend, in list order. */
-export function getBackends(): Backend[] {
-	return resolveBackends?.().backends ?? [];
+/** Every registered server, in list order. */
+export function getServers(): Server[] {
+	return resolveServers?.().servers ?? [];
 }
 
 /**
- * API root for a backend: its own base URL, the synthetic tunnel origin of a
- * remote backend, or an empty string for the local one.
+ * API root for a server: its own base URL, the synthetic tunnel origin of a
+ * remote server, or an empty string for the local one.
  */
-export function getBackendBaseUrl(backendId?: string): string {
-	const backend = getBackend(backendId);
+export function getServerBaseUrl(serverId?: string): string {
+	const server = getServer(serverId);
 
-	return backend ? backendOrigin(backend) : '';
+	return server ? serverOrigin(server) : '';
 }
 
 /**
- * Request target for a backend's chat completions endpoint. Returns a relative
- * path for the local backend and an absolute URL for every other one — its own
- * base URL, or the tunnel origin of a remote backend — so callers can hand the
+ * Request target for a server's chat completions endpoint. Returns a relative
+ * path for the local server and an absolute URL for every other one — its own
+ * base URL, or the tunnel origin of a remote server — so callers can hand the
  * result straight to `fetch` (or to `apiFetch`, which resolves relative paths
  * against the base).
  */
-export function apiChatUrl(backendId?: string): string {
-	const backend = getBackend(backendId);
+export function apiChatUrl(serverId?: string): string {
+	const server = getServer(serverId);
 
-	if (backend && !isLocalBackend(backend)) {
-		return backendChatUrl(backend);
+	if (server && !isLocalServer(server)) {
+		return serverChatUrl(server);
 	}
 
-	return apiUrl(API_CHAT.COMPLETIONS, backendId);
+	return apiUrl(API_CHAT.COMPLETIONS, serverId);
 }
 
 /**
- * Request target for a backend's models listing. Returns a plain path for the
- * local backend (so `apiFetch` applies the base) and an absolute URL otherwise.
+ * Request target for a server's models listing. Returns a plain path for the
+ * local server (so `apiFetch` applies the base) and an absolute URL otherwise.
  */
-export function apiModelsUrl(backendId?: string): string {
-	const backend = getBackend(backendId);
+export function apiModelsUrl(serverId?: string): string {
+	const server = getServer(serverId);
 
-	if (backend && !isLocalBackend(backend)) {
-		return backendModelsUrl(backend);
+	if (server && !isLocalServer(server)) {
+		return serverModelsUrl(server);
 	}
 
 	return API_MODELS.LIST;
 }
 
 /**
- * Absolute URL for an API path on a backend.
+ * Absolute URL for an API path on a server.
  *
- * Absolute URLs pass through untouched. Paths on the local backend keep the
+ * Absolute URLs pass through untouched. Paths on the local server keep the
  * existing base-path-relative form, so serving under a subpath still works.
- * Paths on external backends resolve against the backend's API root.
+ * Paths on external servers resolve against the server's API root.
  */
-export function apiUrl(path: string, backendId?: string): string {
+export function apiUrl(path: string, serverId?: string): string {
 	if (API_ABSOLUTE_URL_PROTOCOLS.some((protocol) => path.startsWith(protocol))) {
 		return path;
 	}
 
-	const baseUrl = getBackendBaseUrl(backendId);
+	const baseUrl = getServerBaseUrl(serverId);
 
 	if (!baseUrl) {
 		return `${base}${path}`;

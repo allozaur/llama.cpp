@@ -45,10 +45,10 @@
 		ModelCapability,
 		ModelDownloadConfirmAction,
 		ModelsTableGroupKind,
-		ModelsTableProviderKind,
+		ModelsTableServerKind,
 		ModelsTableSortKey
 	} from '$lib/enums';
-	import { backendsModelsStore, modelsStore, settingsStore } from '$lib/stores';
+	import { modelsStore, serversModelsStore, settingsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { groupModelFamilies, type ModelFamilyGroup } from '$lib/utils/model-families';
 	import type { Snippet } from 'svelte';
@@ -65,10 +65,10 @@
 		onSelect: (option: ModelOption) => void;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
-		/** Backend ids to keep; empty keeps every provider. */
-		providers?: string[];
-		/** Repos each provider contributes to the current search, for the filter menu. */
-		providerCounts?: Record<string, number>;
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
+		/** Repos each server contributes to the current search, for the filter menu. */
+		serverCounts?: Record<string, number>;
 		selectedId: string | null;
 		/** Rendered at the toolbar's right end, past the filters. */
 		toolbarEnd?: Snippet;
@@ -82,15 +82,15 @@
 		isFavorite,
 		modalities = $bindable<ModalityKey[]>([]),
 		onSelect,
-		providerCounts = {},
-		providers = $bindable<string[]>([]),
 		selectedId,
+		serverCounts = {},
+		servers = $bindable<string[]>([]),
 		toolbarEnd
 	}: Props = $props();
 
 	let isEmpty = $derived(groups.every((group) => group.items.length === 0));
 	let hasFilters = $derived(
-		hasActiveFilters(contextLimit, modalities, capabilities) || providers.length > 0
+		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
 	);
 
 	/** Noun the show-more row counts in, per unit of the grouped list. */
@@ -253,7 +253,7 @@
 					{onSelect}
 					option={quant}
 					selected={selectedId === quant.id}
-					showProvider={entry.kind === 'providers'}
+					showServer={entry.kind === 'servers'}
 				/>
 			{/each}
 		</CollapsibleRegion>
@@ -358,8 +358,8 @@
 		bind:contextLimit
 		bind:filter
 		bind:modalities
-		bind:providers
-		{providerCounts}
+		bind:servers
+		{serverCounts}
 		{toolbarEnd}
 	/>
 
@@ -394,22 +394,22 @@
 					{/if}
 				{/snippet}
 
-				{@const backendState = group.backendId ? backendsModelsStore.get(group.backendId) : null}
+				{@const serverState = group.serverId ? serversModelsStore.get(group.serverId) : null}
 
 				<ModelsSection
-					backendId={group.kind === ModelsTableProviderKind.PROVIDER
-						? (group.backendId ?? undefined)
-						: undefined}
 					chevronClass="mr-7"
 					count={group.items.length}
 					defaultOpen={group.kind !== ModelsTableGroupKind.HIDDEN}
-					error={Boolean(backendState?.error)}
-					icon={group.kind === ModelsTableProviderKind.PROVIDER ? undefined : groupIcon}
+					error={Boolean(serverState?.error)}
+					icon={group.kind === ModelsTableServerKind.SERVER ? undefined : groupIcon}
 					label={group.label}
-					loading={Boolean(backendState?.loading)}
+					loading={Boolean(serverState?.loading)}
 					persistKey={group.key}
 					revealChevronOnHover
 					sectionHeaderClass="m-0 rounded-lg px-2 py-2 text-[13px] font-semibold text-foreground/85 select-none transition-colors hover:bg-muted max-md:px-3"
+					serverId={group.kind === ModelsTableServerKind.SERVER
+						? (group.serverId ?? undefined)
+						: undefined}
 					sticky
 					stickyClass="sticky z-10 bg-muted/70 backdrop-blur-lg"
 				>

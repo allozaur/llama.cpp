@@ -1,55 +1,54 @@
 <script lang="ts">
-	import BackendForm from './BackendForm.svelte';
-	import DialogBackendCodeScanner from './DialogBackendCodeScanner.svelte';
+	import DialogServerCodeScanner from './DialogServerCodeScanner.svelte';
+	import ServerForm from './ServerForm.svelte';
 	import { Button } from '@ggml/llama-ui/ui/button';
 	import * as Dialog from '@ggml/llama-ui/ui/dialog';
-	import { CheckCircle2, Loader2, PlugZap, QrCode, XCircle } from '@lucide/svelte';
-	import { BACKEND_ID_PREFIX, CODE_LENGTHS } from '$lib/constants';
-	import { BackendKind } from '$lib/enums';
-	import { BackendsService } from '$lib/services';
-	import type { BackendTestResult } from '$lib/services/backends.service';
-	import { backendsStore, remoteAccessStore } from '$lib/stores';
-	import type { Backend } from '$lib/types';
+	import { CODE_LENGTHS, SERVER_ID_PREFIX } from '$lib/constants';
+	import { ServerKind } from '$lib/enums';
+	import { ServersService } from '$lib/services';
+	import type { ServerTestResult } from '$lib/services/servers.service';
+	import { remoteAccessStore, serversStore } from '$lib/stores';
+	import type { Server } from '$lib/types';
 	import { uuid } from '$lib/utils';
+	import { supportsQrScan } from '$lib/utils/qr-scan';
 	import {
-		createUrlBackend,
+		createUrlServer,
 		hostOf,
 		isHttpUrl,
-		isRemoteBackend,
+		isRemoteServer,
 		normalizeShareCode
-	} from '$lib/utils/backend';
-	import { supportsQrScan } from '$lib/utils/qr-scan';
+	} from '$lib/utils/server';
 
 	interface Props {
-		backend?: Backend | null;
-		/** Kind a new provider starts on; the form still switches between them. */
-		defaultKind?: BackendKind;
+		server?: Server | null;
+		/** Kind a new server starts on; the form still switches between them. */
+		defaultKind?: ServerKind;
 		onOpenChange?: (open: boolean) => void;
-		/** A remote provider was paired; its tunnel is open. */
-		onPaired?: (backend: Backend) => void;
-		onSaved?: (backend: Backend) => void;
+		/** A remote server was paired; its tunnel is open. */
+		onPaired?: (server: Server) => void;
+		onSaved?: (server: Server) => void;
 		open?: boolean;
 	}
 
 	let {
-		backend = null,
 		defaultKind,
 		onOpenChange,
 		onPaired,
 		onSaved,
-		open = $bindable(false)
+		open = $bindable(false),
+		server = null
 	}: Props = $props();
 
-	let draft = $state<Backend>(createBackend());
-	let testResult = $state<BackendTestResult | null>(null);
+	let draft = $state<Server>(createServer());
+	let testResult = $state<ServerTestResult | null>(null);
 	let testing = $state(false);
 	let apiKeyRequired = $state(false);
 	let pairing = $state(false);
 	let pairError = $state('');
 	let showScanner = $state(false);
 
-	let isEdit = $derived(backend !== null);
-	let isRemote = $derived(isRemoteBackend(draft));
+	let isEdit = $derived(server !== null);
+	let isRemote = $derived(isRemoteServer(draft));
 	let canScan = $derived(supportsQrScan());
 	let code = $derived(normalizeShareCode(draft.code ?? ''));
 	let urlError = $derived.by(() => {
@@ -64,8 +63,8 @@
 	let codeError = $derived(
 		isRemote && !code ? `The code is ${CODE_LENGTHS.SHARE} characters, exactly as printed` : null
 	);
-	// a remote provider is its code and names itself "Remote server" when left
-	// blank, so only the URL provider is held to a name it has to be able to
+	// a remote server is its code and names itself "Remote server" when left
+	// blank, so only the URL server is held to a name it has to be able to
 	// reach; either way a key the endpoint asked for is mandatory
 	let canSave = $derived(
 		(isRemote ? Boolean(code) : Boolean(draft.name.trim()) && !urlError) &&
@@ -76,7 +75,7 @@
 	$effect(() => {
 		if (!open) return;
 
-		draft = backend ? { ...backend } : createBackend(defaultKind);
+		draft = server ? { ...server } : createServer(defaultKind);
 		testResult = null;
 		testing = false;
 		pairing = false;
@@ -86,7 +85,7 @@
 
 	// Once the URL settles, ask the endpoint whether it guards /props with a key, the
 	// way the MCP dialog previews a server. A refused probe is retried once a key is
-	// typed, which is the answer the API-key field waits for. A remote provider has
+	// typed, which is the answer the API-key field waits for. A remote server has
 	// nothing to probe: its code is answered by pairing.
 	$effect(() => {
 		const url = draft.baseUrl.trim();
@@ -99,7 +98,7 @@
 		}
 
 		const timer = setTimeout(async () => {
-			const probe = await BackendsService.probe({ ...draft, apiKey, baseUrl: url });
+			const probe = await ServersService.probe({ ...draft, apiKey, baseUrl: url });
 
 			apiKeyRequired = probe.authRequired;
 		}, 600);
@@ -107,18 +106,18 @@
 		return () => clearTimeout(timer);
 	});
 
-	function createBackend(kind: BackendKind = BackendKind.URL): Backend {
+	function createServer(kind: ServerKind = ServerKind.URL): Server {
 		return {
 			baseUrl: '',
 			code: '',
 			enabled: true,
-			id: uuid() || `${BACKEND_ID_PREFIX}-${Date.now()}`,
+			id: uuid() || `${SERVER_ID_PREFIX}-${Date.now()}`,
 			kind,
 			name: ''
 		};
 	}
 
-	function handleChange(patch: Partial<Backend>) {
+	function handleChange(patch: Partial<Server>) {
 		draft = { ...draft, ...patch };
 		testResult = null;
 		pairError = '';
@@ -142,32 +141,32 @@
 		testResult = null;
 
 		try {
-			testResult = await BackendsService.test(draft);
+			testResult = await ServersService.test(draft);
 		} finally {
 			testing = false;
 		}
 	}
 
 	/**
-	 * Save the provider and open its tunnel.
+	 * Save the server and open its tunnel.
 	 *
-	 * The tunnel lives on the provider, so pairing has to register it first: the
+	 * The tunnel lives on the server, so pairing has to register it first: the
 	 * card keeps the state either way, which is why a failed handshake leaves the
-	 * provider in place with Reconnect on it rather than rolling the pair back.
+	 * server in place with Reconnect on it rather than rolling the pair back.
 	 */
 	async function handlePair() {
 		if (!code) return;
 
-		const id = isEdit && backend ? backend.id : draft.id;
+		const id = isEdit && server ? server.id : draft.id;
 		const name = draft.name.trim() || 'Remote server';
 
 		if (isEdit) {
-			backendsStore.updateBackend(id, { ...draft, code, kind: BackendKind.REMOTE, name });
+			serversStore.updateServer(id, { ...draft, code, kind: ServerKind.REMOTE, name });
 		} else {
-			backendsStore.addRemoteBackend(code, name, id);
+			serversStore.addRemoteServer(code, name, id);
 		}
 
-		draft = { ...draft, code, kind: BackendKind.REMOTE, name };
+		draft = { ...draft, code, kind: ServerKind.REMOTE, name };
 
 		pairing = true;
 		pairError = '';
@@ -175,7 +174,7 @@
 		try {
 			await remoteAccessStore.connect(id);
 			handleOpenChange(false);
-			onPaired?.(backendsStore.list.find((candidate) => candidate.id === id) ?? draft);
+			onPaired?.(serversStore.list.find((candidate) => candidate.id === id) ?? draft);
 		} catch (error: unknown) {
 			pairError = error instanceof Error ? error.message : String(error);
 		} finally {
@@ -194,12 +193,12 @@
 
 		// built through the constructor so a pasted URL and a blank name land in
 		// the list the same way a stored one is read back
-		const next = createUrlBackend(draft.baseUrl, draft.id, draft.name, draft.apiKey, draft.headers);
+		const next = createUrlServer(draft.baseUrl, draft.id, draft.name, draft.apiKey, draft.headers);
 
-		if (isEdit && backend) {
-			backendsStore.updateBackend(backend.id, next);
+		if (isEdit && server) {
+			serversStore.updateServer(server.id, next);
 		} else {
-			backendsStore.addBackend(next);
+			serversStore.addServer(next);
 		}
 
 		onSaved?.(next);
@@ -216,7 +215,7 @@
 	<Dialog.Content class="max-w-2xl!">
 		<Dialog.Header>
 			<Dialog.Title class="select-none">
-				{isEdit ? 'Edit Provider' : isRemote ? 'Pair a remote server' : 'Add New Provider'}
+				{isEdit ? 'Edit Server' : isRemote ? 'Pair a remote server' : 'Add New Server'}
 			</Dialog.Title>
 
 			<Dialog.Description>
@@ -228,19 +227,19 @@
 
 		<form class="contents" onsubmit={handleSubmit}>
 			<div class="space-y-4 py-4">
-				<BackendForm
+				<ServerForm
 					{apiKeyRequired}
-					backend={draft}
 					{canScan}
 					{codeError}
-					id="backend"
+					id="server"
 					onChange={handleChange}
 					onScan={() => (showScanner = true)}
+					server={draft}
 					{urlError}
 				/>
 			</div>
 
-			<DialogBackendCodeScanner
+			<DialogServerCodeScanner
 				bind:open={showScanner}
 				onCode={(scanned) => handleChange({ code: scanned })}
 			/>
@@ -277,7 +276,7 @@
 						<p class="text-xs break-words text-muted-foreground">{pairError}</p>
 
 						<p class="mt-1 text-xs text-muted-foreground">
-							The provider is saved; retry from its card.
+							The server is saved; retry from its card.
 						</p>
 					</div>
 				{:else if testResult?.ok}
@@ -317,8 +316,8 @@
 
 						<p class="text-xs text-muted-foreground">
 							{isRemote
-								? 'Pairing saves the provider and connects to it.'
-								: 'Test it to list the models this provider serves.'}
+								? 'Pairing saves the server and connects to it.'
+								: 'Test it to list the models this server serves.'}
 						</p>
 					</div>
 				{/if}
