@@ -58,6 +58,8 @@
 	let pairing = $state(false);
 	let pairError = $state('');
 	let showScanner = $state(false);
+	/** Verdict of the last /props probe: false when the endpoint is not a llama.cpp server. */
+	let llamaCpp = $state<boolean | null>(null);
 
 	let isEdit = $derived(server !== null);
 	let isRemote = $derived(isRemoteServer(draft));
@@ -83,11 +85,19 @@
 	let codeError = $derived(
 		isRemote && !code ? `The code is ${CODE_LENGTHS.SHARE} characters, exactly as printed` : null
 	);
+	// what the endpoint turned out to be: a server of another kind is not one this
+	// UI can drive, so it is not worth saving
+	let endpointError = $derived(
+		!isRemote && !isEdit && llamaCpp === false
+			? 'Not a llama.cpp server: /props answered something else'
+			: null
+	);
 	// a remote server is its code and names itself "Remote server" when left
 	// blank, so only the URL server is held to a name it has to be able to
 	// reach; either way a key the endpoint asked for is mandatory
 	let canSave = $derived(
 		(isRemote ? Boolean(code) : Boolean(draft.name.trim()) && !urlError) &&
+			!endpointError &&
 			(!apiKeyRequired || Boolean(draft.apiKey?.trim()))
 	);
 
@@ -103,18 +113,21 @@
 		pairing = false;
 		pairError = '';
 		apiKeyRequired = false;
+		llamaCpp = null;
 	});
 
 	// Once the URL settles, ask the endpoint whether it guards /props with a key, the
 	// way the MCP dialog previews a server. A refused probe is retried once a key is
-	// typed, which is the answer the API-key field waits for. A remote server has
-	// nothing to probe: its code is answered by pairing.
+	// typed, which is the answer the API-key field waits for. The same answer says
+	// whether the endpoint is a llama.cpp server at all. A remote server has nothing
+	// to probe: its code is answered by pairing.
 	$effect(() => {
 		const url = draft.baseUrl.trim();
 		const apiKey = draft.apiKey?.trim();
 
 		if (!open || isEdit || isRemote || urlError || !url) {
 			apiKeyRequired = false;
+			llamaCpp = null;
 
 			return;
 		}
@@ -123,6 +136,7 @@
 			const probe = await ServersService.probe({ ...draft, apiKey, baseUrl: url });
 
 			apiKeyRequired = probe.authRequired;
+			llamaCpp = probe.llamaCpp;
 		}, 600);
 
 		return () => clearTimeout(timer);
@@ -239,6 +253,7 @@
 			{apiKeyRequired}
 			{canScan}
 			{codeError}
+			{endpointError}
 			id="server"
 			onChange={handleChange}
 			onScan={() => (showScanner = true)}
