@@ -4,13 +4,23 @@
 	import * as Card from '@ggml/llama-ui/ui/card';
 	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
-	import { Pencil, Radio, RotateCw, Server as ServerGlyph, Trash2, WifiOff } from '@lucide/svelte';
+	import {
+		Copy,
+		Pencil,
+		Radio,
+		RotateCw,
+		Server as ServerGlyph,
+		Trash2,
+		WifiOff
+	} from '@lucide/svelte';
 	import { DialogConfirmation } from '$lib/components/app/dialogs';
 	import Logo from '$lib/components/app/misc/Logo.svelte';
-	import { TunnelStatus } from '$lib/enums';
-	import { remoteAccessStore, serversModelsStore } from '$lib/stores';
+	import { ServerCardState, TunnelStatus } from '$lib/enums';
+	import { remoteAccessStore, serversModelsStore, serverStore } from '$lib/stores';
 	import type { Server } from '$lib/types';
-	import { isRemoteServer } from '$lib/utils/server';
+	import { copyToClipboard } from '$lib/utils';
+	import { isRemoteServer, normalizeShareCode } from '$lib/utils/server';
+	import { serverCardStatusOf } from '$lib/utils/server-status';
 
 	const CARD_ICON_CLASS = 'h-5 w-5';
 
@@ -21,6 +31,8 @@
 		onDelete?: () => void;
 		onDisconnect?: (server: Server) => void;
 		onEdit?: () => void;
+		/** Pair this machine's own host, by the access code it advertises. */
+		onPair?: (code: string) => void;
 		onToggle?: (enabled: boolean) => void;
 	}
 
@@ -30,54 +42,44 @@
 		onDelete,
 		onDisconnect,
 		onEdit,
+		onPair,
 		onToggle,
 		server
 	}: Props = $props();
 
+	let showCode = $state(false);
 	let showDelete = $state(false);
 	let remote = $derived(isRemoteServer(server));
-	let showCode = $state(false);
 
-	/**
-	 * A remote server has two things that can fail: its tunnel and the server
-	 * behind it. The tunnel wins, since a closed tunnel makes the listing
-	 * meaningless. A remote server nobody connected to yet is idle, which is a
-	 * choice the user made, not a failure.
-	 */
-	let tunnel = $derived(remote ? remoteAccessStore.statusOf(server.id) : TunnelStatus.IDLE);
-	let tunnelError = $derived(remote ? remoteAccessStore.errorOf(server.id) : '');
 	let modelsState = $derived(serversModelsStore.get(server.id));
-	let isConnecting = $derived(remote && tunnel === TunnelStatus.CONNECTING);
-	let isIdle = $derived(
-		remote &&
-			tunnel === TunnelStatus.IDLE &&
-			!modelsState.loading &&
-			!modelsState.loaded &&
-			!modelsState.error
+	let tunnel = $derived(remote ? remoteAccessStore.statusOf(server.id) : TunnelStatus.IDLE);
+	let status = $derived(
+		serverCardStatusOf({
+			enabled: server.enabled,
+			modelCount: modelsState.models.length,
+			modelsError: modelsState.error ?? '',
+			modelsLoaded: modelsState.loaded,
+			modelsLoading: modelsState.loading,
+			remote,
+			tunnel,
+			tunnelError: remote ? remoteAccessStore.errorOf(server.id) : ''
+		})
 	);
-	let isChecking = $derived(
-		server.enabled &&
-			!isConnecting &&
-			!isIdle &&
-			!modelsState.loaded &&
-			!modelsState.error &&
-			!tunnelError
-	);
-	let isOnline = $derived(
-		server.enabled &&
-			modelsState.loaded &&
-			!modelsState.error &&
-			(!remote || tunnel === TunnelStatus.CONNECTED)
-	);
+
+	let isConnecting = $derived(status.state === ServerCardState.CONNECTING);
+	let isChecking = $derived(status.state === ServerCardState.CHECKING);
+	let isIdle = $derived(status.state === ServerCardState.IDLE);
+	let isOnline = $derived(status.state === ServerCardState.ONLINE);
 	let isOffline = $derived(
-		server.enabled && (tunnel === TunnelStatus.ERROR || (!isIdle && !!modelsState.error))
+		status.state === ServerCardState.CHANNEL_DOWN || status.state === ServerCardState.UNREACHABLE
 	);
-	let hasStatus = $derived(isChecking || isConnecting || isOnline || isOffline || isIdle);
-	let modelCount = $derived(modelsState.models.length);
+	let hasStatus = $derived(status.state !== ServerCardState.NONE);
+	/** Access code of the host running on this machine, when it offers one. */
+	let hostCode = $derived(
+		isLocal ? normalizeShareCode(serverStore.localProps?.connect_code ?? '') : ''
+	);
 	let displayUrl = $derived(server.baseUrl || 'This server');
 	let metaText = $derived(isLocal ? 'Built-in' : remote ? 'Peer-to-peer' : 'llama.cpp server');
-	/** What the failure is about: the tunnel, or the server behind it. */
-	let errorText = $derived(tunnelError || modelsState.error || '');
 
 	$effect(() => {
 		// kick off the probe for servers the prefetch has not covered yet; a remote
@@ -86,6 +88,10 @@
 			void serversModelsStore.ensureLoaded(server.id);
 		}
 	});
+
+	function handleCopy(text: string, message: string) {
+		void copyToClipboard(text, message);
+	}
 
 	function handleRetry() {
 		if (remote) {
@@ -118,71 +124,120 @@
 				<p class="truncate leading-5 font-medium">{server.name}</p>
 
 				{#if remote}
-					<button
-						class="truncate font-mono text-xs text-muted-foreground underline-offset-2 hover:underline"
-						onclick={() => (showCode = !showCode)}
-						title={showCode ? 'Hide the access code' : 'Show the access code'}
-					>
-						{showCode ? (server.code ?? '') : '•'.repeat(server.code?.length ?? 40)}
-					</button>
+					<div class="flex min-w-0 items-center gap-1">
+						<button
+							class="truncate font-mono text-xs text-muted-foreground underline-offset-2 hover:underline"
+							onclick={() => (showCode = !showCode)}
+							title={showCode ? 'Hide the access code' : 'Show the access code'}
+						>
+							{showCode ? (server.code ?? '') : '•'.repeat(server.code?.length ?? 40)}
+						</button>
+
+						<button
+							aria-label="Copy the access code"
+							class="shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground"
+							onclick={() => handleCopy(server.code ?? '', 'Access code copied')}
+						>
+							<Copy class="h-3 w-3" />
+						</button>
+					</div>
 				{:else}
 					<p class="truncate text-xs text-muted-foreground">{displayUrl}</p>
 				{/if}
 			</div>
 		</div>
 
-		<Switch
-			aria-label={server.enabled ? 'Disable server' : 'Enable server'}
-			checked={server.enabled}
-			onCheckedChange={(value) => onToggle?.(value)}
-		/>
+		{#if remote}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Switch
+							{...props}
+							aria-label={server.enabled ? 'Disable server' : 'Enable server'}
+							checked={server.enabled}
+							onCheckedChange={(value) => onToggle?.(value)}
+						/>
+					{/snippet}
+				</Tooltip.Trigger>
+
+				<Tooltip.Content>
+					<p class="max-w-80 break-words">Disabling also closes this server's tunnel.</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		{:else}
+			<Switch
+				aria-label={server.enabled ? 'Disable server' : 'Enable server'}
+				checked={server.enabled}
+				onCheckedChange={(value) => onToggle?.(value)}
+			/>
+		{/if}
 	</div>
 
-	{#if isOffline && errorText}
-		<Tooltip.Root>
-			<Tooltip.Trigger>
-				<p class="max-w-full truncate text-left text-xs text-destructive">{errorText}</p>
-			</Tooltip.Trigger>
+	{#if hostCode}
+		<div class="space-y-2 rounded-lg border border-border/60 p-2.5">
+			<div class="flex items-center justify-between gap-2">
+				<div class="min-w-0">
+					<p class="text-xs font-medium">Remote access: on</p>
 
-			<Tooltip.Content>
-				<p class="max-w-80 break-words">{errorText}</p>
-			</Tooltip.Content>
-		</Tooltip.Root>
+					<p class="text-xs text-muted-foreground">
+						This server can be reached through its access code.
+					</p>
+				</div>
+
+				<div class="flex shrink-0 items-center gap-1">
+					<Button
+						aria-label="Copy the access code"
+						class="relative h-6 w-6 after:absolute after:-inset-0.5 after:content-['']"
+						onclick={() => handleCopy(hostCode, 'Access code copied')}
+						size="icon"
+						variant="ghost"
+					>
+						<Copy class="h-3 w-3" />
+					</Button>
+
+					<Button class="h-6 px-2" onclick={() => onPair?.(hostCode)} size="sm" variant="secondary">
+						Pair
+					</Button>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	{#if status.detail}
+		<p
+			class="line-clamp-2 text-xs break-words {isOffline
+				? 'text-destructive'
+				: 'text-muted-foreground'}"
+		>
+			{status.detail}
+		</p>
 	{/if}
 
 	<div class="mt-auto flex items-center justify-between gap-4">
 		<div class="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-			{#if isConnecting}
+			{#if isConnecting || isChecking}
 				<span class="size-1.5 shrink-0 animate-pulse rounded-full bg-amber-500"></span>
-
-				<span class="shrink-0">Connecting</span>
-			{:else if isChecking}
-				<span class="size-1.5 shrink-0 animate-pulse rounded-full bg-amber-500"></span>
-
-				<span class="shrink-0">Checking</span>
 			{:else if isOnline}
 				<span class="size-1.5 shrink-0 rounded-full bg-emerald-500"></span>
-
-				<span class="shrink-0">{modelCount === 1 ? '1 model' : `${modelCount} models`}</span>
 			{:else if isOffline}
 				<span class="size-1.5 shrink-0 rounded-full bg-destructive"></span>
-
-				<span class="shrink-0">{remote ? 'Disconnected' : 'Unreachable'}</span>
-
-				<button
-					aria-label={remote ? 'Reconnect' : 'Retry connection'}
-					class="shrink-0 rounded-sm p-0.5 transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground"
-					onclick={handleRetry}
-				>
-					<RotateCw class="h-3 w-3" />
-				</button>
 			{:else if isIdle}
 				<span class="size-1.5 shrink-0 rounded-full bg-muted-foreground/40"></span>
-
-				<span class="shrink-0">Not connected</span>
 			{/if}
 
 			{#if hasStatus}
+				<span class="shrink-0">{status.label}</span>
+
+				{#if isOffline}
+					<button
+						aria-label={remote ? 'Reconnect to the host' : 'Retry connection'}
+						class="shrink-0 rounded-sm p-0.5 transition-colors duration-150 ease-out hover:bg-muted hover:text-foreground"
+						onclick={handleRetry}
+					>
+						<RotateCw class="h-3 w-3" />
+					</button>
+				{/if}
+
 				<span class="shrink-0 opacity-50">·</span>
 			{/if}
 
@@ -196,12 +251,15 @@
 				</Button>
 			{/if}
 
-			{#if remote && tunnel === TunnelStatus.CONNECTED}
+			{#if remote && tunnel !== TunnelStatus.IDLE}
 				<Button
 					aria-label="Disconnect this server"
 					class="relative h-7 w-7 after:absolute after:-inset-0.5 after:content-['']"
 					onclick={() => onDisconnect?.(server)}
 					size="icon"
+					title={tunnel === TunnelStatus.CONNECTED
+						? 'Close the tunnel to this server'
+						: 'Stop trying to reach this server'}
 					variant="ghost"
 				>
 					<WifiOff />
@@ -220,7 +278,7 @@
 				</Button>
 
 				<Button
-					aria-label="Delete server"
+					aria-label={remote ? 'Forget server' : 'Delete server'}
 					class="hover:text-destructive-foreground relative h-7 w-7 text-destructive after:absolute after:-inset-0.5 after:content-[''] hover:bg-destructive/10"
 					onclick={() => (showDelete = true)}
 					size="icon"
@@ -235,7 +293,7 @@
 
 <DialogConfirmation
 	bind:open={showDelete}
-	confirmText="Delete"
+	confirmText={remote ? 'Forget' : 'Delete'}
 	description={remote
 		? 'This removes the server and forgets its access code.'
 		: 'This removes the server and its stored API key.'}

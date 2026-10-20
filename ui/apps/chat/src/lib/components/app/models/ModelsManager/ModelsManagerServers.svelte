@@ -20,10 +20,13 @@
 	let isAdding = $state(false);
 	let editing = $state<Server | null>(null);
 	let addingKind = $state<ServerKind | undefined>(undefined);
+	/** Code a pairing starts from, e.g. the one this machine's own host offers. */
+	let addingCode = $state('');
 
-	function handleAdd(kind?: ServerKind) {
+	function handleAdd(kind?: ServerKind, code?: string) {
 		editing = null;
 		addingKind = kind;
+		addingCode = code ?? '';
 		isAdding = true;
 	}
 
@@ -37,6 +40,7 @@
 
 		if (!open) {
 			editing = null;
+			addingCode = '';
 		}
 	}
 </script>
@@ -48,6 +52,7 @@
 >
 	<DialogServerForm
 		bind:open={isAdding}
+		defaultCode={addingCode}
 		defaultKind={addingKind}
 		onOpenChange={handleOpenChange}
 		onPaired={() => void serversModelsStore.loadAll()}
@@ -58,6 +63,7 @@
 	{#if !serverStore.localServerMissing}
 		<ServerCard
 			isLocal
+			onPair={(code) => handleAdd(ServerKind.REMOTE, code)}
 			onToggle={(enabled) => serversStore.setLocalEnabled(enabled)}
 			server={serversStore.local}
 		/>
