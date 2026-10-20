@@ -5,6 +5,7 @@
 
 import ServerCardWrapper from './components/ServerCardWrapper.svelte';
 import {
+	API_MODELS,
 	CODE_CHARS,
 	CODE_LENGTHS,
 	LOCAL_BACKEND_ID,
@@ -12,7 +13,13 @@ import {
 	WEBRTC_TIMEOUTS
 } from '$lib/constants';
 import { TunnelStatus } from '$lib/enums';
-import { remoteAccessStore, serversStore, serverStore, settingsStore } from '$lib/stores';
+import {
+	modelsStore,
+	remoteAccessStore,
+	serversStore,
+	serverStore,
+	settingsStore
+} from '$lib/stores';
 import type { ApiLlamaCppServerProps } from '$lib/types';
 import { createRemoteServer, tunnelOrigin } from '$lib/utils/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -243,6 +250,56 @@ describe('server card', () => {
 		await screen.getByTitle('Show the access code').click();
 
 		await expect.element(screen.getByText(CODE)).toBeVisible();
+	});
+});
+
+describe('the status feed of a tunneled router', () => {
+	const calls: string[] = [];
+
+	beforeEach(() => {
+		calls.length = 0;
+		settingsStore.updateConfig(
+			SETTINGS_KEYS.SERVERS,
+			JSON.stringify([{ code: CODE, id: 'r1', kind: 'remote', name: 'Home' }])
+		);
+		serversStore.initialize();
+		vi.spyOn(globalThis, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+			calls.push(String(input instanceof Request ? input.url : input));
+
+			return new Response(': ping\n\n', { status: 200 });
+		});
+	});
+
+	afterEach(() => {
+		modelsStore.status.subscribeServer(null);
+		vi.restoreAllMocks();
+	});
+
+	it('reads the feed at the origin of the server it was given', async () => {
+		modelsStore.status.subscribeServer('r1');
+
+		await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
+
+		// the tunnel carries the feed like any other request: the server's own
+		// origin, never the one serving this UI
+		expect(calls[0]).toBe(`${tunnelOrigin('r1')}${API_MODELS.SSE}`);
+	});
+
+	it('opens one reader per server', async () => {
+		modelsStore.status.subscribeServer('r1');
+		modelsStore.status.subscribeServer('r1');
+
+		await vi.waitFor(() => expect(calls.length).toBe(1));
+
+		expect(calls.length).toBe(1);
+	});
+
+	it('opens nothing for no server', async () => {
+		modelsStore.status.subscribeServer(null);
+
+		await new Promise((resolve) => setTimeout(resolve, 20));
+
+		expect(calls).toEqual([]);
 	});
 });
 
