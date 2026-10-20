@@ -19,7 +19,7 @@
  */
 
 import { browser } from '$app/environment';
-import { CODE_LENGTHS } from '$lib/constants';
+import { CODE_LENGTHS, WEBRTC_TIMEOUTS } from '$lib/constants';
 import { TunnelStatus } from '$lib/enums';
 import type { Server } from '$lib/types';
 import { getServers } from '$lib/utils/api-base';
@@ -45,6 +45,8 @@ class RemoteAccessStore {
 	 */
 	private generation = new Map<string, number>();
 	private originalFetch: typeof window.fetch | null = null;
+	/** Pending visibility recovery, so one burst of tab switches opens one handshake. */
+	private recoverTimer: ReturnType<typeof setTimeout> | null = null;
 	/** Live tunnels by server id. */
 	private tunnels = new Map<string, ClientTunnel>();
 	/** Requests held back while their server's handshake runs. */
@@ -124,6 +126,37 @@ class RemoteAccessStore {
 
 	isConnecting(serverId: string): boolean {
 		return this.statusOf(serverId) === TunnelStatus.CONNECTING;
+	}
+
+	/**
+	 * Reconnect the channels a backgrounded tab lost.
+	 *
+	 * iOS Safari and Android PWAs tear a peer connection down when the tab goes
+	 * to the background, which leaves the card on a failure the user can only
+	 * clear with the retry icon. Only a channel that was already wanted is
+	 * recovered: an idle server is one nobody asked to connect. The recovery
+	 * stays silent, so a failure just lands back on the card.
+	 */
+	recoverChannels(): void {
+		if (!browser) return;
+
+		// a tab switch is not the network being back: let the connection settle,
+		// and let a burst of switches coalesce into one attempt per server
+		if (this.recoverTimer) clearTimeout(this.recoverTimer);
+
+		this.recoverTimer = setTimeout(() => {
+			this.recoverTimer = null;
+
+			if (navigator.onLine === false) return;
+
+			for (const server of remoteServers()) {
+				if (!server.enabled || this.statusOf(server.id) !== TunnelStatus.ERROR) continue;
+
+				void this.connect(server.id).catch(() => {
+					// the card keeps the failure and offers the retry control
+				});
+			}
+		}, WEBRTC_TIMEOUTS.RECOVER_MS);
 	}
 
 	/**
