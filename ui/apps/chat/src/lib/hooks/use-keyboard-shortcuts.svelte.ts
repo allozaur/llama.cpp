@@ -1,6 +1,7 @@
-import { NEW_CHAT_TAB_ID } from '#lib/constants/index.ts';
+import { PROJECT_HOME_TAB_ID } from '#lib/constants/index.ts';
 import { KeyboardKey } from '#lib/enums/index.ts';
 import { conversationsStore, settingsStore, tabsStore } from '#lib/stores/index.ts';
+import { resolveTabView } from '#lib/utils/index.ts';
 import { page } from '$app/state';
 
 interface KeyboardShortcutsCallbacks {
@@ -73,11 +74,11 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutsCallbacks) {
 
 			event.preventDefault();
 
-			const activeId =
-				page.params.id ?? (page.route.id === '/(chat)' ? NEW_CHAT_TAB_ID : undefined);
+			const view = resolveTabView(page, tabsStore.openTabs, conversationsStore.conversations);
 
-			if (activeId) {
-				void tabsStore.close(activeId, true);
+			// the project home is a page, not a tab
+			if (view.activeId && view.activeId !== PROJECT_HOME_TAB_ID) {
+				void tabsStore.close(view.activeId, true, view);
 			}
 		}
 
