@@ -15,4 +15,8 @@ export class RouterService {
 	static extensionPage(path: string): string {
 		return `${ROUTES.START}${path}`;
 	}
+
+	static project(id: string): string {
+		return `${ROUTES.PROJECTS}/${id}`;
+	}
 }
