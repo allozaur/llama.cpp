@@ -19,6 +19,7 @@
 		/** Anchors the menu to this element instead of its trigger, and keeps it a menu on a phone too, for one opened by a press-and-hold. */
 		anchor?: HTMLElement | null;
 		open?: boolean;
+		triggerIconClass?: string;
 	}
 
 	let {
@@ -28,6 +29,7 @@
 		open = $bindable(false),
 		triggerClass = '',
 		triggerIcon,
+		triggerIconClass = 'size-icon-xs',
 		triggerTooltip
 	}: Props = $props();
 
@@ -54,7 +56,7 @@
 		}}
 		type="button"
 	>
-		{@render iconComponent(triggerIcon, 'size-icon-xs')}
+		{@render iconComponent(triggerIcon, triggerIconClass)}
 
 		{#if triggerTooltip}
 			<span class="sr-only">{triggerTooltip}</span>
@@ -105,7 +107,7 @@
 						class="flex size-6 cursor-pointer items-center justify-center rounded-md p-0 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground {triggerClass}"
 						onclick={(e) => e.stopPropagation()}
 					>
-						{@render iconComponent(triggerIcon, 'size-icon-xs')}
+						{@render iconComponent(triggerIcon, triggerIconClass)}
 
 						{#if triggerTooltip}
 							<span class="sr-only">{triggerTooltip}</span>

@@ -53,6 +53,8 @@
 	interface Props {
 		isActive?: boolean;
 		depth?: number;
+		/** Optional trailing text, e.g. when the chat was last touched. */
+		meta?: string;
 		conversation: DatabaseConversation;
 		isSelectionMode?: boolean;
 		isSelected?: boolean;
@@ -66,6 +68,8 @@
 		onRowMouseDown?: (id: string, event: MouseEvent) => void;
 		/** Project shown before the title, where the list does not group the chat under it. */
 		project?: Project;
+		/** Row density: `lg` is the roomier list outside the sidebar. */
+		size?: 'default' | 'lg';
 	}
 
 	let {
@@ -74,6 +78,7 @@
 		isActive = false,
 		isSelected = false,
 		isSelectionMode = false,
+		meta,
 		onDelete,
 		onEdit,
 		onEnterSelectionMode,
@@ -82,8 +87,11 @@
 		onSelectionClick,
 		onStop,
 		onToggleSelect,
-		project
+		project,
+		size = 'default'
 	}: Props = $props();
+
+	const isLarge = $derived(size === 'lg');
 
 	let renderActionsDropdown = $state(false);
 	let dropdownOpen = $state(false);
@@ -259,11 +267,15 @@
 			},
 			shortcut: SHORTCUT_EXPORT_CONVERSATION
 		},
-		{
-			icon: ListChecks,
-			label: 'Select',
-			onclick: handleEnterSelectionMode
-		},
+		...(onEnterSelectionMode
+			? [
+					{
+						icon: ListChecks,
+						label: 'Select',
+						onclick: handleEnterSelectionMode
+					}
+				]
+			: []),
 		{
 			icon: Trash2,
 			label: 'Delete',
@@ -363,7 +375,8 @@
 		bind:this={rowElement}
 		style:--row-hold-ms="{ROW_LONG_PRESS_MS}ms"
 		class={[
-			'group flex min-h-9 w-full cursor-pointer items-center justify-between space-x-3 rounded-lg px-2 py-1.5 text-left select-none [-webkit-touch-callout:none] transition-[background-color,color,scale] hover:bg-foreground/10 hover:text-foreground md:min-h-8 md:py-1',
+			'group flex w-full cursor-pointer items-center justify-between space-x-3 rounded-lg text-left select-none [-webkit-touch-callout:none] transition-[background-color,color,scale] hover:bg-foreground/10 hover:text-foreground',
+			isLarge ? 'min-h-11 px-3 py-2' : 'min-h-9 px-2 py-1.5 md:min-h-8 md:py-1',
 			isLanding && 'invisible',
 			isActive ? 'bg-foreground/5 text-accent-foreground' : 'text-foreground/75',
 			contextMenuOpen && 'bg-foreground/10',
@@ -430,7 +443,7 @@
 								class="flex shrink-0 items-center text-muted-foreground transition-colors hover:text-foreground"
 								href={RouterService.chat(conversation.forkedFromConversationId)}
 							>
-								<GitBranch class="size-icon-sm" />
+								<GitBranch class={isLarge ? 'size-icon-md' : 'size-icon-sm'} />
 							</a>
 						{/snippet}
 					</Tooltip.Trigger>
@@ -452,9 +465,15 @@
 							role="button"
 							tabindex="0"
 						>
-							<Loader2 class="loading-icon size-icon-sm animate-spin" />
+							<Loader2
+								class="loading-icon {isLarge ? 'size-icon-md' : 'size-icon-sm'} animate-spin"
+							/>
 
-							<Square class="stop-icon hidden size-icon-xs fill-current text-destructive" />
+							<Square
+								class="stop-icon hidden {isLarge
+									? 'size-icon-sm'
+									: 'size-icon-xs'} fill-current text-destructive"
+							/>
 						</div>
 					</Tooltip.Trigger>
 
@@ -470,8 +489,18 @@
 					<ProjectPrefix class="max-w-1/2 shrink-0 text-sm" name={project.name} />
 				{/if}
 
-				<TruncatedText class="text-sm" showTooltip={false} text={conversation.name} />
+				<TruncatedText
+					class={isLarge ? 'text-base' : 'text-sm'}
+					showTooltip={false}
+					text={conversation.name}
+				/>
 			</span>
+
+			{#if meta}
+				<span class="ml-auto {isLarge ? 'text-sm' : 'text-xs'} shrink-0 text-muted-foreground">
+					{meta}
+				</span>
+			{/if}
 		</div>
 
 		{#if !isSelectionMode && renderActionsDropdown}
