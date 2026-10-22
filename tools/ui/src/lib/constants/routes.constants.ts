@@ -11,6 +11,8 @@ export const URL_PARAMS = {
 export const ROUTES = {
 	/** Chat base — for dynamic chat URLs use RouterService. */
 	CHAT: '#/chat',
+	/** Library. */
+	LIBRARY: '#/library',
 	/** MCP servers. */
 	MCP_SERVERS: '#/mcp-servers',
 	/** Models manager. */
