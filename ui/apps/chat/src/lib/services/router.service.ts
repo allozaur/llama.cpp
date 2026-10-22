@@ -18,4 +18,8 @@ export class RouterService {
 	static extensionPage(path: string): ResolvedPathname {
 		return resolve(ROUTES.EXTENSION_PAGE, { extensionPage: path });
 	}
+
+	static project(id: string): string {
+		return `${ROUTES.PROJECTS}/${id}`;
+	}
 }
