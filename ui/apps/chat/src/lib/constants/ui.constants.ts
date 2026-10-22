@@ -6,12 +6,14 @@ import {
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
 import { ROUTES } from './routes.constants';
+import Library from '@lucide/svelte/icons/library';
 import Search from '@lucide/svelte/icons/search';
 import Server from '@lucide/svelte/icons/server';
 import Settings from '@lucide/svelte/icons/settings';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
+import { resolve } from '$app/paths';
 
 /** Delay before a copied affordance resets from its check to the copy icon. */
 export const COPY_FEEDBACK_RESET_MS = 1500;
@@ -170,6 +172,12 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		activeRouteId: ROUTES.PROJECTS,
 		icon: PROJECT_ICON,
 		tooltip: 'Projects'
+	},
+	{
+		activeRoutePrefix: '/library',
+		icon: Library,
+		route: resolve(ROUTES.LIBRARY),
+		tooltip: 'Library'
 	}
 ];
 
