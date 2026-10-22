@@ -5,6 +5,7 @@ export * from './content';
 export * from './context';
 export * from './dialogs';
 export * from './forms';
+export * from './library';
 export * from './misc';
 export * from './settings';
 export * from './models';
