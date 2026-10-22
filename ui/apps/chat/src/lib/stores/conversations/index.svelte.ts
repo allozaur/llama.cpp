@@ -350,7 +350,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 			draftMessagesStore.saveDraftMessage(conversation.id, draft.message, draft.files);
 		}
 
-		await goto(RouterService.chat(conversation.id));
+		await goto(RouterService.conversation(conversation));
 
 		// the draft moved to the new conversation, so drop the copy saved for the new-chat screen
 		if (draft) {
@@ -513,7 +513,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 
 			this.conversations = [newConv, ...this.conversations];
 
-			await goto(RouterService.chat(newConv.id));
+			await goto(RouterService.conversation(newConv));
 
 			toast.success('Conversation forked');
 
