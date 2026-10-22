@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { File, Folder } from '@lucide/svelte';
+	import { File, Folder, Server } from '@lucide/svelte';
 	import { ChatFormPickerList, ChatFormPickerListItem } from '$lib/components/app/chat';
 	import HighlightedMatch from '$lib/components/app/forms/HighlightedMatch.svelte';
 	import * as Popover from '$lib/components/ui/popover';
@@ -10,23 +10,37 @@
 		FileMentionEntryType,
 		GlobSearchType,
 		KeyboardKey,
+		MentionPickerSource,
 		ToolSource
 	} from '$lib/enums';
 	import { useDebouncedSearch } from '$lib/hooks/use-debounced-search.svelte';
 	import { usePickerNavigation } from '$lib/hooks/use-picker-navigation.svelte';
-	import { conversationsStore, deviceStore, settingsStore, toolsStore } from '$lib/stores';
+	import {
+		conversationsStore,
+		deviceStore,
+		mcpStore,
+		settingsStore,
+		toolsStore
+	} from '$lib/stores';
 	import type { FileMentionEntry, GlobEntryResult } from '$lib/types';
 	import { abbreviateHome, runGlobSearchWithChildren } from '$lib/utils';
 
 	/**
-	 * Floating file/folder mention picker. The chat input is the search
-	 * surface: `query` (typed after `@`) drives a `file_glob_search` tool
-	 * call scoped to `scopePath`. The parent owns the "dismissed token,
-	 * don't re-open until it changes" snapshot.
+	 * Floating mention picker over the server filesystem and the MCP resources
+	 * of the connected servers. In the chat form the input is the search
+	 * surface: `query` (typed after `@`) drives a `file_glob_search` tool call
+	 * scoped to `scopePath`, and MCP resources are filtered client-side. The
+	 * parent owns the "dismissed token, don't re-open until it changes"
+	 * snapshot; a host without an `@` token shows the list's search field and
+	 * binds `query` instead.
 	 */
 	interface Props {
 		class?: string;
 		isOpen: boolean;
+		/** Restricts the listed kinds; both are listed by default. */
+		source?: MentionPickerSource;
+		/** Renders the list's own search field, for hosts without an `@` token. */
+		showSearchInput?: boolean;
 		query: string;
 		customAnchor?: HTMLElement | null;
 		scopePath?: string | null;
@@ -43,8 +57,10 @@
 		onClose,
 		onOpened,
 		onSelect,
-		query,
-		scopePath = null
+		query = $bindable(''),
+		scopePath = null,
+		showSearchInput = false,
+		source = MentionPickerSource.ALL
 	}: Props = $props();
 
 	const nav = usePickerNavigation({
@@ -81,8 +97,10 @@
 	// A smaller window than the WD picker suffices: entries are ranked client-side.
 	const MENTION_SEARCH_LIMIT = 50;
 
+	const searchesFiles = $derived(source !== MentionPickerSource.MCP_RESOURCES);
+
 	const search = useDebouncedSearch({
-		canRun: () => isOpen && fileSearchEnabled,
+		canRun: () => isOpen && searchesFiles && fileSearchEnabled,
 		debounceMs: SEARCH.DEBOUNCE_MS,
 		getQuery: () => trimmedQuery,
 		run: async (query, signal, isCurrent) => {
@@ -125,9 +143,57 @@
 	});
 
 	const trimmedQuery = $derived((query ?? '').trim());
-	const displayedItems = $derived(searchResults);
+
+	// Resources of the enabled servers, filtered by the query client-side: the
+	// picker also opens with an empty query from hosts without an `@` token.
+	const listsMcpResources = $derived(source !== MentionPickerSource.FILES);
+	const mcpResourcesEnabled = $derived(
+		conversationsStore.preferences.isCategoryEnabled(ToolSource.MCP) &&
+			mcpStore.getServersWithResources().length > 0
+	);
+	const mcpResourceEntries = $derived.by(() => {
+		if (!listsMcpResources || !mcpResourcesEnabled) return [];
+
+		const needle = trimmedQuery.toLowerCase();
+		const entries: FileMentionEntry[] = [];
+
+		for (const [serverName, serverResources] of mcpStore.resources.serverResources) {
+			for (const resource of serverResources.resources) {
+				const name = resource.title || resource.name;
+
+				if (
+					needle &&
+					!name.toLowerCase().includes(needle) &&
+					!resource.uri.toLowerCase().includes(needle)
+				) {
+					continue;
+				}
+
+				entries.push({
+					name,
+					path: resource.uri,
+					serverName,
+					type: FileMentionEntryType.MCP_RESOURCE
+				});
+
+				if (entries.length >= MENTION_SEARCH_LIMIT) return entries;
+			}
+		}
+
+		return entries;
+	});
+
+	const displayedItems = $derived([...searchResults, ...mcpResourceEntries]);
 
 	const emptyMessage = $derived.by(() => {
+		if (!searchesFiles && mcpResourceEntries.length === 0) {
+			return mcpResourcesEnabled
+				? 'No matching MCP resources'
+				: 'No MCP server with resources is connected';
+		}
+
+		if (!searchesFiles) return 'No matching files or folders';
+
 		if (fileSearchKey === null) {
 			return 'File search is unavailable on this server (started without --tools)';
 		}
@@ -154,7 +220,11 @@
 	});
 
 	$effect(() => {
-		if (isOpen) onOpened?.();
+		if (!isOpen) return;
+
+		onOpened?.();
+
+		if (mcpResourcesEnabled) void mcpStore.fetchAllResources();
 	});
 
 	$effect(() => {
@@ -229,14 +299,16 @@
 		sideOffset={12}
 	>
 		<ChatFormPickerList
+			bind:searchQuery={query}
 			{emptyMessage}
 			isLoading={search.isSearching}
 			itemKey={(entry) => entry.type + ':' + entry.path}
 			items={displayedItems}
+			onSearchClose={onClose}
 			scrollTrigger={nav.scrollTrigger}
-			searchQuery={query ?? ''}
+			searchPlaceholder="Search files and resources"
 			selectedIndex={nav.hoveredIndex}
-			showSearchInput={false}
+			{showSearchInput}
 		>
 			{#snippet item(entry, index, isSelected)}
 				<ChatFormPickerListItem
@@ -245,7 +317,12 @@
 					onclick={() => handleSelect(entry)}
 					onmouseenter={() => nav.setHover(index)}
 				>
-					{@const Icon = entry.type === FileMentionEntryType.DIRECTORY ? Folder : File}
+					{@const Icon =
+						entry.type === FileMentionEntryType.DIRECTORY
+							? Folder
+							: entry.type === FileMentionEntryType.MCP_RESOURCE
+								? Server
+								: File}
 					<Icon
 						class={[
 							'mt-0.5 h-4 w-4 shrink-0',
@@ -281,7 +358,11 @@
 						</div>
 
 						<span class="min-w-0 flex-1 truncate font-mono text-left text-xs">
-							<HighlightedMatch query={trimmedQuery} text={abbreviateHome(entry.path, home)} />
+							{#if entry.type === FileMentionEntryType.MCP_RESOURCE}
+								{entry.serverName}
+							{:else}
+								<HighlightedMatch query={trimmedQuery} text={abbreviateHome(entry.path, home)} />
+							{/if}
 						</span>
 					</div>
 				</ChatFormPickerListItem>
