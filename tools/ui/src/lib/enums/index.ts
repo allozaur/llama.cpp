@@ -95,6 +95,7 @@ export {
 	ColorMode,
 	HtmlInputType,
 	McpPromptVariant,
+	MenuKind,
 	ScrollCarouselVariant,
 	SidebarAction,
 	TooltipSide,
