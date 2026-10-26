@@ -12,13 +12,7 @@
 		UNNAMED_CHAT_LABEL
 	} from '#lib/constants/index.ts';
 	import { useScrollCarousel } from '#lib/hooks/use-scroll-carousel.svelte.ts';
-	import {
-		chatStore,
-		conversationsStore,
-		projectsStore,
-		tabsStore,
-		uiStore
-	} from '#lib/stores/index.ts';
+	import { chatStore, conversationsStore, tabsStore, uiStore } from '#lib/stores/index.ts';
 	import type { MenuAction } from '#lib/types/index.ts';
 	import { projectNewChatTabId, projectOfNewChatTab, resolveTabView } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
@@ -39,26 +33,18 @@
 	let activeId = $derived(view.activeId);
 
 	let tabs = $derived(
-		view.ids.map((id) =>
-			id === NEW_CHAT_TAB_ID || projectOfNewChatTab(id)
-				? { href: view.hrefFor(id), icon: SquarePen, id, name: NEW_CHAT_LABEL }
-				: chatTab(id)
-		)
+		view.ids.map((id) => {
+			if (id === NEW_CHAT_TAB_ID || projectOfNewChatTab(id)) {
+				return { href: view.hrefFor(id), icon: SquarePen, id, name: NEW_CHAT_LABEL };
+			}
+
+			return {
+				href: view.hrefFor(id),
+				id,
+				name: conversationsStore.conversations.find((c) => c.id === id)?.name ?? UNNAMED_CHAT_LABEL
+			};
+		})
 	);
-
-	// a project chat carries its project name before the title, like a breadcrumb,
-	// except inside the project's own view, which leads with the breadcrumb itself
-	function chatTab(id: string) {
-		const conversation = conversationsStore.conversations.find((c) => c.id === id);
-		const projectId = view.projectId ? undefined : conversation?.projectId;
-
-		return {
-			href: view.hrefFor(id),
-			id,
-			name: conversation?.name ?? UNNAMED_CHAT_LABEL,
-			prefix: projectId ? projectsStore.get(projectId)?.name : undefined
-		};
-	}
 
 	// the new-chat tab of the view: the regular one, or the project's own
 	let newChatTabId = $derived(
