@@ -72,7 +72,7 @@
 					label: conversation.name,
 					meta: project ? `${project.name} · ${time}` : time,
 					pinned: conversation.pinned,
-					run: () => close(() => goto(RouterService.chat(conversation.id)))
+					run: () => close(() => goto(RouterService.conversation(conversation)))
 				};
 			})
 	);

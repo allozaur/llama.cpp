@@ -9,7 +9,6 @@
 
 import { browser } from '$app/environment';
 import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import { ROUTES } from '$lib/constants';
 import { MessageRole } from '$lib/enums';
 import { ConversationTransferService } from '$lib/services/conversation-transfer.service';
@@ -345,14 +344,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 			draftMessagesStore.saveDraftMessage(conversation.id, draft.message, draft.files);
 		}
 
-		// a chat started on a project's page stays in that project's view
-		const routeProjectId = page.params.projectId;
-
-		await goto(
-			routeProjectId && conversation.projectId === routeProjectId
-				? RouterService.projectChat(routeProjectId, conversation.id)
-				: RouterService.chat(conversation.id)
-		);
+		await goto(RouterService.conversation(conversation));
 
 		// the draft moved to the new conversation, so drop the copy saved for the new-chat screen
 		if (draft) {
@@ -515,7 +507,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 
 			this.conversations = [newConv, ...this.conversations];
 
-			await goto(RouterService.chat(newConv.id));
+			await goto(RouterService.conversation(newConv));
 
 			toast.success('Conversation forked');
 
