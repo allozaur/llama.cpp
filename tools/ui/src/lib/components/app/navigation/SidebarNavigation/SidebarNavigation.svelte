@@ -306,7 +306,12 @@
 	}
 
 	function selectConversation(id: string) {
-		afterMobileClose(() => void goto(RouterService.chat(id)));
+		const conversation = conversationsStore.conversations.find((conv) => conv.id === id);
+
+		afterMobileClose(
+			() =>
+				void goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
+		);
 	}
 
 	async function handleEditConversation(id: string) {
