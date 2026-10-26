@@ -31,7 +31,6 @@ import {
 import { withSearchChatsDisabled } from '#lib/utils/search-chats.ts';
 import { browser } from '$app/env';
 import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import { SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
 
@@ -351,14 +350,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 			draftMessagesStore.saveDraftMessage(conversation.id, draft.message, draft.files);
 		}
 
-		// a chat started on a project's page stays in that project's view
-		const routeProjectId = page.params.projectId;
-
-		await goto(
-			routeProjectId && conversation.projectId === routeProjectId
-				? RouterService.projectChat(routeProjectId, conversation.id)
-				: RouterService.chat(conversation.id)
-		);
+		await goto(RouterService.conversation(conversation));
 
 		// the draft moved to the new conversation, so drop the copy saved for the new-chat screen
 		if (draft) {
@@ -521,7 +513,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 
 			this.conversations = [newConv, ...this.conversations];
 
-			await goto(RouterService.chat(newConv.id));
+			await goto(RouterService.conversation(newConv));
 
 			toast.success('Conversation forked');
 
