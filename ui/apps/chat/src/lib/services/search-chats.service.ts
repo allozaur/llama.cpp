@@ -1,7 +1,7 @@
 /**
  * SearchChatsService - executor for the search_chats browser tool
  *
- * Reads conversations and messages in readonly transactions; matching and formatting live in utils/search-chats.
+ * Reads conversations and messages through DatabaseService; matching and formatting live in utils/search-chats.
  */
 
 import { DatabaseService } from './database.service';
@@ -16,13 +16,7 @@ import {
 } from '#lib/utils/search-chats.ts';
 
 function loadConversations(ids?: string[]): Promise<DatabaseConversation[]> {
-	return DatabaseService.readOnly(async ({ conversations }) => {
-		if (!ids) return conversations.toArray();
-
-		const found = await conversations.bulkGet(ids);
-
-		return found.filter((c): c is DatabaseConversation => !!c);
-	});
+	return ids ? DatabaseService.getConversations(ids) : DatabaseService.getAllConversations();
 }
 
 /** Attachment payloads (base64 media, file text) are dropped as rows stream in, only their names are kept */
@@ -36,37 +30,15 @@ function withoutPayloads({ extra, ...message }: DatabaseMessage): DatabaseMessag
 	};
 }
 
-/** One transaction, so the range lookup and the read see the same data */
-function loadMessages(
+async function loadMessages(
 	convIds: string[] | null,
 	range?: SearchChatsTimeRange
 ): Promise<DatabaseMessage[]> {
-	return DatabaseService.readOnly(async ({ messages }) => {
-		let ids = convIds;
+	const rows: DatabaseMessage[] = [];
 
-		if (range) {
-			const { from, to } = range;
-			const index = messages.where('timestamp');
-			const inRange =
-				from !== undefined && to !== undefined
-					? index.between(from, to, true, false)
-					: from !== undefined
-						? index.aboveOrEqual(from)
-						: index.below(to);
-			const active = new Set<string>();
+	await DatabaseService.scanMessages(convIds, (m) => rows.push(withoutPayloads(m)), range);
 
-			await inRange.each((m) => active.add(m.convId));
-			ids = ids ? ids.filter((id) => active.has(id)) : [...active];
-		}
-
-		const rows: DatabaseMessage[] = [];
-
-		await (ids ? messages.where('convId').anyOf(ids) : messages.toCollection()).each((m) =>
-			rows.push(withoutPayloads(m))
-		);
-
-		return rows;
-	});
+	return rows;
 }
 
 const loader = { messages: loadMessages };

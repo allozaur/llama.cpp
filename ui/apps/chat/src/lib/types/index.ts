@@ -106,7 +106,11 @@ export type {
 	DatabaseMessageExtra,
 	DatabaseMessage,
 	ExportedConversation,
-	ExportedConversations
+	ExportedConversations,
+	DatabaseRecordKind,
+	DatabaseRecords,
+	MessageTimeRange,
+	StorageBackend
 } from './database';
 
 // Model types

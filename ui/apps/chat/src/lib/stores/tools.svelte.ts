@@ -25,6 +25,7 @@ import {
 	type ToolGroupIdentityProps,
 	type ToolProvider
 } from '#lib/extensions/index.ts';
+import { PreferencesService } from '#lib/services/preferences.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
@@ -434,7 +435,7 @@ class ToolsStore {
 		if (!browser) return;
 
 		try {
-			const stored = localStorage.getItem(DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY);
+			const stored = PreferencesService.getItem(DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY);
 
 			if (stored) {
 				const parsed = JSON.parse(stored);
@@ -450,7 +451,7 @@ class ToolsStore {
 		}
 
 		try {
-			const stored = localStorage.getItem(DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY);
+			const stored = PreferencesService.getItem(DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY);
 
 			if (stored) {
 				const parsed = JSON.parse(stored);
@@ -600,7 +601,7 @@ class ToolsStore {
 
 	private persistDisabledToolCategories(): void {
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
 				JSON.stringify([...this._disabledToolCategories])
 			);
@@ -611,7 +612,7 @@ class ToolsStore {
 
 	private persistDisabledTools(): void {
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
 				JSON.stringify([...this._disabledTools])
 			);

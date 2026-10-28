@@ -8,6 +8,7 @@
 
 import { getAudioInputFormat } from '../utils/audio-format';
 import { capImageDataURLSize } from '../utils/cap-img-size';
+import { PreferencesService } from './preferences.service';
 import {
 	API_CHAT,
 	API_SLOTS,
@@ -129,7 +130,7 @@ export class ChatService {
 		ChatService.streamStateSaveTrackers.delete(conversationId);
 
 		try {
-			localStorage.removeItem(streamStorageKey(conversationId));
+			PreferencesService.removeItem(streamStorageKey(conversationId));
 		} catch {
 			// nothing to do
 		}
@@ -413,7 +414,7 @@ export class ChatService {
 		if (!conversationId) return null;
 
 		try {
-			const raw = localStorage.getItem(streamStorageKey(conversationId));
+			const raw = PreferencesService.getItem(streamStorageKey(conversationId));
 
 			if (!raw) return null;
 
@@ -1688,7 +1689,7 @@ export class ChatService {
 				updatedAt: Date.now()
 			};
 
-			localStorage.setItem(streamStorageKey(conversationId), JSON.stringify(state));
+			PreferencesService.setItem(streamStorageKey(conversationId), JSON.stringify(state));
 		} catch {
 			// localStorage may be full or disabled, silently ignore
 		}

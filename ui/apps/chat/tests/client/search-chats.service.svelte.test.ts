@@ -104,10 +104,16 @@ describe('search_chats service', () => {
 		expect(reply.content).toBe('Error: order_timestamp must be one of: asc, desc');
 	});
 
-	it('reads through a transaction that refuses writes', async () => {
-		await expect(
-			DatabaseService.readOnly(({ messages }) => messages.delete('paris-m0'))
-		).rejects.toThrow();
+	it('scans the messages of the chats with one in a time range, leaving the store as it was', async () => {
+		const seen: string[] = [];
+
+		await DatabaseService.scanMessages(['paris'], (m) => seen.push(m.id));
+		expect(seen.sort()).toEqual(['paris-m0', 'paris-m1', 'paris-m2', 'paris-m3']);
+
+		seen.length = 0;
+		// paris's messages are timestamped 1000 to 1003, so a window after them leaves it out
+		await DatabaseService.scanMessages(['paris'], (m) => seen.push(m.id), { from: 1004 });
+		expect(seen).toEqual([]);
 		expect(await DatabaseService.getConversationMessages('paris')).toHaveLength(4);
 	});
 });
