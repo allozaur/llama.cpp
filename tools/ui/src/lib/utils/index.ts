@@ -135,6 +135,7 @@ export { portalToBody } from './portal-to-body';
 export { normalizeFloatingPoint, normalizeNumber } from './precision';
 
 // Syntax highlighting utilities
+export { loadHighlightTheme } from './highlight-theme';
 export { getLanguageFromFilename } from './syntax-highlight-language';
 
 // Text file utilities
