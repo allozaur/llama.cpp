@@ -10,8 +10,11 @@
 /** Detail pane of the selected model; fetches its own details and GGUF file list. */
 export { default as ModelsDiscoverDetails } from './ModelsDiscoverDetails.svelte';
 
-/** Fetches one repo's details, files and readme for hosts outside Discover. */
+/** Fetches one repo's details, files and readme, then renders the detail pane. */
 export { default as ModelsDiscoverDetailsContainer } from './ModelsDiscoverDetailsContainer.svelte';
+
+/** Detail pane in a drawer, mounted once and opened through `uiStore.openHubModelDetails`. */
+export { default as ModelsDiscoverDetailsDrawer } from './ModelsDiscoverDetailsDrawer.svelte';
 
 /** Header of the detail pane. */
 export { default as ModelsDiscoverDetailsHeader } from './ModelsDiscoverDetailsHeader.svelte';
