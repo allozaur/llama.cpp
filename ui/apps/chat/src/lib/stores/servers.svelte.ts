@@ -11,6 +11,7 @@
 
 import { browser } from '$app/environment';
 import { ACTIVE_SERVER_LOCALSTORAGE_KEY, LOCAL_BACKEND_ID, SETTINGS_KEYS } from '$lib/constants';
+import { PreferencesService } from '$lib/services/preferences.service';
 import { remoteAccessStore } from '$lib/stores/remote-access.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
@@ -28,7 +29,7 @@ function loadActiveServerId(): string {
 	if (!browser) return LOCAL_BACKEND_ID;
 
 	try {
-		return localStorage.getItem(ACTIVE_SERVER_LOCALSTORAGE_KEY) ?? LOCAL_BACKEND_ID;
+		return PreferencesService.getItem(ACTIVE_SERVER_LOCALSTORAGE_KEY) ?? LOCAL_BACKEND_ID;
 	} catch {
 		return LOCAL_BACKEND_ID;
 	}
@@ -38,7 +39,7 @@ function persistActiveServerId(serverId: string): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(ACTIVE_SERVER_LOCALSTORAGE_KEY, serverId);
+		PreferencesService.setItem(ACTIVE_SERVER_LOCALSTORAGE_KEY, serverId);
 	} catch {
 		/* ignore */
 	}

@@ -14,6 +14,7 @@
 import { REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY } from '$lib/constants';
 import { ReasoningEffort, ToolSource } from '$lib/enums';
 import { DatabaseService } from '$lib/services/database.service';
+import { PreferencesService } from '$lib/services/preferences.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { toolsStore } from '$lib/stores/tools.svelte';
 import type { DatabaseConversation, ToolEntry, ToolGroup } from '$lib/types';
@@ -23,7 +24,7 @@ function loadReasoningEffortDefault(): ReasoningEffort {
 	if (typeof globalThis.localStorage === 'undefined') return ReasoningEffort.DEFAULT;
 
 	try {
-		const raw = localStorage.getItem(REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY);
 
 		return (raw as ReasoningEffort) || ReasoningEffort.DEFAULT;
 	} catch {
@@ -35,7 +36,7 @@ function loadReasoningEffortDefault(): ReasoningEffort {
 function saveReasoningEffortDefault(effort: ReasoningEffort): void {
 	if (typeof globalThis.localStorage === 'undefined') return;
 
-	localStorage.setItem(REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY, effort);
+	PreferencesService.setItem(REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY, effort);
 }
 
 /**
