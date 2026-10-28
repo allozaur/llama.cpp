@@ -2,11 +2,12 @@
 	import ModelsManagerFilters from './ModelsManagerFilters.svelte';
 	import { hasActiveFilters } from './utils';
 	import { Button } from '@ggml/llama-ui/ui/button';
-	import { X } from '@lucide/svelte';
+	import * as ToggleGroup from '@ggml/llama-ui/ui/toggle-group';
+	import { LayoutGrid, List, X } from '@lucide/svelte';
 	import { SearchInput } from '$lib/components/app/forms';
-	import { type ModalityKey } from '$lib/constants';
-	import { ModelCapability } from '$lib/enums';
-	import { deviceStore, serversStore } from '$lib/stores';
+	import { FILTER_TOGGLE_ITEM_CLASS, type ModalityKey } from '$lib/constants';
+	import { ModelCapability, ModelsViewMode } from '$lib/enums';
+	import { deviceStore, serversStore, uiStore } from '$lib/stores';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -21,6 +22,8 @@
 		serverCounts?: Record<string, number>;
 		/** Server ids to keep; empty keeps every server. */
 		servers?: string[];
+		/** Order control, rendered past the filters; the grid's, which has no headers. */
+		sortControl?: Snippet;
 		/** Rendered at the toolbar's right end, past the filters. */
 		toolbarEnd?: Snippet;
 	}
@@ -32,8 +35,14 @@
 		modalities = $bindable<ModalityKey[]>([]),
 		serverCounts = {},
 		servers = $bindable<string[]>([]),
+		sortControl,
 		toolbarEnd
 	}: Props = $props();
+
+	const VIEW_MODES = [
+		{ icon: List, label: 'Table', value: ModelsViewMode.TABLE },
+		{ icon: LayoutGrid, label: 'Grid', value: ModelsViewMode.GRID }
+	];
 
 	let hasFilters = $derived(
 		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
@@ -65,7 +74,7 @@
 		bind:ref={filterInput}
 		bind:value={filter}
 		class="w-full md:w-auto md:max-w-64"
-		placeholder="Search your models"
+		placeholder={uiStore.isDiscoverEnabled ? 'Search models or Hugging Face' : 'Search your models'}
 		size={deviceStore.isMobile ? 'default' : 'sm'}
 	/>
 
@@ -97,6 +106,30 @@
 	{/if}
 
 	<div class="ml-auto flex items-center gap-2">
+		{@render sortControl?.()}
+
+		<ToggleGroup.Root
+			aria-label="Layout"
+			onValueChange={(value) => {
+				// a click on the active mode would clear the group; it keeps its mode instead
+				if (value) uiStore.setModelsViewMode(value as ModelsViewMode);
+			}}
+			size="icon-sm"
+			type="single"
+			value={uiStore.modelsViewMode}
+		>
+			{#each VIEW_MODES as mode (mode.value)}
+				<ToggleGroup.Item
+					aria-label={mode.label}
+					class={FILTER_TOGGLE_ITEM_CLASS}
+					title={mode.label}
+					value={mode.value}
+				>
+					<mode.icon class="size-icon-md" />
+				</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
+
 		{@render toolbarEnd?.()}
 	</div>
 </div>

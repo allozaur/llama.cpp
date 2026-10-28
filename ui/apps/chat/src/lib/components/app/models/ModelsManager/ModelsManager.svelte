@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ModelsManagerHubResults from './ModelsManagerHubResults.svelte';
 	import ModelsManagerModelsTable from './ModelsManagerModelsTable.svelte';
 	import {
 		downloadGroups,
@@ -10,12 +11,18 @@
 		type ModelsTableGroup,
 		splitHiddenQuants
 	} from './utils';
-	import { LOCAL_BACKEND_ID, type ModalityKey, MODELS_TABLE_GROUP_LABELS } from '$lib/constants';
+	import { ModelsDiscoverCarousel } from '$lib/components/app/models/discover';
+	import {
+		LOCAL_BACKEND_ID,
+		type ModalityKey,
+		MODELS_DISCOVER_SEARCH_DEBOUNCE_MS,
+		MODELS_TABLE_GROUP_LABELS
+	} from '$lib/constants';
 	import { ModelCapability, ModelsTableGroupKind, ModelsTableServerKind } from '$lib/enums';
-	import { modelsStore, serversStore, uiStore } from '$lib/stores';
+	import { modelsDiscoverStore, modelsStore, serversStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { filterModelOptions } from '$lib/utils';
-	import type { Snippet } from 'svelte';
+	import { type Snippet, untrack } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 
 	interface Props {
@@ -43,6 +50,26 @@
 	let selectedId = $derived(
 		findModelOption(uiStore.modelDetailsFocus, allModels, downloads)?.id ?? null
 	);
+
+	// the same term searches the Hub, once typing settles; an empty one clears the results
+	let isHubSearch = $derived(uiStore.isDiscoverEnabled && filter.trim().length > 0);
+
+	$effect(() => {
+		const query = isHubSearch ? filter : '';
+
+		if (!query) {
+			untrack(() => void modelsDiscoverStore.search(''));
+
+			return;
+		}
+
+		const timer = setTimeout(
+			() => untrack(() => void modelsDiscoverStore.search(query)),
+			MODELS_DISCOVER_SEARCH_DEBOUNCE_MS
+		);
+
+		return () => clearTimeout(timer);
+	});
 
 	let isFavorite = $derived((option: ModelOption) =>
 		modelsStore.favoriteModelIds.has(option.model)
@@ -245,7 +272,14 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class={['relative flex min-h-0 flex-1', className]}>
+<div class={['relative flex min-h-0 flex-1 flex-col', className]}>
+	<!-- a search owns the page: the suggestions step aside for its results -->
+	{#if uiStore.isDiscoverEnabled && !filter.trim()}
+		<div class="shrink-0 pb-2">
+			<ModelsDiscoverCarousel />
+		</div>
+	{/if}
+
 	<div class="min-h-0 min-w-0 flex-1">
 		<ModelsManagerModelsTable
 			bind:capabilities={capabilityFilter}
@@ -259,6 +293,12 @@
 			{selectedId}
 			{serverCounts}
 			{toolbarEnd}
-		/>
+		>
+			{#snippet footer()}
+				{#if isHubSearch}
+					<ModelsManagerHubResults query={filter} />
+				{/if}
+			{/snippet}
+		</ModelsManagerModelsTable>
 	</div>
 </div>

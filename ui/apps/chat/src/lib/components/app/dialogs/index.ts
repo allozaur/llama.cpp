@@ -479,6 +479,3 @@ export { default as DialogConversationSelection } from './DialogConversationSele
  * ```
  */
 export { default as DialogMermaidPreview } from './DialogMermaidPreview.svelte';
-
-/** **DialogDiscoverModels** - shell for the Hugging Face model discovery view. */
-export { default as DialogDiscoverModels } from './DialogDiscoverModels.svelte';

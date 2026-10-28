@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ModelsManagerModelCard from './ModelsManagerModelCard.svelte';
 	import ModelsManagerModelRow from './ModelsManagerModelRow.svelte';
 	import ModelsManagerQuantRow from './ModelsManagerQuantRow.svelte';
 	import ModelsManagerRepoRow from './ModelsManagerRepoRow.svelte';
@@ -10,6 +11,7 @@
 		type ModelsTableGroup
 	} from './utils';
 	import * as Empty from '@ggml/llama-ui/ui/empty';
+	import * as Select from '@ggml/llama-ui/ui/select';
 	import {
 		ArrowDown,
 		ArrowUp,
@@ -32,6 +34,7 @@
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
 	import {
 		FAMILY_ROW_WINDOW,
+		FILTER_TRIGGER_CLASS,
 		type ModalityKey,
 		MODEL_ICON,
 		MODEL_ROW_GRID_CLASS,
@@ -46,13 +49,14 @@
 		ModelDownloadConfirmAction,
 		ModelsTableGroupKind,
 		ModelsTableServerKind,
-		ModelsTableSortKey
+		ModelsTableSortKey,
+		ModelsViewMode
 	} from '$lib/enums';
-	import { modelsStore, serversModelsStore, settingsStore } from '$lib/stores';
+	import { modelsStore, serversModelsStore, settingsStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { groupModelFamilies, type ModelFamilyGroup } from '$lib/utils/model-families';
 	import type { Snippet } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 	interface Props {
 		/** Capabilities a model must have every one of. */
@@ -60,6 +64,8 @@
 		/** Smallest context a model must support; 0 keeps every model. */
 		contextLimit?: number;
 		filter?: string;
+		/** Rendered after the sections, inside the scroll area: the Hub results. */
+		footer?: Snippet;
 		groups: ModelsTableGroup[];
 		isFavorite: (option: ModelOption) => boolean;
 		onSelect: (option: ModelOption) => void;
@@ -78,6 +84,7 @@
 		capabilities = $bindable<ModelCapability[]>([]),
 		contextLimit = $bindable(0),
 		filter = $bindable(''),
+		footer,
 		groups,
 		isFavorite,
 		modalities = $bindable<ModalityKey[]>([]),
@@ -89,6 +96,9 @@
 	}: Props = $props();
 
 	let isEmpty = $derived(groups.every((group) => group.items.length === 0));
+	let isGrid = $derived(uiStore.modelsViewMode === ModelsViewMode.GRID);
+	/** Cards a grid section shows before its show-more button, per section key. */
+	const gridWindows = new SvelteMap<string, number>();
 	let hasFilters = $derived(
 		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
 	);
@@ -207,6 +217,37 @@
 		if (sortKey !== key) return `Sort by ${name}, lowest first`;
 
 		return sortAsc ? `Sort by ${name}, highest first` : `Stop sorting by ${name}`;
+	}
+
+	/** The grid has no column headers, so its order is picked from one menu. */
+	const SORT_OPTIONS: { asc: boolean; key: ModelsTableSortKey | null; label: string }[] = [
+		{ asc: true, key: null, label: 'Default' },
+		{ asc: true, key: ModelsTableSortKey.NAME, label: 'Name, A to Z' },
+		{ asc: false, key: ModelsTableSortKey.NAME, label: 'Name, Z to A' },
+		{ asc: true, key: ModelsTableSortKey.CONTEXT, label: 'Context, smallest first' },
+		{ asc: false, key: ModelsTableSortKey.CONTEXT, label: 'Context, largest first' }
+	];
+	const sortValue = (key: ModelsTableSortKey | null, asc: boolean) =>
+		key ? `${key}:${asc ? 'asc' : 'desc'}` : 'none';
+	let sortLabel = $derived(
+		SORT_OPTIONS.find((option) => sortValue(option.key, option.asc) === sortValue(sortKey, sortAsc))
+			?.label ?? 'Default'
+	);
+
+	function setSort(value: string): void {
+		const option = SORT_OPTIONS.find((item) => sortValue(item.key, item.asc) === value);
+
+		sortKey = option?.key ?? null;
+		sortAsc = option?.asc ?? true;
+	}
+
+	/** A card per model: a repo's quants are models of their own in the grid. */
+	function gridEntries(items: ModelQuantGroup[]): ModelQuantGroup[] {
+		return items.flatMap((entry) =>
+			entry.quants.length > 1
+				? entry.quants.map((quant) => ({ ...entry, base: quant, key: quant.id, quants: [quant] }))
+				: [entry]
+		);
 	}
 
 	function handleFamilyKeydown(event: KeyboardEvent, toggle: () => void): void {
@@ -345,6 +386,54 @@
 	</div>
 {/snippet}
 
+{#snippet sortControl()}
+	{#if isGrid}
+		<Select.Root onValueChange={setSort} type="single" value={sortValue(sortKey, sortAsc)}>
+			<Select.Trigger class={FILTER_TRIGGER_CLASS} size="sm">
+				<span class="text-muted-foreground">Sort:</span>
+
+				{sortLabel}
+			</Select.Trigger>
+
+			<Select.Content>
+				{#each SORT_OPTIONS as option (sortValue(option.key, option.asc))}
+					<Select.Item label={option.label} value={sortValue(option.key, option.asc)}>
+						{option.label}
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
+	{/if}
+{/snippet}
+
+{#snippet cardGrid(group: (typeof sections)[number])}
+	{@const cards = gridEntries(group.items)}
+	{@const shown = gridWindows.get(group.key) ?? MODEL_ROW_WINDOW}
+
+	<div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3 px-2 pt-1 max-md:px-3">
+		{#each cards.slice(0, shown) as entry (entry.key)}
+			<ModelsManagerModelCard
+				{isFavorite}
+				onDelete={requestDelete}
+				{onSelect}
+				option={entry.base}
+				selected={selectedId === entry.base.id}
+				sidecarBadges={entry.sidecarBadges}
+			/>
+		{/each}
+	</div>
+
+	{#if cards.length > shown}
+		<div class="pt-2">
+			{@render showMore({
+				count: Math.min(MODEL_ROW_WINDOW, cards.length - shown),
+				onMore: () => gridWindows.set(group.key, shown + MODEL_ROW_WINDOW),
+				unit: GroupedListUnit.ENTRIES
+			})}
+		</div>
+	{/if}
+{/snippet}
+
 <DialogConfirmDownload
 	action={pendingAction}
 	onClose={() => (deleteOpen = false)}
@@ -360,22 +449,26 @@
 		bind:modalities
 		bind:servers
 		{serverCounts}
+		{sortControl}
 		{toolbarEnd}
 	/>
 
-	<div
-		class="{MODEL_ROW_GRID_CLASS} shrink-0 border-b border-border/30 px-2 pb-2 text-xs font-medium text-muted-foreground max-md:px-3 dark:border-border/20"
-	>
-		<span>{@render sortHeader(ModelsTableSortKey.NAME, 'Model')}</span>
+	<!-- the grid has no columns: its order comes from the toolbar's sort menu -->
+	{#if !isGrid}
+		<div
+			class="{MODEL_ROW_GRID_CLASS} shrink-0 border-b border-border/30 px-2 pb-2 text-xs font-medium text-muted-foreground max-md:px-3 dark:border-border/20"
+		>
+			<span>{@render sortHeader(ModelsTableSortKey.NAME, 'Model')}</span>
 
-		<span class="text-right whitespace-nowrap max-md:hidden">
-			{@render sortHeader(ModelsTableSortKey.CONTEXT, 'Context')}
-		</span>
+			<span class="text-right whitespace-nowrap max-md:hidden">
+				{@render sortHeader(ModelsTableSortKey.CONTEXT, 'Context')}
+			</span>
 
-		<span class="justify-self-center max-md:hidden">Status</span>
+			<span class="justify-self-center max-md:hidden">Status</span>
 
-		<span class="text-center max-md:hidden">Actions</span>
-	</div>
+			<span class="text-center max-md:hidden">Actions</span>
+		</div>
+	{/if}
 
 	<div class="mt-2 min-h-0 flex-1 overflow-y-auto">
 		{#each sections as group (group.key)}
@@ -398,7 +491,7 @@
 
 				<ModelsSection
 					chevronClass="mr-7"
-					count={group.items.length}
+					count={isGrid ? gridEntries(group.items).length : group.items.length}
 					defaultOpen={group.kind !== ModelsTableGroupKind.HIDDEN}
 					error={Boolean(serverState?.error)}
 					icon={group.kind === ModelsTableServerKind.SERVER ? undefined : groupIcon}
@@ -415,28 +508,37 @@
 				>
 					<!-- a little air before the next section's band -->
 					<div class="pb-3">
-						<GroupedList
-							group={familyRow}
-							groupWindow={FAMILY_ROW_WINDOW}
-							groups={group.flat ? null : familyGroups(group)}
-							initialCollapsed={modelsStore.collapsedGroupsUnder(group.key)}
-							item={listItem}
-							items={group.flat ? group.items : []}
-							keyOf={(entry) => entry.key}
-							more={showMore}
-							onCollapsedChange={(key, collapsed) =>
-								modelsStore.setGroupCollapsed(group.key, key, collapsed)}
-							sectionWindow={MODEL_ROW_WINDOW}
-							stickyClass="rounded-lg bg-muted/25 backdrop-blur-lg"
-							stickyStyle={MODELS_TABLE_GROUP_STICKY_OFFSET}
-							weightOf={(entry) => entry.quants.length}
-						/>
+						{#if isGrid}
+							{@render cardGrid(group)}
+						{:else}
+							<GroupedList
+								group={familyRow}
+								groupWindow={FAMILY_ROW_WINDOW}
+								groups={group.flat ? null : familyGroups(group)}
+								initialCollapsed={modelsStore.collapsedGroupsUnder(group.key)}
+								item={listItem}
+								items={group.flat ? group.items : []}
+								keyOf={(entry) => entry.key}
+								more={showMore}
+								onCollapsedChange={(key, collapsed) =>
+									modelsStore.setGroupCollapsed(group.key, key, collapsed)}
+								sectionWindow={MODEL_ROW_WINDOW}
+								stickyClass="rounded-lg bg-muted/25 backdrop-blur-lg"
+								stickyStyle={MODELS_TABLE_GROUP_STICKY_OFFSET}
+								weightOf={(entry) => entry.quants.length}
+							/>
+						{/if}
 					</div>
 				</ModelsSection>
 			{/if}
 		{/each}
 
-		{#if isEmpty}
+		<!-- with the Hub results below, an empty local list is a line, not the page's state -->
+		{#if isEmpty && footer}
+			<p class="px-2 py-3 text-sm text-muted-foreground max-md:px-3">
+				{hasFilters || filter.trim() ? 'No local models match.' : 'No local models yet.'}
+			</p>
+		{:else if isEmpty}
 			<Empty.Root class="py-16">
 				<Empty.Header>
 					<Empty.Media variant="icon">
@@ -453,5 +555,7 @@
 				</Empty.Header>
 			</Empty.Root>
 		{/if}
+
+		{@render footer?.()}
 	</div>
 </div>
