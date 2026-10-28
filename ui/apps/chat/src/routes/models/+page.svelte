@@ -3,8 +3,8 @@
 	import { ArrowLeft, Server } from '@lucide/svelte';
 	import ModelsManager from '#lib/components/app/models/ModelsManager/ModelsManager.svelte';
 	import ModelsManagerServers from '#lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
-	import { APP_NAME, DISCOVER_ICON } from '#lib/constants/index.ts';
-	import { modelsStore, uiStore } from '#lib/stores/index.ts';
+	import { APP_NAME } from '#lib/constants/index.ts';
+	import { modelsStore } from '#lib/stores/index.ts';
 	import { onMount } from 'svelte';
 
 	// the manager's second view: the servers its models come from
@@ -58,19 +58,6 @@
 
 		{#if !showServers}
 			<div class="ml-auto flex shrink-0 items-center gap-2">
-				{#if uiStore.isDiscoverEnabled}
-					<Button
-						class="gap-1.5"
-						onclick={() => uiStore.openModelsDiscover()}
-						size="sm"
-						variant="secondary"
-					>
-						<DISCOVER_ICON class="size-icon-md" />
-
-						Discover Models
-					</Button>
-				{/if}
-
 				<Button class="gap-1.5" onclick={() => (showServers = true)} size="sm" variant="secondary">
 					<Server class="size-icon-md" />
 
