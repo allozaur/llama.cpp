@@ -31,6 +31,7 @@ export const SETTINGS_KEYS = {
 	ENABLE_CONTINUE_GENERATION: 'enableContinueGeneration',
 	ENABLE_DISCOVER_MODELS: 'enableDiscoverModels',
 	ENABLE_REMOTE_PAIRING: 'enableRemotePairing',
+	ENABLE_NOTEBOOK: 'enableNotebook',
 	EXCLUDE_REASONING_FROM_CONTEXT: 'excludeReasoningFromContext',
 	FREQUENCY_PENALTY: 'frequency_penalty',
 	FULL_HEIGHT_CODE_BLOCKS: 'fullHeightCodeBlocks',

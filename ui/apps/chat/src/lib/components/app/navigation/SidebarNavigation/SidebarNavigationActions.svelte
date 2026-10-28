@@ -7,10 +7,11 @@
 		ICON_CLASS_DEFAULT,
 		ICON_STRIP_TRANSITION_DELAY_MULTIPLIER,
 		ICON_STRIP_TRANSITION_DURATION,
+		ROUTES,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '$lib/constants';
 	import { SidebarAction } from '$lib/enums';
-	import { deviceStore } from '$lib/stores';
+	import { deviceStore, uiStore } from '$lib/stores';
 	import type { DesktopIconStripItem } from '$lib/types';
 	import { hapticTap } from '$lib/utils';
 	import type { Component } from 'svelte';
@@ -31,12 +32,14 @@
 
 	// the models manager stays desktop-only: a phone picks its models in the selector; a phone
 	// reaches search from the round key at the top of the sidebar instead. Servers is the
-	// exception a phone cannot do without: it is the only door to pairing
+	// exception a phone cannot do without: it is the only door to pairing. The notebook is
+	// opt-in from the General settings
 	const actions = $derived(
 		items.filter(
 			(item) =>
-				!deviceStore.isMobile ||
-				(item.action !== SidebarAction.MANAGE_MODELS && item.action !== SidebarAction.SEARCH)
+				(!deviceStore.isMobile ||
+					(item.action !== SidebarAction.MANAGE_MODELS && item.action !== SidebarAction.SEARCH)) &&
+				(item.route !== ROUTES.NOTEBOOK || uiStore.isNotebookEnabled)
 		)
 	);
 	let initialized = $state(false);
