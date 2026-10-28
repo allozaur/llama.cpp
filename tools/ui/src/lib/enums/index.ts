@@ -27,7 +27,6 @@ export {
 	ReasoningFormat,
 	ChatFormCommandAction,
 	FileMentionEntryType,
-	ChatFormInputRichTokenKind,
 	MentionPickerSource
 } from './chat.enums';
 
