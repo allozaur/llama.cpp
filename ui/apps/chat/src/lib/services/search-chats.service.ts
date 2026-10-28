@@ -1,7 +1,9 @@
 /**
  * SearchChatsService - executor for the search_chats browser tool
  *
- * Reads conversations and messages in readonly transactions; matching and formatting live in utils/search-chats.
+ * Reads conversations and messages in readonly transactions over IndexedDB, or through the
+ * active storage backend when conversations live elsewhere; matching and formatting live in
+ * utils/search-chats.
  */
 
 import { DatabaseService } from './database.service';
@@ -14,7 +16,17 @@ import {
 	type SearchChatsTimeRange
 } from '$lib/utils/search-chats';
 
-function loadConversations(ids?: string[]): Promise<DatabaseConversation[]> {
+async function loadConversations(ids?: string[]): Promise<DatabaseConversation[]> {
+	if (!DatabaseService.usesIndexedDb) {
+		const all = await DatabaseService.getAllConversations();
+
+		if (!ids) return all;
+
+		const wanted = new Set(ids);
+
+		return all.filter((c) => wanted.has(c.id));
+	}
+
 	return DatabaseService.readOnly(async ({ conversations }) => {
 		if (!ids) return conversations.toArray();
 
@@ -33,10 +45,12 @@ function withoutPayloads({ extra, ...message }: DatabaseMessage): DatabaseMessag
 }
 
 /** One transaction, so the range lookup and the read see the same data */
-function loadMessages(
+async function loadMessages(
 	convIds: string[] | null,
 	range?: SearchChatsTimeRange
 ): Promise<DatabaseMessage[]> {
+	if (!DatabaseService.usesIndexedDb) return loadMessagesFromBackend(convIds, range);
+
 	return DatabaseService.readOnly(async ({ messages }) => {
 		let ids = convIds;
 
@@ -63,6 +77,22 @@ function loadMessages(
 
 		return rows;
 	});
+}
+
+/** The same read without IndexedDB's indexes, for conversations kept by a storage adapter */
+async function loadMessagesFromBackend(
+	convIds: string[] | null,
+	range?: SearchChatsTimeRange
+): Promise<DatabaseMessage[]> {
+	const ids = convIds ?? (await DatabaseService.getAllConversations()).map((c) => c.id);
+	const byConv = await Promise.all(ids.map((id) => DatabaseService.getConversationMessages(id)));
+	const inRange = (t: number) =>
+		(range?.from === undefined || t >= range.from) && (range?.to === undefined || t < range.to);
+
+	return byConv
+		.filter((messages) => !range || messages.some((m) => inRange(m.timestamp)))
+		.flat()
+		.map(withoutPayloads);
 }
 
 const loader = { messages: loadMessages };

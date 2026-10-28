@@ -1,6 +1,7 @@
 import { AttachmentType, ReasoningEffort, ToolSource } from '$lib/enums';
 import type { ChatMessageTimings, ChatMessageType, ChatRole } from '$lib/types/chat';
 import type { Group } from '$lib/types/groups';
+import type { Project } from '$lib/types/projects';
 
 /**
  * @deprecated Legacy per-conversation MCP server flags. MCP server enabled
@@ -177,3 +178,58 @@ export type ExportedConversation = {
 };
 
 export type ExportedConversations = ExportedConversation | ExportedConversation[];
+
+/** Standalone records stored next to conversations, by table name. */
+export interface DatabaseRecords {
+	groups: Group;
+	projects: Project;
+	prompts: DatabasePrompt;
+}
+
+export type DatabaseRecordKind = keyof DatabaseRecords;
+
+/**
+ * Row-level storage for conversations and messages. Implementations only read
+ * and write rows; tree rules live in DatabaseService and utils/conversation-tree.
+ */
+export interface StorageBackend {
+	/** Runs `fn` atomically; backend calls made inside it join the same transaction. */
+	transaction<T>(fn: () => Promise<T>): Promise<T>;
+
+	/** All conversations, most recently modified first. */
+	listConversations(): Promise<DatabaseConversation[]>;
+	/** One entry per id, `undefined` where the conversation does not exist. */
+	getConversations(ids: string[]): Promise<(DatabaseConversation | undefined)[]>;
+	/** Fails if a conversation with the same id exists. */
+	addConversation(conv: DatabaseConversation): Promise<void>;
+	putConversations(convs: DatabaseConversation[]): Promise<void>;
+	/** Shallow-merges `updates` into the row; a no-op when it does not exist. */
+	updateConversation(id: string, updates: Partial<Omit<DatabaseConversation, 'id'>>): Promise<void>;
+	/** Deletes the conversations together with all of their messages. */
+	deleteConversations(ids: string[]): Promise<void>;
+
+	getMessage(id: string): Promise<DatabaseMessage | undefined>;
+	/** Messages of the given conversations, in no guaranteed order. */
+	getMessages(convIds: string[]): Promise<DatabaseMessage[]>;
+	/** Fails if a message with the same id exists. */
+	addMessages(messages: DatabaseMessage[]): Promise<void>;
+	putMessages(messages: DatabaseMessage[]): Promise<void>;
+	/** Shallow-merges `updates` into the row; a no-op when it does not exist. */
+	updateMessage(id: string, updates: Partial<Omit<DatabaseMessage, 'id'>>): Promise<void>;
+	deleteMessages(ids: string[]): Promise<void>;
+
+	/** All records of a kind, in no guaranteed order. */
+	listRecords<K extends DatabaseRecordKind>(kind: K): Promise<DatabaseRecords[K][]>;
+	/** Fails if a record of that kind with the same id exists. */
+	addRecord<K extends DatabaseRecordKind>(kind: K, record: DatabaseRecords[K]): Promise<void>;
+	/**
+	 * Shallow-merges `updates` into the record, an `undefined` value removes the
+	 * field; a no-op when it does not exist.
+	 */
+	updateRecord<K extends DatabaseRecordKind>(
+		kind: K,
+		id: string,
+		updates: Partial<Omit<DatabaseRecords[K], 'id'>>
+	): Promise<void>;
+	deleteRecord(kind: DatabaseRecordKind, id: string): Promise<void>;
+}
