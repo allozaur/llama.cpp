@@ -13,7 +13,7 @@ import {
 	SERVERS_ROUTE_ID,
 	SETTINGS_ROUTE_ID
 } from './routes.constants';
-import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
+import { Library, NotepadText, Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
@@ -171,6 +171,12 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		icon: SquarePen,
 		keys: SHORTCUT_NEW_CHAT,
 		tooltip: 'New chat'
+	},
+	{
+		activeRouteId: '/notebook',
+		icon: NotepadText,
+		route: ROUTES.NOTEBOOK,
+		tooltip: 'Notebook'
 	},
 	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
 	{

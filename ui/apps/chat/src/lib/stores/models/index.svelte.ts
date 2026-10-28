@@ -230,6 +230,17 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		return restored?.model ?? null;
 	}
 
+	/**
+	 * Get context size valid both in MODEL or ROUTER modes
+	 */
+	get contextSize(): number | null {
+		if (serverStore.isRouterMode) {
+			return this.selectedModelContextSize;
+		}
+
+		return serverStore.contextSize;
+	}
+
 	get loadedModelIds(): string[] {
 		return this.routerModels
 			.filter(
