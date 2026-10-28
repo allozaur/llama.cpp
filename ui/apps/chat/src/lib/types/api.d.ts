@@ -310,6 +310,8 @@ export interface ApiLlamaCppServerProps {
 	 * pair with it. Absent on a server that does not run a host.
 	 */
 	connect_code?: string;
+	/** Server keeps UI conversations and settings on disk (--ui-storage) */
+	ui_storage?: boolean;
 }
 
 export interface ApiChatCompletionRequest {

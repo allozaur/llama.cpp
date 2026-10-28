@@ -29,7 +29,7 @@ import {
 	uuid
 } from '#lib/utils/index.ts';
 
-const backend: StorageBackend = new IdbBackend();
+let backend: StorageBackend = new IdbBackend();
 
 export class DatabaseService {
 	/**
@@ -47,16 +47,16 @@ export class DatabaseService {
 
 		const idSet = new Set(cleanIds);
 
-		await backend.transaction(async () => {
-			const conversations = await backend.listConversations();
+		await backend.transaction(async (tx) => {
+			const conversations = await tx.listConversations();
 
 			for (const id of cleanIds) {
 				const updates = reparentDirectForks(conversations, id, idSet);
 
-				if (updates.length > 0) await backend.putConversations(updates);
+				if (updates.length > 0) await tx.putConversations(updates);
 			}
 
-			await backend.deleteConversations(cleanIds);
+			await tx.deleteConversations(cleanIds);
 		});
 	}
 
@@ -76,8 +76,8 @@ export class DatabaseService {
 
 		if (cleanIds.length === 0) return result;
 
-		await backend.transaction(async () => {
-			const convs = await backend.getConversations(cleanIds);
+		await backend.transaction(async (tx) => {
+			const convs = await tx.getConversations(cleanIds);
 			const updates: DatabaseConversation[] = [];
 
 			for (let i = 0; i < cleanIds.length; i++) {
@@ -93,7 +93,7 @@ export class DatabaseService {
 
 			if (updates.length === 0) return;
 
-			await backend.putConversations(updates);
+			await tx.putConversations(updates);
 		});
 
 		return result;
@@ -146,10 +146,10 @@ export class DatabaseService {
 		message: Omit<DatabaseMessage, 'id'>,
 		parentId: string | null
 	): Promise<DatabaseMessage> {
-		return await backend.transaction(async () => {
+		return await backend.transaction(async (tx) => {
 			// Handle null parent (root message case)
 			if (parentId !== null) {
-				const parentMessage = await backend.getMessage(parentId);
+				const parentMessage = await tx.getMessage(parentId);
 
 				if (!parentMessage) {
 					throw new Error(`Parent message ${parentId} not found`);
@@ -164,14 +164,14 @@ export class DatabaseService {
 				toolCalls: message.toolCalls ?? ''
 			};
 
-			await backend.addMessages([newMessage]);
+			await tx.addMessages([newMessage]);
 
 			// Update parent's children array if parent exists
 			if (parentId !== null) {
-				await this.addChildToParent(parentId, newMessage.id);
+				await this.addChildToParent(tx, parentId, newMessage.id);
 			}
 
-			await this.updateConversation(message.convId, {
+			await tx.updateConversation(message.convId, {
 				currNode: newMessage.id
 			});
 
@@ -247,8 +247,8 @@ export class DatabaseService {
 			throw new Error('Cannot create system message with empty content');
 		}
 
-		return await backend.transaction(async () => {
-			const parentMessage = await backend.getMessage(parentId);
+		return await backend.transaction(async (tx) => {
+			const parentMessage = await tx.getMessage(parentId);
 
 			if (!parentMessage) {
 				throw new Error(`Parent message ${parentId} not found`);
@@ -266,8 +266,8 @@ export class DatabaseService {
 				type: MessageRole.SYSTEM
 			};
 
-			await backend.addMessages([systemMessage]);
-			await this.addChildToParent(parentId, systemMessage.id);
+			await tx.addMessages([systemMessage]);
+			await this.addChildToParent(tx, parentId, systemMessage.id);
 
 			return systemMessage;
 		});
@@ -282,18 +282,18 @@ export class DatabaseService {
 		id: string,
 		options?: { deleteWithForks?: boolean }
 	): Promise<void> {
-		await backend.transaction(async () => {
-			const conversations = await backend.listConversations();
+		await backend.transaction(async (tx) => {
+			const conversations = await tx.listConversations();
 
 			if (options?.deleteWithForks) {
-				await backend.deleteConversations(collectForkDescendantIds(conversations, id));
+				await tx.deleteConversations(collectForkDescendantIds(conversations, id));
 			} else {
 				const updates = reparentDirectForks(conversations, id);
 
-				if (updates.length > 0) await backend.putConversations(updates);
+				if (updates.length > 0) await tx.putConversations(updates);
 			}
 
-			await backend.deleteConversations([id]);
+			await tx.deleteConversations([id]);
 		});
 	}
 
@@ -303,16 +303,16 @@ export class DatabaseService {
 	 * @param id - Group ID
 	 */
 	static async deleteGroup(id: string): Promise<void> {
-		await backend.transaction(async () => {
-			await backend.deleteRecord(IDXDB_TABLES.groups, id);
+		await backend.transaction(async (tx) => {
+			await tx.deleteRecord(IDXDB_TABLES.groups, id);
 
-			for (const conv of await backend.listConversations()) {
-				if (conv.groupId === id) await backend.updateConversation(conv.id, { groupId: undefined });
+			for (const conv of await tx.listConversations()) {
+				if (conv.groupId === id) await tx.updateConversation(conv.id, { groupId: undefined });
 			}
 
-			for (const project of await backend.listRecords(IDXDB_TABLES.projects)) {
+			for (const project of await tx.listRecords(IDXDB_TABLES.projects)) {
 				if (project.groupId === id) {
-					await backend.updateRecord(IDXDB_TABLES.projects, project.id, { groupId: undefined });
+					await tx.updateRecord(IDXDB_TABLES.projects, project.id, { groupId: undefined });
 				}
 			}
 		});
@@ -324,14 +324,14 @@ export class DatabaseService {
 	 * @param messageId - ID of the message to delete
 	 */
 	static async deleteMessage(messageId: string): Promise<void> {
-		await backend.transaction(async () => {
-			const message = await backend.getMessage(messageId);
+		await backend.transaction(async (tx) => {
+			const message = await tx.getMessage(messageId);
 
 			if (!message) return;
 
-			await this.removeChildFromParent(messageId);
+			await this.removeChildFromParent(tx, messageId);
 
-			await backend.deleteMessages([messageId]);
+			await tx.deleteMessages([messageId]);
 		});
 	}
 
@@ -347,16 +347,16 @@ export class DatabaseService {
 		conversationId: string,
 		messageId: string
 	): Promise<string[]> {
-		return await backend.transaction(async () => {
+		return await backend.transaction(async (tx) => {
 			// Get all messages in the conversation to find descendants
-			const allMessages = await backend.getMessages([conversationId]);
+			const allMessages = await tx.getMessages([conversationId]);
 			const descendants = findDescendantMessages(allMessages, messageId);
 			const allToDelete = [messageId, ...descendants];
 
-			await this.removeChildFromParent(messageId);
+			await this.removeChildFromParent(tx, messageId);
 
 			// Delete all messages in the branch
-			await backend.deleteMessages(allToDelete);
+			await tx.deleteMessages(allToDelete);
 
 			return allToDelete;
 		});
@@ -394,18 +394,18 @@ export class DatabaseService {
 		atMessageId: string,
 		options: { name: string; includeAttachments: boolean }
 	): Promise<DatabaseConversation> {
-		return await backend.transaction(async () => {
-			const [sourceConv] = await backend.getConversations([sourceConvId]);
+		return await backend.transaction(async (tx) => {
+			const [sourceConv] = await tx.getConversations([sourceConvId]);
 
 			if (!sourceConv) {
 				throw new Error(`Source conversation ${sourceConvId} not found`);
 			}
 
-			const allMessages = await backend.getMessages([sourceConvId]);
+			const allMessages = await tx.getMessages([sourceConvId]);
 			const fork = buildForkedConversation(sourceConv, allMessages, atMessageId, options);
 
-			await backend.addConversation(fork.conv);
-			await backend.addMessages(fork.messages);
+			await tx.addConversation(fork.conv);
+			await tx.addMessages(fork.messages);
 
 			return fork.conv;
 		});
@@ -528,10 +528,10 @@ export class DatabaseService {
 		const imported: DatabaseConversation[] = [];
 		const skipped: DatabaseConversation[] = [];
 
-		return await backend.transaction(async () => {
+		return await backend.transaction(async (tx) => {
 			for (const item of data) {
 				const { messages } = item;
-				const [existing] = await backend.getConversations([item.conv.id]);
+				const [existing] = await tx.getConversations([item.conv.id]);
 
 				if (existing) {
 					skipped.push(item.conv);
@@ -540,13 +540,13 @@ export class DatabaseService {
 				}
 
 				const conv = { ...item.conv };
-				const groupId = await DatabaseService.importGroup(item);
+				const groupId = await DatabaseService.importGroup(tx, item);
 
 				if (groupId) conv.groupId = groupId;
 				else delete conv.groupId;
 
-				await backend.addConversation(conv);
-				await backend.putMessages(messages);
+				await tx.addConversation(conv);
+				await tx.putMessages(messages);
 
 				imported.push(conv);
 			}
@@ -572,17 +572,17 @@ export class DatabaseService {
 	 * @param groupId - Target group, null to take them out of their group
 	 */
 	static async setConversationsGroup(ids: string[], groupId: string | null): Promise<void> {
-		await backend.transaction(async () => {
-			for (const conversation of await backend.getConversations(ids)) {
+		await backend.transaction(async (tx) => {
+			for (const conversation of await tx.getConversations(ids)) {
 				if (!conversation) continue;
 
 				if (!groupId) {
-					await backend.updateConversation(conversation.id, { groupId: undefined });
+					await tx.updateConversation(conversation.id, { groupId: undefined });
 
 					continue;
 				}
 
-				await backend.updateConversation(
+				await tx.updateConversation(
 					conversation.id,
 					conversation.pinned ? { groupId, pinned: false } : { groupId }
 				);
@@ -688,14 +688,26 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Switch where conversations are stored. Called once at startup, before any
+	 * conversation is read.
+	 */
+	static useBackend(next: StorageBackend): void {
+		backend = next;
+	}
+
+	/**
 	 * Appends a child id to a parent message's children array.
 	 */
-	private static async addChildToParent(parentId: string, childId: string): Promise<void> {
-		const parent = await backend.getMessage(parentId);
+	private static async addChildToParent(
+		store: StorageBackend,
+		parentId: string,
+		childId: string
+	): Promise<void> {
+		const parent = await store.getMessage(parentId);
 
 		if (!parent) return;
 
-		await backend.updateMessage(parentId, {
+		await store.updateMessage(parentId, {
 			children: [...parent.children, childId]
 		});
 	}
@@ -708,8 +720,11 @@ export class DatabaseService {
 	 *
 	 * @returns The group id, or undefined for none
 	 */
-	private static async importGroup(item: ExportedConversation): Promise<string | undefined> {
-		const groups = await backend.listRecords(IDXDB_TABLES.groups);
+	private static async importGroup(
+		store: StorageBackend,
+		item: ExportedConversation
+	): Promise<string | undefined> {
+		const groups = await store.listRecords(IDXDB_TABLES.groups);
 
 		if (!item.group) {
 			const { groupId } = item.conv;
@@ -730,7 +745,7 @@ export class DatabaseService {
 
 		const now = Date.now();
 
-		await backend.addRecord(IDXDB_TABLES.groups, { createdAt: now, id, name, updatedAt: now });
+		await store.addRecord(IDXDB_TABLES.groups, { createdAt: now, id, name, updatedAt: now });
 
 		return id;
 	}
@@ -738,16 +753,19 @@ export class DatabaseService {
 	/**
 	 * Removes a child id from its parent message's children array.
 	 */
-	private static async removeChildFromParent(messageId: string): Promise<void> {
-		const message = await backend.getMessage(messageId);
+	private static async removeChildFromParent(
+		store: StorageBackend,
+		messageId: string
+	): Promise<void> {
+		const message = await store.getMessage(messageId);
 
 		if (!message?.parent) return;
 
-		const parent = await backend.getMessage(message.parent);
+		const parent = await store.getMessage(message.parent);
 
 		if (!parent) return;
 
 		parent.children = parent.children.filter((childId: string) => childId !== messageId);
-		await backend.putMessages([parent]);
+		await store.putMessages([parent]);
 	}
 }

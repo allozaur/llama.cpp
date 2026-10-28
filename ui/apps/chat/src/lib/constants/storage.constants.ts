@@ -97,6 +97,12 @@ export const DEPRECATED_FAVORITE_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_D
 /** @deprecated Use {@link USER_OVERRIDES_LOCALSTORAGE_KEY} instead */
 export const DEPRECATED_USER_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.userOverrides`;
 
+/** Storage adapter id this browser keeps conversations and user settings in, unset: this browser */
+export const STORAGE_ADAPTER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.storageAdapter`;
+
+/** API key kept in this browser while the rest of the config lives on the server */
+export const API_KEY_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.apiKey`;
+
 /** Maps new keys to their deprecated fallback keys */
 export const NEW_TO_DEPRECATED_MAP: Record<string, string> = {
 	[ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY]: DEPRECATED_ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY,
