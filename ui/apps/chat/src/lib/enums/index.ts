@@ -85,7 +85,8 @@ export {
 	ModelRowDownloadState,
 	ModelsTableGroupKind,
 	ModelsTableServerKind,
-	ModelsTableSortKey
+	ModelsTableSortKey,
+	ModelsViewMode
 } from './model.enums';
 
 export {

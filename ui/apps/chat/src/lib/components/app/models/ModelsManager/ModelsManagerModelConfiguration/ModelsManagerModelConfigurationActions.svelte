@@ -20,8 +20,8 @@
 		isDownloadPaused?: boolean;
 		isLoaded: boolean;
 		isLoading: boolean;
-		/** Opens the manager dialog on the Discover view, focused on this model's repo. */
-		onSeeInDiscover?: () => void;
+		/** Opens the Hub details drawer on this model's repo. */
+		onViewOnHub?: () => void;
 		/** Confirm-cancel dialog on the pane, so nothing deletes without a click. */
 		onRequestCancelDownload?: () => void;
 		onToggleDownload?: () => void;
@@ -39,11 +39,11 @@
 		isLoaded,
 		isLoading,
 		onRequestCancelDownload,
-		onSeeInDiscover,
 		onToggleDownload,
 		onToggleLoad,
 		onUseInChat,
 		onUseInNewChat,
+		onViewOnHub,
 		size = 'sm'
 	}: Props = $props();
 
@@ -80,11 +80,11 @@
 			</Button>
 		</div>
 
-		{#if onSeeInDiscover && discoverEnabled}
-			<Button class="gap-1.5" onclick={onSeeInDiscover} {size} variant="tertiary">
+		{#if onViewOnHub && discoverEnabled}
+			<Button class="gap-1.5" onclick={onViewOnHub} {size} variant="tertiary">
 				<Compass class="h-3.5 w-3.5" />
 
-				See in Discover
+				View on Hugging Face
 			</Button>
 		{/if}
 	{:else}
@@ -136,11 +136,11 @@
 				</Button>
 			{/if}
 
-			{#if onSeeInDiscover && discoverEnabled}
-				<Button class="flex-1 gap-1.5" onclick={onSeeInDiscover} {size} variant="tertiary">
+			{#if onViewOnHub && discoverEnabled}
+				<Button class="flex-1 gap-1.5" onclick={onViewOnHub} {size} variant="tertiary">
 					<Compass class="h-3.5 w-3.5" />
 
-					See in Discover
+					View on Hugging Face
 				</Button>
 			{/if}
 		</div>

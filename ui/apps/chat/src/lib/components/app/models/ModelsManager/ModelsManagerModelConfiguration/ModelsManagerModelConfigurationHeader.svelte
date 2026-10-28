@@ -17,8 +17,8 @@
 		isCustomized: boolean;
 		isLoaded: boolean;
 		onClose: () => void;
-		/** Opens the manager dialog on the Discover view, focused on this model's repo. */
-		onSeeInDiscover?: () => void;
+		/** Opens the Hub details drawer on this model's repo. */
+		onViewOnHub?: () => void;
 		onRequestCancelDownload?: () => void;
 		onToggleDownload?: () => void;
 		onToggleLoad: () => void;
@@ -36,11 +36,11 @@
 		isLoaded,
 		onClose,
 		onRequestCancelDownload,
-		onSeeInDiscover,
 		onToggleDownload,
 		onToggleLoad,
 		onUseInChat,
 		onUseInNewChat,
+		onViewOnHub,
 		option,
 		status
 	}: Props = $props();
@@ -166,11 +166,11 @@
 			{isLoaded}
 			{isLoading}
 			{onRequestCancelDownload}
-			{onSeeInDiscover}
 			{onToggleDownload}
 			{onToggleLoad}
 			{onUseInChat}
 			{onUseInNewChat}
+			{onViewOnHub}
 			size="default"
 		/>
 	{/if}
