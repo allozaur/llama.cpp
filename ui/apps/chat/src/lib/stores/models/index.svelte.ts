@@ -557,6 +557,13 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		return this.isModelLoaded(modelId) && !this._status.isOperationInProgress(modelId);
 	}
 
+	/** Re-read the persisted user lists, once startup has chosen where they are stored. */
+	reloadPersisted(): void {
+		this.favoriteModelIds = this.loadFavoritesFromStorage();
+		this.hiddenModelIds = loadHiddenModels();
+		this.recentModelIds = loadRecentModels();
+	}
+
 	/**
 	 * Why the router would refuse to delete a model from disk, or null when it can.
 	 * Only a model from the HF cache is removable; a server that does not report

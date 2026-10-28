@@ -112,6 +112,9 @@ export type {
 	StorageBackend
 } from './database';
 
+// Storage adapter types
+export type { StorageAdapter, StorageAdapterDefinition, StoredConversation } from './storage';
+
 // Model types
 export type {
 	ModelCapabilities,
