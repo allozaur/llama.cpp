@@ -20,6 +20,7 @@ import {
 import { ReasoningEffort, ServerModelStatus } from '$lib/enums';
 import { HuggingFaceService } from '$lib/services/huggingface.service';
 import { ModelsService } from '$lib/services/models.service';
+import { PreferencesService } from '$lib/services/preferences.service';
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
 import { type ModelPropsHost, ModelPropsManager } from '$lib/stores/models/props.svelte';
 import { type ModelStatusHost, ModelStatusManager } from '$lib/stores/models/status.svelte';
@@ -49,7 +50,7 @@ function loadStoredSelection(): { id: string; model: string | null } | null {
 	if (!browser) return null;
 
 	try {
-		const raw = localStorage.getItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
 
 		if (!raw) return null;
 
@@ -70,7 +71,7 @@ function loadHiddenModels(): Set<string> {
 	if (!browser) return new SvelteSet<string>();
 
 	try {
-		const raw = localStorage.getItem(HIDDEN_MODELS_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(HIDDEN_MODELS_LOCALSTORAGE_KEY);
 
 		return raw ? new SvelteSet(JSON.parse(raw) as string[]) : new SvelteSet<string>();
 	} catch {
@@ -83,7 +84,7 @@ function loadGroupOpenState(): SvelteMap<string, boolean> {
 	if (!browser) return new SvelteMap<string, boolean>();
 
 	try {
-		const raw = localStorage.getItem(MODEL_GROUP_OPEN_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(MODEL_GROUP_OPEN_LOCALSTORAGE_KEY);
 		const parsed = raw ? (JSON.parse(raw) as unknown) : null;
 		const entries =
 			parsed && typeof parsed === 'object' ? Object.entries(parsed as Record<string, unknown>) : [];
@@ -101,7 +102,7 @@ function loadRecentModels(): string[] {
 	if (!browser) return [];
 
 	try {
-		const raw = localStorage.getItem(RECENT_MODELS_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(RECENT_MODELS_LOCALSTORAGE_KEY);
 
 		if (!raw) return [];
 
@@ -590,7 +591,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		this.favoriteModelIds = next;
 
 		try {
-			localStorage.setItem(FAVORITE_MODELS_LOCALSTORAGE_KEY, JSON.stringify([...next]));
+			PreferencesService.setItem(FAVORITE_MODELS_LOCALSTORAGE_KEY, JSON.stringify([...next]));
 		} catch {
 			toast.error('Failed to save favorite models to local storage');
 		}
@@ -619,7 +620,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		this.groupOpenState = next;
 
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				MODEL_GROUP_OPEN_LOCALSTORAGE_KEY,
 				JSON.stringify(Object.fromEntries(next))
 			);
@@ -699,7 +700,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		this.hiddenModelIds = next;
 
 		try {
-			localStorage.setItem(HIDDEN_MODELS_LOCALSTORAGE_KEY, JSON.stringify([...next]));
+			PreferencesService.setItem(HIDDEN_MODELS_LOCALSTORAGE_KEY, JSON.stringify([...next]));
 		} catch {
 			toast.error('Failed to save hidden models to local storage');
 		}
@@ -807,7 +808,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 	private loadFavoritesFromStorage(): Set<string> {
 		try {
-			const raw = localStorage.getItem(FAVORITE_MODELS_LOCALSTORAGE_KEY);
+			const raw = PreferencesService.getItem(FAVORITE_MODELS_LOCALSTORAGE_KEY);
 
 			return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
 		} catch {
@@ -822,9 +823,9 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		try {
 			if (!this.selectedModelId) {
-				localStorage.removeItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
+				PreferencesService.removeItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
 			} else {
-				localStorage.setItem(
+				PreferencesService.setItem(
 					SELECTED_MODEL_LOCALSTORAGE_KEY,
 					JSON.stringify({ id: this.selectedModelId, model: this.selectedModelName })
 				);
@@ -844,7 +845,10 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		if (!browser) return;
 
 		try {
-			localStorage.setItem(RECENT_MODELS_LOCALSTORAGE_KEY, JSON.stringify(this.recentModelIds));
+			PreferencesService.setItem(
+				RECENT_MODELS_LOCALSTORAGE_KEY,
+				JSON.stringify(this.recentModelIds)
+			);
 		} catch {
 			console.warn('[ModelsStore] Failed to persist the recently used models');
 		}

@@ -13,6 +13,7 @@ import {
 	ModelsTableServerKind
 } from '$lib/enums';
 import { HuggingFaceService, ModelsService } from '$lib/services';
+import { PreferencesService } from '$lib/services/preferences.service';
 import { modelsStore, serversModelsStore, settingsStore } from '$lib/stores';
 import type {
 	ModelDownloadEntry,
@@ -155,7 +156,7 @@ export function isCustomized(override?: ModelOverride): boolean {
 
 export function loadOverrides(): ModelOverrideMap {
 	try {
-		const raw = localStorage.getItem(MODEL_OVERRIDES_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(MODEL_OVERRIDES_LOCALSTORAGE_KEY);
 
 		if (!raw) return {};
 
@@ -169,7 +170,7 @@ export function loadOverrides(): ModelOverrideMap {
 
 export function saveOverrides(overrides: ModelOverrideMap): void {
 	try {
-		localStorage.setItem(MODEL_OVERRIDES_LOCALSTORAGE_KEY, JSON.stringify(overrides));
+		PreferencesService.setItem(MODEL_OVERRIDES_LOCALSTORAGE_KEY, JSON.stringify(overrides));
 	} catch {
 		console.warn('[ModelsManager] Failed to persist model overrides');
 	}

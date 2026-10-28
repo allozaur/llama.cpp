@@ -120,3 +120,5 @@ export { SplashOrientation } from './splash.enums';
 
 export { LibraryItemKind, LibraryTab, LibraryView } from './library.enums';
 export { PromptDrift } from './prompt.enums';
+
+export { PreferenceScope } from './storage.enums';
