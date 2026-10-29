@@ -221,6 +221,8 @@ export {
 	type PathQuery
 } from './working-directory';
 
+// Project system prompt section (instructions + referenced documents)
+export { buildProjectSystemPrompt, estimateProjectContext } from './project-prompt';
 export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
 
 export { sidebarFooterItems } from './sidebar-items';

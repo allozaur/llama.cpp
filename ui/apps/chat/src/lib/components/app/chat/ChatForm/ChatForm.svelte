@@ -8,7 +8,8 @@
 		ChatFormCurrentWorkingDirectory,
 		ChatFormInput,
 		ChatFormInputFileInputInvisible,
-		ChatFormPickers
+		ChatFormPickers,
+		ChatFormProjectChip
 	} from '$lib/components/app';
 	import {
 		CHAT_FORM_SINGLE_ROW_MAX_TEXT_PX,
@@ -25,6 +26,7 @@
 		conversationsStore,
 		deviceStore,
 		modelsStore,
+		projectsStore,
 		serverStore,
 		settingsStore,
 		toolsStore,
@@ -128,6 +130,15 @@
 	let cwd = $derived(
 		conversationsStore.activeConversation?.cwd ?? conversationsStore.preferences.pendingCwd
 	);
+
+	// the project the chat is in, or the one picked for the chat about to start
+	let project = $derived.by(() => {
+		const projectId =
+			conversationsStore.activeConversation?.projectId ??
+			conversationsStore.preferences.pendingProjectId;
+
+		return projectId ? projectsStore.get(projectId) : undefined;
+	});
 
 	let showWorkingDirectory = $derived(conversationsStore.preferences.hasEnabledCwdTools());
 	// On a desktop the chip under the form shows a directory once one is set, and the + menu
@@ -732,7 +743,37 @@
 		></div>
 	{/if}
 
-	{#if showWorkingDirectory}
+	{#if project}
+		<!-- the chat's context: its project and, once one is set, its working directory -->
+		<div
+			class={[
+				'mt-1.5 flex min-w-0 items-center gap-1 self-start',
+				// the expanded phone sheet reaches the screen's bottom
+				isExpanded && 'max-md:hidden'
+			]}
+		>
+			<ChatFormProjectChip {disabled} {project} />
+
+			{#if showWorkingDirectoryChip}
+				<span aria-hidden="true" class="text-xs text-muted-foreground">·</span>
+			{/if}
+
+			{#if showWorkingDirectory}
+				<ChatFormCurrentWorkingDirectory
+					bind:query={pickers.workingDirectoryQuery}
+					class="!mt-0"
+					customAnchor={activePickerAnchor}
+					directory={cwd}
+					{disabled}
+					isOpen={pickers.isWorkingDirectoryPickerOpen}
+					onChange={handleWorkingDirectoryChange}
+					onClose={pickers.handleWorkingDirectoryClose}
+					onOpen={pickers.handleWorkingDirectoryOpen}
+					showChip={showWorkingDirectoryChip}
+				/>
+			{/if}
+		</div>
+	{:else if showWorkingDirectory}
 		<!-- opened from the chip, the + menu, a phone chat's header or `/cwd` -->
 		<ChatFormCurrentWorkingDirectory
 			bind:query={pickers.workingDirectoryQuery}

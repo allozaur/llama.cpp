@@ -20,6 +20,7 @@ import {
 	ErrorDialogType,
 	MessageRole,
 	MessageType,
+	ProjectContextKind,
 	ReasoningEffort,
 	StreamConnectionState
 } from '$lib/enums';
@@ -34,6 +35,7 @@ import { chatProcessingStore } from '$lib/stores/chat/processing.svelte';
 import { type ChatStreamHost, ChatStreamManager } from '$lib/stores/chat/streams.svelte';
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
+import { projectsStore } from '$lib/stores/projects.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import { toolsStore } from '$lib/stores/tools.svelte';
@@ -49,6 +51,7 @@ import type {
 } from '$lib/types';
 import type { AgenticToolPolicy } from '$lib/types/agentic';
 import {
+	buildProjectSystemPrompt,
 	canCompactMessages,
 	compactionCut,
 	filterByLeafNodeId,
@@ -734,6 +737,10 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		}
 	}
 
+	/**
+	 * Sends a message, creating the conversation when none is active. A new
+	 * conversation joins the pending project and starts with its context.
+	 */
 	async sendMessage(content: string, extras?: DatabaseMessageExtra[]): Promise<void> {
 		if (!content.trim() && (!extras || extras.length === 0)) return;
 
@@ -756,11 +763,19 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		// Cancel any in-flight pre-encode request
 		this.cancelPreEncode();
 
+		const pendingProjectId = conversationsStore.preferences.pendingProjectId;
+		const project =
+			!activeConv && pendingProjectId ? projectsStore.get(pendingProjectId) : undefined;
+		const projectItems = project ? $state.snapshot(project.contextItems) : [];
+		const projectExtras = projectItems
+			.filter((item) => item.kind === ProjectContextKind.ATTACHMENT && item.extra)
+			.map((item) => item.extra!);
 		// Attachments an extension holds outside the form go with this message, and are cleared at their source
 		const pendingExtras = extensions
 			.contributions('composerAttachments')
 			.flatMap((source) => source.consume());
-		const allExtras = pendingExtras.length > 0 ? [...(extras || []), ...pendingExtras] : extras;
+		const addedExtras = [...projectExtras, ...pendingExtras];
+		const allExtras = addedExtras.length > 0 ? [...(extras || []), ...addedExtras] : extras;
 
 		let isNewConversation = false;
 
@@ -782,7 +797,14 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			if (isNewConversation) {
 				const rootId = await DatabaseService.createRootMessage(currentConv.id);
 				const currentConfig = settingsStore.config;
-				const systemPrompt = currentConfig.systemMessage?.toString().trim();
+				// a project conversation starts from the project's instructions and
+				// referenced documents, ahead of the global system message
+				const projectPrompt = buildProjectSystemPrompt(
+					currentConv.projectId ? projectsStore.get(currentConv.projectId) : undefined
+				);
+				const systemPrompt = [currentConfig.systemMessage?.toString().trim(), projectPrompt]
+					.filter(Boolean)
+					.join('\n\n');
 
 				let sysOrRootId = rootId;
 
