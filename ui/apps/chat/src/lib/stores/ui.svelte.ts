@@ -19,6 +19,7 @@ import { SidebarAction } from '#lib/enums/index.ts';
 import { deviceStore } from '#lib/stores/device.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type { Group } from '#lib/types/groups.js';
+import type { Project } from '#lib/types/projects.js';
 import { remToPx } from '#lib/utils/css.ts';
 import { browser } from '$app/env';
 import { goto } from '$app/navigation';
@@ -40,6 +41,13 @@ interface GroupPickerOptions {
 	onSelect: (groupId: string) => void;
 }
 
+interface ProjectDialogOptions {
+	/** Called with the new project after the dialog creates one. */
+	onCreate?: (project: Project) => void;
+	/** Project to edit; without it the dialog creates a new one. */
+	projectId?: string;
+}
+
 /** Sidebar sections the user folded, read once on load. */
 function loadCollapsedSidebarSections(): SvelteSet<string> {
 	if (!browser) return new SvelteSet<string>();
@@ -54,6 +62,12 @@ function loadCollapsedSidebarSections(): SvelteSet<string> {
 	} catch {
 		return new SvelteSet<string>();
 	}
+}
+
+interface ProjectPickerOptions {
+	/** Project ticked in the list: the one the chat is in. */
+	currentProjectId?: string | null;
+	onSelect: (projectId: string) => void;
 }
 
 /** Section order the user dragged into place, read once on load. */
@@ -103,6 +117,10 @@ class UiStore {
 	modelsReturnRoute: ResolvedPathname = resolve(ROUTES.START);
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** Open state of the project dialog, `null` while closed. */
+	projectDialog = $state<ProjectDialogOptions | null>(null);
+	/** Open state of the project picker, a phone's stand-in for the project submenus. */
+	projectPicker = $state<ProjectPickerOptions | null>(null);
 	/** Open state of the servers dialog, the door to pairing on a phone. */
 	serversOpen = $state(false);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
@@ -235,6 +253,16 @@ class UiStore {
 		void goto(resolve(ROUTES.MODELS));
 	}
 
+	/** Open the project dialog to create a project, or to edit `projectId`. */
+	openProjectDialog(options: ProjectDialogOptions = {}): void {
+		this.projectDialog = options;
+	}
+
+	/** Open the project picker, which calls `onSelect` with the picked project. */
+	openProjectPicker(options: ProjectPickerOptions): void {
+		this.projectPicker = options;
+	}
+
 	/** Open the servers, where a server is paired or pointed at: a page on a phone, a dialog elsewhere. */
 	openServers(): void {
 		if (deviceStore.isMobile) {
@@ -248,7 +276,7 @@ class UiStore {
 
 	/**
 	 * Puts sections in the order the user gave them. One never moved, such as a
-	 * section that was empty until now, keeps its default place: right before the next section in
+	 * new group or project, keeps its default place: right before the next section in
 	 * the default order that was.
 	 */
 	orderSidebarSections<T extends { id: string }>(sections: T[]): T[] {
@@ -294,7 +322,7 @@ class UiStore {
 	 * @param ids - The sections as the sidebar shows them now
 	 */
 	setSidebarSectionOrder(ids: string[]): void {
-		// sections not shown right now (an empty Pinned) keep their place
+		// sections not shown right now (an empty Pinned, a deleted group) keep their place
 		this.sidebarSectionOrder = [
 			...ids,
 			...this.sidebarSectionOrder.filter((id) => !ids.includes(id))
