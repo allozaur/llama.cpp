@@ -10,6 +10,8 @@
 		DialogGroup,
 		DialogGroupPicker,
 		DialogMcpServers,
+		DialogProject,
+		DialogProjectPicker,
 		DialogSearch,
 		DialogSettingsChat,
 		Logo,
@@ -763,6 +765,10 @@
 <DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
+
+<DialogProject />
+
+<DialogProjectPicker />
 
 <style>
 	aside {
