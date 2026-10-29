@@ -11,6 +11,7 @@ import { AGENTIC_ENABLED } from '#lib/constants/app.constants.ts';
 import {
 	buildBrowserInfoToolDefinition,
 	buildGetDatetimeToolDefinition,
+	buildProjectToolDefinitions,
 	buildReadMediaToolDefinition,
 	buildSearchChatsToolDefinition,
 	DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
@@ -29,6 +30,7 @@ import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
+import { projectsStore } from '#lib/stores/projects.svelte.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { serversStore } from '#lib/stores/servers.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
@@ -137,6 +139,9 @@ class ToolsStore {
 		const readMedia = this.readMediaTool();
 
 		if (readMedia) tools.push(readMedia);
+
+		// the project tools only make sense once there is a project to read or edit
+		if (projectsStore.projects.length > 0) tools.push(...buildProjectToolDefinitions());
 
 		// provide browser's get_info tool if server doesn't provide one
 		if (!this.hasServerTool(BuiltInTool.SERVER_GET_INFO)) {

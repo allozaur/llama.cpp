@@ -25,6 +25,7 @@ import {
 import {
 	DEFAULT_AGENTIC_CONFIG,
 	NEWLINE,
+	PROJECT_TOOL_NAMES,
 	SETTINGS_KEYS,
 	TOOL_DENIED_RESULT,
 	TOOL_LOADING,
@@ -58,6 +59,7 @@ import {
 } from '#lib/enums/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
 import { ChatService } from '#lib/services/index.ts';
+import { ProjectToolsService } from '#lib/services/project-tools.service.ts';
 import { ReadMediaService } from '#lib/services/read-media.service.ts';
 import { SandboxService } from '#lib/services/sandbox.service.ts';
 import { SearchChatsService } from '#lib/services/search-chats.service.ts';
@@ -664,6 +666,14 @@ class AgenticStore {
 			const args = this.parseToolArguments(toolCall.function.arguments);
 
 			if (toolName === BuiltInTool.BROWSER_GET_DATETIME) return executeGetDatetimeTool();
+
+			if (PROJECT_TOOL_NAMES.includes(toolName)) {
+				return ProjectToolsService.executeTool(
+					toolName,
+					args,
+					conversationsStore.activeConversation?.projectId
+				);
+			}
 
 			if (toolName === BuiltInTool.SERVER_GET_INFO) return executeBrowserInfoTool();
 

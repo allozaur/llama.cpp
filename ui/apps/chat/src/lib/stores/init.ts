@@ -4,6 +4,7 @@ import { groupsStore } from './groups.svelte';
 import { serverStore } from './llama-server.svelte';
 import { modelsStore } from './models/index.svelte';
 import { permissionsStore } from './permissions.svelte';
+import { projectsStore } from './projects.svelte';
 import { remoteAccessStore } from './remote-access.svelte';
 import { serversStore } from './servers.svelte';
 import { serversModelsStore } from './serversModels.svelte';
@@ -158,6 +159,7 @@ export function initStores(): Promise<void> {
 
 		void versionStore.initialize();
 		void groupsStore.initialize();
+		void projectsStore.initialize();
 
 		// the full conversation list loads in the background; once it is back,
 		// prune persisted tabs against the conversations that still exist

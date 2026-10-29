@@ -17,11 +17,17 @@
 		Trash2,
 		Unlink
 	} from '@lucide/svelte';
-	import { ContextMenuActions, DropdownMenuActions } from '#lib/components/app/index.ts';
+	import {
+		ContextMenuActions,
+		DropdownMenuActions,
+		ProjectPrefix,
+		ProjectSubmenu
+	} from '#lib/components/app/index.ts';
 	import { TruncatedText } from '#lib/components/app/index.ts';
 	import {
 		FORK_TREE_DEPTH_PADDING,
 		ICON_CLASS_DEFAULT,
+		PROJECT_ICON,
 		ROW_LONG_PRESS_MS,
 		SHORTCUT_DELETE_CONVERSATION,
 		SHORTCUT_EDIT_CONVERSATION,
@@ -41,7 +47,7 @@
 		tabsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
-	import type { MenuAction } from '#lib/types/index.ts';
+	import type { MenuAction, Project } from '#lib/types/index.ts';
 	import { hapticTap } from '#lib/utils/index.ts';
 	import { onMount, tick } from 'svelte';
 
@@ -59,6 +65,8 @@
 		onEnterSelectionMode?: (id: string) => void;
 		onSelectionClick?: (id: string, options: { shiftKey: boolean }) => void;
 		onRowMouseDown?: (id: string, event: MouseEvent) => void;
+		/** Project shown before the title, where the list does not group the chat under it. */
+		project?: Project;
 	}
 
 	let {
@@ -74,7 +82,8 @@
 		onSelect,
 		onSelectionClick,
 		onStop,
-		onToggleSelect
+		onToggleSelect,
+		project
 	}: Props = $props();
 
 	let renderActionsDropdown = $state(false);
@@ -175,6 +184,38 @@
 			: [])
 	]);
 
+	function setProject(projectId: string | null) {
+		void conversationsStore.setConversationProject(conversation.id, projectId);
+	}
+
+	// a phone has no flyouts: the same entry opens the project picker there
+	function handlePickProject(event: Event) {
+		event.stopPropagation();
+		uiStore.openProjectPicker({ currentProjectId: conversation.projectId, onSelect: setProject });
+	}
+
+	// a chat in a project can move to another one or leave it, a loose chat can join one
+	let projectActions = $derived<MenuAction[]>([
+		{
+			icon: PROJECT_ICON,
+			label: conversation.projectId ? 'Change project' : 'Add to project',
+			onclick: handlePickProject,
+			submenu: projectSubmenu
+		},
+		...(conversation.projectId
+			? [
+					{
+						icon: Unlink,
+						label: 'Remove from project',
+						onclick: (event: Event) => {
+							event.stopPropagation();
+							setProject(null);
+						}
+					}
+				]
+			: [])
+	]);
+
 	// the "more actions" dropdown and the right-click menu offer the same actions; the
 	// shortcuts act on the active conversation, so only its row shows them
 	let actions = $derived<MenuAction[]>([
@@ -206,6 +247,7 @@
 			shortcut: isActive ? SHORTCUT_EDIT_CONVERSATION : undefined
 		},
 		...groupActions,
+		...projectActions,
 		{
 			icon: Download,
 			label: 'Export',
@@ -422,11 +464,18 @@
 				</Tooltip.Root>
 			{/if}
 
-			<TruncatedText
-				class="text-body-sm max-md:text-body"
-				showTooltip={false}
-				text={conversation.name}
-			/>
+			<!-- the project prefix and the title read as one label, spaced like a tab -->
+			<span class="flex min-w-0 flex-1 items-center gap-1">
+				{#if project}
+					<ProjectPrefix class="max-w-1/2 shrink-0 text-body-sm" name={project.name} />
+				{/if}
+
+				<TruncatedText
+					class="text-body-sm max-md:text-body"
+					showTooltip={false}
+					text={conversation.name}
+				/>
+			</span>
 		</div>
 
 		{#if !isSelectionMode && renderActionsDropdown}
@@ -451,6 +500,16 @@
 		label="Move to group"
 		onClose={close}
 		onSelect={setGroup}
+	/>
+{/snippet}
+
+{#snippet projectSubmenu({ close, kind }: { close: () => void; kind: MenuKind })}
+	<ProjectSubmenu
+		currentProjectId={conversation.projectId}
+		{kind}
+		label={conversation.projectId ? 'Change project' : 'Add to project'}
+		onClose={close}
+		onSelect={setProject}
 	/>
 {/snippet}
 

@@ -21,6 +21,7 @@
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,
 		ICON_CLASS_XS,
+		PROJECT_ICON,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '#lib/constants/index.ts';
 	import { KeyboardKey, SidebarAction } from '#lib/enums/index.ts';
@@ -36,6 +37,7 @@
 		conversationsStore,
 		deviceStore,
 		modelsDiscoverStore,
+		projectsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
 	import type { DatabaseConversation } from '#lib/types/database.js';
@@ -98,16 +100,35 @@
 		conversation: DatabaseConversation,
 		snippet?: ConversationSearchSnippet
 	): SearchEntry {
+		const project = conversation.projectId
+			? projectsStore.get(conversation.projectId)
+			: undefined;
+		const time = formatRelativeTime(conversation.lastModified);
+
 		return {
 			icon: MessageSquare,
 			id: `chat-${conversation.id}`,
 			label: conversation.name,
-			meta: formatRelativeTime(conversation.lastModified),
+			meta: project ? `${project.name} · ${time}` : time,
 			pinned: conversation.pinned,
 			run: () => close(() => goto(RouterService.chat(conversation.id))),
 			snippet
 		};
 	}
+
+	// hidden ones too: this is where a hidden project is found and shown again
+	const projectEntries = $derived.by((): SearchEntry[] =>
+		projectsStore.projects
+			.filter((project) => matches(project.name))
+			.slice(0, limit)
+			.map((project) => ({
+				icon: PROJECT_ICON,
+				id: `project-${project.id}`,
+				label: project.name,
+				meta: project.hidden ? 'Hidden' : undefined,
+				run: () => close(() => uiStore.openProjectDialog({ projectId: project.id }))
+			}))
+	);
 
 	const recentConversations = $derived(
 		[...conversationsStore.conversations].sort((a, b) => b.lastModified - a.lastModified)
@@ -286,6 +307,7 @@
 				loading: contentSearch.isSearching && !!needle,
 				title: 'In messages'
 			},
+			{ entries: projectEntries, title: 'Projects' },
 			{ entries: suggestedEntries, title: 'Suggested models' },
 			{ entries: actionEntries, title: 'Actions' },
 			{
