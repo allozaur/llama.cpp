@@ -21,7 +21,7 @@ import {
 	type ToolContext,
 	type ToolResult
 } from '@ggml-org/llama-harness';
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE } from '#lib/constants/index.ts';
+import { DEFAULT_AGENTIC_CONFIG, NEWLINE, PROJECT_TOOL_NAMES } from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -43,6 +43,7 @@ import {
 } from '#lib/enums/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
 import { ChatService } from '#lib/services/index.ts';
+import { ProjectToolsService } from '#lib/services/project-tools.service.ts';
 import { ReadMediaService } from '#lib/services/read-media.service.ts';
 import { SandboxService } from '#lib/services/sandbox.service.ts';
 import { SearchChatsService } from '#lib/services/search-chats.service.ts';
@@ -509,6 +510,14 @@ class AgenticStore {
 			const args = this.parseToolArguments(toolCall.function.arguments);
 
 			if (toolName === BuiltInTool.BROWSER_GET_DATETIME) return executeGetDatetimeTool();
+
+			if (PROJECT_TOOL_NAMES.includes(toolName)) {
+				return ProjectToolsService.executeTool(
+					toolName,
+					args,
+					conversationsStore.activeConversation?.projectId
+				);
+			}
 
 			if (toolName === BuiltInTool.SERVER_GET_INFO) return executeBrowserInfoTool();
 

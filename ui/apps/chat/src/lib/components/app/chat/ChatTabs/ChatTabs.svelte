@@ -12,7 +12,13 @@
 		UNNAMED_CHAT_LABEL
 	} from '#lib/constants/index.ts';
 	import { useScrollCarousel } from '#lib/hooks/use-scroll-carousel.svelte.ts';
-	import { chatStore, conversationsStore, tabsStore, uiStore } from '#lib/stores/index.ts';
+	import {
+		chatStore,
+		conversationsStore,
+		projectsStore,
+		tabsStore,
+		uiStore
+	} from '#lib/stores/index.ts';
 	import type { MenuAction } from '#lib/types/index.ts';
 	import { resolveTabView } from '#lib/utils/index.ts';
 	import { page } from '$app/state';
@@ -28,14 +34,21 @@
 		view.ids.map((id) =>
 			id === NEW_CHAT_TAB_ID
 				? { href: view.hrefFor(id), icon: SquarePen, id, name: NEW_CHAT_LABEL }
-				: {
-						href: view.hrefFor(id),
-						id,
-						name:
-							conversationsStore.conversations.find((c) => c.id === id)?.name ?? UNNAMED_CHAT_LABEL
-					}
+				: chatTab(id)
 		)
 	);
+
+	// a project chat carries its project name before the title, like a breadcrumb
+	function chatTab(id: string) {
+		const conversation = conversationsStore.conversations.find((c) => c.id === id);
+
+		return {
+			href: view.hrefFor(id),
+			id,
+			name: conversation?.name ?? UNNAMED_CHAT_LABEL,
+			prefix: conversation?.projectId ? projectsStore.get(conversation.projectId)?.name : undefined
+		};
+	}
 
 	// hide the New chat button while a new-chat tab is already open
 	let showNewChatButton = $derived(!view.ids.includes(NEW_CHAT_TAB_ID));

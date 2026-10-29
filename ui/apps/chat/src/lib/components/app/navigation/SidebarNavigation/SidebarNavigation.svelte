@@ -7,6 +7,8 @@
 		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
+		DialogProject,
+		DialogProjectPicker,
 		DialogSearch,
 		DialogSettingsChat,
 		Logo,
@@ -792,6 +794,10 @@
 <DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
+
+<DialogProject />
+
+<DialogProjectPicker />
 
 <style>
 	aside {
