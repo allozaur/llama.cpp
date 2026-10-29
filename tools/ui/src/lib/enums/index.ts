@@ -98,6 +98,7 @@ export {
 	MenuKind,
 	ScrollCarouselVariant,
 	SidebarAction,
+	SidebarSectionKind,
 	TooltipSide,
 	UrlProtocol
 } from './ui.enums';
