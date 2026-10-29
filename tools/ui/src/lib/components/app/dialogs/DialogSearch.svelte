@@ -7,11 +7,12 @@
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,
 		ICON_CLASS_XS,
+		PROJECT_ICON,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '$lib/constants';
 	import { KeyboardKey, SidebarAction } from '$lib/enums';
 	import { RouterService } from '$lib/services/router.service';
-	import { conversationsStore } from '$lib/stores';
+	import { conversationsStore, projectsStore, uiStore } from '$lib/stores';
 	import { formatRelativeTime, isIMEComposing } from '$lib/utils';
 	import type { Component } from 'svelte';
 
@@ -59,13 +60,34 @@
 			.filter((conversation) => matches(conversation.name))
 			.sort((a, b) => b.lastModified - a.lastModified)
 			.slice(0, limit)
-			.map((conversation) => ({
-				icon: MessageSquare,
-				id: `chat-${conversation.id}`,
-				label: conversation.name,
-				meta: formatRelativeTime(conversation.lastModified),
-				pinned: conversation.pinned,
-				run: () => close(() => goto(RouterService.chat(conversation.id)))
+			.map((conversation) => {
+				const project = conversation.projectId
+					? projectsStore.get(conversation.projectId)
+					: undefined;
+				const time = formatRelativeTime(conversation.lastModified);
+
+				return {
+					icon: MessageSquare,
+					id: `chat-${conversation.id}`,
+					label: conversation.name,
+					meta: project ? `${project.name} · ${time}` : time,
+					pinned: conversation.pinned,
+					run: () => close(() => goto(RouterService.chat(conversation.id)))
+				};
+			})
+	);
+
+	// hidden ones too: this is where a hidden project is found and shown again
+	const projectEntries = $derived.by((): SearchEntry[] =>
+		projectsStore.projects
+			.filter((project) => matches(project.name))
+			.slice(0, limit)
+			.map((project) => ({
+				icon: PROJECT_ICON,
+				id: `project-${project.id}`,
+				label: project.name,
+				meta: project.hidden ? 'Hidden' : undefined,
+				run: () => close(() => uiStore.openProjectDialog({ projectId: project.id }))
 			}))
 	);
 
@@ -85,6 +107,7 @@
 	const sections = $derived<SearchSection[]>(
 		[
 			{ entries: chatEntries, title: needle ? 'Chats' : 'Recents' },
+			{ entries: projectEntries, title: 'Projects' },
 			{ entries: actionEntries, title: 'Actions' }
 		].filter((section) => section.entries.length > 0)
 	);

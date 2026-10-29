@@ -96,6 +96,7 @@ export {
 	HtmlInputType,
 	McpPromptVariant,
 	MenuKind,
+	ProjectContextKind,
 	ScrollCarouselVariant,
 	SidebarAction,
 	SidebarSectionKind,

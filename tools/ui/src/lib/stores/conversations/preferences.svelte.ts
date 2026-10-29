@@ -81,11 +81,24 @@ export class ConversationPreferences {
 	pendingCwd = $state<string | null>(null);
 
 	/**
+	 * Whether `pendingCwd` was copied from the pending project's folder rather
+	 * than picked by the user, so switching projects replaces it.
+	 */
+	pendingCwdFromProject = false;
+
+	/**
 	 * Group the chat about to start goes into, picked before any conversation
 	 * exists. Consumed by `createConversation()` so the first send lands in
 	 * that group. Cleared alongside `pendingCwd`.
 	 */
 	pendingGroupId = $state<string | null>(null);
+
+	/**
+	 * Project picked on the empty new-chat screen, before any conversation
+	 * exists. Consumed by `createConversation()` so the first send lands in
+	 * that project. Cleared alongside `pendingCwd`.
+	 */
+	pendingProjectId = $state<string | null>(null);
 
 	/** Global (non-conversation-specific) reasoning effort default */
 	pendingReasoningEffort = $state<ReasoningEffort>(loadReasoningEffortDefault());
@@ -208,6 +221,8 @@ export class ConversationPreferences {
 		this.pendingReasoningEffort = loadReasoningEffortDefault();
 		this.pendingCwd = null;
 		this.pendingGroupId = null;
+		this.pendingCwdFromProject = false;
+		this.pendingProjectId = null;
 	}
 
 	// Working Directory
@@ -228,6 +243,7 @@ export class ConversationPreferences {
 		// No chat yet - buffer for the first chat the user creates.
 		if (!this.host.activeConversation) {
 			this.pendingCwd = trimmed ?? null;
+			this.pendingCwdFromProject = false;
 
 			return;
 		}
