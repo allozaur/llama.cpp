@@ -12,7 +12,8 @@ import FileIcon from '@lucide/svelte/icons/file';
 import AudioIcon from '@lucide/svelte/icons/file-headphone';
 import FileTextIcon from '@lucide/svelte/icons/file-text';
 import CompactCommandIcon from '@lucide/svelte/icons/fold-vertical';
-import CwdCommandIcon from '@lucide/svelte/icons/folder-open';
+import CwdCommandIcon from '@lucide/svelte/icons/folder';
+import ProjectIcon from '@lucide/svelte/icons/folder-open';
 import ImageIcon from '@lucide/svelte/icons/image';
 import LoadingIcon from '@lucide/svelte/icons/loader-2';
 import ModelIcon from '@lucide/svelte/icons/package';
@@ -45,6 +46,12 @@ export const DEFAULT_FILE_ICON = FileIcon;
 
 /** The mark for a model, wherever one is listed. */
 export const MODEL_ICON = ModelIcon;
+
+/**
+ * The mark for a project, wherever one is listed: an open folder. The working
+ * directory, which a project may have, is the closed folder.
+ */
+export const PROJECT_ICON = ProjectIcon;
 
 /** The mark for the Discover Models surface and its entry points. */
 export const DISCOVER_ICON = DiscoverIcon;
