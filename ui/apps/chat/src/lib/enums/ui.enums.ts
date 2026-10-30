@@ -20,6 +20,7 @@ export enum ScrollCarouselVariant {
 export enum SidebarAction {
 	MANAGE_MODELS = 'manage-models',
 	NEW_CHAT = 'new-chat',
+	PROJECTS = 'projects',
 	SEARCH = 'search',
 	SERVERS = 'servers',
 	SETTINGS = 'settings'
