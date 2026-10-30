@@ -77,7 +77,6 @@
 			})
 	);
 
-	// hidden ones too: this is where a hidden project is found and shown again
 	const projectEntries = $derived.by((): SearchEntry[] =>
 		projectsStore.projects
 			.filter((project) => matches(project.name))
@@ -86,7 +85,6 @@
 				icon: PROJECT_ICON,
 				id: `project-${project.id}`,
 				label: project.name,
-				meta: project.hidden ? 'Hidden' : undefined,
 				run: () => close(() => uiStore.openProjectDialog({ projectId: project.id }))
 			}))
 	);
