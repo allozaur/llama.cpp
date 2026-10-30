@@ -10,6 +10,7 @@ import { GROUP_NAME_MAX_LENGTH, SIDEBAR_SECTION_IDS } from '#lib/constants/index
 import { DatabaseService } from '#lib/services/database.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
+import { projectsStore } from '#lib/stores/projects.svelte.ts';
 import { uiStore } from '#lib/stores/ui.svelte.ts';
 import type { DatabaseConversation, Group } from '#lib/types/index.ts';
 import { uuid } from '#lib/utils/index.ts';
@@ -118,6 +119,8 @@ class GroupsStore {
 				conversationsStore.applyConversationUpdate(conversation.id, { groupId: undefined });
 			}
 		}
+
+		projectsStore.forgetGroup(id);
 	}
 
 	/**
