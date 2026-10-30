@@ -14,8 +14,10 @@
 		DialogConfirmation,
 		DropdownMenuActions
 	} from '#lib/components/app/index.ts';
+	import { RouterService } from '#lib/services/index.ts';
 	import { projectsStore, uiStore } from '#lib/stores/index.ts';
 	import type { MenuAction, Project } from '#lib/types/index.ts';
+	import { goto } from '$app/navigation';
 
 	interface Props {
 		project: Project;
@@ -31,6 +33,10 @@
 	let confirmDeleteOpen = $state(false);
 
 	function open() {
+		void goto(RouterService.project(project.id));
+	}
+
+	function edit() {
 		uiStore.openProjectDialog({ projectId: project.id });
 	}
 
@@ -41,7 +47,7 @@
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
 	const actions = $derived<MenuAction[]>([
-		{ icon: Pencil, label: 'Edit project', onclick: open },
+		{ icon: Pencil, label: 'Edit project', onclick: edit },
 		// pinning places the sidebar row, which an archived project does not have
 		...(project.archived
 			? []
