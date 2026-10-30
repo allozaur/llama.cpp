@@ -1,11 +1,11 @@
-import { MODEL_ICON } from './icons.constants';
+import { MODEL_ICON, PROJECT_ICON } from './icons.constants';
 import {
 	SHORTCUT_MODELS,
 	SHORTCUT_NEW_CHAT,
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID } from './routes.constants';
+import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID } from './routes.constants';
 import { Search, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
@@ -163,6 +163,12 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		tooltip: 'New chat'
 	},
 	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
+	{
+		action: SidebarAction.PROJECTS,
+		activeRouteId: PROJECTS_ROUTE_ID,
+		icon: PROJECT_ICON,
+		tooltip: 'Projects'
+	},
 	{
 		action: SidebarAction.MANAGE_MODELS,
 		activeRouteId: MODELS_ROUTE_ID,
