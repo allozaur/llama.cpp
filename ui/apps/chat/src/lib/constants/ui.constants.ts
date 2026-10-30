@@ -1,11 +1,11 @@
-import { MODEL_ICON } from './icons.constants';
+import { MODEL_ICON, PROJECT_ICON } from './icons.constants';
 import {
 	SHORTCUT_MODELS,
 	SHORTCUT_NEW_CHAT,
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
+import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
 import { Search, Settings, SquarePen } from '@lucide/svelte';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
@@ -161,7 +161,13 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		keys: SHORTCUT_NEW_CHAT,
 		tooltip: 'New chat'
 	},
-	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' }
+	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
+	{
+		action: SidebarAction.PROJECTS,
+		activeRouteId: PROJECTS_ROUTE_ID,
+		icon: PROJECT_ICON,
+		tooltip: 'Projects'
+	}
 ];
 
 /**
