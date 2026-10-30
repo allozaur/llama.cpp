@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Card from '@ggml/llama-ui/ui/card';
-	import { Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from '@lucide/svelte';
+	import { MoreHorizontal, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
 	import { ContextMenuActions, DialogConfirmation, DropdownMenuActions } from '$lib/components/app';
 	import { projectsStore, uiStore } from '$lib/stores';
 	import type { MenuAction, Project } from '$lib/types';
@@ -31,9 +31,9 @@
 	const actions = $derived<MenuAction[]>([
 		{ icon: Pencil, label: 'Edit project', onclick: open },
 		{
-			icon: project.hidden ? Eye : EyeOff,
-			label: project.hidden ? 'Show in sidebar' : 'Hide from sidebar',
-			onclick: () => void projectsStore.setHidden(project.id, !project.hidden)
+			icon: project.pinned ? PinOff : Pin,
+			label: project.pinned ? 'Unpin' : 'Pin',
+			onclick: () => void projectsStore.setPinned(project.id, !project.pinned)
 		},
 		{
 			icon: Trash2,
