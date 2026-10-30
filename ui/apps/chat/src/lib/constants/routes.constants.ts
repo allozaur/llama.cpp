@@ -16,12 +16,20 @@ export const URL_PARAMS = {
  * (`#/models` with the hash router); URLs with ids come from RouterService.
  */
 export const ROUTES = {
-	/** A conversation. */
+	/** A conversation outside any project. */
 	CHAT: '/(chat)/chat/[id]',
 	/** A page an extension contributes, see RouterService.extensionPage(). */
 	EXTENSION_PAGE: '/[extensionPage]',
 	/** Models manager. */
 	MODELS: '/models',
+	/** A project's overview. */
+	PROJECT: '/(chat)/projects/[projectId]',
+	/** A chat opened inside its project. */
+	PROJECT_CHAT: '/(chat)/projects/[projectId]/chat/[id]',
+	/** The new-chat screen of a project. */
+	PROJECT_NEW_CHAT: '/(chat)/projects/[projectId]/chat/new',
+	/** Projects list. */
+	PROJECTS: '/projects',
 	/** Search — mobile-only full-page conversation search. */
 	SEARCH: '/search',
 	/** Servers - a page on a phone, a dialog elsewhere. */

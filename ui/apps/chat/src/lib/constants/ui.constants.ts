@@ -1,4 +1,4 @@
-import { MODEL_ICON } from './icons.constants';
+import { MODEL_ICON, PROJECT_ICON } from './icons.constants';
 import {
 	SHORTCUT_MODELS,
 	SHORTCUT_NEW_CHAT,
@@ -163,7 +163,13 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		keys: SHORTCUT_NEW_CHAT,
 		tooltip: 'New chat'
 	},
-	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' }
+	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
+	{
+		action: SidebarAction.PROJECTS,
+		activeRouteId: ROUTES.PROJECTS,
+		icon: PROJECT_ICON,
+		tooltip: 'Projects'
+	}
 ];
 
 /**
