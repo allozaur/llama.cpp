@@ -186,6 +186,14 @@ export { default as DialogConversationRename } from './DialogConversationRename.
 export { default as DialogPromptUpdate } from './DialogPromptUpdate.svelte';
 
 /**
+ * **DialogPrompt** - Name, describe and write a library prompt
+ *
+ * Adds a prompt to the library, from a system message (its text shown as is)
+ * or from scratch on the Library page, and edits an existing one.
+ */
+export { default as DialogPrompt } from './DialogPrompt.svelte';
+
+/**
  * **DialogGroup** - Name a new sidebar group, or rename one
  *
  * Opened through `uiStore.openGroupDialog()`, from the Recent heading's
