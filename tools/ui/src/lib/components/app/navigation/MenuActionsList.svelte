@@ -36,7 +36,7 @@
 			<div class="flex items-center gap-2">
 				{@render iconComponent(
 					action.icon,
-					`h-4 w-4 ${action.variant === 'destructive' ? 'text-destructive' : ''}`
+					`size-icon-md ${action.variant === 'destructive' ? 'text-destructive' : ''}`
 				)}
 				{action.label}
 			</div>

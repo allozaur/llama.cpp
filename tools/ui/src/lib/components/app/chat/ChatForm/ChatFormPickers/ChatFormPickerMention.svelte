@@ -325,7 +325,7 @@
 								: File}
 					<Icon
 						class={[
-							'mt-0.5 h-4 w-4 shrink-0',
+							'mt-0.5 size-icon-md shrink-0',
 							entry.type === FileMentionEntryType.DIRECTORY
 								? 'text-amber-500'
 								: 'text-muted-foreground'

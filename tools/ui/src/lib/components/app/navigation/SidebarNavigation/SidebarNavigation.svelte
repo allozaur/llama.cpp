@@ -560,14 +560,14 @@
 					: deviceStore.isIOSDevice
 						? 'h-[calc(100dvh-0.5rem)]'
 						: 'h-[calc(100dvh-1rem)]'),
-			'rounded-3xl md:rounded-2xl',
+			'rounded-3xl md:rounded-(--sidebar-radius)',
 			'flex flex-col justify-between',
 			'md:transition-[width,padding,margin,background-color,box-shadow,backdrop-filter] duration-200 ease-out',
 			(uiStore.isSidebarResizing || isSnapping) && 'md:duration-0',
 			isSettling && 'md:duration-300 md:ease-[cubic-bezier(0.34,1.56,0.64,1)]',
 			isDocked && !uiStore.isSidebarExpanded ? 'md:w-12' : 'md:w-(--sidebar-width)',
 			(uiStore.isSidebarExpanded || (isFloating && isPeeking)) &&
-				'md:bg-muted/60 md:backdrop-blur-xl shadow-md',
+				'md:sidebar-surface max-md:shadow-md',
 			isFloating && 'md:-mr-[calc(var(--sidebar-width)-3rem)]',
 			isStripHidden && 'md:pointer-events-none',
 			uiStore.isSidebarExpanded && 'is-expanded'
@@ -598,14 +598,14 @@
 							: 'Go to start'}
 					class="{uiStore.isSidebarExpanded
 						? 'bg-muted! md:bg-foreground/5!'
-						: 'bg-transparent!'} md:h-9 md:w-9 h-10 w-10 rounded-full md:hover:bg-foreground/10! pointer-events-auto"
+						: 'bg-transparent!'} md:size-9 size-10 rounded-full md:hover:bg-foreground/10! pointer-events-auto"
 					href={uiStore.isSidebarExpanded && !isLogoToggle ? ROUTES.START : undefined}
 					icon={isLogoToggle && logoHovered
 						? uiStore.isSidebarExpanded
 							? PanelLeftClose
 							: PanelLeftOpen
 						: Logo}
-					iconSize="h-4.5 w-4.5 md:h-4 md:w-4"
+					iconSize="size-4.5 md:size-4"
 					onclick={!uiStore.isSidebarExpanded || isLogoToggle ? toggleExpandedMode : undefined}
 					size="lg"
 					tooltip={!uiStore.isSidebarExpanded
@@ -627,9 +627,9 @@
 				>
 					<ActionIcon
 						ariaLabel="Collapse navigation"
-						class="backdrop-blur-none h-10 w-10 rounded-full -mr-1 -mt-1 hover:bg-accent!"
+						class="backdrop-blur-none size-10 rounded-full -mr-1 -mt-1 hover:bg-accent!"
 						icon={X}
-						iconSize="h-4 w-4"
+						iconSize="size-icon-md"
 						onclick={toggleExpandedMode}
 						size="lg"
 						tooltip="Close Sidebar"

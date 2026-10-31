@@ -90,13 +90,13 @@
 			disabled={isCompactDisabled}
 			onclick={handleCompact}
 			size="sm"
-			variant="tertiary"
+			variant="secondary"
 		>
 			{#if isCompacting}
-				<Loader2 class="h-3.5 w-3.5 animate-spin" />
+				<Loader2 class="size-icon-md animate-spin" />
 				Compacting...
 			{:else}
-				<FoldVertical class="h-3.5 w-3.5" />
+				<FoldVertical class="size-icon-md" />
 				Compact conversation
 			{/if}
 		</Button>

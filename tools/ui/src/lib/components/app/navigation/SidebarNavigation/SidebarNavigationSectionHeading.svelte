@@ -48,14 +48,14 @@
 		type="button"
 	>
 		{#if Icon}
-			<Icon class="h-3.5 w-3.5 shrink-0" />
+			<Icon class="size-icon-sm shrink-0" />
 		{/if}
 
 		<TruncatedText showTooltip={false} text={label} />
 
 		<ChevronDown
 			aria-hidden="true"
-			class="h-3.5 w-3.5 shrink-0 transition-[opacity,rotate] duration-200 ease-out group-hover/heading:opacity-100 [button:focus-visible_&]:opacity-100 {open
+			class="size-icon-sm shrink-0 transition-[opacity,rotate] duration-200 ease-out group-hover/heading:opacity-100 [button:focus-visible_&]:opacity-100 {open
 				? 'opacity-0'
 				: '-rotate-90 opacity-100'}"
 		/>

@@ -27,12 +27,13 @@
 	<Tooltip.Root>
 		<Tooltip.Trigger>
 			<Button
-				class="h-8 w-8 max-md:h-9 max-md:w-9 rounded-full p-0 {isRecording
-					? 'animate-pulse bg-red-500 text-white hover:bg-red-600'
+				class="size-8 max-md:size-9 rounded-full p-0 {isRecording
+					? 'matte-orb orb-danger animate-pulse text-white! hover:bg-transparent'
 					: ''}"
 				disabled={disabled || isLoading || !hasAudioModality}
 				onclick={onMicClick}
 				type="button"
+				variant={isRecording ? 'ghost' : 'default'}
 			>
 				<span class="sr-only">{isRecording ? 'Stop recording' : 'Start recording'}</span>
 
