@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { isLocalOption } from './ModelsManager/utils';
+	import { cn } from '@ggml-org/llama-ui/utils';
 	import { MODEL_ID } from '#lib/constants/index.ts';
 	import { HuggingFaceService } from '#lib/services/index.ts';
 	import type { ModelOption } from '#lib/types/models.js';
@@ -53,7 +54,7 @@
 
 <span
 	{@attach nearViewport(() => (isNearViewport = true))}
-	class={['text-body-sm text-muted-foreground', className]}
+	class={cn('text-body-sm text-muted-foreground', className)}
 >
 	{formatContextLength(values)}
 </span>
