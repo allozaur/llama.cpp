@@ -117,7 +117,8 @@
 
 		await step('the form is ready for the next message', async () => {
 			await waitFor(() => expect(chatStore.isLoading).toBe(false));
-			await expect(canvas.getByRole('textbox')).toHaveValue('');
+			// the editor is empty again: at most its placeholder is left
+			await expect(canvas.getByRole('textbox')).toHaveTextContent(/^(Type a message\.\.\.)?$/);
 			await expect(conversationsStore.activeMessages.map((m) => m.role)).toEqual([
 				'user',
 				'assistant'
@@ -233,6 +234,7 @@
 		const { canvas } = context;
 
 		await expect(await canvas.findByText(/connection refused/)).toBeInTheDocument();
-		await expect(canvas.getByRole('textbox')).toBeDisabled();
+		// the markdown editor is a contenteditable, disabled by turning that off
+		await expect(canvas.getByRole('textbox')).toHaveAttribute('contenteditable', 'false');
 	}}
 />
