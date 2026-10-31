@@ -57,7 +57,7 @@
 		await userEvent.clear(textarea);
 		await userEvent.type(textarea, text);
 
-		await expect(textarea).toHaveValue(text);
+		await expect(textarea).toHaveTextContent(text);
 
 		const fileInput = document.querySelector('input[type="file"]');
 
@@ -79,12 +79,12 @@
 <Story
 	args={{ class: FORM_CLASS }}
 	beforeEach={() => seedStores(modelServer)}
-	name="WithRichInput"
+	name="WithCodeSpan"
 	play={async ({ canvas, userEvent }) => {
-		const textarea = await canvas.findByRole('textbox');
+		const editor = await canvas.findByRole('textbox');
 
-		// a complete code span swaps the textarea for the rich input
-		await userEvent.type(textarea, 'Why does `npm run check` fail after `npm install`?');
+		// the live-preview editor renders a complete code span as it is typed
+		await userEvent.type(editor, 'Why does `npm run check` fail after `npm install`?');
 	}}
 />
 
