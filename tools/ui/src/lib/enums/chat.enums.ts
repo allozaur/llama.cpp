@@ -89,7 +89,16 @@ export enum ChatFormCommandAction {
 
 export enum FileMentionEntryType {
 	DIRECTORY = 'directory',
-	FILE = 'file'
+	FILE = 'file',
+	/** MCP resource; its `path` is the resource URI. */
+	MCP_RESOURCE = 'mcp-resource'
+}
+
+/** Which entries the `@` mention picker lists. */
+export enum MentionPickerSource {
+	ALL = 'all',
+	FILES = 'files',
+	MCP_RESOURCES = 'mcp-resources'
 }
 
 /**

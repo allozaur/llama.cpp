@@ -218,8 +218,11 @@ export interface FileProcessingResult {
  * server-side path; `name` is the basename.
  */
 export interface FileMentionEntry {
-	path: string;
 	name: string;
+	/** Server path, or the resource URI for an MCP resource entry. */
+	path: string;
+	/** MCP server owning the resource, on `MCP_RESOURCE` entries. */
+	serverName?: string;
 	type: FileMentionEntryType;
 }
 
