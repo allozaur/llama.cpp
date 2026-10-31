@@ -1,6 +1,10 @@
 <script lang="ts">
-	import { File, Image, MessageSquare, Mic, Plus, Video } from '@lucide/svelte';
-	import { ChatFormActionAddToolsSubmenu, ProjectSubmenu } from '$lib/components/app';
+	import { File, Image, Mic, Plus, Video } from '@lucide/svelte';
+	import {
+		ChatFormActionAddSystemMessageSubmenu,
+		ChatFormActionAddToolsSubmenu,
+		ProjectSubmenu
+	} from '$lib/components/app';
 	import { buttonVariants } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Tooltip from '$lib/components/ui/tooltip';
@@ -143,17 +147,12 @@
 					)}
 			/>
 
-			<DropdownMenu.Item
-				class="flex cursor-pointer items-center gap-2"
-				onclick={() => {
+			<ChatFormActionAddSystemMessageSubmenu
+				onWriteNew={() => {
 					suppressCloseAutoFocus = true;
 					chatFormActions.onSystemPromptClick?.();
 				}}
-			>
-				<MessageSquare class={ICON_CLASS_DEFAULT} />
-
-				<span>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
-			</DropdownMenu.Item>
+			/>
 
 			<ChatFormActionAddToolsSubmenu />
 		</DropdownMenu.Content>
