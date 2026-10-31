@@ -231,7 +231,9 @@ export {
 	downloadResourceContent,
 	getMcpIconUrl,
 	getMcpServerFaviconFallback,
-	getMcpServerLabel
+	getMcpServerLabel,
+	buildMcpPromptId,
+	isMcpPromptId
 } from './mcp';
 
 // URI Template utilities

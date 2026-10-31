@@ -12,6 +12,7 @@
 	import { ICON_CLASS_DEFAULT, SET_WORKING_DIRECTORY_LABEL } from '$lib/constants';
 	import { setChatFormActionsContext } from '$lib/contexts';
 	import { FileTypeCategory } from '$lib/enums';
+	import type { SystemPromptEntry, SystemPromptSource } from '$lib/extensions';
 	import { useChatFormModel } from '$lib/hooks/use-chat-form-model.svelte';
 	import { useShowContextGauge } from '$lib/hooks/use-context-gauge.svelte';
 	import { ChatService } from '$lib/services';
@@ -37,7 +38,9 @@
 		onFileUpload?: () => void;
 		onMicClick?: () => void;
 		onStop?: () => void;
+		onPromptArguments?: (source: SystemPromptSource, entry: SystemPromptEntry) => void;
 		onSystemPromptClick?: () => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		onWorkingDirectoryClick?: () => void;
 	}
 
@@ -52,8 +55,10 @@
 		micWarning = null,
 		onFileUpload,
 		onMicClick,
+		onPromptArguments,
 		onStop,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		onWorkingDirectoryClick,
 		showAddButton = true,
 		showModelSelector = true,
@@ -114,8 +119,14 @@
 		get onFileUpload() {
 			return onFileUpload;
 		},
+		get onPromptArguments() {
+			return onPromptArguments;
+		},
 		get onSystemPromptClick() {
 			return onSystemPromptClick;
+		},
+		get onSystemPromptWithContent() {
+			return onSystemPromptWithContent;
 		},
 		get onWorkingDirectoryClick() {
 			return onWorkingDirectoryClick;

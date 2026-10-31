@@ -18,7 +18,12 @@
 		SETTING_CONFIG_DEFAULT
 	} from '$lib/constants';
 	import { FileExtensionText, KeyboardKey, MimeTypeText, SpecialFileType } from '$lib/enums';
-	import { type ComposerHandle, extensions } from '$lib/extensions';
+	import {
+		type ComposerHandle,
+		extensions,
+		type SystemPromptEntry,
+		type SystemPromptSource
+	} from '$lib/extensions';
 	import { useChatFormExpansion } from '$lib/hooks/use-chat-form-expansion.svelte';
 	import { useChatFormPickers } from '$lib/hooks/use-chat-form-pickers.svelte';
 	import {
@@ -78,6 +83,7 @@
 		onStop?: () => void;
 		onSubmit?: () => void;
 		onSystemPromptClick?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		onUploadedFileRemove?: (fileId: string) => void;
 		onUploadedFilesChange?: (files: ChatUploadedFile[]) => void;
 		onValueChange?: (value: string) => void;
@@ -94,6 +100,7 @@
 		onStop,
 		onSubmit,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		onUploadedFileRemove,
 		onUploadedFilesChange,
 		onValueChange,
@@ -486,6 +493,11 @@
 		}
 	}
 
+	/** A prompt of the System message list that needs arguments: its source asks for them in the form. */
+	function handlePromptArguments(source: SystemPromptSource, entry: SystemPromptEntry) {
+		source.openArguments(entry, composer);
+	}
+
 	// Deferred so the closing popover's focus scope tears down first -
 	// bits-ui yanks a synchronous focus() back into the still-mounted popover.
 	function refocusInput() {
@@ -713,9 +725,11 @@
 					micWarning={micUnavailableReason ?? micError}
 					onFileUpload={handleFileUpload}
 					onMicClick={handleMicClick}
+					onPromptArguments={handlePromptArguments}
 					{onStop}
 					onSystemPromptClick={() =>
 						onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+					{onSystemPromptWithContent}
 					onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 						? pickers.handleWorkingDirectoryOpen
 						: undefined}
