@@ -3,8 +3,12 @@
 	import * as DropdownMenu from '@ggml-org/llama-ui/ui/dropdown-menu';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { cn } from '@ggml-org/llama-ui/utils';
-	import { File, Folder, MessageSquare, Plus } from '@lucide/svelte';
-	import { ChatFormActionAddToolsSubmenu, ProjectSubmenu } from '#lib/components/app/index.ts';
+	import { File, Folder, Plus } from '@lucide/svelte';
+	import {
+		ChatFormActionAddSystemMessageSubmenu,
+		ChatFormActionAddToolsSubmenu,
+		ProjectSubmenu
+	} from '#lib/components/app/index.ts';
 	import {
 		ATTACHMENT_FILE_ITEMS,
 		ATTACHMENT_MENU_TEXT,
@@ -146,17 +150,12 @@
 					)}
 			/>
 
-			<DropdownMenu.Item
-				class="flex cursor-pointer items-center gap-2"
-				onclick={() => {
+			<ChatFormActionAddSystemMessageSubmenu
+				onWriteNew={() => {
 					suppressCloseAutoFocus = true;
 					chatFormActions.onSystemPromptClick?.();
 				}}
-			>
-				<MessageSquare class={ICON_CLASS_DEFAULT} />
-
-				<span>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
-			</DropdownMenu.Item>
+			/>
 
 			{#if chatFormActions.onWorkingDirectoryClick}
 				<DropdownMenu.Item

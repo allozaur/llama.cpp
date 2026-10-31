@@ -14,6 +14,7 @@ import { contributeNavigation } from './navigation';
 import { contributePages } from './pages';
 import { contributeRenderers } from './renderers';
 import { contributeStartup } from './startup.svelte';
+import { contributeSystemPrompts } from './system-prompts';
 import { contributeTools } from './tools';
 
 const mcp: Extension = {
@@ -23,6 +24,7 @@ const mcp: Extension = {
 		contributePages(ctx);
 		contributeRenderers(ctx);
 		contributeStartup(ctx);
+		contributeSystemPrompts(ctx);
 		contributeTools(ctx);
 	}
 };

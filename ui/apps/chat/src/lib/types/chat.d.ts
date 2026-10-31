@@ -10,6 +10,10 @@ import type {
 	MessageRole
 } from '#lib/enums/index.ts';
 import type { ComposerCommand } from '#lib/extensions/points/composer.ts';
+import type {
+	SystemPromptEntry,
+	SystemPromptSource
+} from '#lib/extensions/points/system-prompts.ts';
 import type { Component } from 'svelte';
 
 /**
@@ -377,7 +381,10 @@ export interface ChatFormActionsContext {
 	readonly hasVideoModality: boolean;
 	readonly hasVisionModality: boolean;
 	onFileUpload?: () => void;
+	/** A prompt that needs arguments was chosen in the System message list. */
+	onPromptArguments?: (source: SystemPromptSource, entry: SystemPromptEntry) => void;
 	onSystemPromptClick?: () => void;
+	onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 	/** Opens the working directory picker; set where the + menu offers it. */
 	onWorkingDirectoryClick?: () => void;
 	/** The working directory's name in the + menu, or what sets one. */
