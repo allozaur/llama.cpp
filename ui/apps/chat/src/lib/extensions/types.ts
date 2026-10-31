@@ -8,6 +8,7 @@ import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './poi
 import type { NavigationItem } from './points/navigation';
 import type { ExtensionPage } from './points/pages';
 import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
+import type { SystemPromptSource } from './points/system-prompts';
 import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
@@ -56,6 +57,8 @@ export interface ExtensionPoints {
 	attachmentRenderers: AttachmentRenderer;
 	/** Draws the messages it claims, in place of the default message. */
 	messageRenderers: MessageRenderer;
+	/** Prompts offered as system messages, beside the prompt library. */
+	systemPromptSources: SystemPromptSource;
 	/** Tools the model can call, listed and run by the extension. */
 	tools: ToolProvider;
 }
