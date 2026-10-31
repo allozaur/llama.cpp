@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { libraryItemActions } from './library-actions';
 	import LibraryItemThumbnail from './LibraryItemThumbnail.svelte';
-	import { MoreHorizontal, Star } from '@lucide/svelte';
+	import { MoreHorizontal } from '@lucide/svelte';
 	import { ContextMenuActions, DropdownMenuActions } from '$lib/components/app';
 	import type { LibraryItem } from '$lib/types';
 	import { formatRelativeTime } from '$lib/utils';
@@ -28,7 +28,7 @@
 	<ul class="flex flex-col">
 		{#each items as item (item.id)}
 			<li>
-				<ContextMenuActions actions={libraryItemActions(item)}>
+				<ContextMenuActions actions={libraryItemActions()}>
 					<div
 						class="group {ROW_GRID_CLASS} cursor-pointer border-b border-border/40 px-2 py-2.5 transition-colors hover:bg-muted/40"
 					>
@@ -36,13 +36,6 @@
 							<LibraryItemThumbnail {item} />
 
 							<span class="truncate text-sm">{item.name}</span>
-
-							{#if item.favorite}
-								<Star
-									aria-label="Favorite"
-									class="size-3.5 shrink-0 fill-current text-muted-foreground"
-								/>
-							{/if}
 						</div>
 
 						<span class="text-sm text-muted-foreground max-md:hidden">
@@ -53,7 +46,7 @@
 							class="flex justify-end opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100"
 						>
 							<DropdownMenuActions
-								actions={libraryItemActions(item)}
+								actions={libraryItemActions()}
 								triggerIcon={MoreHorizontal}
 								triggerTooltip="More actions"
 							/>
