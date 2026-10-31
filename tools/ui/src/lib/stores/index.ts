@@ -50,6 +50,9 @@ export { modelsDiscoverStore } from './models-discover/index.svelte';
 // PROJECTS (shared instructions and context for chats)
 export { projectsStore } from './projects.svelte';
 
+// PROMPTS (reusable system messages kept in the library)
+export { promptsStore } from './prompts.svelte';
+
 // SERVER
 export { serverStore } from './server.svelte';
 
