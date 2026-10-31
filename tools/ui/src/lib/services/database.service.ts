@@ -12,13 +12,18 @@ import {
 	IDXDB_STORE_SCHEMAS,
 	IDXDB_STORES_V1,
 	IDXDB_TABLES,
-	IDXDB_VERSION,
 	IDXDB_VERSION_GROUPS,
+	IDXDB_VERSION_PROJECTS,
+	IDXDB_VERSION_PROMPTS,
 	STORAGE_APP_NAME
 } from '$lib/constants';
 import { MessageRole } from '$lib/enums';
-import type { McpServerOverride } from '$lib/types/database';
-import type { ExportedConversation } from '$lib/types/database';
+import type {
+	DatabaseMessageExtra,
+	DatabasePrompt,
+	ExportedConversation,
+	McpServerOverride
+} from '$lib/types/database';
 import type { Group } from '$lib/types/groups';
 import type { Project } from '$lib/types/projects';
 import { filterByLeafNodeId, findDescendantMessages, uuid } from '$lib/utils';
@@ -29,6 +34,7 @@ class LlamaUiDatabase extends Dexie {
 	[IDXDB_TABLES.groups]!: EntityTable<Group, 'id'>;
 	[IDXDB_TABLES.messages]!: EntityTable<DatabaseMessage, string>;
 	[IDXDB_TABLES.projects]!: EntityTable<Project, 'id'>;
+	[IDXDB_TABLES.prompts]!: EntityTable<DatabasePrompt, 'id'>;
 
 	constructor() {
 		super(STORAGE_APP_NAME);
@@ -37,8 +43,11 @@ class LlamaUiDatabase extends Dexie {
 		this.version(IDXDB_VERSION_GROUPS).stores({
 			[IDXDB_TABLES.groups]: IDXDB_STORE_SCHEMAS.groups
 		});
-		this.version(IDXDB_VERSION).stores({
+		this.version(IDXDB_VERSION_PROJECTS).stores({
 			[IDXDB_TABLES.projects]: IDXDB_STORE_SCHEMAS.projects
+		});
+		this.version(IDXDB_VERSION_PROMPTS).stores({
+			[IDXDB_TABLES.prompts]: IDXDB_STORE_SCHEMAS.prompts
 		});
 	}
 }
@@ -237,6 +246,17 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Creates a prompt in the library.
+	 *
+	 * @returns The created prompt
+	 */
+	static async createPrompt(prompt: DatabasePrompt): Promise<DatabasePrompt> {
+		await db[IDXDB_TABLES.prompts].add(prompt);
+
+		return prompt;
+	}
+
+	/**
 	 * Creates a root message for a new conversation.
 	 * Root messages are not displayed but serve as the tree root for branching.
 	 *
@@ -273,7 +293,8 @@ export class DatabaseService {
 	static async createSystemMessage(
 		convId: string,
 		systemPrompt: string,
-		parentId: string
+		parentId: string,
+		extra?: DatabaseMessageExtra[]
 	): Promise<DatabaseMessage> {
 		const trimmedPrompt = systemPrompt.trim();
 
@@ -292,6 +313,7 @@ export class DatabaseService {
 				children: [],
 				content: trimmedPrompt,
 				convId,
+				extra,
 				id: uuid(),
 				parent: parentId,
 				role: MessageRole.SYSTEM,
@@ -432,6 +454,15 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Deletes a prompt from the library. Messages linked to it keep their content.
+	 *
+	 * @param id - Prompt ID
+	 */
+	static async deletePrompt(id: string): Promise<void> {
+		await db[IDXDB_TABLES.prompts].delete(id);
+	}
+
+	/**
 	 * Forks a conversation at a specific message, creating a new conversation
 	 * containing all messages from the root up to (and including) the target message.
 	 *
@@ -541,6 +572,15 @@ export class DatabaseService {
 	 */
 	static async getAllProjects(): Promise<Project[]> {
 		return await db[IDXDB_TABLES.projects].orderBy('updatedAt').reverse().toArray();
+	}
+
+	/**
+	 * Gets all prompts in the library, most recently edited first.
+	 *
+	 * @returns Array of prompts
+	 */
+	static async getAllPrompts(): Promise<DatabasePrompt[]> {
+		return await db[IDXDB_TABLES.prompts].orderBy('lastModified').reverse().toArray();
 	}
 
 	/**
@@ -728,6 +768,19 @@ export class DatabaseService {
 	 */
 	static async updateProject(id: string, updates: Partial<Omit<Project, 'id'>>): Promise<void> {
 		await db[IDXDB_TABLES.projects].update(id, updates);
+	}
+
+	/**
+	 * Updates a prompt in the library.
+	 *
+	 * @param id - Prompt ID
+	 * @param updates - Partial updates to apply
+	 */
+	static async updatePrompt(
+		id: string,
+		updates: Partial<Omit<DatabasePrompt, 'id'>>
+	): Promise<void> {
+		await db[IDXDB_TABLES.prompts].update(id, updates);
 	}
 
 	/**

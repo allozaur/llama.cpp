@@ -176,7 +176,9 @@ export {
 	downloadResourceContent,
 	getMcpIconUrl,
 	getMcpServerFaviconFallback,
-	getMcpServerLabel
+	getMcpServerLabel,
+	buildMcpPromptId,
+	isMcpPromptId
 } from './mcp';
 
 // URI Template utilities
@@ -219,6 +221,7 @@ export {
 
 // Project system prompt section (instructions + referenced documents)
 export { buildProjectSystemPrompt, estimateProjectContext } from './project-prompt';
+export { getPromptDrift } from './prompt-drift';
 export {
 	projectNewChatTabId,
 	projectOfNewChatTab,

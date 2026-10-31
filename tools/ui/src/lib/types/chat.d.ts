@@ -1,5 +1,6 @@
 import type { ApiChatCompletionToolCall } from './api';
 import type { DatabaseMessage, DatabaseMessageExtra } from './database';
+import type { MCPPromptInfo } from './mcp';
 import type {
 	AttachmentAction,
 	AttachmentItemEnabledWhen,
@@ -358,5 +359,7 @@ export interface ChatFormActionsContext {
 	readonly hasVideoModality: boolean;
 	readonly hasVisionModality: boolean;
 	onFileUpload?: () => void;
+	onMcpPromptClick?: (prompt: MCPPromptInfo) => void;
 	onSystemPromptClick?: () => void;
+	onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 }

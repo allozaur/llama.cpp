@@ -17,6 +17,7 @@ import {
 	TITLE_GENERATION
 } from '$lib/constants';
 import {
+	AttachmentType,
 	ErrorDialogType,
 	MessageRole,
 	MessageType,
@@ -202,46 +203,80 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 				return;
 			}
 
-			const am = conversationsStore.activeMessages;
-			const firstActiveMessage = am.find((m) => m.parent === rootId);
-			const systemMessage = await DatabaseService.createSystemMessage(
+			const systemMessage = await this.insertSystemMessage(
 				activeConv.id,
-				SYSTEM_MESSAGE_PLACEHOLDER,
-				rootId
+				rootId,
+				rootMessage,
+				SYSTEM_MESSAGE_PLACEHOLDER
 			);
 
-			if (firstActiveMessage) {
-				await DatabaseService.updateMessage(firstActiveMessage.id, {
-					parent: systemMessage.id
-				});
-				await DatabaseService.updateMessage(systemMessage.id, {
-					children: [firstActiveMessage.id]
-				});
-				const updatedRootChildren = rootMessage
-					? rootMessage.children.filter((id: string) => id !== firstActiveMessage.id)
-					: [];
-
-				await DatabaseService.updateMessage(rootId, {
-					children: [
-						...updatedRootChildren.filter((id: string) => id !== systemMessage.id),
-						systemMessage.id
-					]
-				});
-				const firstMsgIndex = conversationsStore.findMessageIndex(firstActiveMessage.id);
-
-				if (firstMsgIndex !== -1)
-					conversationsStore.updateMessageAtIndex(firstMsgIndex, {
-						parent: systemMessage.id
-					});
-			}
-
-			conversationsStore.activeMessages.unshift(systemMessage);
 			this.pendingEditMessageId = systemMessage.id;
 			conversationsStore.updateConversationTimestamp();
 		} catch (error) {
 			console.error('Failed to add system prompt:', error);
 		}
 	}
+	/**
+	 * Sets the conversation's system message to a prompt's text and links the
+	 * message to the prompt. Replaces the system message when there is one.
+	 *
+	 * @param content - Prompt text to use as the system message
+	 * @param link - Prompt id and title the message is linked to
+	 */
+	async addSystemPromptFromPrompt(
+		content: string,
+		link: { promptId: string; title: string }
+	): Promise<void> {
+		let activeConv = conversationsStore.activeConversation;
+
+		if (!activeConv) {
+			await conversationsStore.createConversation();
+			activeConv = conversationsStore.activeConversation;
+		}
+
+		if (!activeConv) return;
+
+		const extra: DatabaseMessageExtra[] = [{ type: AttachmentType.PROMPT, ...link }];
+
+		try {
+			const allMessages = await conversationsStore.getConversationMessages(activeConv.id);
+			const rootMessage = allMessages.find((m) => m.type === 'root' && m.parent === null);
+			const rootId = rootMessage
+				? rootMessage.id
+				: await DatabaseService.createRootMessage(activeConv.id);
+			const existingSystemMessage = allMessages.find(
+				(m) => m.role === MessageRole.SYSTEM && m.parent === rootId
+			);
+
+			if (existingSystemMessage) {
+				const trimmed = content.trim();
+
+				await DatabaseService.updateMessage(existingSystemMessage.id, {
+					content: trimmed,
+					extra
+				});
+
+				const index = conversationsStore.findMessageIndex(existingSystemMessage.id);
+
+				if (index !== -1) {
+					conversationsStore.updateMessageAtIndex(index, { content: trimmed, extra });
+				} else {
+					conversationsStore.activeMessages.unshift({
+						...existingSystemMessage,
+						content: trimmed,
+						extra
+					});
+				}
+			} else {
+				await this.insertSystemMessage(activeConv.id, rootId, rootMessage, content, extra);
+			}
+
+			conversationsStore.updateConversationTimestamp();
+		} catch (error) {
+			console.error('Failed to add system prompt from prompt:', error);
+		}
+	}
+
 	cancelPreEncode(): void {
 		if (this.preEncodeAbortController) {
 			this.preEncodeAbortController.abort();
@@ -266,6 +301,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		this.clearChatStreaming(convId);
 		this.processing.setState(convId, null);
 	}
+
 	clearChatStreaming(convId: string, messageId?: string): void {
 		// session aware: a stale generation must not wipe a newer one's streaming state on the
 		// same conversation, that would drop the frozen stop identity and stop the wrong session
@@ -281,7 +317,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		this.isEditModeActive = false;
 		this.addFilesHandler = null;
 	}
-
 	clearPendingEditMessageId(): void {
 		this.pendingEditMessageId = null;
 	}
@@ -877,6 +912,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			});
 		}
 	}
+
 	setChatLoading(convId: string, loading: boolean): void {
 		if (loading) {
 			this.activity.markLocal(convId);
@@ -885,7 +921,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			this.setChatReasoning(convId, false);
 		}
 	}
-
 	setChatReasoning(convId: string, reasoning: boolean): void {
 		if (reasoning) this.chatReasoningStates.set(convId, true);
 		else this.chatReasoningStates.delete(convId);
@@ -1479,6 +1514,53 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		convId: string
 	): { response: string; messageId: string } | undefined {
 		return this.chatStreamingStates.get(convId);
+	}
+
+	/**
+	 * Creates a system message under the root, makes it the parent of the
+	 * conversation's first message and shows it at the top of the active messages.
+	 */
+	private async insertSystemMessage(
+		convId: string,
+		rootId: string,
+		rootMessage: DatabaseMessage | undefined,
+		content: string,
+		extra?: DatabaseMessageExtra[]
+	): Promise<DatabaseMessage> {
+		const am = conversationsStore.activeMessages;
+		const firstActiveMessage = am.find((m) => m.parent === rootId);
+		const systemMessage = await DatabaseService.createSystemMessage(convId, content, rootId, extra);
+
+		if (firstActiveMessage) {
+			await DatabaseService.updateMessage(firstActiveMessage.id, {
+				parent: systemMessage.id
+			});
+			await DatabaseService.updateMessage(systemMessage.id, {
+				children: [firstActiveMessage.id]
+			});
+
+			const updatedRootChildren = rootMessage
+				? rootMessage.children.filter((id: string) => id !== firstActiveMessage.id)
+				: [];
+
+			await DatabaseService.updateMessage(rootId, {
+				children: [
+					...updatedRootChildren.filter((id: string) => id !== systemMessage.id),
+					systemMessage.id
+				]
+			});
+
+			const firstMsgIndex = conversationsStore.findMessageIndex(firstActiveMessage.id);
+
+			if (firstMsgIndex !== -1)
+				conversationsStore.updateMessageAtIndex(firstMsgIndex, {
+					parent: systemMessage.id
+				});
+		}
+
+		conversationsStore.activeMessages.unshift(systemMessage);
+
+		return systemMessage;
 	}
 
 	/**

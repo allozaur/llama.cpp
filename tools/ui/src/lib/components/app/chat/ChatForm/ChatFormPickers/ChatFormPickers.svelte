@@ -59,6 +59,11 @@
 	let promptPickerRef: ChatFormPickerMcpPrompts | undefined = $state(undefined);
 	let mentionPickerRef: ChatFormPickerMention | undefined = $state(undefined);
 
+	/** Opens the prompt picker straight on the argument form of an MCP prompt. */
+	export function openPromptArguments(prompt: MCPPromptInfo) {
+		promptPickerRef?.openArguments(prompt);
+	}
+
 	/** Delegate keyboard events to the active picker child; true if handled. */
 	export function handleKeydown(event: KeyboardEvent): boolean {
 		if (isCommandPickerOpen && commandPickerRef?.handleKeydown(event)) {

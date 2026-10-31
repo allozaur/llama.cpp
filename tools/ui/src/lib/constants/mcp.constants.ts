@@ -36,6 +36,9 @@ export const DEFAULT_MCP_CONFIG = {
 
 export const MCP_SERVER_ID_PREFIX = 'LlamaUI-MCP-Server';
 
+/** Prefix of MCP prompt ids, so they never match a library prompt id. */
+export const MCP_PROMPT_ID_PREFIX = 'mcp:';
+
 /** Backoff policy for reconnecting to a dropped MCP server. */
 export const MCP_RECONNECT = {
 	/** Per-attempt timeout for a single reconnection attempt before giving up and backing off. */
