@@ -68,7 +68,7 @@
 		isAudioRecordingSupported,
 		microphoneUnavailableReason
 	} from '$lib/utils/browser-only';
-	import { onMount, untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import type { ClassValue } from 'svelte/elements';
 	import { toast } from 'svelte-sonner';
 
@@ -96,6 +96,7 @@
 		onStop?: () => void;
 		onSubmit?: () => void;
 		onSystemPromptClick?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		onUploadedFileRemove?: (fileId: string) => void;
 		onUploadedFilesChange?: (files: ChatUploadedFile[]) => void;
 		onValueChange?: (value: string) => void;
@@ -112,6 +113,7 @@
 		onStop,
 		onSubmit,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		onUploadedFileRemove,
 		onUploadedFilesChange,
 		onValueChange,
@@ -128,8 +130,12 @@
 	let audioRecorder: AudioRecorder | undefined;
 	let chatFormActionsRef: ChatFormActions | undefined = $state(undefined);
 	let fileInputRef: ChatFormInputFileInputInvisible | undefined = $state(undefined);
-	let pickersRef: { handleKeydown: (event: KeyboardEvent) => boolean } | undefined =
-		$state(undefined);
+	let pickersRef:
+		| {
+				handleKeydown: (event: KeyboardEvent) => boolean;
+				openPromptArguments: (prompt: MCPPromptInfo) => void;
+		  }
+		| undefined = $state(undefined);
 	let inputRef: ChatFormInput | undefined = $state(undefined);
 
 	// Audio Recording State
@@ -499,6 +505,12 @@
 		}
 	}
 
+	async function handleMcpPromptArguments(prompt: MCPPromptInfo) {
+		pickers.openPromptPicker();
+		await tick();
+		pickersRef?.openPromptArguments(prompt);
+	}
+
 	function handlePromptLoadStart(
 		placeholderId: string,
 		promptInfo: MCPPromptInfo,
@@ -797,10 +809,12 @@
 					{isRecording}
 					micWarning={micUnavailableReason ?? micError}
 					onFileUpload={handleFileUpload}
+					onMcpPromptClick={handleMcpPromptArguments}
 					onMicClick={handleMicClick}
 					{onStop}
 					onSystemPromptClick={() =>
 						onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+					{onSystemPromptWithContent}
 					onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 						? pickers.handleWorkingDirectoryOpen
 						: undefined}
