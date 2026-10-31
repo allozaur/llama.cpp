@@ -16,6 +16,7 @@
 	import { useShowContextGauge } from '$lib/hooks/use-context-gauge.svelte';
 	import { ChatService } from '$lib/services';
 	import { conversationsStore, deviceStore, settingsStore } from '$lib/stores';
+	import type { MCPPromptInfo } from '$lib/types';
 	import { getFileTypeCategory } from '$lib/utils';
 
 	interface Props {
@@ -31,7 +32,9 @@
 		onFileUpload?: () => void;
 		onMicClick?: () => void;
 		onStop?: () => void;
+		onMcpPromptClick?: (prompt: MCPPromptInfo) => void;
 		onSystemPromptClick?: () => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 	}
 
 	let {
@@ -42,9 +45,11 @@
 		isReasoning = false,
 		isRecording = false,
 		onFileUpload,
+		onMcpPromptClick,
 		onMicClick,
 		onStop,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		showAddButton = true,
 		showModelSelector = true,
 		uploadedFiles = []
@@ -103,8 +108,14 @@
 		get onFileUpload() {
 			return onFileUpload;
 		},
+		get onMcpPromptClick() {
+			return onMcpPromptClick;
+		},
 		get onSystemPromptClick() {
 			return onSystemPromptClick;
+		},
+		get onSystemPromptWithContent() {
+			return onSystemPromptWithContent;
 		}
 	});
 </script>
