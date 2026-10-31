@@ -1,29 +1,17 @@
-/** What a library item is, which picks its mark and its file-type filter. */
+/** What a media item is, which picks its mark. */
 export enum LibraryItemKind {
-	DOCUMENT = 'document',
-	FOLDER = 'folder',
+	AUDIO = 'audio',
 	IMAGE = 'image',
-	PDF = 'pdf',
-	PRESENTATION = 'presentation',
-	SPREADSHEET = 'spreadsheet'
+	VIDEO = 'video'
 }
 
-/** Where a library item came from. */
-export enum LibraryItemSource {
-	GENERATED = 'generated',
-	UPLOADED = 'uploaded'
-}
-
-/** The slice of the library a tab shows. */
+/** The part of the library a tab shows. */
 export enum LibraryTab {
-	ALL = 'all',
-	FAVORITES = 'favorites',
-	FOLDERS = 'folders',
-	IMAGES = 'images',
-	RECENT = 'recent'
+	MEDIA = 'media',
+	PROMPTS = 'prompts'
 }
 
-/** How the library lays its items out. */
+/** How the media tab lays its items out. */
 export enum LibraryView {
 	GRID = 'grid',
 	LIST = 'list'
