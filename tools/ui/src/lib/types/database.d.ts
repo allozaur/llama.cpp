@@ -11,6 +11,16 @@ export interface McpServerOverride {
 	enabled: boolean;
 }
 
+/** A reusable system message stored in the prompt library. */
+export interface DatabasePrompt {
+	id: string;
+	name: string;
+	content: string;
+	/** Epoch ms of the last edit to the name, description or content. */
+	lastModified: number;
+	description?: string;
+}
+
 export interface DatabaseConversation {
 	currNode: string | null;
 	id: string;
@@ -104,6 +114,17 @@ export interface DatabaseMessageExtraMcpResource {
 	mimeType?: string;
 }
 
+/**
+ * Links a system message to the prompt it was created from. `promptId` is a
+ * library prompt id, or an MCP prompt id (`mcp:<server>:<name>`) for prompts
+ * that come from an MCP server.
+ */
+export interface DatabaseMessageExtraPrompt {
+	type: AttachmentType.PROMPT;
+	promptId: string;
+	title: string;
+}
+
 export type DatabaseMessageExtra =
 	| DatabaseMessageExtraImageFile
 	| DatabaseMessageExtraTextFile
@@ -112,6 +133,7 @@ export type DatabaseMessageExtra =
 	| DatabaseMessageExtraPdfFile
 	| DatabaseMessageExtraMcpPrompt
 	| DatabaseMessageExtraMcpResource
+	| DatabaseMessageExtraPrompt
 	| DatabaseMessageExtraLegacyContext;
 
 export interface DatabaseMessage {
