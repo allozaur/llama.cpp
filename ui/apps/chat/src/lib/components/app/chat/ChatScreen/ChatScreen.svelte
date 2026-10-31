@@ -276,6 +276,10 @@
 		await chatStore.addSystemPrompt(draft);
 	}
 
+	async function handleSystemPromptWithContent(content: string, promptId: string, title: string) {
+		await chatStore.addSystemPromptFromPrompt(content, { promptId, title });
+	}
+
 	$effect(() => {
 		stick.setEnabled(!settingsStore.config.disableAutoScroll);
 	});
@@ -427,6 +431,7 @@
 				onSend={handleSendMessage}
 				onStop={() => chatStore.stopGeneration()}
 				onSystemPromptAdd={handleSystemPromptAdd}
+				onSystemPromptWithContent={handleSystemPromptWithContent}
 			/>
 		</div>
 	</div>

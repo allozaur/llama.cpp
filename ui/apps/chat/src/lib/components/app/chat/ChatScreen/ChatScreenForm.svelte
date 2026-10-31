@@ -17,6 +17,7 @@
 		onSend?: (message: string, files?: ChatUploadedFile[]) => Promise<boolean>;
 		onStop?: () => void;
 		onSystemPromptAdd?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		uploadedFiles?: ChatUploadedFile[];
 	}
 
@@ -29,6 +30,7 @@
 		onSend,
 		onStop,
 		onSystemPromptAdd,
+		onSystemPromptWithContent,
 		uploadedFiles = $bindable([])
 	}: Props = $props();
 
@@ -161,6 +163,7 @@
 		{onStop}
 		onSubmit={handleSubmit}
 		onSystemPromptClick={handleSystemPromptClick}
+		{onSystemPromptWithContent}
 		onUploadedFileRemove={handleUploadedFileRemove}
 		singleRow={settingsStore.config[SETTINGS_KEYS.SINGLE_ROW_CHAT_FORM] !== false}
 	/>
