@@ -1,13 +1,19 @@
 <script lang="ts">
 	import { Check, ScanText, X } from '@lucide/svelte';
-	import { ChatMessageActionIcons, DialogPromptUpdate, MarkdownContent } from '$lib/components/app';
+	import {
+		ChatMessageActionIcons,
+		DialogPrompt,
+		DialogPromptUpdate,
+		MarkdownContent
+	} from '$lib/components/app';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
-	import { INPUT_CLASSES } from '$lib/constants';
+	import { INPUT_CLASSES, SYSTEM_MESSAGE_PLACEHOLDER } from '$lib/constants';
 	import { getChatMessageEditContext } from '$lib/contexts';
 	import { AttachmentType, KeyboardKey, PromptDrift } from '$lib/enums';
 	import { DatabaseService } from '$lib/services/database.service';
 	import { conversationsStore, promptsStore, settingsStore } from '$lib/stores';
+	import type { PromptDraft } from '$lib/stores/prompts.svelte';
 	import type { DatabaseMessageExtra, DatabaseMessageExtraPrompt } from '$lib/types';
 	import { autoResizeTextarea, getPromptDrift, isIMEComposing, isMcpPromptId } from '$lib/utils';
 
@@ -57,6 +63,12 @@
 	let linkedPrompt = $derived(libraryPromptId ? promptsStore.get(libraryPromptId) : undefined);
 	let drift = $derived(libraryPromptId ? getPromptDrift(message, linkedPrompt) : PromptDrift.NONE);
 	let showUpdateDialog = $state(false);
+	let showAddDialog = $state(false);
+
+	// a system message written in the chat, not yet a prompt, can be saved as one
+	let canAddToLibrary = $derived(
+		!promptLink && !!message.content.trim() && message.content !== SYSTEM_MESSAGE_PLACEHOLDER
+	);
 
 	/** Sets the message text and links it to a prompt, keeping its other extras. */
 	async function linkMessageToPrompt(content: string, link: { promptId: string; title: string }) {
@@ -108,6 +120,14 @@
 		if (!created) return;
 
 		await linkMessageToPrompt(message.content, { promptId: created.id, title: created.name });
+	}
+
+	async function handleAddToLibrary(draft: PromptDraft) {
+		const created = await promptsStore.add({ ...draft, content: message.content });
+
+		if (!created) return;
+
+		await linkMessageToPrompt(created.content, { promptId: created.id, title: created.name });
 	}
 
 	$effect(() => {
@@ -284,6 +304,17 @@
 					</button>
 				{/if}
 			</div>
+		{:else if canAddToLibrary}
+			<button
+				class="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+				onclick={() => (showAddDialog = true)}
+				title="Save this system message as a prompt, to start other chats from it."
+				type="button"
+			>
+				<ScanText class="h-3.5 w-3.5" />
+
+				Add to library
+			</button>
 		{/if}
 
 		{#if message.timestamp}
@@ -292,6 +323,13 @@
 			</div>
 		{/if}
 	{/if}
+
+	<DialogPrompt
+		bind:open={showAddDialog}
+		contentEditable={false}
+		initialContent={message.content}
+		onSave={handleAddToLibrary}
+	/>
 
 	{#if linkedPrompt}
 		<DialogPromptUpdate
