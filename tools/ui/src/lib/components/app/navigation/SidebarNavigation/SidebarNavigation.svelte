@@ -55,6 +55,9 @@
 	let dockTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	const isOnMobile = $derived(deviceStore.isMobile);
+	const isHiddenByChatForm = $derived(
+		isOnMobile && uiStore.isComposerExpanded && !uiStore.isSidebarExpanded
+	);
 	const alwaysShowOnDesktop = $derived(settingsStore.config.alwaysShowSidebarOnDesktop as boolean);
 	// the collapsed sidebar shows only its logo until it is peeked at, which fades the rest in
 	const isStripHidden = $derived(!uiStore.isSidebarExpanded && !isOnMobile && !isPeeking);
@@ -549,9 +552,13 @@
 				'md:sidebar-surface max-md:shadow-md',
 			isFloating && 'md:-mr-[calc(var(--sidebar-width)-3rem)]',
 			isStripHidden && 'md:pointer-events-none',
+			// on a phone the expanded chat form fills the screen, so the logo button over
+			// its corner fades away (and goes inert) until the form collapses
+			'max-md:transition-opacity',
+			isHiddenByChatForm && 'opacity-0',
 			uiStore.isSidebarExpanded && 'is-expanded'
 		]}
-		inert={isOnMobile && !uiStore.isSidebarExpanded}
+		inert={isHiddenByChatForm || (isOnMobile && !uiStore.isSidebarExpanded)}
 		onfocusin={peek}
 		onfocusout={handleAsideFocusOut}
 		onmouseleave={() => (isPeeking = false)}
