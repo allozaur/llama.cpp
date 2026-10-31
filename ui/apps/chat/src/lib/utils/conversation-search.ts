@@ -55,7 +55,7 @@ export function searchableTexts(message: DatabaseMessage): string[] {
 	if (message.toolCalls) texts.push(...toolCallTexts(message.toolCalls));
 
 	for (const extra of message.extra ?? []) {
-		if (extra.name) texts.push(extra.name);
+		if ('name' in extra && extra.name) texts.push(extra.name);
 
 		if ('content' in extra && typeof extra.content === 'string' && extra.content) {
 			texts.push(extra.content);
