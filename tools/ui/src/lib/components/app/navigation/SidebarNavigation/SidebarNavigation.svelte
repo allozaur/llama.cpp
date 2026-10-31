@@ -7,6 +7,8 @@
 		DialogConversationDelete,
 		DialogConversationRename,
 		DialogDiscoverModels,
+		DialogGroup,
+		DialogGroupPicker,
 		DialogMcpServers,
 		DialogSearch,
 		DialogSettingsChat,
@@ -711,6 +713,10 @@
 <DialogMcpServers bind:open={mcpDialogOpen} />
 
 <DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
+
+<DialogGroup />
+
+<DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
 
