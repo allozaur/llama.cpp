@@ -8,7 +8,8 @@
 		ICON_CLASS_SM,
 		ICON_CLASS_XS,
 		PROJECT_ICON,
-		SIDEBAR_ACTIONS_ITEMS
+		SIDEBAR_ACTIONS_ITEMS,
+		SIDEBAR_FOOTER_ITEMS
 	} from '$lib/constants';
 	import { KeyboardKey, SidebarAction } from '$lib/enums';
 	import { RouterService } from '$lib/services/router.service';
@@ -92,7 +93,8 @@
 
 	const actionEntries = $derived.by((): SearchEntry[] =>
 		// every sidebar action but Search itself, which is what opened this dialog
-		SIDEBAR_ACTIONS_ITEMS.filter((item) => item.action && item.action !== SidebarAction.SEARCH)
+		[...SIDEBAR_ACTIONS_ITEMS, ...SIDEBAR_FOOTER_ITEMS]
+			.filter((item) => item.action && item.action !== SidebarAction.SEARCH)
 			.map((item) => ({
 				icon: item.icon,
 				id: `action-${item.action}`,

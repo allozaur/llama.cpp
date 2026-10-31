@@ -23,6 +23,7 @@
 		ROUTES,
 		SIDEBAR_COLLAPSE_WIDTH,
 		SIDEBAR_COLLAPSED_WIDTH,
+		SIDEBAR_FOOTER_ITEMS,
 		SIDEBAR_MAX_WIDTH,
 		SIDEBAR_MIN_WIDTH,
 		SIDEBAR_OVERSTRETCH_PX,
@@ -671,6 +672,14 @@
 						visibleCount={visibleSelectionStats.visibleCount}
 					/>
 				</div>
+
+				<!-- the footer: managing the app around the chats, at the bottom of the
+				     sidebar and of its collapsed strip alike, clear of a phone's home indicator -->
+				<SidebarNavigationActions
+					class="border-t border-border/30 px-2 pt-2 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] md:mb-2"
+					items={SIDEBAR_FOOTER_ITEMS}
+					onAction={handleSidebarAction}
+				/>
 			</div>
 		</div>
 
