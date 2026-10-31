@@ -1,15 +1,15 @@
 <script lang="ts">
+	import ModelCardSkeleton from '../ModelCardSkeleton.svelte';
 	import ModelsDiscoverCard from './ModelsDiscoverCard.svelte';
 	import { Button } from '@ggml/llama-ui/ui/button';
-	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 	import { Sparkles } from '@lucide/svelte';
 	import { ModelsSection, ScrollCarousel } from '$lib/components/app';
+	import { MODEL_CARD_CAROUSEL_CLASS } from '$lib/constants';
 	import { modelsDiscoverStore, uiStore } from '$lib/stores';
 	import { untrack } from 'svelte';
 
 	/** Placeholder cards while the first catalog batch is on its way. */
 	const SKELETON_CARDS = 4;
-	const CARD_CLASS = 'w-72 shrink-0 snap-start';
 
 	let models = $derived(modelsDiscoverStore.suggested);
 	let isFirstLoad = $derived(modelsDiscoverStore.loading && models.length === 0);
@@ -49,23 +49,13 @@
 		>
 			{#if isFirstLoad}
 				{#each Array(SKELETON_CARDS) as _, index (index)}
-					<div class="{CARD_CLASS} space-y-3 rounded-xl border border-border/50 p-3">
-						<div class="flex items-center gap-2.5">
-							<Skeleton class="h-7 w-7 rounded-full" />
-
-							<Skeleton class="h-4 w-36" />
-						</div>
-
-						<Skeleton class="h-3 w-44" />
-
-						<Skeleton class="h-3 w-32" />
-					</div>
+					<ModelCardSkeleton class={MODEL_CARD_CAROUSEL_CLASS} description />
 				{/each}
 			{:else}
 				{#each models as model (model.id)}
 					<ModelsDiscoverCard
 						active={uiStore.hubModelFocus === model.id}
-						class={CARD_CLASS}
+						class={MODEL_CARD_CAROUSEL_CLASS}
 						{model}
 						onSelect={(id) => uiStore.openHubModelDetails(id)}
 					/>

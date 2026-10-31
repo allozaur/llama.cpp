@@ -1,13 +1,14 @@
 <script lang="ts">
 	import ModelAvatar from '../ModelAvatar.svelte';
 	import ModelCapabilities from '../ModelCapabilities.svelte';
+	import ModelCard from '../ModelCard.svelte';
 	import ModelContext from '../ModelContext.svelte';
 	import ModelDownloadProgressBar from '../ModelDownloadProgressBar.svelte';
 	import ModelDraftSubline from '../ModelDraftSubline.svelte';
 	import ModelId from '../ModelId.svelte';
 	import ModelsManagerStatusCell from './ModelsManagerStatusCell.svelte';
 	import { modelRowActions } from './row-actions';
-	import { configuredContext, downloadProgressFor, isRowControlClick } from './utils';
+	import { configuredContext, downloadProgressFor } from './utils';
 	import { Heart, MoreHorizontal } from '@lucide/svelte';
 	import { DropdownMenuActions } from '$lib/components/app';
 	import { ModelRowDownloadState } from '$lib/enums';
@@ -38,61 +39,54 @@
 				? ModelRowDownloadState.DOWNLOADING
 				: null
 	);
-
-	function activate(): void {
-		onSelect(option);
-	}
 </script>
 
-<!-- the whole card opens the model for a pointer; keyboard users reach the same action
-     through the model's own button, the way a table row works -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-	class={[
-		'group relative flex min-w-0 cursor-pointer flex-col gap-3 overflow-hidden rounded-xl border p-3 transition',
-		isHidden && 'opacity-60',
-		selected
-			? 'border-primary/40 bg-accent text-accent-foreground'
-			: 'border-border/50 bg-card hover:bg-muted/40'
-	]}
-	onclick={(event) => {
-		if (!isRowControlClick(event)) activate();
-	}}
+<ModelCard
+	dimmed={isHidden}
+	onSelect={() => onSelect(option)}
+	pressed={download ? undefined : selected}
+	{selected}
+	tooltip={option.model}
 >
-	<div class="flex min-w-0 items-start gap-2">
-		<!-- only the model itself is the button: the card also holds a load control and
-		     an actions menu, and a button nested in a button is invalid -->
-		<button
-			aria-pressed={download ? undefined : selected}
-			class="flex min-w-0 flex-1 cursor-pointer items-start gap-3 text-left"
-			onclick={activate}
-			type="button"
-		>
-			<ModelAvatar {option} size="size-9" />
+	{#snippet avatar()}
+		<!-- the details header's geometry: base org, quant org badge -->
+		<ModelAvatar {option} showBaseModelAvatar size="size-9" />
+	{/snippet}
 
+	{#snippet title()}
+		<span class="flex min-w-0 items-start gap-1.5">
 			<ModelId
 				aliases={option.aliases}
-				class="min-w-0 flex-1 text-sm"
+				class="min-w-0 flex-1"
 				draftSidecars={option.draftSidecars}
 				hideCapabilities
 				hideModalities
+				hideOrgName
 				modalities={option.modalities}
 				modelId={option.model}
 				stackId
 				tags={option.tags}
-				title={option.model}
-				wrap
 			/>
-		</button>
 
+			{#if favorite}
+				<!-- the heart is decorative, the text beside it carries the state -->
+				<Heart aria-hidden="true" class="mt-1 h-3.5 w-3.5 shrink-0 text-rose-500" />
+
+				<span class="sr-only">favorited</span>
+			{/if}
+		</span>
+	{/snippet}
+
+	{#snippet actions()}
 		<DropdownMenuActions
 			actions={modelRowActions(option, { download, favorite, isHidden }, { onDelete })}
 			align="end"
 			triggerIcon={MoreHorizontal}
 			triggerTooltip="Model actions"
 		/>
-	</div>
+	{/snippet}
+
+	<ModelCapabilities asBadges {option} />
 
 	{#if sidecarBadges?.length}
 		<div class="flex w-fit flex-col">
@@ -107,28 +101,21 @@
 		</div>
 	{/if}
 
-	<div class="flex min-h-5 items-center gap-1.5">
-		<ModelCapabilities {option} />
+	{#snippet footer()}
+		<ModelContext class="text-xs" configured={configuredContext(option)} {option} />
+	{/snippet}
 
-		{#if favorite}
-			<!-- the heart is decorative, the button's pressed state carries the selection -->
-			<Heart aria-hidden="true" class="h-3.5 w-3.5 shrink-0 text-rose-500" />
-
-			<span class="sr-only">favorited</span>
-		{/if}
-	</div>
-
-	<div class="mt-auto flex items-center justify-between gap-2 border-t border-border/40 pt-3">
-		<ModelContext configured={configuredContext(option)} {option} />
-
+	{#snippet footerEnd()}
 		<ModelsManagerStatusCell {download} {option} />
-	</div>
+	{/snippet}
 
-	{#if download}
-		<ModelDownloadProgressBar
-			downloadedBytes={downloadProgress?.downloadedBytes ?? 0}
-			overlay
-			totalBytes={downloadProgress?.totalBytes ?? 0}
-		/>
-	{/if}
-</div>
+	{#snippet overlay()}
+		{#if download}
+			<ModelDownloadProgressBar
+				downloadedBytes={downloadProgress?.downloadedBytes ?? 0}
+				overlay
+				totalBytes={downloadProgress?.totalBytes ?? 0}
+			/>
+		{/if}
+	{/snippet}
+</ModelCard>
