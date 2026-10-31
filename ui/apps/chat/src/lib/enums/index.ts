@@ -129,4 +129,5 @@ export {
 
 export { SplashOrientation } from './splash.enums';
 
+export { PromptDrift } from './prompt.enums';
 export { VoiceInputMode, VoiceMode } from './voice.enums';
