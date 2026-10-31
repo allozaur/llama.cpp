@@ -240,6 +240,17 @@ components:
     backgroundColor: '{colors.edge-ambient-side}'
   sidebar-edge-dark:
     backgroundColor: '{colors.edge-ambient-side-dark}'
+  inset-group:
+    backgroundColor: 'oklch(1 0 0 / 0.85)'
+    textColor: '{colors.fg-default}'
+    rounded: '{rounded.card}'
+  inset-group-dark:
+    backgroundColor: 'oklch(0.985 0 0 / 0.03)'
+    textColor: '{colors.fg-default-dark}'
+  inset-group-edge:
+    backgroundColor: '{colors.edge-ambient-side}'
+  inset-group-edge-dark:
+    backgroundColor: '{colors.edge-ambient-side-dark}'
   user-bubble:
     backgroundColor: '#f3f3f3'
     textColor: '{colors.fg-default}'
@@ -579,6 +590,10 @@ components:
     backgroundColor: '{colors.edge-ambient-mid}'
   sidebar-edge-mid-dark:
     backgroundColor: '{colors.edge-ambient-mid-dark}'
+  inset-group-edge-mid:
+    backgroundColor: '{colors.edge-ambient-mid}'
+  inset-group-edge-mid-dark:
+    backgroundColor: '{colors.edge-ambient-mid-dark}'
   glass-highlight:
     backgroundColor: '{colors.highlight-inner}'
   glass-highlight-dark:
@@ -760,8 +775,9 @@ matches the role of the surface instead of combining raw shadows.
   inner highlight, a soft drop shadow and a 1px hairline whose sides are slightly darker than
   its middle. The hairline is drawn on a masked `::before` so it never tints the fill. Focus
   inside swaps the hairline to the focus edge; the shadow stays the same. Its colours come
-  from slot variables, and `chat-form-surface`, `card-surface` and `sidebar-surface` point
-  those slots at one component's tokens, so each component needs a single class.
+  from slot variables, and `chat-form-surface`, `card-surface`, `sidebar-surface` and
+  `inset-group-surface` point those slots at one component's tokens, so each component needs
+  a single class.
 - **`matte-float`** and **`matte-float-modal`:** menus, popovers, select lists, hover cards
   and drawers, and dialogs over the page colour. An 86% opaque panel with blur, a faint edge
   and a deeper shadow. In light mode dialogs are solid white instead: over the dimmed page a
@@ -859,6 +875,16 @@ icon buttons in the chat form are fully round.
   danger colour (`alert-danger-*`), with the title, description and icon in `fg-danger`.
 - **Sidebar:** `sidebar-surface`, the muted fill at 60% with no inner highlight and the
   ambient edge. On small screens it keeps a plain `shadow-md` instead.
+- **Inset groups:** `inset-group-surface` gathers rows inside a glass panel, like the
+  sidebar footer's Models, MCP and Settings, instead of a rule between them and the rows
+  above. In light mode it is a soft white (`surface-raised` at 85%) on the grey glass; in dark
+  mode a raised fill would be darker than the glass, so it is a 3% tint of the text colour. It
+  takes the sidebar's ambient edge, no inner highlight and only a faint, wide shade under it
+  (`0 2px 8px -4px`, 8% black in light, 40% in dark), with the card radius. It reads as part of
+  the panel: no tight contact shadow and no solid border, which make a button, and no inset
+  shade, which makes a field. Unlike the other `matte-glass` surfaces it does not blur: it
+  already sits on glass, and a second backdrop blur re-paints the panel's fill behind it and
+  turns the group visibly lighter, whatever its own fill.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
 - **Floating panels:** every menu, popover, select list, hover card and drawer uses
   `matte-float`; dialogs use `matte-float-modal`.
