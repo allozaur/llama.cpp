@@ -39,8 +39,27 @@
 
 :root {
 	--radius: 0.625rem;
+	/* the page runs under the status bar (viewport-fit=cover); what is pinned
+	   to the top of the screen pads itself clear by this */
+	--safe-area-top: env(safe-area-inset-top, 0px);
+	/* where the phone's corner controls (menu toggle, context gauge, sidebar logo) sit */
+	--corner-control-top: calc(1rem + var(--safe-area-top));
 	/* expanded desktop sidebar width, overridden once the user drags its edge */
 	--sidebar-width: 18rem;
+	/* phone sidebar width, which the page slides aside to reveal */
+	--sidebar-reveal: min(80dvw, 20rem);
+	/* the desktop sidebar's muted/60 over the page, made opaque so the slid page's corners can match it */
+	--sidebar-reveal-tint: color-mix(in oklab, var(--muted) 60%, var(--background));
+	/* how far the phone sidebar is open, 0 to 1, stepped every frame by useSidebarReveal */
+	--sidebar-reveal-progress: 0;
+	/* the same on a log curve: the sidebar's contents hold on until the page nearly covers them */
+	--sidebar-reveal-ease: calc(log(1 + 9 * var(--sidebar-reveal-progress)) / log(10));
+	/* the page background, blending into the sidebar tint as the phone sidebar opens */
+	--sidebar-reveal-bg: color-mix(
+		in oklab,
+		var(--sidebar-reveal-tint) calc(var(--sidebar-reveal-progress) * 100%),
+		var(--background)
+	);
 	--font-mono:
 		ui-monospace, SFMono-Regular, 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas,
 		'Liberation Mono', Menlo, monospace;
@@ -75,6 +94,21 @@
 	--ring: var(--line-focus);
 	--code-background: var(--surface-code);
 	--code-foreground: var(--fg-code);
+}
+
+/* iOS 26 gives an installed app with viewport-fit=cover and a translucent status bar a
+   viewport short of that bar (WebKit bug 301108), but only while the page is shorter than
+   the screen. A page that reaches past it gets the full screen, after which this is 100%,
+   capped at the screen so it never scrolls; elsewhere the inset is 0 and it is 100% too. */
+@media (display-mode: standalone) {
+	/* the installed app's status bar already sets them apart from the screen's edge */
+	:root {
+		--corner-control-top: calc(0.25rem + var(--safe-area-top));
+	}
+
+	html {
+		min-height: min(100lvh, calc(100% + var(--safe-area-top)));
+	}
 }
 
 @media (min-width: 640px) {
@@ -116,7 +150,7 @@
 	}
 
 	body {
-		@apply bg-background text-foreground antialiased;
+		@apply bg-(--sidebar-reveal-bg) text-foreground antialiased;
 		scrollbar-width: thin;
 		scrollbar-gutter: stable;
 	}
@@ -126,6 +160,30 @@
 	html,
 	body {
 		overscroll-behavior: none;
+	}
+
+	/* no gray flash over a tapped control, which has its own press state, and
+	   no text inflation when a phone turns to landscape */
+	html {
+		-webkit-tap-highlight-color: transparent;
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+
+	/* a tap clicks at once rather than waiting to see if it is a double-tap zoom */
+	button,
+	a,
+	[role='button'] {
+		touch-action: manipulation;
+	}
+
+	/* holding a control does not select its label or pop the link callout;
+	   links stay selectable, as in a message they are content */
+	button,
+	[role='button'] {
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	/* same for dialogs, whose panels and lists scroll on their own with sticky
@@ -246,6 +304,27 @@
 		z-index: 1000;
 		border-radius: 0.5rem;
 		pointer-events: none;
+	}
+
+	/* the phone sidebar's contents zoom out and fade as the page slides back over them */
+	.sidebar-reveal-content {
+		opacity: var(--sidebar-reveal-ease);
+		scale: calc(0.98 + 0.02 * var(--sidebar-reveal-ease));
+	}
+
+	/* the slid page's fixed bars, held where they sit on screen, see useSidebarReveal */
+	.sidebar-reveal-pin-top {
+		translate: 0 var(--sidebar-reveal-pin-top, 0px);
+	}
+
+	.sidebar-reveal-pin-bottom {
+		translate: 0 calc(-1 * var(--sidebar-reveal-pin-bottom, 0px));
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.sidebar-reveal-content {
+			scale: none;
+		}
 	}
 
 	.shimmer-text {
