@@ -217,7 +217,15 @@ export {
 	type PathQuery
 } from './working-directory';
 
-export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
+// Project system prompt section (instructions + referenced documents)
+export { buildProjectSystemPrompt, estimateProjectContext } from './project-prompt';
+export {
+	projectNewChatTabId,
+	projectOfNewChatTab,
+	resolveTabTarget,
+	resolveTabView,
+	type TabView
+} from './chat-tabs';
 
 // Shared `file_glob_search` runner with a short-lived result cache
 export { runGlobSearch, runGlobSearchWithChildren } from './glob-search';

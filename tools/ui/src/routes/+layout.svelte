@@ -13,7 +13,6 @@
 		FAVICON_SELECTORS,
 		HEADERS,
 		MODELS_ROUTE_ID,
-		NEW_CHAT_TAB_ID,
 		ROUTES,
 		SETTINGS_KEYS,
 		TOOLTIP_DELAY_DURATION
@@ -35,6 +34,7 @@
 		versionStore
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
+	import { resolveTabView } from '$lib/utils';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -79,13 +79,14 @@
 		// only makes sense with conversation tabs enabled
 		if (!settingsStore.config.conversationTabs) return;
 
-		const openTabs = tabsStore.openTabs;
+		// a project view cycles through its own tabs
+		const view = resolveTabView(page, tabsStore.openTabs, conversationsStore.conversations);
+		const openTabs = view.ids;
 
 		if (openTabs.length === 0) return;
 
-		const activeId = page.params.id ?? NEW_CHAT_TAB_ID;
-		const idx = openTabs.indexOf(activeId);
-		// active tab not in list (e.g. a non-chat route): start from an edge
+		const idx = openTabs.indexOf(view.activeId ?? '');
+		// active tab not in list: start from an edge
 		const targetIdx =
 			idx === -1
 				? direction === 1
@@ -93,7 +94,7 @@
 					: openTabs.length - 1
 				: (idx + direction + openTabs.length) % openTabs.length;
 
-		void tabsStore.activate(openTabs[targetIdx]);
+		void goto(view.hrefFor(openTabs[targetIdx]));
 	}
 
 	function navigateToConversation(direction: -1 | 1) {
@@ -104,7 +105,7 @@
 		const currentId = page.params.id;
 
 		if (!currentId) {
-			goto(RouterService.chat(allConvs[direction === 1 ? 0 : allConvs.length - 1].id));
+			goto(RouterService.conversation(allConvs[direction === 1 ? 0 : allConvs.length - 1]));
 
 			return;
 		}
@@ -116,7 +117,7 @@
 		const targetIdx = idx + direction;
 
 		if (targetIdx >= 0 && targetIdx < allConvs.length) {
-			goto(RouterService.chat(allConvs[targetIdx].id));
+			goto(RouterService.conversation(allConvs[targetIdx]));
 		} else {
 			conversationsStore.openNewChat();
 		}
@@ -160,9 +161,7 @@
 
 		untrack(() => {
 			if (
-				(page.route.id === '/(chat)' ||
-					page.route.id === '/(chat)/chat/[id]' ||
-					page.route.id === MODELS_ROUTE_ID) &&
+				(page.route.id === '/(chat)' || !!page.params.id || page.route.id === MODELS_ROUTE_ID) &&
 				page.status !== 401 &&
 				page.status !== 403
 			) {

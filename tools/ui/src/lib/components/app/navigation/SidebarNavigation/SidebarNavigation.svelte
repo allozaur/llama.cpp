@@ -10,6 +10,8 @@
 		DialogGroup,
 		DialogGroupPicker,
 		DialogMcpServers,
+		DialogProject,
+		DialogProjectPicker,
 		DialogSearch,
 		DialogSettingsChat,
 		Logo,
@@ -304,7 +306,12 @@
 	}
 
 	function selectConversation(id: string) {
-		afterMobileClose(() => void goto(RouterService.chat(id)));
+		const conversation = conversationsStore.conversations.find((conv) => conv.id === id);
+
+		afterMobileClose(
+			() =>
+				void goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
+		);
 	}
 
 	async function handleEditConversation(id: string) {
@@ -516,6 +523,10 @@
 				openSearch();
 
 				break;
+			case SidebarAction.PROJECTS:
+				afterMobileClose(() => void goto(ROUTES.PROJECTS));
+
+				break;
 			case SidebarAction.MANAGE_MODELS:
 				openDialog(() => uiStore.openModelsManager());
 
@@ -719,6 +730,10 @@
 <DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
+
+<DialogProject />
+
+<DialogProjectPicker />
 
 <style>
 	aside {

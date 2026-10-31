@@ -9,6 +9,7 @@
 		ChatFormInputFileInputInvisible,
 		ChatFormMcpResourcesList,
 		ChatFormPickers,
+		ChatFormProjectChip,
 		DialogMcpResourcesBrowser
 	} from '$lib/components/app';
 	import { hasMarkdownStructure } from '$lib/components/app/content/MarkdownEditor/markdown-structure';
@@ -41,6 +42,7 @@
 		deviceStore,
 		mcpStore,
 		modelsStore,
+		projectsStore,
 		serverStore,
 		settingsStore,
 		toolsStore,
@@ -140,6 +142,16 @@
 	let cwd = $derived(
 		conversationsStore.activeConversation?.cwd ?? conversationsStore.preferences.pendingCwd
 	);
+
+	// the project the chat is in, or the one picked for the chat about to start
+	let project = $derived.by(() => {
+		const active = conversationsStore.activeConversation;
+		const projectId = active ? active.projectId : conversationsStore.preferences.pendingProjectId;
+
+		return projectId ? projectsStore.get(projectId) : undefined;
+	});
+
+	let showWorkingDirectory = $derived(conversationsStore.preferences.hasEnabledCwdTools());
 
 	const pickers = useChatFormPickers({
 		canCompact: () => chatStore.canCompact(conversationsStore.activeMessages),
@@ -1111,28 +1123,40 @@
 		></div>
 	{/if}
 
-	{#if conversationsStore.preferences.hasEnabledCwdTools()}
+	{#if project || showWorkingDirectory}
+		<!-- the chat's context: its project and its working directory -->
 		<div
 			bind:this={cwdEl}
 			class={[
-				'relative self-start transition-[translate,opacity,margin] duration-400 ease-[cubic-bezier(0.3,1.12,0.5,1)] max-md:transition-none',
-				// on a phone the expanded sheet reaches the screen's bottom: the chip gives up
+				'relative mt-1.5 flex min-w-0 items-center self-start justify-self-start transition-[translate,opacity,margin] duration-400 ease-[cubic-bezier(0.3,1.12,0.5,1)] max-md:transition-none',
+				// on a phone the expanded sheet reaches the screen's bottom: the row gives up
 				// its room (its 1.5 top margin plus its 6 height) and waits below it, out of
 				// sight; it travels there and back with the sheet (see animateSheet)
 				isExpanded &&
 					'max-md:pointer-events-none max-md:-mb-7.5 max-md:translate-y-full max-md:opacity-0'
 			]}
 		>
-			<ChatFormCurrentWorkingDirectory
-				bind:query={pickers.workingDirectoryQuery}
-				customAnchor={mentionAnchor}
-				directory={cwd}
-				{disabled}
-				isOpen={pickers.isWorkingDirectoryPickerOpen}
-				onChange={handleWorkingDirectoryChange}
-				onClose={pickers.handleWorkingDirectoryClose}
-				onOpen={pickers.handleWorkingDirectoryOpen}
-			/>
+			{#if project}
+				<ChatFormProjectChip {disabled} {project} />
+			{/if}
+
+			{#if project && showWorkingDirectory}
+				<span aria-hidden="true" class="text-xs text-muted-foreground">·</span>
+			{/if}
+
+			{#if showWorkingDirectory}
+				<ChatFormCurrentWorkingDirectory
+					bind:query={pickers.workingDirectoryQuery}
+					class="!mt-0"
+					customAnchor={mentionAnchor}
+					directory={cwd}
+					{disabled}
+					isOpen={pickers.isWorkingDirectoryPickerOpen}
+					onChange={handleWorkingDirectoryChange}
+					onClose={pickers.handleWorkingDirectoryClose}
+					onOpen={pickers.handleWorkingDirectoryOpen}
+				/>
+			{/if}
 		</div>
 	{/if}
 </form>
