@@ -377,6 +377,21 @@
 			animation: none;
 		}
 	}
+
+	/* A page's entrance, for pages that remount on every navigation into them:
+	 * the whole page fades in at once. A plain ease over 350ms spreads the
+	 * fade evenly instead of front-loading it, so it reads as a calm arrival.
+	 * Opacity only, so it runs on the compositor and stays for reduced motion
+	 * too: a fade does not move anything. */
+	.page-enter {
+		animation: page-enter 350ms ease;
+	}
+
+	@keyframes page-enter {
+		from {
+			opacity: 0;
+		}
+	}
 }
 
 .mermaidTooltip {
