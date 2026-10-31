@@ -69,6 +69,9 @@ export function getAttachmentDisplayItems(
 
 	// Add stored attachments (ChatMessage)
 	for (const [index, attachment] of attachments.entries()) {
+		// a prompt link marks where a system message came from, it is not a file
+		if (attachment.type === AttachmentType.PROMPT) continue;
+
 		const isImage = isImageFile(attachment);
 
 		items.push({
