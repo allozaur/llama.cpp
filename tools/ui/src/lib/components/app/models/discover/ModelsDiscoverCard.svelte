@@ -1,9 +1,14 @@
 <script lang="ts">
+	import ModelCapabilityIcons from '../ModelCapabilityIcons.svelte';
+	import ModelCard from '../ModelCard.svelte';
 	import ModelId from '../ModelId.svelte';
 	import ModelOrgAvatar from '../ModelOrgAvatar.svelte';
+	import { Database, Download, ScrollText } from '@lucide/svelte';
 	import { useHubModelSummary } from '$lib/hooks/use-hub-model-summary.svelte';
+	import { HuggingFaceService } from '$lib/services';
 	import { modelsDiscoverStore } from '$lib/stores';
 	import type { HfModelInfo } from '$lib/types/huggingface';
+	import { formatParameters } from '$lib/utils';
 
 	interface Props {
 		model: HfModelInfo;
@@ -14,7 +19,7 @@
 
 	let { active = false, class: className = '', model, onSelect }: Props = $props();
 
-	// the card names the model the repo quantizes, the way the list does
+	// the card names the model the repo quantizes, the way the details pane does
 	const summary = useHubModelSummary(
 		() => model,
 		() => true
@@ -23,37 +28,68 @@
 	let description = $derived(modelsDiscoverStore.descriptionFor(model.id));
 </script>
 
-<button
-	aria-current={active ? 'true' : undefined}
-	class={[
-		'flex min-w-0 cursor-pointer flex-col gap-2.5 rounded-xl border p-3 text-left transition-colors',
-		active
-			? 'border-primary/40 bg-primary/10 hover:bg-primary/15'
-			: 'border-border/50 bg-card hover:bg-muted/50',
-		className
-	]}
-	onclick={() => onSelect?.(model.id)}
-	type="button"
+<ModelCard
+	class={className}
+	onSelect={() => onSelect?.(model.id)}
+	pressed={active}
+	selected={active}
+	tooltip={model.id}
 >
-	<span class="flex min-w-0 items-start gap-2.5">
-		<ModelOrgAvatar class="mt-1" org={summary.avatarOrg} quantOrg={summary.org} />
+	{#snippet avatar()}
+		<!-- the details header's geometry: base org, quant org badge -->
+		<ModelOrgAvatar org={summary.avatarOrg} quantOrg={summary.org} />
+	{/snippet}
 
+	{#snippet title()}
 		<ModelId
 			class="min-w-0"
-			contextLength={summary.contextLength}
 			draftKinds={summary.draftKinds}
+			hideCapabilities
+			hideModalities
 			hideOrgName
-			iconsOnNewLine
-			modalities={summary.modalities}
 			modelId={model.id}
-			sizeRange={summary.sizeRange}
-			supportsThinking={summary.supportsThinking}
-			supportsToolUse={summary.supportsToolUse}
-			wrap
+			stackId
 		/>
-	</span>
+	{/snippet}
+
+	<ModelCapabilityIcons
+		asBadges
+		modalities={summary.modalities}
+		supportsThinking={summary.supportsThinking}
+		supportsToolUse={summary.supportsToolUse}
+	/>
 
 	{#if description}
-		<span class="line-clamp-2 text-xs text-muted-foreground">{description}</span>
+		<p class="line-clamp-2 text-xs text-muted-foreground">{description}</p>
 	{/if}
-</button>
+
+	<!-- what the download gives on the left, the way a local card leads with its context;
+	     how often it is pulled on the right. Likes and the last update live in the details -->
+	{#snippet footer()}
+		<span class="flex items-center gap-3 whitespace-nowrap">
+			{#if summary.sizeRange}
+				<span class="inline-flex items-center gap-1" title="Download size">
+					<Database class="h-3 w-3" />
+
+					{HuggingFaceService.formatSizeRange(summary.sizeRange.min, summary.sizeRange.max)}
+				</span>
+			{/if}
+
+			{#if summary.contextLength}
+				<span class="inline-flex items-center gap-1" title="Context length">
+					<ScrollText class="h-3 w-3" />
+
+					{formatParameters(summary.contextLength)}
+				</span>
+			{/if}
+		</span>
+	{/snippet}
+
+	{#snippet footerEnd()}
+		<span class="inline-flex items-center gap-1 text-muted-foreground" title="Downloads">
+			<Download class="h-3 w-3" />
+
+			{HuggingFaceService.formatDownloads(model.downloads)}
+		</span>
+	{/snippet}
+</ModelCard>
