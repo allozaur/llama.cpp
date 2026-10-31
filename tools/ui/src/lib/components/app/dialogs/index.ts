@@ -177,6 +177,15 @@ export { default as DialogConversationDelete } from './DialogConversationDelete.
 export { default as DialogConversationRename } from './DialogConversationRename.svelte';
 
 /**
+ * **DialogPromptUpdate** - Save a system message back to its library prompt
+ *
+ * Opened from the "Modified" link under a system message made from a prompt.
+ * Writes the message text to the prompt (with an optional rename), or syncs the
+ * message from the prompt when the library is the newer side.
+ */
+export { default as DialogPromptUpdate } from './DialogPromptUpdate.svelte';
+
+/**
  * **DialogGroup** - Name a new sidebar group, or rename one
  *
  * Opened through `uiStore.openGroupDialog()`, from the Recent heading's
