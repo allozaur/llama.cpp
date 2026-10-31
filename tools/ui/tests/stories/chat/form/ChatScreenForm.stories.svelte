@@ -79,11 +79,11 @@
 <Story
 	args={{ class: FORM_CLASS }}
 	beforeEach={() => seedStores(modelServer)}
-	name="WithRichInput"
+	name="WithCodeSpan"
 	play={async ({ canvas, userEvent }) => {
 		const editor = await canvas.findByRole('textbox');
 
-		// a complete code span swaps the textarea for the rich input
+		// the live-preview editor renders a complete code span as it is typed
 		await userEvent.type(editor, 'Why does `npm run check` fail after `npm install`?');
 	}}
 />
