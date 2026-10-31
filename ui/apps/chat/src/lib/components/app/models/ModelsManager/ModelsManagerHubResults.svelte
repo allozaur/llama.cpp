@@ -1,8 +1,8 @@
 <script lang="ts">
+	import ModelCardSkeleton from '../ModelCardSkeleton.svelte';
 	import { ModelsSection } from '$lib/components/app';
 	import { ModelsDiscoverCard, ModelsDiscoverList } from '$lib/components/app/models/discover';
-	import { Skeleton } from '$lib/components/ui/skeleton';
-	import { DISCOVER_ICON } from '$lib/constants';
+	import { DISCOVER_ICON, MODEL_CARD_GRID_CLASS } from '$lib/constants';
 	import { ModelsViewMode } from '$lib/enums';
 	import { modelsDiscoverStore, uiStore } from '$lib/stores';
 
@@ -49,10 +49,10 @@
 				No GGUF models on Hugging Face match this search.
 			</p>
 		{:else if isGrid}
-			<div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3 px-2 pt-1 max-md:px-3">
+			<div class="{MODEL_CARD_GRID_CLASS} px-2 pt-1 max-md:px-3">
 				{#if pending}
 					{#each Array(SKELETON_COUNT) as _, index (index)}
-						<Skeleton class="h-24 rounded-xl" />
+						<ModelCardSkeleton description />
 					{/each}
 				{:else}
 					{#each results as model (model.id)}

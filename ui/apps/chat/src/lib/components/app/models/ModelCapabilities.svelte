@@ -8,13 +8,15 @@
 	import { detectThinkingSupport, detectToolUseSupport, nearViewport, repoOf } from '$lib/utils';
 
 	interface Props {
+		/** Name every capability in an outline badge instead of a bare icon. */
+		asBadges?: boolean;
 		class?: string;
 		/** Hide the modality icons, keeping the capability ones. */
 		hideModalities?: boolean;
 		option: ModelOption;
 	}
 
-	let { class: className = '', hideModalities = false, option }: Props = $props();
+	let { asBadges = false, class: className = '', hideModalities = false, option }: Props = $props();
 
 	// a listing that declares its capabilities (Ollama-compatible servers) needs no lookup
 	let declared = $derived(option.capabilities);
@@ -56,6 +58,7 @@
 
 <span use:nearViewport={() => (isNearViewport = true)} class={className}>
 	<ModelCapabilityIcons
+		{asBadges}
 		{hideModalities}
 		modalities={option.modalities}
 		{supportsThinking}

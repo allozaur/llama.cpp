@@ -36,6 +36,7 @@
 		FAMILY_ROW_WINDOW,
 		FILTER_TRIGGER_CLASS,
 		type ModalityKey,
+		MODEL_CARD_GRID_CLASS,
 		MODEL_ICON,
 		MODEL_ROW_GRID_CLASS,
 		MODEL_ROW_TRAILING_CELL_CLASS,
@@ -410,7 +411,7 @@
 	{@const cards = gridEntries(group.items)}
 	{@const shown = gridWindows.get(group.key) ?? MODEL_ROW_WINDOW}
 
-	<div class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-3 px-2 pt-1 max-md:px-3">
+	<div class="{MODEL_CARD_GRID_CLASS} px-2 pt-1 max-md:px-3">
 		{#each cards.slice(0, shown) as entry (entry.key)}
 			<ModelsManagerModelCard
 				{isFavorite}

@@ -53,17 +53,7 @@
 			/>
 
 			<div class="min-w-0">
-				<div class="flex items-center gap-2 @max-lg:flex-col @max-lg:items-start">
-					<h1 class="truncate text-lg font-semibold @max-lg:w-full">{details.id ?? modelId}</h1>
-
-					<ModelCapabilityIcons
-						gapClass="gap-2"
-						iconSize="h-4 w-4"
-						{modalities}
-						supportsThinking={hasReasoning}
-						supportsToolUse={hasTools}
-					/>
-				</div>
+				<h1 class="truncate text-lg font-semibold">{details.id ?? modelId}</h1>
 
 				{#if baseModels.length}
 					<div class="flex items-center gap-1">
@@ -98,6 +88,14 @@
 			<ExternalLink class="size-3.5" />
 		</Button>
 	</div>
+
+	<!-- capabilities named in badges, the way the model cards and MCP servers show them -->
+	<ModelCapabilityIcons
+		asBadges
+		{modalities}
+		supportsThinking={hasReasoning}
+		supportsToolUse={hasTools}
+	/>
 
 	<ModelsDiscoverDetailsHfHubStats {details} />
 
