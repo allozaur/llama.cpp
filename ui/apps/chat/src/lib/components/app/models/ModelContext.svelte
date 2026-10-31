@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { isLocalOption } from './ModelsManager/utils';
+	import { cn } from '$lib/components/ui/utils';
 	import { MODEL_ID } from '$lib/constants';
 	import { HuggingFaceService } from '$lib/services';
 	import type { ModelOption } from '$lib/types/models';
@@ -53,7 +54,7 @@
 
 <span
 	use:nearViewport={() => (isNearViewport = true)}
-	class={['text-sm text-muted-foreground', className]}
+	class={cn('text-sm text-muted-foreground', className)}
 >
 	{formatContextLength(values)}
 </span>

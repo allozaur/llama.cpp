@@ -54,6 +54,10 @@ export { default as ModelOrgAvatar } from './ModelOrgAvatar.svelte';
 export { default as ModelRowActions } from './ModelRowActions.svelte';
 export { default as ModelsSection } from './ModelsSection.svelte';
 
+/** Card surface of a model, local or on the Hub, styled like the MCP server cards. */
+export { default as ModelCard } from './ModelCard.svelte';
+export { default as ModelCardSkeleton } from './ModelCardSkeleton.svelte';
+
 /** Capability and modality icon row, shared by every model-id surface. */
 export { default as ModelCapabilityIcons } from './ModelCapabilityIcons.svelte';
 
