@@ -17,6 +17,7 @@ import {
 	FILE_EXTENSION_REGEX,
 	IMAGE_FILE_EXTENSION_REGEX,
 	MCP_ALLOWED_ICON_MIME_TYPES,
+	MCP_PROMPT_ID_PREFIX,
 	MCP_SERVER_ID_PREFIX,
 	MCP_SSE,
 	MIME_TYPE_PREFIXES,
@@ -461,4 +462,14 @@ export function getMcpServerLabel(
 	const position = twins.findIndex((s) => s.id === server.id);
 
 	return position < 0 ? label : `${label} (${position + 1})`;
+}
+
+/** Id stored on a system message created from an MCP prompt. */
+export function buildMcpPromptId(serverName: string, promptName: string): string {
+	return `${MCP_PROMPT_ID_PREFIX}${serverName}:${promptName}`;
+}
+
+/** Whether a prompt id names an MCP prompt rather than a library prompt. */
+export function isMcpPromptId(promptId: string): boolean {
+	return promptId.startsWith(MCP_PROMPT_ID_PREFIX);
 }
