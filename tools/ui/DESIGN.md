@@ -724,6 +724,18 @@ never a hand-written `calc()`:
   under the status bar.
 - `top-safe-N`, `bottom-safe-N`: the same for absolutely or fixedly placed controls, e.g.
   `top-safe-2.5` for the expanded chat form's collapse button.
+- `top-(--corner-control-top)`, `bottom-(--corner-control-bottom)`: the phone's corner
+  controls, like the menu key and a page's floating key. They follow the insets differently
+  in the installed app (see Corners below).
+
+**Corners in the installed app.** The status bar and the home indicator set the screen's top
+and bottom apart on their own, so a corner control does not add its usual 1rem on top of
+their insets there. At the top it sits just below the status bar (`--corner-control-top`, the
+inset plus 0.25rem). At the bottom the home indicator is a short bar in the middle and the
+corners beside it are free, so a bottom corner action ignores its inset and sits 1.5rem from
+the screen's edge (`--corner-control-bottom`), level with the chat form, not stacked above the
+indicator. Only what spans the bottom edge's middle, like a sheet's last row, clears the
+inset with `pb-safe` or `bottom-safe-N`. In a browser tab both keep 1rem beyond the insets.
 
 A control placed inside a padded box still needs its own `top-safe-N`: absolute positions
 ignore the padding. Dialogs keep clear of the insets on their own (see Dialogs on phones under
@@ -872,7 +884,8 @@ icon buttons in the chat form are fully round.
 - **A page's main action on phones:** below `md` the action that adds to a page, like New
   project or New prompt, leaves the page's header for a `FloatingActionButton`: a round 56px
   `default` (primary) key with a large shadow and only a `+` icon, pinned 16px from the right
-  edge and 24px above the home indicator (`bottom-safe-6`), where the thumb rests. It holds its
+  edge at `--corner-control-bottom` (level with the chat form in the installed app, beside the
+  home indicator rather than above it; see Safe areas), where the thumb rests. It holds its
   place while the page slides aside for the sidebar. The page keeps room under its last row
   (`max-md:pb-safe-24`) so the key never covers it, and it is placed outside an element with an
   entrance transform, which would hold a fixed key to that element. One per page, only for its
@@ -919,6 +932,9 @@ icon buttons in the chat form are fully round.
   stay small and centred.
 - Don't put more than one floating key on a phone page, or use one for anything but the
   page's main action.
+- Don't lift a bottom corner action above the home indicator's inset in the installed app:
+  the corners beside the indicator are free, so it sits level with the chat form at
+  `--corner-control-bottom`.
 
 ## Proposing changes
 
