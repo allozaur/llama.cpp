@@ -869,6 +869,14 @@ icon buttons in the chat form are fully round.
   page; its icon is a 2px-stroke glyph in `fg-default` on the 24px icon grid, the context
   gauge's dial drawn the same way. Don't rebuild one from a ghost `Button` plus classes: the
   button's own blur overrides `matte-key`'s.
+- **A page's main action on phones:** below `md` the action that adds to a page, like New
+  project or New prompt, leaves the page's header for a `FloatingActionButton`: a round 56px
+  `default` (primary) key with a large shadow and only a `+` icon, pinned 16px from the right
+  edge and 24px above the home indicator (`bottom-safe-6`), where the thumb rests. It holds its
+  place while the page slides aside for the sidebar. The page keeps room under its last row
+  (`max-md:pb-safe-24`) so the key never covers it, and it is placed outside an element with an
+  entrance transform, which would hold a fixed key to that element. One per page, only for its
+  main action; from `md` up the action stays a button in the header.
 - **Copy feedback:** a copy action turns its icon into a `fg-success` check for 1.5s
   (`COPY_FEEDBACK_RESET_MS`), only when the copy succeeded, then back. The icon pops in with a
   150ms fade and scale, skipped on first render and with reduced motion.
@@ -909,6 +917,8 @@ icon buttons in the chat form are fully round.
   or `bg-background`, the page's own grey): controls sit on the page in white or white glass.
 - Don't give a dialog its own size on a phone: every dialog is full screen there. Only alerts
   stay small and centred.
+- Don't put more than one floating key on a phone page, or use one for anything but the
+  page's main action.
 
 ## Proposing changes
 
