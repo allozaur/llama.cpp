@@ -193,7 +193,7 @@
 				class="group/project flex min-h-9 w-full items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-foreground/10 hover:text-foreground max-md:min-h-12 max-md:rounded-2xl md:min-h-8 {isLanding
 					? 'invisible'
 					: ''} {holdsActive && !open
-					? 'bg-foreground/5 text-accent-foreground'
+					? 'selected-row-surface text-accent-foreground'
 					: 'text-foreground/75'} {contextMenuOpen || dropdownOpen ? 'bg-foreground/10' : ''}"
 				{...{ [UI_DATA_ATTRS.CONVERSATION_ROW]: dragId }}
 			>

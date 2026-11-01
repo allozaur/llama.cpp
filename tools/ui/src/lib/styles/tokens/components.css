@@ -49,6 +49,10 @@
 	--inset-group-shadow: 0 2px 8px -4px var(--black-a8);
 	--inset-group-radius: var(--radius-card);
 
+	/* selected row: the page a sidebar row opens is on. A tint of the text colour, under hover's,
+	   with the inset group's edge and shade so it reads as picked out rather than hovered */
+	--selected-row-background: color-mix(in oklch, var(--fg-default) 5%, transparent);
+
 	/* user message bubble */
 	--user-bubble-background: color-mix(in oklch, var(--action-primary) 5%, transparent);
 	/* a uniform hairline only: no inner ring and no shadow, which read as a border */
@@ -161,6 +165,7 @@
 	/* a raised fill would be darker than the dark glass: a faint tint of the text colour instead */
 	--inset-group-background: color-mix(in oklch, var(--fg-default) 3%, transparent);
 	--inset-group-shadow: 0 2px 8px -4px var(--black-a40);
+	--selected-row-background: color-mix(in oklch, var(--fg-default) 5%, transparent);
 	--button-secondary-background-hover: var(--surface-muted);
 	--button-secondary-border: color-mix(in oklch, var(--line-default) 20%, transparent);
 	--badge-secondary-background: color-mix(in oklch, var(--fg-default) 10%, transparent);
