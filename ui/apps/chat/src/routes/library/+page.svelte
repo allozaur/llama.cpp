@@ -3,6 +3,7 @@
 	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import { Library, Plus } from '@lucide/svelte';
 	import {
+		FloatingActionButton,
 		LIBRARY_MOCK_ITEMS,
 		LibraryGrid,
 		LibraryList,
@@ -31,7 +32,7 @@
 </svelte:head>
 
 <div
-	class="page-enter mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-(--page-top) pb-16 md:px-8 md:pt-6"
+	class="page-enter mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-(--page-top) pb-16 max-md:pb-safe-24 md:px-8 md:pt-6"
 >
 	<div class="flex flex-wrap items-start gap-4">
 		<div class="flex min-w-0 flex-col gap-1">
@@ -42,8 +43,13 @@
 			</p>
 		</div>
 
+		<!-- a phone has the floating key below instead -->
 		{#if tab === LibraryTab.PROMPTS}
-			<Button class="ml-auto shrink-0 gap-1.5" onclick={() => (creatingPrompt = true)} size="sm">
+			<Button
+				class="ml-auto shrink-0 gap-1.5 max-md:hidden"
+				onclick={() => (creatingPrompt = true)}
+				size="sm"
+			>
 				<Plus class="h-3.5 w-3.5" />
 
 				New prompt
@@ -104,3 +110,8 @@
 		<LibraryList items={media} />
 	{/if}
 </div>
+
+<!-- outside the page, whose entrance transform would hold a fixed key to it -->
+{#if tab === LibraryTab.PROMPTS}
+	<FloatingActionButton icon={Plus} label="New prompt" onclick={() => (creatingPrompt = true)} />
+{/if}
