@@ -876,7 +876,11 @@ never a hand-written `calc()`:
 
 A control placed inside a padded box still needs its own `top-safe-N`: absolute positions
 ignore the padding. Dialogs keep clear of the insets on their own (see Dialogs on phones under
-Components). Check pinned content with the insets simulated (the Safe areas page in
+Components). Under the status bar, every route on a phone has the `status-bar-fade` from the
+root layout: solid behind the bar and fading out below it, like the fade under the desktop tab
+bar, so content scrolls away under the bar instead of colliding with its clock. A route needs no
+fade of its own; what covers the whole screen, like the expanded chat form, hides it. Check
+pinned content with the insets simulated (the Safe areas page in
 Storybook does this), since they are 0 in a desktop browser.
 
 ## Elevation & Depth
