@@ -473,3 +473,20 @@ export function buildMcpPromptId(serverName: string, promptName: string): string
 export function isMcpPromptId(promptId: string): boolean {
 	return promptId.startsWith(MCP_PROMPT_ID_PREFIX);
 }
+
+/**
+ * The server and prompt an MCP prompt id names, or null for any other id.
+ * The server name ends at the first colon; the prompt name may hold more.
+ */
+export function parseMcpPromptId(
+	promptId: string
+): { serverName: string; promptName: string } | null {
+	if (!isMcpPromptId(promptId)) return null;
+
+	const rest = promptId.slice(MCP_PROMPT_ID_PREFIX.length);
+	const separator = rest.indexOf(':');
+
+	if (separator <= 0 || separator === rest.length - 1) return null;
+
+	return { promptName: rest.slice(separator + 1), serverName: rest.slice(0, separator) };
+}
