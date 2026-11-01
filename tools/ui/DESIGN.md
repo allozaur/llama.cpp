@@ -838,7 +838,9 @@ icon buttons in the chat form are fully round.
   never its own phone size. Its top and bottom borders take the height of the status bar and
   the home indicator, transparent, so the content keeps clear of both with no change to its
   padding (see Safe areas). A dialog that draws its own full-screen content instead, like the
-  attachment preview, keeps clear with `pt-safe`, `pb-safe` and `top-safe-N` itself.
+  attachment preview, keeps clear with `pt-safe`, `pb-safe` and `top-safe-N` itself. Alerts
+  (`AlertDialog`: confirmations, renames, errors) are the exception: a short question with a
+  button or two, they stay small and centred on a phone too.
 - **Copy feedback:** a copy action turns its icon into a `fg-success` check for 1.5s
   (`COPY_FEEDBACK_RESET_MS`), only when the copy succeeded, then back. The icon pops in with a
   150ms fade and scale, skipped on first render and with reduced motion.
@@ -875,7 +877,8 @@ icon buttons in the chat form are fully round.
 - Don't animate for decoration: no motion on things that did not change, no bounces on
   entrances, and nothing that delays the user.
 - Don't stack two glass surfaces with blur directly on top of each other.
-- Don't give a dialog its own size on a phone: every dialog is full screen there.
+- Don't give a dialog its own size on a phone: every dialog is full screen there. Only alerts
+  stay small and centred.
 
 ## Proposing changes
 
