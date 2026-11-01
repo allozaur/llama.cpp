@@ -11,3 +11,9 @@ export { default as ActionIcon } from './ActionIcon.svelte';
 
 /** Copy-to-clipboard icon button with clipboard logic. */
 export { default as ActionIconCopyToClipboard } from './ActionIconCopyToClipboard.svelte';
+
+/** A round matte glass key: a phone's corner keys and the key back to a chat's bottom. */
+export { default as GlassKey } from './GlassKey.svelte';
+
+/** A page's main action on a phone: a round key pinned to the bottom-right corner. */
+export { default as FloatingActionButton } from './FloatingActionButton.svelte';
