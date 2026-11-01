@@ -702,6 +702,24 @@ pair, and icons use the `size-icon-*` roles. Inside buttons, toggles and menu it
 a generous bottom offset so the floating chat form never covers the last message. The desktop
 sidebar is 18rem wide by default, can be resized, and collapses to a 3rem strip.
 
+### Safe areas
+
+The page runs under the status bar and over the home indicator (`viewport-fit=cover`), which
+an installed iPhone app always shows and a browser tab mostly does not. The insets are
+`--safe-area-top` and `--safe-area-bottom` (0 where there is none). Anything pinned to a screen
+edge keeps clear of them with the safe-area utilities from `src/lib/styles/safe-area.css`,
+never a hand-written `calc()`:
+
+- `pt-safe`, `pb-safe`: padding of just the inset, e.g. a sheet that fills the screen.
+- `pt-safe-N`, `pb-safe-N`: a spacing step plus the inset, e.g. `pt-safe-12` for a page whose
+  content starts 3rem below the top on a phone.
+- `top-safe-N`, `bottom-safe-N`: the same for absolutely or fixedly placed controls, e.g.
+  `top-safe-2.5` for the expanded chat form's collapse button.
+
+A control placed inside a padded box still needs its own `top-safe-N`: absolute positions
+ignore the padding. Check pinned content with the insets simulated (the Safe areas page in
+Storybook does this), since they are 0 in a desktop browser.
+
 ## Elevation & Depth
 
 Depth is built from the matte utilities in `src/lib/styles/surfaces.css`. Pick the one that
