@@ -869,8 +869,11 @@ edge keeps clear of them with the safe-area utilities from `src/lib/styles/safe-
 never a hand-written `calc()`:
 
 - `pt-safe`, `pb-safe`: padding of just the inset, e.g. a sheet that fills the screen.
-- `pt-safe-N`, `pb-safe-N`: a spacing step plus the inset, e.g. `pt-safe-12` for a page whose
-  content starts 3rem below the top on a phone.
+- `pt-safe-N`, `pb-safe-N`: a spacing step plus the inset, e.g. `pt-safe-12` for the chat,
+  whose messages start 3rem below the top on a phone.
+- `pt-(--page-top)`: where a page with a title, like Models, Projects or Library, starts on a
+  phone: a row below the corner controls, so the title clears both the menu key and the fade
+  under the status bar.
 - `top-safe-N`, `bottom-safe-N`: the same for absolutely or fixedly placed controls, e.g.
   `top-safe-2.5` for the expanded chat form's collapse button.
 
