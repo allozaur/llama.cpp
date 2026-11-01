@@ -9,6 +9,7 @@
 @import './lib/styles/tokens/semantic.css';
 @import './lib/styles/tokens/components.css';
 @import './lib/styles/surfaces.css';
+@import './lib/styles/safe-area.css';
 
 /* Llama Sans, the sans of the Llama type family (OFL, see lib/assets/fonts/OFL.txt): one variable font for every
    weight from 400 to 700 and every optical size from 16 to 40. The browser sets the optical size from font-size
@@ -64,9 +65,11 @@
 
 :root {
 	--radius: 0.625rem;
-	/* the page runs under the status bar (viewport-fit=cover); what is pinned
-	   to the top of the screen pads itself clear by this */
+	/* the page runs under the status bar and over the home indicator
+	   (viewport-fit=cover); what is pinned to a screen edge keeps clear of them
+	   with the pt-safe / pb-safe utilities (see lib/styles/safe-area.css) */
 	--safe-area-top: env(safe-area-inset-top, 0px);
+	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
 	/* where the phone's corner controls (menu toggle, context gauge, sidebar logo) sit */
 	--corner-control-top: calc(1rem + var(--safe-area-top));
 	/* expanded desktop sidebar width, overridden once the user drags its edge */
