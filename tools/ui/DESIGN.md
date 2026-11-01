@@ -889,10 +889,11 @@ icon buttons in the chat form are fully round.
   `default` (primary) key with a large shadow and only a `+` icon, pinned in the bottom-right
   corner 1.75rem from both edges (`--corner-control-side`, `--corner-control-bottom`; in the
   installed app beside the home indicator rather than above it, see Safe areas), where the
-  thumb rests. It holds its place while the page slides aside for the sidebar. The page keeps
-  room under its last row (`max-md:pb-safe-24`) so the key never covers it, and it is placed
-  outside an element with an entrance transform, which would hold a fixed key to that element.
-  One per page, only for its main action; from `md` up the action stays a button in the header.
+  thumb rests. It is portalled to the body, so its place on screen never depends on the page's
+  box, and slides with the page when the sidebar opens, by the same offset and ease
+  (`--sidebar-reveal-x`), taking no taps while the page is aside. The page keeps room under its
+  last row (`max-md:pb-safe-24`) so the key never covers it. One per page, only for its main
+  action; from `md` up the action stays a button in the header.
 - **Copy feedback:** a copy action turns its icon into a `fg-success` check for 1.5s
   (`COPY_FEEDBACK_RESET_MS`), only when the copy succeeded, then back. The icon pops in with a
   150ms fade and scale, skipped on first render and with reduced motion.
