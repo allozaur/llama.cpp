@@ -858,6 +858,14 @@ icon buttons in the chat form are fully round.
   attachment preview, keeps clear with `pt-safe`, `pb-safe` and `top-safe-N` itself. Alerts
   (`AlertDialog`: confirmations, renames, errors) are the exception: a short question with a
   button or two, they stay small and centred on a phone too.
+- **Glass keys:** a round key that floats over the page and lets it show through, like the
+  menu and context gauge keys at a phone's top corners and the key back to a chat's bottom, is
+  a `GlassKey` (`GLASS_KEY_CLASS`): white glass (`surface-glass`), a faint `line-default`
+  hairline, and `matte-key`'s blur and saturation with its small shadow, so what scrolls under
+  it softens instead of showing sharp behind the icon. 40px at the corners, 36px over the
+  page; its icon is a 2px-stroke glyph in `fg-default` on the 24px icon grid, the context
+  gauge's dial drawn the same way. Don't rebuild one from a ghost `Button` plus classes: the
+  button's own blur overrides `matte-key`'s.
 - **Copy feedback:** a copy action turns its icon into a `fg-success` check for 1.5s
   (`COPY_FEEDBACK_RESET_MS`), only when the copy succeeded, then back. The icon pops in with a
   150ms fade and scale, skipped on first render and with reduced motion.
