@@ -3,16 +3,17 @@
  * only tier that changes between light and dark. Pattern: [category]-[role]-[state].
  */
 :root {
-	/* surfaces: what a region of the page sits on */
-	--surface-page: var(--neutral-0);
+	/* surfaces: what a region of the page sits on. The page is a faint grey, so glass and
+	   fields, white, sit lighter than it */
+	--surface-page: var(--neutral-50);
 	--surface-muted: var(--neutral-100);
 	--surface-emphasis: var(--neutral-150);
 	--surface-selected: var(--neutral-150);
 	--surface-raised: var(--neutral-0);
 	--surface-lifted: var(--neutral-0);
 	--surface-pressed: var(--neutral-0);
-	--surface-glass: color-mix(in oklch, var(--neutral-100) 60%, transparent);
-	--surface-code: var(--neutral-50);
+	--surface-glass: color-mix(in oklch, var(--neutral-0) 80%, transparent);
+	--surface-code: var(--neutral-100);
 	--surface-overlay: var(--black-a40);
 
 	/* foreground: text and icons */
@@ -51,7 +52,7 @@
 	--action-ghost-hover: color-mix(in oklch, var(--neutral-500) 10%, transparent);
 
 	/* fields: editable controls */
-	--field-background: var(--surface-page);
+	--field-background: var(--neutral-0);
 	--field-shade: var(--black-a6);
 
 	/* status lamps: fill, lighter rim, darker glyph; the same in both modes */

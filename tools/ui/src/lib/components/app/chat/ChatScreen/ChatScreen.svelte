@@ -317,7 +317,7 @@
 		{#if deviceStore.isMobile && showContextGauge.current && !uiStore.isComposerExpanded}
 			<div transition:fade={{ duration: 150 }}>
 				<ChatFormContextGauge
-					class="sidebar-reveal-pin-top fixed top-(--corner-control-top) right-4 z-20 size-10 rounded-full bg-muted/60 border border-border/20 shadow-sm backdrop-blur-sm"
+					class="sidebar-reveal-pin-top fixed top-(--corner-control-top) right-4 z-20 size-10 rounded-full bg-surface-glass border border-border/20 shadow-sm backdrop-blur-sm"
 					corner
 				/>
 			</div>

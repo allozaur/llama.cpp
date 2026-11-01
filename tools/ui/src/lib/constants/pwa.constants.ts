@@ -15,9 +15,9 @@ export const THEME_COLORS = {
 	ACCENT_BLUE: '#2563eb',
 	ACCENT_BLUE_HOVER: '#1d4ed8',
 	BACKGROUND_DARK: '#111111',
-	BACKGROUND_LIGHT: 'white',
+	BACKGROUND_LIGHT: '#fafafa',
 	DARK: '#0d0d0d',
-	LIGHT: '#ffffff',
+	LIGHT: '#fafafa',
 	TITLE_UPDATE_ALERT: {
 		BG_DARK: 'zinc-800',
 		BG_LIGHT: 'white',

@@ -393,7 +393,7 @@
 				<div transition:fade={{ duration: 150 }}>
 					<ActionIcon
 						ariaLabel={uiStore.isSidebarExpanded ? 'Collapse navigation' : 'Expand navigation'}
-						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-20 transition-colors h-10 w-10 rounded-full bg-muted/60 border border-border/20 shadow-sm text-accent-foreground"
+						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-20 transition-colors h-10 w-10 rounded-full bg-surface-glass border border-border/20 shadow-sm text-accent-foreground"
 						icon={MenuIcon}
 						iconSize="size-6"
 						onclick={toggleSidebar}
