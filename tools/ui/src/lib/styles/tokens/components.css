@@ -36,7 +36,10 @@
 
 	/* user message bubble */
 	--user-bubble-background: color-mix(in oklch, var(--action-primary) 5%, transparent);
-	--user-bubble-edge: var(--edge-faint);
+	/* a uniform hairline only: no inner ring and no shadow, which read as a border */
+	--user-bubble-edge: var(--edge-ambient-mid);
+	--user-bubble-highlight: transparent;
+	--user-bubble-shadow: none;
 	--user-bubble-sheen-start: var(--sheen-start);
 	--user-bubble-sheen-end: var(--sheen-end);
 
@@ -152,8 +155,12 @@
 	--float-panel-background-modal: color-mix(in oklch, var(--surface-page) 86%, transparent);
 }
 
-/* the user bubble is a card with an even, fainter edge */
+/* the user bubble is a card with an even, very faint hairline and nothing else around it */
 .chat-message-user-bubble {
 	--card-edge-side: var(--user-bubble-edge);
 	--card-edge-mid: var(--user-bubble-edge);
+	--card-highlight: var(--user-bubble-highlight);
+	--card-shadow: var(--user-bubble-shadow);
+	/* a flat fill on the page: a backdrop blur only greys it */
+	backdrop-filter: none;
 }
