@@ -35,7 +35,7 @@ export const TAB_SURFACE_IDLE_CLASS =
 
 /** Tab surface of the open tab. */
 export const TAB_SURFACE_ACTIVE_CLASS =
-	'matte-key bg-muted/60 border-border/10 text-accent-foreground hover:bg-primary/15';
+	'matte-key bg-surface-glass border-border/10 text-accent-foreground hover:bg-primary/15';
 
 /** Selects the focused chat-form input (either renderer) to restore focus after model actions. */
 export const CHAT_INPUT_FOCUS_SELECTOR =

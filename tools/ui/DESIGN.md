@@ -49,15 +49,15 @@ colors:
   black-a6: 'oklch(0 0 0 / 0.06)'
   black-a30: 'oklch(0 0 0 / 0.3)'
   black-a40: 'oklch(0 0 0 / 0.4)'
-  surface-page: '{colors.neutral-0}'
+  surface-page: '{colors.neutral-50}'
   surface-muted: '{colors.neutral-100}'
   surface-emphasis: '{colors.neutral-150}'
   surface-selected: '{colors.neutral-150}'
   surface-raised: '{colors.neutral-0}'
   surface-lifted: '{colors.neutral-0}'
   surface-pressed: '{colors.neutral-0}'
-  surface-glass: 'oklch(0.97 0 0 / 0.6)'
-  surface-code: '{colors.neutral-50}'
+  surface-glass: 'oklch(1 0 0 / 0.8)'
+  surface-code: '{colors.neutral-100}'
   surface-overlay: '{colors.black-a40}'
   fg-default: '{colors.neutral-950}'
   fg-muted: '{colors.neutral-500}'
@@ -652,11 +652,17 @@ fills are given as they render over the page, so contrast checks see the real co
 The palette is achromatic. Hue appears only in the hairline edges (a cool grey at hue 250,
 kept almost neutral) and in status and error colours.
 
+- **Light mode's two levels:** the page is a faint grey (`surface-page`, `#fafafa`) and
+  everything that sits on it as a control or a container, glass buttons, keys, the chat form,
+  cards, fields, chips and dialogs, is white or white glass, so it reads lighter than the page,
+  never darker. Only quiet panels, hover and selected fills, code and the user bubble are greyer
+  than the page. A control that needs a solid white uses `surface-raised`, not `bg-background`,
+  which is the page's grey; a translucent one uses `surface-glass`, not the muted grey.
 - **Surfaces:** `surface-page` for the page, `surface-muted` for quiet panels,
   `surface-emphasis` and `surface-selected` for stronger fills and hover or selected rows,
   `surface-raised` for menus and dialogs, `surface-lifted` for a selection raised on a
   recessed track, `surface-pressed` for a key pressed in, `surface-glass` for the translucent matte fill, `surface-code` for code and
-  `surface-overlay` behind dialogs.
+  `surface-overlay` behind dialogs. Fields take `field-background`, solid white in light mode.
 - **Foreground:** `fg-default` and `fg-muted` for text and icons, `fg-on-action` and
   `fg-on-danger` on filled buttons, `fg-code` for code, `fg-danger` for errors and
   `fg-success` for confirmations such as a copied check.
@@ -880,6 +886,8 @@ icon buttons in the chat form are fully round.
 - Don't animate for decoration: no motion on things that did not change, no bounces on
   entrances, and nothing that delays the user.
 - Don't stack two glass surfaces with blur directly on top of each other.
+- Don't fill a button, key or other control darker than the page in light mode (`bg-muted`,
+  or `bg-background`, the page's own grey): controls sit on the page in white or white glass.
 - Don't give a dialog its own size on a phone: every dialog is full screen there. Only alerts
   stay small and centred.
 

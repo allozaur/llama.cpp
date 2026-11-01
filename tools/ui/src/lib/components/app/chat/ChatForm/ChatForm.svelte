@@ -230,7 +230,7 @@
 
 	// the card's translucent fill as it looks over the page background, made solid
 	const EXPANDED_SHEET_FILL =
-		'max-md:bg-[color-mix(in_oklab,var(--muted)_60%,var(--background))] max-md:dark:bg-[color-mix(in_oklab,var(--muted)_75%,var(--background))]';
+		'max-md:bg-surface-raised max-md:dark:bg-[color-mix(in_oklab,var(--muted)_75%,var(--background))]';
 	/** The phone sheet's ease-out: no overshoot, so it lands without a wobble. */
 	const SHEET_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
