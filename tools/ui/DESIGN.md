@@ -717,7 +717,8 @@ never a hand-written `calc()`:
   `top-safe-2.5` for the expanded chat form's collapse button.
 
 A control placed inside a padded box still needs its own `top-safe-N`: absolute positions
-ignore the padding. Check pinned content with the insets simulated (the Safe areas page in
+ignore the padding. Dialogs keep clear of the insets on their own (see Dialogs on phones under
+Components). Check pinned content with the insets simulated (the Safe areas page in
 Storybook does this), since they are 0 in a desktop browser.
 
 ## Elevation & Depth
@@ -828,6 +829,12 @@ icon buttons in the chat form are fully round.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
 - **Floating panels:** every menu, popover, select list, hover card and drawer uses
   `matte-float`; dialogs use `matte-float-modal`.
+- **Dialogs on phones:** below `md` every dialog is full screen, whatever size it takes on a
+  desktop. The shared `Dialog.Content` does this, so a dialog sets only its desktop size and
+  never its own phone size. Its top and bottom borders take the height of the status bar and
+  the home indicator, transparent, so the content keeps clear of both with no change to its
+  padding (see Safe areas). A dialog that draws its own full-screen content instead, like the
+  attachment preview, keeps clear with `pt-safe`, `pb-safe` and `top-safe-N` itself.
 - **Copy feedback:** a copy action turns its icon into a `fg-success` check for 1.5s
   (`COPY_FEEDBACK_RESET_MS`), only when the copy succeeded, then back. The icon pops in with a
   150ms fade and scale, skipped on first render and with reduced motion.
@@ -864,6 +871,7 @@ icon buttons in the chat form are fully round.
 - Don't animate for decoration: no motion on things that did not change, no bounces on
   entrances, and nothing that delays the user.
 - Don't stack two glass surfaces with blur directly on top of each other.
+- Don't give a dialog its own size on a phone: every dialog is full screen there.
 
 ## Proposing changes
 
