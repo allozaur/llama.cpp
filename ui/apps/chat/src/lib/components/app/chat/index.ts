@@ -488,6 +488,13 @@ export { default as ChatMessageSynthetic } from './ChatMessages/ChatMessage/Chat
 export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/ChatMessageCompaction.svelte';
 
 /**
+ * A system message made from a library prompt, laid out like the MCP prompt card:
+ * the prompt's name above, with an optional status (e.g. "Modified"), and its text
+ * in a card.
+ */
+export { default as ChatMessagePromptContent } from './ChatMessages/ChatMessage/ChatMessagePrompt/ChatMessagePromptContent.svelte';
+
+/**
  * Assistant message display component. Renders assistant responses with left-aligned styling.
  * A basic chat reply renders as reasoning and text (via ChatMessageAssistantResponse); a reply
  * that ran the agentic loop renders as an Agent Trace (via ChatMessageAgentTrace). Shows model
