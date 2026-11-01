@@ -727,10 +727,12 @@ never a hand-written `calc()`:
 
 A control placed inside a padded box still needs its own `top-safe-N`: absolute positions
 ignore the padding. Dialogs keep clear of the insets on their own (see Dialogs on phones under
-Components). Under the status bar, every route on a phone has the `status-bar-fade` from the
-root layout: solid behind the bar and fading out below it, like the fade under the desktop tab
-bar, so content scrolls away under the bar instead of colliding with its clock. A route needs no
-fade of its own; what covers the whole screen, like the expanded chat form, hides it. Check
+Components). At the top, every route on a phone has the `status-bar-fade` from the root
+layout: solid behind the status bar and the row of corner controls under it, fading out down to
+`--page-top`, like the fade under the desktop tab bar, so content scrolls away under them
+instead of colliding with the clock or the chat's header. A route needs no fade of its own;
+what covers the whole screen, like the expanded chat form, hides it, and it fades out as the
+page slides aside for the sidebar. Check
 pinned content with the insets simulated (the Safe areas page in
 Storybook does this), since they are 0 in a desktop browser.
 
@@ -842,6 +844,12 @@ icon buttons in the chat form are fully round.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
 - **Floating panels:** every menu, popover, select list, hover card and drawer uses
   `matte-float`; dialogs use `matte-float-modal`.
+- **Chat header on phones:** a chat shows its title and, under it, its working directory
+  centred between the menu key and the context gauge, on the top fade. The directory is the
+  folder's name (the full path is its title) and tapping it opens the directory picker, which
+  on a phone is a drawer. A new chat has no header yet: it offers "Set working directory" in
+  the + menu instead, and no chip sits under the form on a phone. The header steps aside with
+  the corner keys while the expanded chat form covers the screen.
 - **Dialogs on phones:** below `md` every dialog is full screen, whatever size it takes on a
   desktop. The shared `Dialog.Content` does this, so a dialog sets only its desktop size and
   never its own phone size. Its top and bottom borders take the height of the status bar and
