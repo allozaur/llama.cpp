@@ -5,6 +5,7 @@
 
 import type { SystemPromptEntry } from '../points/system-prompts';
 import type { ExtensionContext } from '../types';
+import SystemPromptMcpCard from './components/contributions/SystemPromptMcpCard.svelte';
 import McpLogo from './components/McpLogo.svelte';
 import { MCP_PROMPTS_PICKER_ID } from './composer';
 import { pendingPromptArguments } from './prompt-arguments.svelte';
@@ -12,13 +13,14 @@ import { mcpStore } from './stores/index.svelte';
 import { PROMPT_CONTENT_SEPARATOR } from '$lib/constants';
 import { ContentPartType } from '$lib/enums';
 import type { MCPPromptInfo, PromptMessage } from '$lib/types';
-import { buildMcpPromptId } from '$lib/utils';
+import { buildMcpPromptId, isMcpPromptId } from '$lib/utils';
 
 export function contributeSystemPrompts(ctx: ExtensionContext): void {
 	// the prompts behind the entries handed out, by entry id
 	let listed: Record<string, MCPPromptInfo> = {};
 
 	ctx.contribute('systemPromptSources', {
+		card: SystemPromptMcpCard,
 		icon: McpLogo,
 		id: 'mcp',
 		label: 'MCP Prompts',
@@ -55,6 +57,8 @@ export function contributeSystemPrompts(ctx: ExtensionContext): void {
 			pendingPromptArguments.set(prompt);
 			composer.openPicker(MCP_PROMPTS_PICKER_ID);
 		},
+
+		owns: isMcpPromptId,
 
 		async resolve(entry): Promise<string | null> {
 			const prompt = listed[entry.id];
