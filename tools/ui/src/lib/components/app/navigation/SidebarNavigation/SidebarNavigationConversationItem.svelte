@@ -385,7 +385,7 @@
 				? 'min-h-11 px-3 py-2'
 				: 'min-h-9 px-2 py-1.5 max-md:min-h-12 max-md:rounded-2xl max-md:px-3.5 max-md:py-3 md:min-h-8 md:py-1',
 			isLanding && 'invisible',
-			isActive ? 'bg-foreground/5 text-accent-foreground' : 'text-foreground/75',
+			isActive ? 'selected-row-surface text-accent-foreground' : 'text-foreground/75',
 			contextMenuOpen && 'bg-foreground/10',
 			isSelected && 'bg-primary/10 hover:bg-primary/15',
 			isSelectionMode && 'is-selection-mode',
