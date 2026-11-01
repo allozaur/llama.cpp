@@ -95,6 +95,20 @@
 	border-radius: var(--inset-group-radius);
 }
 
+/* the row a sidebar list is on: the inset group's edge and shade around a tint. It keeps the
+   row's own radius, and hover or press fills (bg-*) still paint over it */
+@utility selected-row-surface {
+	@apply matte-glass;
+	backdrop-filter: none;
+	--glass-background: var(--selected-row-background);
+	--glass-edge-side: var(--inset-group-edge-side);
+	--glass-edge-mid: var(--inset-group-edge-mid);
+	--glass-edge-side-focus: var(--inset-group-edge-side);
+	--glass-edge-mid-focus: var(--inset-group-edge-mid);
+	--glass-highlight: transparent;
+	--glass-shadow: var(--inset-group-shadow);
+}
+
 /* Floating panel (menus, popovers, drawers): frosted fill, faint rim, lifted shadow. */
 @utility matte-float {
 	background-color: var(--float-background, var(--float-panel-background));

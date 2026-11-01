@@ -251,6 +251,12 @@ components:
     backgroundColor: '{colors.edge-ambient-side}'
   inset-group-edge-dark:
     backgroundColor: '{colors.edge-ambient-side-dark}'
+  selected-row:
+    backgroundColor: 'oklch(0.145 0 0 / 0.05)'
+    textColor: '{colors.fg-default}'
+  selected-row-dark:
+    backgroundColor: 'oklch(0.985 0 0 / 0.05)'
+    textColor: '{colors.fg-default-dark}'
   user-bubble:
     backgroundColor: '#f3f3f3'
     textColor: '{colors.fg-default}'
@@ -885,6 +891,11 @@ icon buttons in the chat form are fully round.
   shade, which makes a field. Unlike the other `matte-glass` surfaces it does not blur: it
   already sits on glass, and a second backdrop blur re-paints the panel's fill behind it and
   turns the group visibly lighter, whatever its own fill.
+- **Selected rows:** `selected-row-surface` marks the row a sidebar list is on: a
+  conversation, a project or a top action, on desktop and on a phone. It is a 5% tint of the
+  text colour, under hover's 10%, with the inset group's edge and shade, so the selected row
+  reads as picked out rather than hovered, in both modes. It keeps the row's own radius, and
+  hover and press fills still paint over it.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
 - **Floating panels:** every menu, popover, select list, hover card and drawer uses
   `matte-float`; dialogs use `matte-float-modal`.
