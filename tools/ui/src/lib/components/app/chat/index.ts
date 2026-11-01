@@ -585,6 +585,13 @@ export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/Cha
 export { default as ChatMessageMcpPromptContent } from './ChatMessages/ChatMessage/ChatMessageMcpPrompt/ChatMessageMcpPromptContent.svelte';
 
 /**
+ * A system message made from a library prompt, laid out like the MCP prompt card:
+ * the prompt's name above, with an optional status (e.g. "Modified"), and its text
+ * in a card.
+ */
+export { default as ChatMessagePromptContent } from './ChatMessages/ChatMessage/ChatMessagePrompt/ChatMessagePromptContent.svelte';
+
+/**
  * Assistant message display component. Renders assistant responses with left-aligned styling.
  * Supports both plain markdown content (via MarkdownContent) and agentic content with tool calls
  * (via ChatMessageAgenticContent). Shows model info badge, statistics, and action buttons.
