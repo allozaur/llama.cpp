@@ -31,7 +31,7 @@
 </svelte:head>
 
 <div
-	class="page-enter mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-12 pb-16 md:px-8 md:pt-6"
+	class="page-enter mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pt-(--page-top) pb-16 md:px-8 md:pt-6"
 >
 	<div class="flex flex-wrap items-start gap-4">
 		<div class="flex min-w-0 flex-col gap-1">
