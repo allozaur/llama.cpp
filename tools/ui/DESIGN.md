@@ -249,9 +249,9 @@ components:
     backgroundColor: '#181818'
     textColor: '{colors.fg-default-dark}'
   user-bubble-edge:
-    backgroundColor: '{colors.edge-faint}'
+    backgroundColor: '{colors.edge-ambient-mid}'
   user-bubble-edge-dark:
-    backgroundColor: '{colors.edge-faint-dark}'
+    backgroundColor: '{colors.edge-ambient-mid-dark}'
   floating-panel:
     backgroundColor: '#ffffff'
     textColor: '{colors.fg-default}'
@@ -801,8 +801,10 @@ icon buttons in the chat form are fully round.
   as a control of its size.
 - **Chat form:** one `chat-form-surface` holding the input, attachments and actions. Its fill
   is the muted grey at 60% in light mode and 75% in dark mode.
-- **User message bubble:** the primary colour at 5% with `matte-sheen` and the very faint
-  `edge-faint` hairline, so it separates from the page without a visible border.
+- **User message bubble:** the primary colour at 5% with `matte-sheen` and an even, very faint
+  hairline (`edge-ambient-mid`), so it separates from the page without a visible border. It
+  keeps nothing else of `card-surface`: no inner highlight ring, no shadow and no backdrop
+  blur, which together read as a border, most in dark mode.
 - **Sidebar:** `sidebar-surface`, the muted fill at 60% with no inner highlight and the
   ambient edge. On small screens it keeps a plain `shadow-md` instead.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
