@@ -234,8 +234,14 @@ class UiStore {
 		this.projectPicker = options;
 	}
 
-	/** Open the servers dialog, where a server is paired or pointed at. */
+	/** Open the servers, where a server is paired or pointed at: a page on a phone, a dialog elsewhere. */
 	openServers(): void {
+		if (deviceStore.isMobile) {
+			void goto(ROUTES.SERVERS);
+
+			return;
+		}
+
 		this.serversOpen = true;
 	}
 

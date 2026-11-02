@@ -9,6 +9,7 @@ import {
 	MCP_SERVERS_ROUTE_ID,
 	MODELS_ROUTE_ID,
 	PROJECTS_ROUTE_ID,
+	SERVERS_ROUTE_ID,
 	SETTINGS_ROUTE_ID
 } from './routes.constants';
 import { Search, Server, Settings, SquarePen } from '@lucide/svelte';
@@ -196,6 +197,7 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	},
 	{
 		action: SidebarAction.SERVERS,
+		activeRouteId: SERVERS_ROUTE_ID,
 		icon: Server,
 		tooltip: 'Servers'
 	},
