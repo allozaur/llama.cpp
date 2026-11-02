@@ -546,7 +546,8 @@
 
 				break;
 			case SidebarAction.SERVERS:
-				openDialog(() => uiStore.openServers());
+				if (isOnMobile) navigateBehind(() => goto(ROUTES.SERVERS));
+				else openDialog(() => uiStore.openServers());
 
 				break;
 			// a dialog on a desktop or tablet; on a phone, a page of its own
