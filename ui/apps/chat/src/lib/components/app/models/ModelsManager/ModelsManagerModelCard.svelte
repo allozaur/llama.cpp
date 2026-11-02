@@ -70,7 +70,7 @@
 
 			{#if favorite}
 				<!-- the heart is decorative, the text beside it carries the state -->
-				<Heart aria-hidden="true" class="mt-1 h-3.5 w-3.5 shrink-0 text-rose-500" />
+				<Heart aria-hidden="true" class="mt-1 size-icon-sm shrink-0 text-rose-500" />
 
 				<span class="sr-only">favorited</span>
 			{/if}
