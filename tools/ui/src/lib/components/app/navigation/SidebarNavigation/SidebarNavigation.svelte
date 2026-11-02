@@ -6,7 +6,6 @@
 		ActionIcon,
 		DialogConversationDelete,
 		DialogConversationRename,
-		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
 		DialogMcpServers,
@@ -20,6 +19,7 @@
 		SidebarNavigationActions,
 		SidebarNavigationConversationList
 	} from '$lib/components/app';
+	import { ModelsDiscoverDetailsDrawer } from '$lib/components/app/models/discover';
 	import {
 		ROUTES,
 		SIDEBAR_ACTIONS_ITEMS,
@@ -771,7 +771,7 @@
 
 <DialogMcpServers bind:open={mcpDialogOpen} />
 
-<DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
+<ModelsDiscoverDetailsDrawer />
 
 <DialogGroup />
 

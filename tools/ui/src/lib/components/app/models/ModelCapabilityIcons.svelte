@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		CAPABILITY_ICONS,
@@ -12,6 +13,8 @@
 	import type { ModelModalities } from '$lib/types/models';
 
 	interface Props {
+		/** Name every capability in an outline badge, the way the MCP server cards do. */
+		asBadges?: boolean;
 		modalities?: ModelModalities;
 		supportsThinking?: boolean;
 		supportsToolUse?: boolean;
@@ -22,6 +25,7 @@
 	}
 
 	let {
+		asBadges = false,
 		gapClass = 'gap-1.25',
 		hideCapabilities = false,
 		hideModalities = false,
@@ -48,7 +52,33 @@
 	);
 </script>
 
-{#if hasIcons}
+{#if hasIcons && asBadges}
+	<span class="inline-flex flex-wrap items-center gap-1.5">
+		{#if !hideCapabilities}
+			{#each capabilities as capability (capability)}
+				{@const Icon = CAPABILITY_ICONS[capability]}
+
+				<Badge class="h-5 gap-1 px-1.5 text-[10px]" variant="outline">
+					<Icon class="size-icon-xs text-muted-foreground" />
+
+					{CAPABILITY_LABELS[capability]}
+				</Badge>
+			{/each}
+		{/if}
+
+		{#if !hideModalities}
+			{#each shownModalities as modality (modality)}
+				{@const Icon = MODALITY_ICONS[modality]}
+
+				<Badge class="h-5 gap-1 px-1.5 text-[10px]" variant="outline">
+					<Icon class="size-icon-xs text-muted-foreground" />
+
+					{MODALITY_LABELS[modality]}
+				</Badge>
+			{/each}
+		{/if}
+	</span>
+{:else if hasIcons}
 	<span class="inline-flex items-center {gapClass}">
 		{#if !hideCapabilities}
 			{#each capabilities as capability (capability)}

@@ -125,13 +125,11 @@
 		{isLoaded}
 		{onClose}
 		onRequestCancelDownload={() => (cancelDownloadOpen = true)}
-		onSeeInDiscover={isDownload
-			? () => uiStore.openModelsDiscover(repoOf(option.model))
-			: undefined}
 		onToggleDownload={() => void modelsStore.status.toggleDownload(option.model)}
 		{onToggleLoad}
 		{onUseInChat}
 		{onUseInNewChat}
+		onViewOnHub={isDownload ? () => uiStore.openHubModelDetails(repoOf(option.model)) : undefined}
 		{option}
 		{status}
 	/>
@@ -235,13 +233,13 @@
 				{isLoaded}
 				isLoading={status === ServerModelStatus.LOADING}
 				onRequestCancelDownload={() => (cancelDownloadOpen = true)}
-				onSeeInDiscover={isDownload
-					? () => uiStore.openModelsDiscover(repoOf(option.model))
-					: undefined}
 				onToggleDownload={() => void modelsStore.status.toggleDownload(option.model)}
 				{onToggleLoad}
 				{onUseInChat}
 				{onUseInNewChat}
+				onViewOnHub={isDownload
+					? () => uiStore.openHubModelDetails(repoOf(option.model))
+					: undefined}
 			/>
 		</div>
 	{/if}

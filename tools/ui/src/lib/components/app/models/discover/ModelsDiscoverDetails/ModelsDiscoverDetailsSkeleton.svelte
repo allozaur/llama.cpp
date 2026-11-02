@@ -3,7 +3,7 @@
 </script>
 
 <!-- Static skeleton of ModelsDiscoverDetails: header, metadata chips, download options and readme lines. -->
-<div class="@container space-y-6 p-6 pr-0" data-slot="model-details-skeleton">
+<div class="@container space-y-6 p-6" data-slot="model-details-skeleton">
 	<!-- Header: avatar, name with capability icons, base model line, HF link -->
 	<div class="space-y-3">
 		<div class="flex items-start justify-between gap-3">
