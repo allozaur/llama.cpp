@@ -24,6 +24,8 @@ export const ROUTES = {
 	MODELS: '/models',
 	/** Search — mobile-only full-page conversation search. */
 	SEARCH: '/search',
+	/** Servers - a page on a phone, a dialog elsewhere. */
+	SERVERS: '/servers',
 	/** Settings - a page on a phone, a dialog elsewhere. */
 	SETTINGS: '/settings',
 	/** Root — start of the app. */
