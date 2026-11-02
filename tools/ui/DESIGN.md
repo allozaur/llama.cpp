@@ -652,7 +652,7 @@ fills are given as they render over the page, so contrast checks see the real co
 The palette is achromatic. Hue appears only in the hairline edges (a cool grey at hue 250,
 kept almost neutral) and in status and error colours.
 
-- **Light mode's two levels:** the page is a faint grey (`surface-page`, `#fafafa`) and
+- **Light mode's two levels:** the page is a faint grey (`surface-page`, `#fbfbfb`) and
   everything that sits on it as a control or a container, glass buttons, keys, the chat form,
   cards, fields, chips and dialogs, is white or white glass, so it reads lighter than the page,
   never darker. Only quiet panels, hover and selected fills, code and the user bubble are greyer

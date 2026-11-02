@@ -5,7 +5,7 @@
 :root {
 	/* surfaces: what a region of the page sits on. The page is a faint grey, so glass and
 	   fields, white, sit lighter than it */
-	--surface-page: var(--neutral-50);
+	--surface-page: var(--neutral-25);
 	--surface-muted: var(--neutral-100);
 	--surface-emphasis: var(--neutral-150);
 	--surface-selected: var(--neutral-150);
