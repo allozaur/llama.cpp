@@ -912,7 +912,10 @@ icon buttons in the chat form are fully round.
   padding (see Safe areas). A dialog that draws its own full-screen content instead, like the
   attachment preview, keeps clear with `pt-safe`, `pb-safe` and `top-safe-N` itself. Alerts
   (`AlertDialog`: confirmations, renames, errors) are the exception: a short question with a
-  button or two, they stay small and centred on a phone too.
+  button or two, they stay small and centred on a phone too. A place the sidebar opens, like
+  Settings or MCP Servers, is no dialog on a phone at all but a page at its own route
+  (`#/settings`, `#/mcp-servers`), with the menu key and a title like any phone page; a
+  desktop or tablet keeps it a dialog over the page it was opened from.
 - **Glass keys:** a round key that floats over the page and lets it show through, like the
   menu and context gauge keys at a phone's top corners and the key back to a chat's bottom, is
   a `GlassKey` (`GLASS_KEY_CLASS`): white glass (`surface-glass`), a faint `line-default`
