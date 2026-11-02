@@ -1,5 +1,10 @@
 import { LOCAL_BACKEND_ID, type ModalityKey } from '$lib/constants';
-import { ModelCapability, ModelGroupKind, ModelsTableGroupKind } from '$lib/enums';
+import {
+	ModelCapability,
+	ModelGroupKind,
+	ModelsTableGroupKind,
+	ModelsTableServerKind
+} from '$lib/enums';
 import { HuggingFaceService, ModelsService } from '$lib/services';
 import { modelsStore } from '$lib/stores';
 import type {
@@ -9,6 +14,8 @@ import type {
 	ModelSidecarBadge
 } from '$lib/types/models';
 import { detectThinkingSupport, detectToolUseSupport, repoOf } from '$lib/utils';
+import { getServer } from '$lib/utils/api-base';
+import { isLocalServer } from '$lib/utils/server';
 
 /** One repo of the table, with the rows it ships as. */
 export interface ModelQuantGroup {
@@ -49,14 +56,14 @@ export function downloadGroups(
 ): ModelQuantGroup[] {
 	return entries.map((entry) => {
 		const listed = models.find((candidate) => candidate.model === entry.repoWithTag);
-		// the synthesized option carries backendId, which ModelOption drops on
+		// the synthesized option carries serverId, which ModelOption drops on
 		// assignment, so the callers spread it instead of typing this as one
 		const option = listed ?? {
-			backendId: LOCAL_BACKEND_ID,
 			capabilities: [],
 			id: entry.repoWithTag,
 			model: entry.repoWithTag,
-			name: entry.repoWithTag
+			name: entry.repoWithTag,
+			serverId: LOCAL_BACKEND_ID
 		};
 		// a draft still coming down badges the id, an on-disk one keeps its sub-line
 		const sidecars = sidecarsFor(repoOf(entry.repoWithTag));
@@ -87,10 +94,14 @@ export function findModelOption(
 
 /** One collapsible block of the manager's table. */
 export interface ModelsTableGroup {
+	/** Server the block belongs to, when it is tied to one. */
+	serverId?: string | null;
 	/** One entry per repo, its quants hanging off it. */
 	items: ModelQuantGroup[];
+	isLocal?: boolean;
 	key: string;
-	kind: ModelsTableGroupKind;
+	/** Manager sections use the kind constants, server blocks their own kinds. */
+	kind: ModelsTableGroupKind | ModelsTableServerKind;
 	label: string;
 }
 
@@ -102,16 +113,10 @@ export function isRowControlClick(event: MouseEvent): boolean {
 	return event.target instanceof Element && event.target.closest(ROW_CONTROL_SELECTOR) !== null;
 }
 
-/** Context the model runs with: what a loaded model reports. */
-export function configuredContext(option: ModelOption): number | null {
-	return modelsStore.isModelRunning(option.model)
-		? modelsStore.props.getModelContextSize(option.model)
-		: null;
-}
-
 /**
  * Capability a model reports: true or false once its listing or its chat template
- * answers, null while the Hub record that carries the template is not read yet.
+ * answers, null while the Hub record that carries the template is not read yet. A
+ * listing that declares nothing is not a listing that lacks the capability.
  */
 export function modelCapability(option: ModelOption, capability: ModelCapability): boolean | null {
 	if (option.capabilities.includes(capability)) return true;
@@ -128,8 +133,25 @@ export function modelCapability(option: ModelOption, capability: ModelCapability
 		: detectThinkingSupport(template);
 }
 
+/** Context the model runs with: what a loaded local model reports. */
+export function configuredContext(option: ModelOption): number | null {
+	if (!isLocalOption(option)) return null;
+
+	return modelsStore.isModelRunning(option.model)
+		? modelsStore.props.getModelContextSize(option.model)
+		: null;
+}
+
+export function servedByLabel(option: ModelOption): string {
+	const server = getServer(option.serverId);
+
+	if (!server || isLocalServer(server)) return 'This server';
+
+	return server.name;
+}
+
 /**
- * Context a model reports: the provider listing first, then the cached Hub record.
+ * Context a model reports: the server listing first, then the cached Hub record.
  * Null while neither of them has answered.
  */
 export function modelContextLength(option: ModelOption): number | null {
@@ -140,12 +162,20 @@ export function modelContextLength(option: ModelOption): number | null {
 	);
 }
 
+export function isLocalOption(option: ModelOption): boolean {
+	return (option.serverId ?? LOCAL_BACKEND_ID) === LOCAL_BACKEND_ID;
+}
+
 /** Fold the quants of one repo into a single entry, so the table shows one row per model. */
-export function groupModelQuants(models: ModelOption[]): ModelQuantGroup[] {
+export function groupModelQuants(models: ModelOption[], mergeServers = false): ModelQuantGroup[] {
 	const groups = new Map<string, ModelQuantGroup>();
 
 	for (const option of models) {
-		const key = repoOf(option.model);
+		const repo = repoOf(option.model);
+		// groups stay within one server, so the same repo served by two servers
+		// is not read as two quants of one model. The OAI-compat block asks for the
+		// opposite: one repo, one row per server that serves it.
+		const key = mergeServers ? repo : `${option.serverId ?? ''}::${repo}`;
 		const group = groups.get(key);
 
 		if (group) {
@@ -161,8 +191,13 @@ export function groupModelQuants(models: ModelOption[]): ModelQuantGroup[] {
 		const kind = groupKind(group.quants);
 		const modelIds = group.quants.map((option) => option.model);
 
-		// the very same id twice is not a quant set; keep those rows apart
-		if (modelIds.length > 1 && modelIds.every((model) => model === modelIds[0])) {
+		// the very same id twice is not a quant set; keep those rows apart, unless
+		// the group exists to list the servers that serve it
+		if (
+			kind !== ModelGroupKind.SERVERS &&
+			modelIds.length > 1 &&
+			modelIds.every((model) => model === modelIds[0])
+		) {
 			return group.quants.map((option) => ({
 				...group,
 				base: option,
@@ -176,8 +211,12 @@ export function groupModelQuants(models: ModelOption[]): ModelQuantGroup[] {
 	});
 }
 
-/** What a group folds: quants or variants of one repo. */
+/** What a group folds: servers, quants, or variants of one repo. */
 function groupKind(quants: ModelOption[]): ModelGroupKind {
+	const servers = new Set(quants.map((option) => option.serverId ?? ''));
+
+	if (servers.size > 1) return ModelGroupKind.SERVERS;
+
 	const isQuant = quants.every(
 		(option) => (option.parsedId ?? ModelsService.parseModelId(option.model)).quantization
 	);

@@ -10,9 +10,10 @@ import {
 	MODELS_ROUTE_ID,
 	PROJECTS_ROUTE_ID,
 	ROUTES,
+	SERVERS_ROUTE_ID,
 	SETTINGS_ROUTE_ID
 } from './routes.constants';
-import { Library, Search, Settings, SquarePen } from '@lucide/svelte';
+import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
@@ -103,8 +104,8 @@ export const STATS_UNITS = {
 
 export const DEFAULT_MOBILE_BREAKPOINT = 768;
 
-/** Models listed per remote provider before the "+ X more" line; search covers the rest. */
-export const REMOTE_PROVIDER_MODEL_LIMIT = 12;
+/** Models listed per remote server before the "+ X more" line; search covers the rest. */
+export const REMOTE_SERVER_MODEL_LIMIT = 12;
 
 /** Orgs whose avatar is dark and needs inverting in dark mode. */
 export const DARK_INVERT_AVATAR_ORGS = ['openai'];
@@ -198,6 +199,12 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		activeRouteId: MCP_SERVERS_ROUTE_ID,
 		icon: McpLogo,
 		tooltip: 'MCP'
+	},
+	{
+		action: SidebarAction.SERVERS,
+		activeRouteId: SERVERS_ROUTE_ID,
+		icon: Server,
+		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,

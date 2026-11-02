@@ -18,6 +18,7 @@ import {
 	IDXDB_VERSION,
 	LEGACY_AGENTIC_REGEX,
 	LEGACY_REASONING_TAGS,
+	LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY,
 	NEW_TO_DEPRECATED_MAP,
 	SETTINGS_KEYS,
 	STORAGE_APP_NAME,
@@ -25,6 +26,8 @@ import {
 } from '$lib/constants';
 import { BooleanString, MessageRole } from '$lib/enums';
 import type { McpServerOverride } from '$lib/types/database';
+import { createRemoteServer, normalizeShareCode, parseServersSettings } from '$lib/utils/server';
+import { uuid } from '$lib/utils/uuid';
 import Dexie from 'dexie';
 
 // Types
@@ -829,6 +832,64 @@ const mcpServerOverridesToToolPolicyMigration: Migration = {
 			);
 	}
 };
+const TUNNEL_SERVERS_LEGACY_KEY = LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY;
+/* A migration runs once per browser, so its id is written in stone: the name moved, the id did not. */
+const REMOTE_SERVERS_MIGRATION_ID = 'remote-providers-v1';
+/**
+ * Fold the `llama_servers` registry the first remote-access build kept in its own
+ * localStorage key into the settings-backed server list, as remote servers.
+ *
+ * The tunnel build stored exactly one shape - `{ type: 'tunnel', code }` - and a
+ * code it cannot validate is worthless, so unusable entries are dropped. Codes
+ * are credentials, so the legacy key is left in place: a user who downgrades
+ * still has what they pasted.
+ */
+const remoteServersMigration: Migration = {
+	description: 'Move tunnel servers onto the server list as remote servers',
+	id: REMOTE_SERVERS_MIGRATION_ID,
+
+	async run(): Promise<void> {
+		const raw = localStorage.getItem(TUNNEL_SERVERS_LEGACY_KEY);
+
+		if (!raw) return;
+
+		let servers: unknown;
+
+		try {
+			servers = JSON.parse(raw);
+		} catch {
+			return;
+		}
+
+		if (!Array.isArray(servers)) return;
+
+		const migrated = servers.flatMap((server) => {
+			const entry = server as { code?: unknown; type?: unknown };
+
+			if (entry?.type !== 'tunnel' || typeof entry.code !== 'string') return [];
+
+			const code = normalizeShareCode(entry.code);
+
+			return code ? [createRemoteServer(code, uuid(), 'Remote server')] : [];
+		});
+
+		if (migrated.length === 0) return;
+
+		const configRaw = localStorage.getItem(CONFIG_LOCALSTORAGE_KEY);
+		const config = configRaw ? JSON.parse(configRaw) : {};
+		const kept = parseServersSettings(config[SETTINGS_KEYS.SERVERS]);
+		const codes = new Set(kept.map((server) => server.code));
+		const added = migrated.filter((server) => !codes.has(server.code));
+
+		if (added.length === 0) return;
+
+		config[SETTINGS_KEYS.SERVERS] = JSON.stringify([...kept, ...added]);
+		localStorage.setItem(CONFIG_LOCALSTORAGE_KEY, JSON.stringify(config));
+
+		if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
+			console.log(`[Migration] Remote servers: moved ${added.length} tunnel servers`);
+	}
+};
 const migrations: Migration[] = [
 	localStorageMigration,
 	idxdbMigration,
@@ -840,7 +901,8 @@ const migrations: Migration[] = [
 	configTypesMigration,
 	renderKeysMigration,
 	modelOrgNameKeyMigration,
-	mcpServerOverridesToToolPolicyMigration
+	mcpServerOverridesToToolPolicyMigration,
+	remoteServersMigration
 ];
 
 export const MigrationService = {

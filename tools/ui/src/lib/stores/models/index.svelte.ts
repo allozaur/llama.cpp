@@ -11,21 +11,27 @@ import { browser } from '$app/environment';
 import {
 	FAVORITE_MODELS_LOCALSTORAGE_KEY,
 	HIDDEN_MODELS_LOCALSTORAGE_KEY,
+	LOCAL_BACKEND_ID,
 	MODEL_GROUP_OPEN_LOCALSTORAGE_KEY,
 	RECENT_MODEL_LIMIT,
-	RECENT_MODELS_LOCALSTORAGE_KEY
+	RECENT_MODELS_LOCALSTORAGE_KEY,
+	SELECTED_MODEL_LOCALSTORAGE_KEY
 } from '$lib/constants';
 import { ReasoningEffort, ServerModelStatus } from '$lib/enums';
 import { HuggingFaceService } from '$lib/services/huggingface.service';
 import { ModelsService } from '$lib/services/models.service';
-// direct imports between stores, not via the barrel, to avoid circular deps
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
 import { type ModelPropsHost, ModelPropsManager } from '$lib/stores/models/props.svelte';
 import { type ModelStatusHost, ModelStatusManager } from '$lib/stores/models/status.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '$lib/stores/servers.svelte';
+import { serversModelsStore } from '$lib/stores/serversModels.svelte';
 import type { ParsedModelId } from '$lib/types/models';
 import { getConversationModel } from '$lib/utils/conversation-utils';
 import { repoOf } from '$lib/utils/model-names';
+import { qualifyModelId, rawModelId, serverIdFromModelId } from '$lib/utils/model-option-id';
+import { readModelContextLength } from '$lib/utils/server';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
 
@@ -37,6 +43,27 @@ const MAX_GROUP_OPEN_ENTRIES = 200;
  * list window and the rest of the rows fetch as they scroll near the viewport.
  */
 const HUB_WARM_LIMIT = 12;
+
+/** Selection kept from the last session, so a reload does not drop the picked model. */
+function loadStoredSelection(): { id: string; model: string | null } | null {
+	if (!browser) return null;
+
+	try {
+		const raw = localStorage.getItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
+
+		if (!raw) return null;
+
+		const parsed = JSON.parse(raw) as { id?: unknown; model?: unknown };
+
+		if (typeof parsed?.id !== 'string' || !parsed.id) return null;
+
+		return { id: parsed.id, model: typeof parsed.model === 'string' ? parsed.model : null };
+	} catch {
+		return null;
+	}
+}
+
+const storedSelection = loadStoredSelection();
 
 /** Models kept out of the selector. */
 function loadHiddenModels(): Set<string> {
@@ -69,7 +96,7 @@ function loadGroupOpenState(): SvelteMap<string, boolean> {
 	}
 }
 
-/** Recently used backend-qualified ids, most recent first. */
+/** Recently used server-qualified ids, most recent first. */
 function loadRecentModels(): string[] {
 	if (!browser) return [];
 
@@ -89,16 +116,59 @@ function loadRecentModels(): string[] {
 }
 
 class ModelsStore implements ModelPropsHost, ModelStatusHost {
+	activeModels = $state<ModelOption[]>([]);
 	error = $state<string | null>(null);
 	favoriteModelIds = $state<Set<string>>(this.loadFavoritesFromStorage());
 	groupOpenState = $state<SvelteMap<string, boolean>>(loadGroupOpenState());
 	hiddenModelIds = $state<Set<string>>(loadHiddenModels());
 	loading = $state(false);
-	models = $state<ModelOption[]>([]);
+	/**
+	 * Every selectable model across enabled servers. The active server's
+	 * models come from {@link activeModels}; the rest come from the background
+	 * prefetch cache. Ids are server-qualified so the same model name on two
+	 * servers stays distinct.
+	 */
+	/**
+	 * Computed once per state change. Rows reach this through per-model props
+	 * lookups, so a getter that rebuilt the list on every read made opening the
+	 * selector quadratic in the size of the catalog.
+	 */
+	models = $derived.by((): ModelOption[] => {
+		const activeServerId = serversStore.active.id;
+		const merged: ModelOption[] = [];
+		const seen = new SvelteSet<string>();
+		const push = (option: ModelOption, serverId: string) => {
+			const id = qualifyModelId(serverId, rawModelId(option.id));
+
+			// a server can be listed twice while a switch is in flight: the rows
+			// of the previous server are still in activeModels
+			if (seen.has(id)) return;
+
+			seen.add(id);
+			merged.push({ ...option, id, serverId });
+		};
+
+		for (const option of this.activeModels) {
+			// keep the server an option was built for: rows from the previous
+			// server must not be relabelled while a switch is in flight
+			push(option, option.serverId ?? activeServerId);
+		}
+
+		for (const server of serversStore.enabled) {
+			if (server.id === activeServerId) continue;
+
+			for (const option of serversModelsStore.get(server.id).models) {
+				push(option, option.serverId ?? server.id);
+			}
+		}
+
+		return merged;
+	});
 	recentModelIds = $state<string[]>(loadRecentModels());
 	routerModels = $state<ApiModelDataEntry[]>([]);
-	selectedModelId = $state<string | null>(null);
-	selectedModelName = $state<string | null>(null);
+	selectedModelId = $state<string | null>(storedSelection?.id ?? null);
+
+	selectedModelName = $state<string | null>(storedSelection?.model ?? null);
 
 	updating = $state(false);
 
@@ -112,6 +182,9 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	// Without this, ?model=<name> URL handler races an in-progress fetch and sees an empty list.
 	private inflightFetch: Promise<void> | null = null;
 
+	/** A restored selection loses to the active conversation's model, a fresh pick does not. */
+	private selectionFromStorage = storedSelection !== null;
+
 	/**
 	 * Model the active conversation view resolves to. Router mode: the user's
 	 * selection first, then the conversation's own model. Otherwise the single
@@ -119,14 +192,20 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 */
 	get activeModelId(): string | null {
 		if (!serverStore.isRouterMode) {
+			// external servers expose a selectable list; prefer the user's pick
+			const selected = this.selectedModelId
+				? this.models.find((m) => m.id === this.selectedModelId)
+				: undefined;
+
+			if (selected) return selected.model;
+
 			return this.models.length > 0 ? this.models[0].model : this.singleModelName;
 		}
 
-		if (this.selectedModelId) {
-			const selected = this.models.find((m) => m.id === this.selectedModelId);
+		const picked = this.selectedModelId && !this.selectionFromStorage ? this.selectedModelId : null;
+		const selected = picked ? this.models.find((m) => m.id === picked) : undefined;
 
-			if (selected) return selected.model;
-		}
+		if (selected) return selected.model;
 
 		const conversationModel = getConversationModel(conversationsStore.activeMessages);
 
@@ -136,7 +215,11 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			if (model) return model.model;
 		}
 
-		return null;
+		const restored = this.selectedModelId
+			? this.models.find((m) => m.id === this.selectedModelId)
+			: undefined;
+
+		return restored?.model ?? null;
 	}
 
 	get loadedModelIds(): string[] {
@@ -189,6 +272,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	clearSelection(): void {
 		this.selectedModelId = null;
 		this.selectedModelName = null;
+		this.persistSelection();
 	}
 
 	/** Family keys folded away under one section, for a list that restores them. */
@@ -243,7 +327,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			return;
 		}
 
-		// favorites are shared across backends, so a stored id may belong to another one
+		// favorites are shared across servers, so a stored id may belong to another one
 		const favorite = this.favoriteModelIds.values().next()?.value;
 		const favoriteOption = favorite
 			? availableModels.find((m) => m.id === favorite || m.model === favorite)
@@ -260,13 +344,26 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	}
 
 	/**
+	 * Make the server serving `modelName` active when it is not already.
+	 * A conversation keeps the model that generated it, which can belong to a
+	 * server other than the active one.
+	 */
+	async ensureModelServer(modelName: string): Promise<void> {
+		const option = this.models.find((model) => model.model === modelName);
+
+		if (!option?.serverId || option.serverId === serversStore.active.id) return;
+
+		await this.selectModelById(option.id);
+	}
+
+	/**
 	 * Fetch list of models from server and detect server role.
 	 * Also fetches modalities for MODEL mode (single model).
 	 */
 	async fetch(force = false): Promise<void> {
 		if (this.inflightFetch) return this.inflightFetch;
 
-		if (this.models.length > 0 && !force) return;
+		if (this.activeModels.length > 0 && !force) return;
 
 		this.inflightFetch = this.runFetch();
 		try {
@@ -293,7 +390,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			this._status.syncPausedDownloads();
 			// keep the selector options in sync: a downloaded / deleted model shows
 			// up here too, not only in the router model rows
-			this.models = this.buildModelOptions(response);
+			this.activeModels = this.buildModelOptions(response);
 			this.warmHubDetails();
 			await this.props.fetchModalitiesForLoadedModels();
 
@@ -339,10 +436,26 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		return null;
 	}
 
+	/**
+	 * Load state a model's own server reports. Only the local server has a status
+	 * feed, so an external server answers from its own model listing.
+	 */
 	getModelStatus(modelId: string): ServerModelStatus | null {
+		// the local feed reports the models its router serves: a same-named entry
+		// on a remote server must not shadow it
 		const model = this.routerModels.find((m) => m.id === modelId);
 
-		return (model?.status?.value as ServerModelStatus) ?? null;
+		if (model) return (model.status?.value as ServerModelStatus) ?? null;
+
+		// a model the local router does not serve belongs to a server, and the
+		// first enabled server listing it owns the state
+		for (const server of serversStore.enabled) {
+			const option = serversModelsStore.get(server.id).models.find((m) => m.model === modelId);
+
+			if (option) return (option.status?.value as ServerModelStatus) ?? null;
+		}
+
+		return null;
 	}
 
 	hasModel(modelName: string): boolean {
@@ -378,13 +491,27 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	async selectModelById(modelId: string, options?: { recordRecent?: boolean }): Promise<void> {
 		if (!modelId || this.updating) return;
 
-		if (this.selectedModelId === modelId) {
-			if (options?.recordRecent) this.recordRecentModel(modelId);
+		const serverId = serverIdFromModelId(modelId) ?? serversStore.active.id;
+		const rawId = rawModelId(modelId);
+		// the selection is stored server-qualified, matching the aggregated
+		// model list, no matter which form the caller passed
+		const qualifiedId = qualifyModelId(serverId, rawId);
+
+		// a model from another server makes that server active first; a remote
+		// one is only reachable once its tunnel is open, so the switch asks for it
+		if (serverId !== serversStore.active.id) {
+			serversStore.setActive(serverId);
+			await serversModelsStore.connectAndLoad(serverId);
+			await this.switchServer();
+		}
+
+		if (this.selectedModelId === qualifiedId) {
+			if (options?.recordRecent) this.recordRecentModel(qualifiedId);
 
 			return;
 		}
 
-		const option = this.models.find((model) => model.id === modelId);
+		const option = this.activeModels.find((model) => model.id === rawId);
 
 		if (!option) throw new Error('Selected model is not available');
 
@@ -392,10 +519,12 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		this.error = null;
 
 		try {
-			this.selectedModelId = option.id;
+			this.selectedModelId = qualifiedId;
 			this.selectedModelName = option.model;
+			this.selectionFromStorage = false;
+			this.persistSelection();
 
-			if (options?.recordRecent) this.recordRecentModel(modelId);
+			if (options?.recordRecent) this.recordRecentModel(qualifiedId);
 
 			// reasoning levels belong to the model that answered: another model in the chat starts at Default
 			const conversationModel = getConversationModel(conversationsStore.activeMessages);
@@ -499,6 +628,53 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		}
 	}
 
+	/**
+	 * Activate a server for the selector tabs. Everything comes from memory:
+	 * the model list and router rows are prefetched at startup and the local
+	 * server state is kept while an external server is active. The selection
+	 * is left alone, switching tabs must not pick a model.
+	 */
+	async switchServer(): Promise<void> {
+		this.error = null;
+
+		const server = serversStore.active;
+
+		// local props describe the server the UI is served from; keep them while
+		// an external server is active instead of dropping and refetching
+		if (server.id === LOCAL_BACKEND_ID) {
+			serverStore.restoreLocalState();
+		} else {
+			serverStore.cacheLocalState();
+			serverStore.clear();
+		}
+
+		const cached = serversModelsStore.get(server.id);
+
+		if (!cached.loaded) {
+			// nothing prefetched for this server (startup prefetch failed): load it once
+			await this.fetch(true);
+
+			return;
+		}
+
+		if (server.id === LOCAL_BACKEND_ID && !serverStore.props) {
+			// first visit to the local tab in this session
+			await serverStore.fetch({ background: true });
+		}
+
+		this.activeModels = cached.models;
+		this.loading = false;
+
+		// the local router rows carry the load statuses; the startup prefetch
+		// already returned them, so a tab switch rebuilds the list from memory
+		if (server.id === LOCAL_BACKEND_ID && this.routerModels.length === 0 && cached.raw) {
+			this.routerModels = cached.raw.data;
+			this.activeModels = this.buildModelOptions(cached.raw);
+		}
+
+		this.warmHubDetails();
+	}
+
 	toDisplayName(id: string): string {
 		const segments = id.split(/\\|\//);
 		const candidate = segments.pop();
@@ -538,10 +714,12 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 
 		const repos: string[] = [];
 
-		for (const option of this.models) {
-			const repo = repoOf(option.model);
+		for (const server of serversStore.enabled) {
+			for (const option of serversModelsStore.get(server.id).models) {
+				const repo = repoOf(option.model);
 
-			if (repo?.includes('/') && !repos.includes(repo)) repos.push(repo);
+				if (repo?.includes('/') && !repos.includes(repo)) repos.push(repo);
+			}
 		}
 
 		// the Hub rate limits aggressively and an unauthenticated burst of requests
@@ -591,13 +769,9 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 						capabilities: rawCapabilities.filter((value: unknown): value is string =>
 							Boolean(value)
 						),
-						// 0 is the server's way of leaving the trained context unknown; a
-						// model-mode listing reports it as meta.n_ctx_train instead
-						contextLength:
-							item.context_length ||
-							(typeof item.meta?.n_ctx_train === 'number' && item.meta.n_ctx_train > 0
-								? item.meta.n_ctx_train
-								: undefined),
+						// external servers report the context in their listing, so the
+						// gauge keeps working when the list is rebuilt on reload
+						contextLength: readModelContextLength(item),
 						description: details?.description,
 						details: details?.details,
 						draftSidecars: this._status.getDraftSidecars(modelId),
@@ -607,23 +781,28 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 						model: modelId,
 						name: this.toDisplayName(displayNameSource),
 						parsedId: ModelsService.parseModelId(modelId),
+						// stamp the server here so the option keeps its origin even
+						// after another server becomes active
+						serverId: serversStore.active.id,
 						tags: item.tags ?? []
 					};
 				})
 		);
 	}
-
 	/** Fetch models in MODEL mode (single model, standard OpenAI-compatible). */
 	private async fetchModelModeInternal(): Promise<ModelOption[]> {
 		const response = await ModelsService.list();
 
 		return this.buildModelOptions(response);
 	}
+
 	/**
 	 * Filter to models visible in the UI (ui !== false).
 	 */
 	private getVisibleModels(): ModelOption[] {
-		return this.models.filter((option) => this.props.getModelProps(option.model)?.ui !== false);
+		return this.activeModels.filter(
+			(option) => this.props.getModelProps(option.model)?.ui !== false
+		);
 	}
 
 	private loadFavoritesFromStorage(): Set<string> {
@@ -635,6 +814,23 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 			toast.error('Failed to load favorite models from local storage');
 
 			return new Set();
+		}
+	}
+
+	private persistSelection(): void {
+		if (!browser) return;
+
+		try {
+			if (!this.selectedModelId) {
+				localStorage.removeItem(SELECTED_MODEL_LOCALSTORAGE_KEY);
+			} else {
+				localStorage.setItem(
+					SELECTED_MODEL_LOCALSTORAGE_KEY,
+					JSON.stringify({ id: this.selectedModelId, model: this.selectedModelName })
+				);
+			}
+		} catch {
+			console.warn('[ModelsStore] Failed to persist the model selection');
 		}
 	}
 
@@ -669,7 +865,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 				const response = await ModelsService.list();
 
 				this.routerModels = response.data;
-				this.models = this.buildModelOptions(response);
+				this.activeModels = this.buildModelOptions(response);
 
 				await this.props.fetchModalitiesForLoadedModels();
 
@@ -679,10 +875,10 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 					this.selectModelById(visible[0].id);
 				}
 			} else {
-				this.models = await this.fetchModelModeInternal();
+				this.activeModels = await this.fetchModelModeInternal();
 			}
 		} catch (error) {
-			this.models = [];
+			this.activeModels = [];
 			this.error = error instanceof Error ? error.message : 'Failed to load models';
 
 			throw error;

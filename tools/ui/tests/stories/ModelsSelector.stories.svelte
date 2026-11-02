@@ -72,7 +72,8 @@
 				items: [availableModels[4]],
 				orgName: 'intel'
 			}
-		]
+		],
+		servers: []
 	};
 
 	function handleSelect(modelId: string) {

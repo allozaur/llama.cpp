@@ -2,7 +2,6 @@
 	import '../app.css';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { GlassKey, MenuIcon, SidebarNavigation } from '$lib/components/app';
 	import { PwaMetaTags, PwaRefreshAlert } from '$lib/components/pwa';
@@ -27,6 +26,9 @@
 		deviceStore,
 		mcpStore,
 		modelsStore,
+		remoteAccessStore,
+		serversModelsStore,
+		serversStore,
 		serverStore,
 		settingsStore,
 		tabsStore,
@@ -35,6 +37,8 @@
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
 	import { hapticTap, resolveTabView } from '$lib/utils';
+	import { apiUrl } from '$lib/utils/api-base';
+	import { isLocalServer, isRemoteServer } from '$lib/utils/server';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -196,7 +200,7 @@
 					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey.trim()}`
 				};
 
-				fetch(`${base}/props`, { headers })
+				fetch(apiUrl('/props'), { headers })
 					.then((response) => {
 						if (response.status === 401 || response.status === 403) {
 							window.location.reload();
@@ -211,7 +215,7 @@
 
 	onMount(() => {
 		updateFavicon();
-		// snapshot of every backend running stream on first load, populates the sidebar spinners
+		// snapshot of every server running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet
 		void chatStore.syncRemoteRunningStreams();
 	});
@@ -222,6 +226,10 @@
 		if (document.visibilityState !== 'visible') return;
 
 		void chatStore.syncRemoteRunningStreams();
+
+		// mobile browsers drop a peer connection when the tab is backgrounded, so a
+		// tunnel that was open is asked for again on the way back
+		remoteAccessStore.recoverChannels();
 	}
 
 	$effect(() => {
@@ -259,37 +267,34 @@
 		});
 	}
 
-	// Fetch router models when in router mode (for status and modalities)
-	// Wait for models to be loaded first, run only once
-	let routerModelsFetched = false;
-
-	$effect(() => {
-		const isRouter = serverStore.isRouterMode;
-		const modelsCount = modelsStore.models.length;
-
-		// Only fetch router models once when we have models loaded and in router mode
-		if (isRouter && modelsCount > 0 && !routerModelsFetched) {
-			routerModelsFetched = true;
-
-			untrack(() => {
-				modelsStore.fetchRouterModels();
-			});
-		}
-	});
-
-	// Live model status and load progress via the /models/sse feed (router mode)
+	// Live model status and load progress via the /models/sse feed (router mode).
+	// The feed is kept for the session: switching to an external server and back
+	// must not tear it down and reconnect on every tab switch.
 	$effect(() => {
 		if (!browser) return;
 
-		if (!serverStore.isRouterMode) return;
+		if (!serverStore.localIsRouter) return;
 
 		untrack(() => {
 			modelsStore.status.subscribe();
 		});
+	});
 
-		return () => {
-			modelsStore.status.unsubscribe();
-		};
+	// The active server's own feed, when it is not the built-in one: a llama.cpp
+	// server serves /models/sse at its origin, so a router behind a tunnel animates
+	// its loads the way a local one does. It follows that server being reachable,
+	// and the operations that wait on a load keep their polling as the fallback.
+	$effect(() => {
+		if (!browser) return;
+
+		const server = serversStore.active;
+		const reachable =
+			!isLocalServer(server) &&
+			(isRemoteServer(server)
+				? remoteAccessStore.isConnected(server.id)
+				: serversModelsStore.get(server.id).loaded);
+
+		untrack(() => modelsStore.status.subscribeServer(reachable ? server.id : null));
 	});
 
 	// Background MCP server health checks on app load.

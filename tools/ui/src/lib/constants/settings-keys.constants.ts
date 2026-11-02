@@ -10,6 +10,7 @@ export const SETTINGS_KEYS = {
 	ALWAYS_SHOW_TOOL_CALL_CONTENT: 'alwaysShowToolCallContent',
 	API_KEY: 'apiKey',
 	AUTO_MIC_ON_EMPTY: 'autoMicOnEmpty',
+	// llama.cpp's own flag: "backend" here is the compute backend, not a server
 	BACKEND_SAMPLING: 'backend_sampling',
 	COMPACTION_PRESERVED_STEPS: 'compactionPreservedSteps',
 	COMPACTION_PROMPT: 'compactionPrompt',
@@ -34,6 +35,7 @@ export const SETTINGS_KEYS = {
 	FULL_HEIGHT_CODE_BLOCKS: 'fullHeightCodeBlocks',
 	GROUP_MODELS_BY_FAMILY: 'groupModelsByFamily',
 	JS_SANDBOX_ENABLED: 'jsSandboxEnabled',
+	LOCAL_BACKEND_ENABLED: 'localBackendEnabled',
 	MAX_IMAGE_RESOLUTION: 'maxImageMPixels',
 	MAX_TOKENS: 'max_tokens',
 	MCP_REQUEST_TIMEOUT_SECONDS: 'mcpRequestTimeoutSeconds',
@@ -54,6 +56,8 @@ export const SETTINGS_KEYS = {
 	REPEAT_PENALTY: 'repeat_penalty',
 	SAMPLERS: 'samplers',
 	SEND_ON_ENTER: 'sendOnEnter',
+	// the server list is stored under the key it shipped with, so the value is not its name
+	SERVERS: 'backends',
 	SHOW_AGENTIC_TURN_STATS: 'showAgenticTurnStats',
 	SHOW_BUILD_VERSION: 'showBuildVersion',
 	SHOW_FULL_PATH_IN_MENTIONS: 'showFullPathInMentions',

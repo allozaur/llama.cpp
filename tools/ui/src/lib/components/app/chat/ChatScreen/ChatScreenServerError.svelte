@@ -1,11 +1,18 @@
 <script lang="ts">
-	import { AlertTriangle, Loader2, RefreshCw } from '@lucide/svelte';
+	import { AlertTriangle, Loader2, RefreshCw, Server } from '@lucide/svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
-	import { serverStore } from '$lib/stores';
+	import { useBackendAvailability } from '$lib/hooks/use-backend-availability.svelte';
+	import { serversStore, serverStore, uiStore } from '$lib/stores';
 
-	let hasError = $derived(!!serverStore.error);
+	const availability = useBackendAvailability();
+
 	let isLoadingModel = $derived(serverStore.status === 503);
+	// A single server leaves nowhere to switch to, so the banner is the only
+	// place the failure can be reported. With another server available the
+	// selector carries it instead, and stays usable.
+	let isOnlyServer = $derived(serversStore.enabled.length <= 1);
+	let hasError = $derived(availability.isOffline && isOnlyServer);
 </script>
 
 {#if hasError || isLoadingModel}
@@ -33,7 +40,19 @@
 			</Alert.Title>
 
 			{#if !isLoadingModel}
-				<Alert.Description>{serverStore.error}</Alert.Description>
+				<Alert.Description class="flex flex-col items-start gap-2">
+					<span>{serverStore.error}</span>
+
+					<!--nothing here can serve a request: pairing one is the way out-->
+					<button
+						class="flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
+						onclick={() => uiStore.openServers()}
+					>
+						<Server class="h-3 w-3" />
+
+						Pair a remote server
+					</button>
+				</Alert.Description>
 			{/if}
 		</Alert.Root>
 	</div>

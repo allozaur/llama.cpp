@@ -45,9 +45,10 @@
 		ModelCapability,
 		ModelDownloadConfirmAction,
 		ModelsTableGroupKind,
+		ModelsTableServerKind,
 		ModelsTableSortKey
 	} from '$lib/enums';
-	import { modelsStore, settingsStore } from '$lib/stores';
+	import { modelsStore, serversModelsStore, settingsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { groupModelFamilies, type ModelFamilyGroup } from '$lib/utils/model-families';
 	import type { Snippet } from 'svelte';
@@ -64,6 +65,10 @@
 		onSelect: (option: ModelOption) => void;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
+		/** Repos each server contributes to the current search, for the filter menu. */
+		serverCounts?: Record<string, number>;
 		selectedId: string | null;
 		/** Rendered at the toolbar's right end, past the filters. */
 		toolbarEnd?: Snippet;
@@ -78,11 +83,15 @@
 		modalities = $bindable<ModalityKey[]>([]),
 		onSelect,
 		selectedId,
+		serverCounts = {},
+		servers = $bindable<string[]>([]),
 		toolbarEnd
 	}: Props = $props();
 
 	let isEmpty = $derived(groups.every((group) => group.items.length === 0));
-	let hasFilters = $derived(hasActiveFilters(contextLimit, modalities, capabilities));
+	let hasFilters = $derived(
+		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
+	);
 
 	/** Noun the show-more row counts in, per unit of the grouped list. */
 	const SHOW_MORE_NOUNS: Record<GroupedListUnit, string> = {
@@ -95,7 +104,7 @@
 	/** Repos whose quants are folded away; the rest show them. */
 	const collapsedQuants = new SvelteSet<string>();
 	/** Sections that list their models straight, without folding them into families. */
-	const FLAT_SECTIONS = new Set<ModelsTableGroupKind>([
+	const FLAT_SECTIONS = new Set<ModelsTableGroup['kind']>([
 		ModelsTableGroupKind.DOWNLOADING,
 		ModelsTableGroupKind.FAVORITES,
 		ModelsTableGroupKind.LOADED
@@ -244,6 +253,7 @@
 					{onSelect}
 					option={quant}
 					selected={selectedId === quant.id}
+					showServer={entry.kind === 'servers'}
 				/>
 			{/each}
 		</CollapsibleRegion>
@@ -348,6 +358,8 @@
 		bind:contextLimit
 		bind:filter
 		bind:modalities
+		bind:servers
+		{serverCounts}
 		{toolbarEnd}
 	/>
 
@@ -382,15 +394,22 @@
 					{/if}
 				{/snippet}
 
+				{@const serverState = group.serverId ? serversModelsStore.get(group.serverId) : null}
+
 				<ModelsSection
 					chevronClass="mr-7"
 					count={group.items.length}
 					defaultOpen={group.kind !== ModelsTableGroupKind.HIDDEN}
-					icon={groupIcon}
+					error={Boolean(serverState?.error)}
+					icon={group.kind === ModelsTableServerKind.SERVER ? undefined : groupIcon}
 					label={group.label}
+					loading={Boolean(serverState?.loading)}
 					persistKey={group.key}
 					revealChevronOnHover
 					sectionHeaderClass="m-0 rounded-lg px-2 py-2 text-[13px] font-semibold text-foreground/85 select-none transition-colors hover:bg-muted max-md:px-3"
+					serverId={group.kind === ModelsTableServerKind.SERVER
+						? (group.serverId ?? undefined)
+						: undefined}
 					sticky
 					stickyClass="sticky z-10 bg-muted/70 backdrop-blur-lg"
 				>

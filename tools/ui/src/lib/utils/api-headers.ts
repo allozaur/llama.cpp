@@ -1,26 +1,45 @@
+import { getServer } from './api-base';
 import { redactValue } from './redact';
 import { CORS_PROXY, HEADERS } from '$lib/constants';
 import { MimeTypeApplication } from '$lib/enums';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
+import type { Server } from '$lib/types';
 
 /**
- * Get authorization headers for API requests
- * Includes Bearer token if API key is configured
+ * Get authorization headers for API requests to a server.
  */
-export function getAuthHeaders(): Record<string, string> {
-	const currentConfig = settingsStore.config;
-	const apiKey = currentConfig.apiKey?.toString().trim();
+export function getAuthHeaders(serverId?: string): Record<string, string> {
+	const server = getServer(serverId);
+
+	if (server) return getAuthHeadersForServer(server);
+
+	// no servers resolver yet (early startup, or a non-browser call): keep the
+	// pre-servers behaviour and authenticate against the serving origin
+	const apiKey = settingsStore.config.apiKey?.toString().trim();
 
 	return apiKey ? { [HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey}` } : {};
 }
 
 /**
+ * Get authorization headers for a server object, including one that is not
+ * registered yet (used on the add-server form).
+ */
+export function getAuthHeadersForServer(server: Server): Record<string, string> {
+	const headers: Record<string, string> = { ...(server.headers ?? {}) };
+	const apiKey = server.apiKey?.trim();
+
+	if (apiKey) headers[HEADERS.AUTHORIZATION] = `${HEADERS.BEARER}${apiKey}`;
+
+	return headers;
+}
+
+/**
  * Get standard JSON headers with optional authorization
  */
-export function getJsonHeaders(): Record<string, string> {
+export function getJsonHeaders(serverId?: string): Record<string, string> {
 	return {
 		[HEADERS.CONTENT_TYPE]: MimeTypeApplication.JSON,
-		...getAuthHeaders()
+		...getAuthHeaders(serverId)
 	};
 }
 

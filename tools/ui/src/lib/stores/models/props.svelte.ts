@@ -18,14 +18,19 @@ import {
 } from '$lib/constants';
 import { FileTypeCategory, ModelModality, ReasoningEffort } from '$lib/enums';
 import { PropsService } from '$lib/services/props.service';
-// direct imports between stores, not via the barrel, to avoid circular deps
 import { serverStore } from '$lib/stores/server.svelte';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '$lib/stores/servers.svelte';
 import type { ReasoningEffortLevel } from '$lib/types';
 // deep imports, not the '$lib/utils' barrel: it re-exports modules that reach back
 // into the stores, and going through it here would read a half-built module
 import { TTLCache } from '$lib/utils/cache-ttl';
 import { detectThinkingSupport } from '$lib/utils/chat-template-thinking-detector';
+import { rawModelId } from '$lib/utils/model-option-id';
 import { SvelteMap } from 'svelte/reactivity';
+
+/** Grace period before /props is retried for a model after a failed fetch. */
+const PROPS_FETCH_RETRY_COOLDOWN_MS = 30_000;
 
 /**
  * The slice of modelsStore the manager reads. Kept narrow on purpose so it
@@ -34,7 +39,9 @@ import { SvelteMap } from 'svelte/reactivity';
  */
 export interface ModelPropsHost {
 	/** Model rows the manager mirrors fetched modalities onto. */
-	models: ModelOption[];
+	activeModels: ModelOption[];
+	/** Every enabled server's models, used to resolve a model's owner. */
+	readonly models: ModelOption[];
 	readonly selectedModelName: string | null;
 	readonly loadedModelIds: string[];
 	isModelLoaded(modelId: string): boolean;
@@ -51,6 +58,8 @@ export class ModelPropsManager {
 		maxEntries: MODEL_PROPS_CACHE.MAX_ENTRIES,
 		ttlMs: MODEL_PROPS_CACHE.TTL_MS
 	});
+	/** Last failed /props fetch per model; requests stay on cooldown after it. */
+	private failedPropsAt = new SvelteMap<string, number>();
 	/** Props requests in flight, a second caller awaits the same request. */
 	private fetching = new SvelteMap<string, Promise<ApiLlamaCppServerProps | null>>();
 
@@ -130,7 +139,7 @@ export class ModelPropsManager {
 		try {
 			const results = await Promise.all(propsPromises);
 
-			this.host.models = this.host.models.map((model) => {
+			this.host.activeModels = this.host.activeModels.map((model) => {
 				const modelIndex = loadedModelIds.indexOf(model.model);
 
 				if (modelIndex === -1) return model;
@@ -159,11 +168,30 @@ export class ModelPropsManager {
 	 * @returns Props data or null if fetch failed or model not loaded
 	 */
 	async fetchModelProps(modelId: string): Promise<ApiLlamaCppServerProps | null> {
+		// props not loaded yet (mid server switch): the server role and model
+		// load state are not trustworthy, so do not guess
+		if (!serverStore.props) return null;
+
 		const cached = this.cache.get(modelId);
 
 		if (cached) return cached;
 
+		// never ask a server about a model another server serves; a name that
+		// exists on two servers resolves to the active one's entry first
+		const option = this.host.models.find(
+			(m) => m.model === modelId || m.id === modelId || rawModelId(m.id) === modelId
+		);
+
+		if (option?.serverId && option.serverId !== serversStore.active.id) return null;
+
 		if (serverStore.isRouterMode && !this.host.isModelLoaded(modelId)) {
+			return null;
+		}
+
+		// a failing model would otherwise be refetched on every reactive update
+		const failedAt = this.failedPropsAt.get(modelId);
+
+		if (failedAt !== undefined && Date.now() - failedAt < PROPS_FETCH_RETRY_COOLDOWN_MS) {
 			return null;
 		}
 
@@ -175,10 +203,12 @@ export class ModelPropsManager {
 			.then((props) => {
 				this.cache.set(modelId, props);
 				this.cacheVersion++;
+				this.failedPropsAt.delete(modelId);
 
 				return props;
 			})
 			.catch((error) => {
+				this.failedPropsAt.set(modelId, Date.now());
 				console.warn(`Failed to fetch props for model ${modelId}:`, error);
 
 				return null;
@@ -194,7 +224,12 @@ export class ModelPropsManager {
 		const props = this.getModelProps(modelId);
 		const nCtx = props?.default_generation_settings?.n_ctx;
 
-		return typeof nCtx === 'number' ? nCtx : null;
+		if (typeof nCtx === 'number') return nCtx;
+
+		// external servers report the context in their model listing, when they report one
+		const model = this.host.activeModels.find((m) => m.model === modelId || m.id === modelId);
+
+		return model?.contextLength ?? null;
 	}
 
 	getModelModalities(modelId: string): ModelModalities | null {
@@ -202,7 +237,7 @@ export class ModelPropsManager {
 			return this.buildModalities(serverStore.props.modalities);
 		}
 
-		const model = this.host.models.find((m) => m.model === modelId || m.id === modelId);
+		const model = this.host.activeModels.find((m) => m.model === modelId || m.id === modelId);
 
 		if (model?.modalities) {
 			return model.modalities;
@@ -304,7 +339,7 @@ export class ModelPropsManager {
 
 		if (!props?.modalities) return;
 
-		this.host.models = this.host.models.map((model) =>
+		this.host.activeModels = this.host.activeModels.map((model) =>
 			model.model === modelId
 				? { ...model, modalities: this.buildModalities(props.modalities!) }
 				: model

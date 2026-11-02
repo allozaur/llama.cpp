@@ -24,11 +24,14 @@
 		ms: UseModelsSelectorReturn;
 		currentModel?: string | null;
 		disabled?: boolean;
+		/** The server behind this selector is unreachable. */
+		error?: boolean;
 		/** Model id the list highlights from the keyboard; the owner tracks it. */
 		highlightedId?: string | null;
 		/** Bind the menu's open state, so the owner sees the close too. */
 		open?: boolean;
 		showOrgName?: boolean;
+		onAddServer?: () => void;
 		onHighlight?: (id: string | null) => void;
 		onManageModels?: () => void;
 		onModelKeyAction?: (modelId: string, unload: boolean) => void;
@@ -38,8 +41,10 @@
 	let {
 		currentModel = null,
 		disabled = false,
+		error = false,
 		highlightedId = null,
 		ms,
+		onAddServer,
 		onHighlight,
 		onManageModels,
 		onModelKeyAction,
@@ -155,9 +160,11 @@
 					{...props}
 					class={[
 						`relative inline-grid cursor-pointer grid-cols-[1fr_auto_1fr] items-center gap-1 rounded-sm bg-background px-1.5 py-1 text-xs shadow-sm transition hover:bg-muted-foreground/20 max-md:h-8 max-md:px-2.25 max-md:py-1.25 max-md:text-[13px] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-muted-foreground/15 dark:text-secondary-foreground`,
-						!ms.isCurrentModelInCache
-							? 'bg-red-400/10 !text-red-400 hover:bg-red-400/20 hover:text-red-400'
-							: 'text-foreground',
+						error
+							? 'border-destructive/40 bg-destructive/10 !text-destructive hover:bg-destructive/20'
+							: !ms.isCurrentModelInCache
+								? 'bg-red-400/10 !text-red-400 hover:bg-red-400/20 hover:text-red-400'
+								: 'text-foreground',
 						open && 'text-foreground',
 						'max-w-[min(calc(100vw-4rem) md:max-w-[min(calc(100cqw-9rem),25rem)]'
 					]}
@@ -242,7 +249,17 @@
 		{/if}
 
 		{#if ms.isEmpty}
-			<p class="px-4 py-3 text-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{#if ms.searchTerm}
+				<p class="px-4 py-3 text-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{:else}
+				<button
+					class="cursor-pointer px-4 py-3 text-left text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					onclick={() => onAddServer?.()}
+					type="button"
+				>
+					No models yet. Add a server to get started.
+				</button>
+			{/if}
 		{/if}
 
 		<ModelsSelectorList
@@ -252,6 +269,8 @@
 			groups={ms.groupedFilteredOptions}
 			loaded={ms.loadedItems}
 			onSelect={ms.handleSelect}
+			onServerBack={ms.isServerView ? ms.closeServer : undefined}
+			onServerOpen={ms.openServer}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-1 mb-1 px-2 py-2 text-[13px] font-semibold text-foreground/80 select-none"
 			{showOrgName}

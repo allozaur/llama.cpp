@@ -33,12 +33,16 @@
 		sectionHeaderClass?: string;
 		onSelect: (modelId: string) => void;
 		renderOption?: import('svelte').Snippet<[ModelItem, boolean]>;
-		/** Favorite models of every backend, listed in their own section. */
+		/** Favorite models of every server, listed in their own section. */
 		favorites?: ModelItem[];
-		/** Loaded models of every llama-compat backend, leading the list. */
+		/** Loaded models of every llama-compat server, leading the list. */
 		loaded?: ModelItem[];
 		/** Show the organization name in every model id of the list. */
 		showOrgName?: boolean;
+		/** Open one server's full list, offered when a section is cut short. */
+		onServerOpen?: (serverId: string) => void;
+		/** Leave the drilled-in server; enables the back affordance. */
+		onServerBack?: () => void;
 	}
 
 	let {
@@ -48,6 +52,8 @@
 		groups,
 		loaded = [],
 		onSelect,
+		onServerBack,
+		onServerOpen,
 		renderOption,
 		sectionHeaderClass = 'm-0 px-2 py-2 text-[13px] font-semibold text-muted-foreground/70 select-none',
 		showOrgName = true
@@ -232,6 +238,39 @@
 		{@render localRows()}
 	</ModelsSection>
 {/if}
+
+<!-- One section per remote server. -->
+{#each groups.servers as server (server.serverId)}
+	<ModelsSection
+		error={Boolean(server.error)}
+		label={server.name}
+		loading={server.loading}
+		onBack={onServerBack}
+		persistKey={server.serverId}
+		revealChevronOnHover
+		serverId={server.serverId}
+		sticky
+	>
+		{#if server.items.length > 0}
+			{@render listRows(server.items, server.serverId)}
+
+			{#if onServerOpen && server.matched > server.items.length}
+				<!-- same box as a model row, it opens the server's full list -->
+				<button
+					class="flex w-full cursor-pointer items-center gap-2 rounded-sm p-2 text-left text-sm text-muted-foreground transition hover:bg-accent hover:text-foreground focus:outline-none"
+					onclick={() => onServerOpen(server.serverId)}
+					type="button"
+				>
+					+ {server.matched - server.items.length} more
+				</button>
+			{/if}
+		{:else if server.catalog === 0}
+			<p class="px-4 pb-2 text-xs text-muted-foreground">
+				{server.error ?? (server.loading ? 'Loading models...' : 'No models')}
+			</p>
+		{/if}
+	</ModelsSection>
+{/each}
 
 <DialogConfirmDownload
 	action={ModelDownloadConfirmAction.CANCEL}
