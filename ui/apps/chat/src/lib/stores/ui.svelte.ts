@@ -81,9 +81,6 @@ class UiStore {
 	/** Open state of the Discover dialog. */
 	discoverModelsOpen = $state(false);
 
-	/** Open state of the servers dialog, the door to pairing on a phone. */
-	serversOpen = $state(false);
-
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -106,6 +103,8 @@ class UiStore {
 	modelsReturnRoute: ResolvedPathname = resolve(ROUTES.START);
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
@@ -236,8 +235,14 @@ class UiStore {
 		void goto(resolve(ROUTES.MODELS));
 	}
 
-	/** Open the servers dialog, where a server is paired or pointed at. */
+	/** Open the servers, where a server is paired or pointed at: a page on a phone, a dialog elsewhere. */
 	openServers(): void {
+		if (deviceStore.isMobile) {
+			void goto(resolve(ROUTES.SERVERS));
+
+			return;
+		}
+
 		this.serversOpen = true;
 	}
 
