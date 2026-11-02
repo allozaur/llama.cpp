@@ -408,7 +408,7 @@
 			{#if deviceStore.isMobile && !page.url.hash.includes(ROUTES.SEARCH) && !uiStore.isComposerExpanded}
 				<div transition:fade={{ duration: 150 }}>
 					<GlassKey
-						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-20"
+						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-30"
 						icon={MenuIcon}
 						label={uiStore.isSidebarExpanded ? 'Collapse navigation' : 'Expand navigation'}
 						onclick={toggleSidebar}
