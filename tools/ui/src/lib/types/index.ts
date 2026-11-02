@@ -204,6 +204,8 @@ export type {
 export type { Group } from './groups';
 // Project types
 export type { Project, ProjectContextItem, ProjectDraft } from './projects';
+// Library types
+export type { LibraryItem } from './library';
 
 // Search result types
 export type { SearchResult } from './search';
