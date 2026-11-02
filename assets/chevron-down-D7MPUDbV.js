@@ -1,0 +1,1 @@
+import{a3 as n,w as t}from"./iframe-BxvSZK0j.js";import{I as a}from"./Icon-CSRBsjq8.js";var p=new Set(["$$slots","$$events","$$legacy"]);function i(e,o){let r=t(o,p);const s={name:"chevron-down",size:24,node:[["path",{d:"m6 9 6 6 6-6"}]]};a(e,n(()=>r,{get icon(){return s}}))}export{i as C};

@@ -1,0 +1,1 @@
+import{a3 as c,w as t}from"./iframe-BxvSZK0j.js";import{I as a}from"./Icon-CSRBsjq8.js";var n=new Set(["$$slots","$$events","$$legacy"]);function l(e,r){let s=t(r,n);const o={name:"circle",size:24,node:[["circle",{cx:"12",cy:"12",r:"10"}]]};a(e,c(()=>s,{get icon(){return o}}))}export{l as C};

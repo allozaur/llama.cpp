@@ -1,0 +1,1 @@
+import{p as n,o as r,ai as s,aj as e,c,f,l as d,n as h,a as m,d as p}from"./iframe-BxvSZK0j.js";function v(i,a){n(a,!0);let o=r(a,"tooltip",3,!1);s.create({id:e(()=>a.id),virtualEl:e(()=>a.virtualEl),ref:a.ref},o());var t=c(),l=f(t);d(l,()=>a.children??h),m(i,t),p()}export{v as F};

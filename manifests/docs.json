@@ -1,0 +1,21 @@
+{
+  "v": 0,
+  "docs": {
+    "introduction-overview--docs": {
+      "id": "introduction-overview--docs",
+      "name": "Docs",
+      "path": "./tests/stories/Introduction.mdx",
+      "title": "Introduction/Overview",
+      "content": "import { Meta, Unstyled } from '@storybook/addon-docs/blocks';\n\n<Meta title=\"Introduction/Overview\" />\n\n<Unstyled>\n<div className=\"ds-docs\">\n\n# llama.cpp Web UI\n\nWelcome to the **llama-ui** component library! This Storybook showcases the components used in the modern web interface for the llama-server.\n\n## 🚀 About This Project\n\nLlama UI is a modern web interface for the llama-server, built with SvelteKit and ShadCN UI. Features include:\n\n- **Real-time chat conversations** with AI assistants\n- **Multi-conversation management** with persistent storage\n- **Advanced parameter tuning** for model behavior\n- **File upload support** for multimodal interactions\n- **Responsive design** that works on desktop and mobile\n\n## 🎨 Design System\n\nThe UI is built using:\n\n- **SvelteKit** - Modern web framework with excellent performance\n- **Tailwind CSS** - Utility-first CSS framework for rapid styling\n- **ShadCN/UI** - High-quality, accessible component library\n- **Lucide Icons** - Beautiful, consistent icon set\n\n## 🔧 Development\n\nThis Storybook serves as both documentation and a development environment for the UI components. Each story demonstrates:\n\n- **Component variations** - Different states and configurations\n- **Interactive examples** - Live components you can interact with\n- **Usage patterns** - How components work together\n- **Styling consistency** - Unified design language\n\n## 🚀 Getting Started\n\nTo explore the components:\n\n1. **Browse the sidebar** to see all available components\n2. **Click on stories** to see different component states\n3. **Use the controls panel** to interact with component props\n4. **Check the docs tab** for detailed component information\n\n</div>\n</Unstyled>\n",
+      "summary": "# llama.cpp Web UI Welcome to the **llama-ui** component library! This Storybook showcases..."
+    },
+    "introduction-design-guidelines--docs": {
+      "id": "introduction-design-guidelines--docs",
+      "name": "Docs",
+      "path": "./tests/stories/DesignGuidelines.mdx",
+      "title": "Introduction/Design guidelines",
+      "content": "import { Markdown, Meta, Source, Unstyled } from '@storybook/addon-docs/blocks';\nimport designMd from '../../DESIGN.md?raw';\n\nexport const [, tokens, guidelines] = designMd.split(/^---$/m);\n\n<Meta title=\"Introduction/Design guidelines\" />\n\n<Unstyled>\n<div className=\"ds-docs\">\n\n# Design guidelines\n\nRendered from `tools/ui/DESIGN.md`. The implementation lives in `src/app.css`, and every token and surface below can be seen under **Design system** in this Storybook.\n\n<Markdown>{guidelines}</Markdown>\n\n## Tokens\n\nThe machine-readable half of `tools/ui/DESIGN.md`, in the [DESIGN.md format](https://github.com/google-labs-code/design.md). Check it with `npx @google/design.md lint DESIGN.md`.\n\n<Source code={tokens.trim()} language=\"yaml\" dark />\n\n</div>\n</Unstyled>\n",
+      "summary": "export const [, tokens, guidelines] = designMd.split(/^---$/m); # Design guidelines Render..."
+    }
+  }
+}

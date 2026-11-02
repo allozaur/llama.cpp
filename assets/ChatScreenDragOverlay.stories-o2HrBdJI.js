@@ -1,0 +1,5 @@
+import{p as i,s as l,f as c,a as f,d,e as m}from"./iframe-BxvSZK0j.js";import{c as p,i as u,d as h}from"./create-runtime-stories-DF7OwIoM.js";import{C as t}from"./ChatScreenDragOverlay-oERtBrSH.js";import"./preload-helper-PPVm8Dsz.js";import"./Icon-CSRBsjq8.js";import"./each-DMxlN0HO.js";import"./svelte-element-BAftWIbD.js";const v={component:t,parameters:{layout:"fullscreen"},title:"Chat/ChatScreen/ChatScreenDragOverlay"},{Story:_}=h();var g=m('<div class="flex h-screen items-center justify-center p-8 text-muted-foreground">Page content behind the overlay</div> <!>',1);function a(r,s){i(s,!1),u(),_(r,{asChild:!0,name:"Default",children:(n,C)=>{var e=g(),o=l(c(e),2);t(o),f(n,e)},$$slots:{default:!0},parameters:{__svelteCsf:{rawCode:`<div class="flex h-screen items-center justify-center p-8 text-muted-foreground">
+	Page content behind the overlay
+</div>
+
+<ChatScreenDragOverlay />`}}}),d()}a.__docgen={data:[],name:"ChatScreenDragOverlay.stories.svelte"};const y=p(a,v),j=["Default"],w={...y.Default,tags:["svelte-csf-v5"]};export{w as Default,j as __namedExportsOrder,v as default};

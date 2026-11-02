@@ -1,0 +1,5 @@
+import{p as m,m as f,a,s as c,d as u,e as _,b as v}from"./iframe-BxvSZK0j.js";import{c as y,i as $,d as b}from"./create-runtime-stories-DF7OwIoM.js";import{I as g}from"./input-CLr4-AYd.js";import{L as s}from"./label-2OikHIdw.js";import"./preload-helper-PPVm8Dsz.js";import"./input-BVFa53i-.js";import"./this-PF-vsikk.js";const h={component:s,parameters:{layout:"centered"},title:"Design system/Forms/Label"},{Story:k}=b();var L=_('<div class="grid w-72 gap-2"><!> <!></div>');function r(o,i){m(i,!1),$(),k(o,{asChild:!0,name:"Default",children:(l,I)=>{var e=L(),t=v(e);s(t,{for:"story-api-key",children:(n,x)=>{var p=f("API key");a(n,p)},$$slots:{default:!0}});var d=c(t,2);g(d,{id:"story-api-key",placeholder:"sk-..."}),a(l,e)},$$slots:{default:!0},parameters:{__svelteCsf:{rawCode:`<div class="grid w-72 gap-2">
+	<Label for="story-api-key">API key</Label>
+
+	<Input id="story-api-key" placeholder="sk-..." />
+</div>`}}}),u()}r.__docgen={data:[],name:"Label.stories.svelte"};const D=y(r,h),M=["Default"],O={...D.Default,tags:["svelte-csf-v5"]};export{O as Default,M as __namedExportsOrder,h as default};

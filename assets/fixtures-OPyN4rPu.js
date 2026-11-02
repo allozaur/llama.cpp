@@ -1,0 +1,72 @@
+import{b as e,c as u,d,B as s,e as p}from"./library.constants-v9JM2Zdd.js";import{a as m,c as l}from"./index.svelte-BBrD1Za8.js";import{b as E,c as g}from"./index.svelte-B6jPthz0.js";import"./audio-format-YL0iSAfS.js";import"./iframe-BxvSZK0j.js";const a="conv-1",h="ggml-org/gpt-oss-20b-GGUF",D="max-w-[56rem] w-[calc(100vw-2rem)]",S=Date.now(),P={continueAssistantMessage:()=>{},copy:()=>{},delete:()=>{},editUserMessagePreserveResponses:()=>{},editWithBranching:()=>{},editWithReplacement:()=>{},forkConversation:()=>{},navigateToSibling:()=>{},regenerateCompaction:()=>{},regenerateWithBranching:()=>{}};function t(o){return{children:[],convId:a,parent:null,timestamp:S-1e3*60,type:d.TEXT,...o}}function T(o){const i=o.map(r=>({function:{arguments:JSON.stringify(r.args),name:r.name},id:r.id,type:"function"}));return JSON.stringify(i)}const y=`data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f59e0b"/><stop offset="1" stop-color="#ef4444"/></linearGradient></defs><rect width="320" height="200" fill="url(#g)"/><circle cx="160" cy="100" r="48" fill="#fff" fill-opacity="0.85"/></svg>')}`,R=`data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160"><rect width="240" height="160" fill="#0f172a"/><rect x="30" y="90" width="30" height="50" fill="#38bdf8"/><rect x="80" y="60" width="30" height="80" fill="#38bdf8"/><rect x="130" y="30" width="30" height="110" fill="#38bdf8"/><rect x="180" y="70" width="30" height="70" fill="#38bdf8"/></svg>')}`,G=t({content:"What is the meaning of life, the universe, and everything?",id:"user-1",role:e.USER}),U=t({content:`Can you review this function?
+
+\`\`\`ts
+export function sum(values: number[]): number {
+	return values.reduce((acc, v) => acc + v, 0);
+}
+\`\`\`
+
+- Is it safe for empty arrays?
+- Should it accept \`bigint\`?`,id:"user-markdown",role:e.USER}),w=[{base64Url:y,name:"sunset.svg",size:412,type:u.IMAGE},{content:`id,name,score
+1,Ada,98
+2,Linus,91
+3,Grace,95
+`,name:"scores.csv",size:46,type:u.TEXT},{base64Data:btoa(`%PDF-1.4
+%mock
+`),content:"Quarterly report. Revenue grew 12 percent quarter over quarter.",name:"report.pdf",processedAsImages:!1,size:18432,type:u.PDF}],F=t({content:"Summarize the attached files and describe the image.",extra:w,id:"user-attachments",role:e.USER}),V=t({content:"",extra:[w[0]],id:"user-attachments-only",role:e.USER}),W=t({content:"You are a helpful assistant. Answer briefly and use **markdown** when it helps.",id:"system-1",role:e.SYSTEM,type:d.SYSTEM}),j=t({content:["You are a senior software engineer helping with the llama.cpp web UI.","","## Rules","","1. Read the relevant files before you answer.","2. Keep answers short and concrete.","3. Prefer existing helpers over new abstractions.","4. Use ASCII only in code comments.","5. Never invent API fields; read the types first.","6. Point to file paths when you mention code.","","## Style","","- Use simple words.","- Avoid long comments.","- Show code only when it is needed."].join(`
+`),id:"system-long",role:e.SYSTEM,type:d.SYSTEM}),_=t({content:`The answer to the ultimate question of life, the universe, and everything is **42**.
+
+This comes from Douglas Adams' "The Hitchhiker's Guide to the Galaxy," where a supercomputer named Deep Thought calculated this answer over 7.5 million years. However, the question itself was never properly formulated, which is why the answer seems meaningless without context.`,id:"assistant-1",parent:"user-1",role:e.ASSISTANT}),v=`Let's consider the question step by step:
+
+1. Identify the core problem
+2. Evaluate relevant information
+3. Formulate a clear answer
+
+Following this process keeps the final response focused and accurate.`,H=t({content:"Here's the concise answer, now that I've thought it through: **42**.",id:"assistant-reasoning",parent:"user-1",reasoningContent:v,role:e.ASSISTANT}),J=t({content:"",id:"assistant-reasoning-interrupted",parent:"user-1",reasoningContent:"The user asks about the meaning of life. I should first check which",role:e.ASSISTANT}),B=t({content:_.content,id:"assistant-stats",model:h,parent:"user-1",role:e.ASSISTANT,timings:{cache_n:128,predicted_ms:3120,predicted_n:164,prompt_ms:412,prompt_n:1830}}),X=t({content:"Hello there! How can I help you today?",id:"assistant-raw",parent:"user-1",reasoningContent:"User greeted me. Is this a trap? No, just a normal hello. Respond calmly and do not start explaining quantum physics again.",role:e.ASSISTANT}),M={llm:{predicted_ms:5400,predicted_n:312,prompt_ms:980,prompt_n:4210},perTurn:[{llm:{predicted_ms:1800,predicted_n:96,prompt_ms:610,prompt_n:2400},toolCalls:[{duration_ms:42,name:s.SERVER_GET_INFO,success:!0},{duration_ms:318,name:s.SERVER_EXEC_SHELL_COMMAND,success:!0}],toolsMs:360,turn:1},{llm:{predicted_ms:3600,predicted_n:216,prompt_ms:370,prompt_n:1810},toolCalls:[],toolsMs:0,turn:2}],toolCalls:[{duration_ms:42,name:s.SERVER_GET_INFO,success:!0},{duration_ms:318,name:s.SERVER_EXEC_SHELL_COMMAND,success:!0}],toolCallsCount:2,toolsMs:360,turns:2},A=t({content:"Let me check the environment first.",id:"assistant-tools",parent:"user-1",reasoningContent:"I need the working directory and the file list before I answer.",role:e.ASSISTANT,toolCalls:T([{args:{},id:"call-info",name:s.SERVER_GET_INFO},{args:{command:"ls -la"},id:"call-ls",name:s.SERVER_EXEC_SHELL_COMMAND}])}),C=[t({content:JSON.stringify({cwd:"/home/user/projects/llama.cpp",os:"linux"}),id:"tool-info",parent:"assistant-tools",role:e.TOOL,toolCallId:"call-info"}),t({content:`total 24
+drwxr-xr-x  6 user user 4096 Oct 28 10:12 .
+drwxr-xr-x 12 user user 4096 Oct 27 09:01 ..
+-rw-r--r--  1 user user 1067 Oct 20 14:33 LICENSE
+-rw-r--r--  1 user user 2311 Oct 28 10:12 README.md
+drwxr-xr-x  4 user user 4096 Oct 28 10:10 src
+drwxr-xr-x  3 user user 4096 Oct 26 18:40 tools
+[exit code: 0]`,id:"tool-ls",parent:"tool-info",role:e.TOOL,toolCallId:"call-ls",toolCwd:"/home/user/projects/llama.cpp"})],I=t({content:"The project root holds `README.md`, `LICENSE` and two folders: `src` and `tools`. The shell runs on Linux in `~/projects/llama.cpp`.",id:"assistant-tools-final",parent:"tool-ls",role:e.ASSISTANT}),q=[...C,I],Y={...A,id:"assistant-tools-stats",model:h,timings:{agentic:M,predicted_ms:1800,predicted_n:96,prompt_ms:610,prompt_n:2400}},z=t({content:"Deep Thought took 7.5 million years to answer.",id:"assistant-pre-compaction",parent:"user-1",role:e.ASSISTANT,timestamp:S-1e3*60*31,timings:{cache_n:0,predicted_n:118,prompt_n:42200}}),K=t({content:`The user asked about the ultimate answer and its origin. Key facts: the answer is **42**, from Douglas Adams' "The Hitchhiker's Guide to the Galaxy", computed by Deep Thought over 7.5 million years.
+
+Nothing is left to do unless the user wants the question itself discussed.`,id:"compaction-1",model:h,parent:"assistant-pre-compaction",role:e.USER,timestamp:S-1e3*60*30,timings:{cache_n:0,compaction:{cache_n:0,predicted_ms:12e3,predicted_n:300,prompt_ms:18200,prompt_n:42200},predicted_n:0,prompt_n:3204},type:d.COMPACTION}),$=t({content:"",id:"compaction-pending",parent:"assistant-pre-compaction",role:e.USER,type:d.COMPACTION}),Q=t({content:"The user asked about the ultimate answer and its origin. Key facts: the answer is **42**",id:"compaction-generating",model:h,parent:"assistant-pre-compaction",role:e.USER,type:d.COMPACTION}),Z=t({content:"Set working directory to [file:///home/user/projects/llama.cpp](~/projects/llama.cpp)",id:"cwd-change",isSynthetic:!0,role:e.USER}),ee=t({content:"Working directory cleared",id:"cwd-cleared",isSynthetic:!0,role:e.USER}),te=t({content:"",extra:[{arguments:{language:"TypeScript",path:"src/lib/utils/agentic.ts"},content:"Review the TypeScript file at src/lib/utils/agentic.ts. Point out bugs first, then style issues.",name:"code_review",promptName:"code_review",serverName:"github",type:u.MCP_PROMPT}],id:"mcp-prompt",role:e.USER}),se={currentIndex:1,message:_,siblingIds:["assistant-0",_.id,"assistant-2"],totalSiblings:3};function n(o,i,r,c=p.TOOL_CALL){return{content:r??"",toolArgs:typeof i=="string"?i:JSON.stringify(i),toolCallId:`call-${o}`,toolName:o,toolResult:r,type:c}}const ne=n("get_weather",{city:"Warsaw",units:"metric"},JSON.stringify({city:"Warsaw",condition:"cloudy",humidity:71,temperature:9})),oe=n("get_weather",{city:"Warsaw",units:"metric"},void 0,p.TOOL_CALL_PENDING),ae=n("get_weather",'{"city": "Wars',void 0,p.TOOL_CALL_STREAMING),ie=n("summarize_issue",{issue:31273},`## Issue 31273
+
+**Status:** open
+
+The reasoning menu should list the effort levels the chat template supports.`),re=n(s.BROWSER_GET_DATETIME,{},JSON.stringify({result:"Wednesday, October 28, 2026, 10:15:00 CET"})),ce=n(s.SERVER_GET_INFO,{},JSON.stringify({cwd:"/home/user/projects/llama.cpp",os:"linux"})),le=n(s.SERVER_READ_FILE,{end_line:9,path:"src/lib/utils/sum.ts",start_line:1},`export function sum(values: number[]): number {
+	return values.reduce((acc, v) => acc + v, 0);
+}
+
+export function mean(values: number[]): number {
+	if (values.length === 0) return 0;
+
+	return sum(values) / values.length;
+}`),pe=n(s.SERVER_EDIT_FILE,{edits:[{new_text:"	if (values.length === 0) return Number.NaN;",old_text:"	if (values.length === 0) return 0;"}],path:"src/lib/utils/sum.ts"},JSON.stringify({edits_applied:1,result:"File edited"})),de=n(s.SERVER_EDIT_FILE,{edits:[{new_text:"const b = 2;",old_text:"const a = 1;"}],path:"src/lib/utils/sum.ts"},JSON.stringify({error:"old_text not found in file"})),ue=n(s.SERVER_WRITE_FILE,{content:`# Notes
+
+- Sum is safe for empty arrays.
+- Mean returns NaN for empty input.
+`,path:"docs/notes.md"},JSON.stringify({bytes:79,result:"File written"})),me={...n(s.SERVER_EXEC_SHELL_COMMAND,{command:"npm test -- --run"},` RUN  v4.1.12 /home/user/projects/app
+
+  src/sum.test.ts (3 tests) 4ms
+  src/mean.test.ts (2 tests) 3ms
+
+ Test Files  2 passed (2)
+      Tests  5 passed (5)
+[exit code: 0]`),toolCwd:"/home/user/projects/app"},ge={...n(s.SERVER_EXEC_SHELL_COMMAND,{command:"cat missing.txt"},`cat: missing.txt: No such file or directory
+[exit code: 1]`),toolCwd:"/home/user/projects/app"},he={...n(s.SERVER_EXEC_SHELL_COMMAND,{command:"sleep 600"},"[exit code: -1] [exit due to timed out]"),toolCwd:"/home/user/projects/app"},Se=n(s.SERVER_EXEC_SHELL_COMMAND,{command:"npm run build"},void 0,p.TOOL_CALL_PENDING),fe=n(s.SERVER_FILE_GLOB_SEARCH,{exclude:"**/node_modules/**",include:"**/*.svelte",path:"src/lib/components"},JSON.stringify({plain_text_response:`src/lib/components/app/chat/ChatMessages/ChatMessage/ChatMessage.svelte
+src/lib/components/app/chat/ChatMessages/ChatMessageReasoningBlock.svelte
+src/lib/components/app/chat/ChatMessages/ChatMessageEditForm.svelte
+---
+Total matches: 3`})),Ee=n(s.SERVER_GREP_SEARCH,{include:"**/*.ts",path:"src/lib",pattern:"deriveAgenticSections",return_line_numbers:!0},JSON.stringify({plain_text_response:`src/lib/utils/agentic.ts:209:export function deriveAgenticSections(
+src/lib/utils/index.ts:88:	deriveAgenticSections,
+---
+Total matches: 2`})),_e=n(s.BROWSER_RUN_JAVASCRIPT,{code:`const values = [3, 1, 2];
+console.log(values.sort());
+return values.length;`,timeout_ms:5e3},`[1,2,3]
+3`),ve=n(s.BROWSER_RUN_JAVASCRIPT,{code:"undefinedFunction();"},JSON.stringify({error:"ReferenceError: undefinedFunction is not defined"})),we={...n(s.BROWSER_READ_MEDIA,{path:"/home/user/charts/usage.svg"},`File: /home/user/charts/usage.svg
+Size: 512 bytes
+MIME: image/svg+xml
+[Attachment saved: mcp-attachment-usage.svg]`),toolResultExtras:[{base64Url:R,name:"mcp-attachment-usage.svg",type:u.IMAGE}]},Te=n("web_search_exa",{query:"llama.cpp speculative decoding"},["Title: Speculative decoding in llama.cpp","URL: https://github.com/ggml-org/llama.cpp/tree/master/examples/speculative","Published: 2025-03-14","Author: N/A","Highlights:","Use a small draft model to propose tokens that the main model verifies in one batch.","---","Title: llama-server README","URL: https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md","Published: N/A","Author: ggml-org","Highlights:","The server accepts --model-draft to enable speculative decoding."].join(`
+`)),ye={content:v,type:p.REASONING},Re={content:v,type:p.REASONING_PENDING},Me={content:"The user asks about the meaning of life. I should first check which",type:p.REASONING,wasInterrupted:!0},Ae={contextTotal:32768,contextUsed:1e4,hasNextToken:!1,outputTokensMax:-1,outputTokensUsed:0,progressPercent:42,promptProgress:{cache:0,processed:4200,time_ms:6e3,total:1e4},promptTokens:0,speculative:!1,status:"preparing",temperature:.8,tokensDecoded:0,tokensPerSecond:0,tokensRemaining:-1,topP:.95},Ce={contextTotal:32768,contextUsed:45200,hasNextToken:!0,outputTokensMax:-1,outputTokensUsed:128,promptTokens:42200,speculative:!1,status:"generating",temperature:.8,tokensDecoded:128,tokensPerSecond:25,tokensRemaining:-1,topP:.95},b={enableContinueGeneration:!1,renderThinkingAsMarkdown:!0,renderUserContentAsMarkdown:!0,showAgenticTurnStats:!1,showMessageStats:!0,showRawOutputSwitch:!1};function Ie(o={}){const i={...b,...o.settings},r=Object.fromEntries(Object.keys(i).map(c=>[c,E.config[c]]));for(const[c,f]of Object.entries(i))E.updateConfig(c,f);return g.activeConversation={currNode:null,id:a,lastModified:S,name:"Storybook conversation"},g.activeMessages=o.activeMessages??[],o.loading&&m.markLocal(a),o.streamingMessageId&&l.chatStreamingStates.set(a,{messageId:o.streamingMessageId,response:""}),o.processing&&(l.processing.setActiveConversation(a),l.processing.setState(a,o.processing)),o.compactingNodeId&&m.markCompacting(a,o.compactingNodeId),o.pendingEditMessageId&&(l.pendingEditMessageId=o.pendingEditMessageId),()=>{for(const[c,f]of Object.entries(r))E.updateConfig(c,f);m.localEnded(a),m.endCompacting(a),l.chatStreamingStates.delete(a),l.processing.setState(a,null),l.processing.setActiveConversation(null),l.pendingEditMessageId=null,g.activeMessages=[],g.activeConversation=null}}export{Se as $,te as A,ye as B,a as C,Re as D,Me as E,M as F,ne as G,ie as H,oe as I,ae as J,re as K,ce as L,le as M,pe as N,de as O,ue as P,fe as Q,v as R,D as S,Ee as T,_e as U,ve as V,we as W,Te as X,me as Y,ge as Z,he as _,Q as a,w as a0,F as b,$ as c,H as d,W as e,_ as f,U as g,V as h,B as i,j,J as k,Ce as l,A as m,P as n,q as o,Ae as p,Y as q,X as r,Ie as s,C as t,G as u,se as v,K as w,z as x,Z as y,ee as z};

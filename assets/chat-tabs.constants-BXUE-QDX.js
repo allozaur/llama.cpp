@@ -1,0 +1,1 @@
+const a="new-chat",A="project-home",_="New chat",c="Chat",E={COLLAPSED_SIDEBAR:"max-w-[calc(100vw-5rem)]",EXPANDED_SIDEBAR:"max-w-[calc(100vw-var(--sidebar-width)-2rem)]"};export{E as C,a as N,A as P,c as U,_ as a};

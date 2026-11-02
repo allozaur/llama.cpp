@@ -1,0 +1,1 @@
+const A={DISPLAY_MODE_STANDALONE:"(display-mode: standalone)",PREFERS_DARK:"(prefers-color-scheme: dark)"},D={BACKGROUND_DARK:"#111111",BACKGROUND_LIGHT:"#fbfbfb"},s={DARK:"#fafafa",LIGHT:"#111111"},E={FAVICON_PADDING:.04,SPLASH_PADDING:.75};export{s as F,A as M,E as P,D as T};

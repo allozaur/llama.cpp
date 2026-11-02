@@ -1,0 +1,1 @@
+import{p as a,o as t,ak as u,al as r,d as s}from"./iframe-BxvSZK0j.js";function l(f,e){a(e,!0);let o=t(e,"mounted",15,!1),n=t(e,"onMountedChange",3,u);r(()=>(o(!0),n()(!0),()=>{o(!1),n()(!1)})),s()}export{l as M};

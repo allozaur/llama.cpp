@@ -1,0 +1,1 @@
+import{a3 as s,w as r}from"./iframe-BxvSZK0j.js";import{I as n}from"./Icon-CSRBsjq8.js";var p=new Set(["$$slots","$$events","$$legacy"]);function i(o,a){let e=r(a,p);const t={name:"download",size:24,node:[["path",{d:"M12 15V3"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}],["path",{d:"m7 10 5 5 5-5"}]]};n(o,s(()=>e,{get icon(){return t}}))}export{i as D};
