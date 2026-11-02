@@ -90,9 +90,6 @@ class UiStore {
 	/** Set when a flow outside the chat wants the composer focused once it can take it. */
 	composerFocusRequested = $state(false);
 
-	/** Hugging Face repo the Hub details drawer shows, e.g. `ggml-org/gemma-3-4b-it-GGUF`. */
-	hubModelFocus = $state<string | null>(null);
-
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -101,6 +98,9 @@ class UiStore {
 
 	/** Open state of the group picker, a phone's stand-in for the group submenus. */
 	groupPicker = $state<GroupPickerOptions | null>(null);
+
+	/** Hugging Face repo the Hub details drawer shows, e.g. `ggml-org/gemma-3-4b-it-GGUF`. */
+	hubModelFocus = $state<string | null>(null);
 
 	/** Whether the main chat form is expanded into its large editor. */
 	isComposerExpanded = $state(false);
