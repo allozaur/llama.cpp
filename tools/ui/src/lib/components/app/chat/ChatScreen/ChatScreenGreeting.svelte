@@ -7,12 +7,15 @@
 		enterDelayMs?: number;
 		/** Transparent but still in place, e.g. behind the expanded chat form. */
 		faded?: boolean;
+		/** Shown at once, without the entry: a phone's form never moves, so there is none to wait for. */
+		instant?: boolean;
 		isEmpty: boolean;
 	}
 
 	let {
 		enterDelayMs = CHAT_GREETING_ENTER_DELAY_MS,
 		faded = false,
+		instant = false,
 		isEmpty = false
 	}: Props = $props();
 
@@ -37,7 +40,7 @@
 
 	let enterClass = $derived([
 		'transition-opacity duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]',
-		(!hasEntered || faded) && 'opacity-0'
+		((!hasEntered && !instant) || faded) && 'opacity-0'
 	]);
 </script>
 
