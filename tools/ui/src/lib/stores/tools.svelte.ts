@@ -27,6 +27,7 @@ import {
 	ToolCallType,
 	ToolSource
 } from '$lib/enums';
+import { PreferencesService } from '$lib/services/preferences.service';
 import { ToolsService } from '$lib/services/tools.service';
 import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
@@ -377,7 +378,7 @@ class ToolsStore {
 		if (!browser) return;
 
 		try {
-			const stored = localStorage.getItem(DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY);
+			const stored = PreferencesService.getItem(DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY);
 
 			if (stored) {
 				const parsed = JSON.parse(stored);
@@ -393,7 +394,7 @@ class ToolsStore {
 		}
 
 		try {
-			const stored = localStorage.getItem(DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY);
+			const stored = PreferencesService.getItem(DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY);
 
 			if (stored) {
 				const parsed = JSON.parse(stored);
@@ -672,7 +673,7 @@ class ToolsStore {
 
 	private persistDisabledToolCategories(): void {
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
 				JSON.stringify([...this._disabledToolCategories])
 			);
@@ -683,7 +684,7 @@ class ToolsStore {
 
 	private persistDisabledTools(): void {
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
 				JSON.stringify([...this._disabledTools])
 			);
