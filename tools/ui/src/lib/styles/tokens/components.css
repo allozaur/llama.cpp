@@ -43,7 +43,7 @@
 	/* inset group: rows grouped inside a glass panel, e.g. the sidebar footer. A soft white on
 	   the light glass, with the sidebar's own ambient edge and a faint shade under it, so it
 	   reads as part of the panel rather than a button or a field */
-	--inset-group-background: color-mix(in oklch, var(--surface-raised) 85%, transparent);
+	--inset-group-background: color-mix(in oklch, var(--surface-raised) 55%, transparent);
 	--inset-group-edge-side: var(--edge-ambient-side);
 	--inset-group-edge-mid: var(--edge-ambient-mid);
 	--inset-group-shadow: 0 2px 8px -4px var(--black-a8);
