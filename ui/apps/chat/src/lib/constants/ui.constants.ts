@@ -5,7 +5,12 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
+import {
+	MODELS_ROUTE_ID,
+	PROJECTS_ROUTE_ID,
+	SERVERS_ROUTE_ID,
+	SETTINGS_ROUTE_ID
+} from './routes.constants';
 import { Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
@@ -184,6 +189,7 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	},
 	{
 		action: SidebarAction.SERVERS,
+		activeRouteId: SERVERS_ROUTE_ID,
 		icon: Server,
 		tooltip: 'Servers'
 	},
