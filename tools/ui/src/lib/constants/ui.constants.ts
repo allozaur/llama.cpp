@@ -5,7 +5,12 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID } from './routes.constants';
+import {
+	MCP_SERVERS_ROUTE_ID,
+	MODELS_ROUTE_ID,
+	PROJECTS_ROUTE_ID,
+	SETTINGS_ROUTE_ID
+} from './routes.constants';
 import { Search, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
@@ -185,11 +190,13 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	},
 	{
 		action: SidebarAction.MCP,
+		activeRouteId: MCP_SERVERS_ROUTE_ID,
 		icon: McpLogo,
 		tooltip: 'MCP'
 	},
 	{
 		action: SidebarAction.SETTINGS,
+		activeRouteId: SETTINGS_ROUTE_ID,
 		icon: Settings,
 		keys: SHORTCUT_SETTINGS,
 		tooltip: 'Settings'
