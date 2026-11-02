@@ -2,9 +2,11 @@
 	import ChatScreenActionScrollDown from './ChatScreenActionScrollDown.svelte';
 	import ChatScreenDialogsAndAlerts from './ChatScreenDialogsAndAlerts.svelte';
 	import ChatScreenGreeting from './ChatScreenGreeting.svelte';
+	import ChatScreenMobileHeader from './ChatScreenMobileHeader.svelte';
 	import { disableScrollHandling, onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
+		ChatFormContextGauge,
 		ChatMessages,
 		ChatScreenDragOverlay,
 		ChatScreenForm,
@@ -25,6 +27,7 @@
 	import { useChatScreenActiveModel } from '$lib/hooks/use-chat-screen-active-model.svelte';
 	import { useChatScreenDragAndDrop } from '$lib/hooks/use-chat-screen-drag-and-drop.svelte';
 	import { useChatScreenFileUpload } from '$lib/hooks/use-chat-screen-file-upload.svelte';
+	import { useShowContextGauge } from '$lib/hooks/use-context-gauge.svelte';
 	import { useKeyboardShortcuts } from '$lib/hooks/use-keyboard-shortcuts.svelte';
 	import { createStickToBottom } from '$lib/hooks/use-stick-to-bottom.svelte';
 	import {
@@ -49,6 +52,7 @@
 	let isFormCentered = $state(untrack(() => isEmpty));
 	let isFormMoving = false;
 	let formWrapper: HTMLElement | undefined = $state();
+	let chatScreenForm: ChatScreenForm | undefined = $state();
 	let activeErrorDialog = $derived(chatStore.errorDialogState);
 	let isServerLoading = $derived(serverStore.loading);
 	let hasPropsError = $derived(!!serverStore.error);
@@ -58,14 +62,15 @@
 
 		if (deviceStore.isStandalone) return '1.5rem';
 
-		if (deviceStore.isIOSSafari) return '0.25rem';
+		if (deviceStore.isIOSSafari) return '0.5rem';
 
-		return '0.5rem';
+		return '0.75rem';
 	});
 
 	// The page is the scroller: it follows new content while the reader sits at
 	// the bottom, and otherwise leaves their position alone.
 	const stick = createStickToBottom();
+	const showContextGauge = useShowContextGauge();
 	let stickPin: HTMLDivElement | undefined = $state();
 	const activeModel = useChatScreenActiveModel();
 	const fileUpload = useChatScreenFileUpload({
@@ -234,13 +239,29 @@
 {:else}
 	<div
 		style:--chat-form-bottom-position={chatFormBottomPosition}
-		class="chat-screen flex grow flex-col min-h-[calc(100dvh-1rem)] md:min-h-[calc(100dvh-var(--chat-tabs-offset,0px))] px-4 md:py-0 pt-12 pb-48 md:pb-4"
+		class="chat-screen flex grow flex-col min-h-[calc(100dvh-1rem)] md:min-h-[calc(100dvh-var(--chat-tabs-offset,0px))] px-4 md:py-0 pt-(--page-top) pb-48 md:pb-4"
 		ondragenter={dragAndDrop.dragHandlers.dragenter}
 		ondragleave={dragAndDrop.dragHandlers.dragleave}
 		ondragover={dragAndDrop.dragHandlers.dragover}
 		ondrop={dragAndDrop.dragHandlers.drop}
 		role="main"
 	>
+		<!-- a phone pins the gauge to the top right, across from the menu toggle -->
+		{#if deviceStore.isMobile && showContextGauge.current}
+			<ChatFormContextGauge
+				class="sidebar-reveal-pin-top fixed top-(--corner-control-top) right-4 z-20 size-10 rounded-full bg-muted/60 border border-border/20 shadow-sm backdrop-blur-sm"
+				corner
+			/>
+		{/if}
+
+		<!-- a phone's chat shows its title and working directory between the corner keys; a new
+		     chat has neither yet, and offers the directory in the + menu instead -->
+		{#if deviceStore.isMobile && page.params.id}
+			<ChatScreenMobileHeader
+				onWorkingDirectoryClick={() => chatScreenForm?.openWorkingDirectoryPicker()}
+			/>
+		{/if}
+
 		{#if !isEmpty}
 			<ChatMessages
 				messages={conversationsStore.activeMessages}
@@ -259,12 +280,14 @@
 				// a fade, see moveForm. Its height in the page is the same in both
 				// (the padding stays, the desktop greeting floats above the form),
 				// so the messages never shift while it moves
-				'pointer-events-none md:sticky fixed mt-auto',
+				'pointer-events-none md:sticky fixed mt-auto max-md:z-10',
+				// a phone holds it in place on screen while the page is slid aside
+				deviceStore.isMobile && 'sidebar-reveal-pin-bottom',
 				deviceStore.isStandalone
 					? 'bottom-6 right-4 left-4'
 					: deviceStore.isIOSSafari
-						? 'bottom-1 left-2 right-2'
-						: 'bottom-2 right-2 left-2',
+						? 'bottom-2 left-2 right-2'
+						: 'bottom-3 right-2 left-2',
 				'md:bottom-4',
 				isFormCentered
 					? 'md:translate-y-[calc(-50dvh+7rem)] 2xl:translate-y-[calc(-50dvh+4rem)]'
@@ -280,12 +303,13 @@
 			{/if}
 
 			<div class="pointer-events-none flex flex-col gap-6 items-center w-full">
-				{#if !stick.atBottom && page.url.hash.includes(ROUTES.CHAT) && page.params.id}
+				{#if stick.farFromBottom && page.url.hash.includes(ROUTES.CHAT) && page.params.id}
 					<ChatScreenActionScrollDown onclick={() => stick.scrollToBottom('smooth')} />
 				{/if}
 			</div>
 
 			<ChatScreenForm
+				bind:this={chatScreenForm}
 				bind:uploadedFiles={fileUpload.uploadedFiles}
 				class="pointer-events-auto conversation-chat-form"
 				disabled={hasPropsError || chatStore.isEditing()}
