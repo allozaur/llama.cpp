@@ -5,7 +5,8 @@
 
 import DialogServersWrapper from './components/DialogServersWrapper.svelte';
 import { ChatScreenServerError, SidebarNavigationActions } from '$lib/components/app';
-import { CODE_CHARS, CODE_LENGTHS, SETTINGS_KEYS } from '$lib/constants';
+import { CODE_CHARS, CODE_LENGTHS, SETTINGS_KEYS, SIDEBAR_FOOTER_ITEMS } from '$lib/constants';
+import { SidebarAction } from '$lib/enums';
 import { serversStore, serverStore, settingsStore, uiStore } from '$lib/stores';
 import { getAuthHeadersForServer } from '$lib/utils/api-headers';
 import { createRemoteServer, createUrlServer } from '$lib/utils/server';
@@ -34,12 +35,11 @@ describe('servers on a phone', () => {
 	});
 
 	it('offers the servers list in the sidebar', async () => {
+		// the sidebar's footer carries the entry, and a phone lists it with the top actions
 		const screen = render(SidebarNavigationActions, {
 			class: '',
-			isExpandedMode: true,
-			isSearchModeActive: false,
-			onServersClick: () => opened.push(true),
-			searchQuery: ''
+			items: SIDEBAR_FOOTER_ITEMS,
+			onAction: (action) => opened.push(action === SidebarAction.SERVERS)
 		});
 		const item = screen.getByRole('button', { name: 'Servers' });
 
