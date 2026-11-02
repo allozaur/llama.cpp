@@ -5,7 +5,12 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID, PROJECTS_ROUTE_ID } from './routes.constants';
+import {
+	MCP_SERVERS_ROUTE_ID,
+	MODELS_ROUTE_ID,
+	PROJECTS_ROUTE_ID,
+	SETTINGS_ROUTE_ID
+} from './routes.constants';
 import { Search, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
@@ -155,6 +160,7 @@ export const ROW_LONG_PRESS_SLOP_PX = 8;
 /** Max height for tool-result code blocks (json / source / diff / streaming code). */
 export const MAX_HEIGHT_CODE_BLOCK = '22rem';
 
+/** The sidebar's actions at its top: starting, finding and organizing chats. */
 export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.NEW_CHAT,
@@ -168,7 +174,11 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		activeRouteId: PROJECTS_ROUTE_ID,
 		icon: PROJECT_ICON,
 		tooltip: 'Projects'
-	},
+	}
+];
+
+/** The sidebar's footer: managing the app around the chats. */
+export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.MANAGE_MODELS,
 		activeRouteId: MODELS_ROUTE_ID,
@@ -178,11 +188,13 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 	},
 	{
 		action: SidebarAction.MCP,
+		activeRouteId: MCP_SERVERS_ROUTE_ID,
 		icon: McpLogo,
 		tooltip: 'MCP'
 	},
 	{
 		action: SidebarAction.SETTINGS,
+		activeRouteId: SETTINGS_ROUTE_ID,
 		icon: Settings,
 		keys: SHORTCUT_SETTINGS,
 		tooltip: 'Settings'

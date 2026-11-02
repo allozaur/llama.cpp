@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PanelLeftClose, PanelLeftOpen } from '@lucide/svelte';
+	import { PanelLeftClose, PanelLeftOpen, Search } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
@@ -21,8 +21,10 @@
 	} from '$lib/components/app';
 	import {
 		ROUTES,
+		SIDEBAR_ACTIONS_ITEMS,
 		SIDEBAR_COLLAPSE_WIDTH,
 		SIDEBAR_COLLAPSED_WIDTH,
+		SIDEBAR_FOOTER_ITEMS,
 		SIDEBAR_MAX_WIDTH,
 		SIDEBAR_MIN_WIDTH,
 		SIDEBAR_OVERSTRETCH_PX,
@@ -36,6 +38,7 @@
 	import { RouterService } from '$lib/services/router.service';
 	import { chatStore, conversationsStore, deviceStore, settingsStore, uiStore } from '$lib/stores';
 	import { buildConversationTree, remToPx } from '$lib/utils';
+	import { tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { fade } from 'svelte/transition';
 
@@ -302,9 +305,8 @@
 	function selectConversation(id: string) {
 		const conversation = conversationsStore.conversations.find((conv) => conv.id === id);
 
-		afterMobileClose(
-			() =>
-				void goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
+		navigateBehind(() =>
+			goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
 		);
 	}
 
@@ -372,8 +374,25 @@
 	}
 
 	/**
-	 * A phone slides its open sidebar shut first, and only then follows a tap in it, so the page
-	 * it goes to or the dialog it opens appears once the sidebar is out of the way. Anything else
+	 * A phone opens the page a tap in its sidebar goes to while the current one is still aside,
+	 * and slides the sidebar shut once that page has rendered, so it is ready, settled, as it
+	 * slides back. Anything else navigates at once.
+	 */
+	function navigateBehind(go: () => Promise<unknown>): void {
+		if (!deviceStore.isMobile || !uiStore.isSidebarExpanded) {
+			void go();
+
+			return;
+		}
+
+		void go()
+			.then(tick)
+			.finally(() => requestAnimationFrame(() => (uiStore.isSidebarExpanded = false)));
+	}
+
+	/**
+	 * A phone slides its open sidebar shut first, and only then opens what a tap in it asks for,
+	 * so a dialog or the search screen appears once the sidebar is out of the way. Anything else
 	 * acts at once.
 	 */
 	function afterMobileClose(run: () => void): void {
@@ -510,7 +529,7 @@
 	function handleSidebarAction(action: SidebarAction): void {
 		switch (action) {
 			case SidebarAction.NEW_CHAT:
-				afterMobileClose(() => void conversationsStore.openNewChat());
+				navigateBehind(() => conversationsStore.openNewChat());
 
 				break;
 			case SidebarAction.SEARCH:
@@ -518,19 +537,22 @@
 
 				break;
 			case SidebarAction.PROJECTS:
-				afterMobileClose(() => void goto(ROUTES.PROJECTS));
+				navigateBehind(() => goto(ROUTES.PROJECTS));
 
 				break;
 			case SidebarAction.MANAGE_MODELS:
 				openDialog(() => uiStore.openModelsManager());
 
 				break;
+			// dialogs on a desktop or tablet; on a phone, pages of their own
 			case SidebarAction.MCP:
-				openDialog(() => (mcpDialogOpen = true));
+				if (isOnMobile) navigateBehind(() => goto(ROUTES.MCP_SERVERS));
+				else openDialog(() => (mcpDialogOpen = true));
 
 				break;
 			case SidebarAction.SETTINGS:
-				openDialog(() => (settingsDialogOpen = true));
+				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
+				else openDialog(() => (settingsDialogOpen = true));
 
 				break;
 		}
@@ -591,15 +613,17 @@
 					role="button"
 					tabindex="0"
 				>
+					<!-- the chat form's add-button key whenever the sidebar shows, open or peeking;
+					     no fill while it is hidden; hover and focus never change the fill -->
 					<ActionIcon
 						ariaLabel={!uiStore.isSidebarExpanded
 							? 'Expand navigation'
 							: isLogoToggle
 								? 'Collapse navigation'
 								: 'Go to start'}
-						class="{uiStore.isSidebarExpanded
-							? 'bg-muted! md:bg-foreground/5!'
-							: 'bg-transparent!'} md:size-9 size-10 rounded-full md:hover:bg-foreground/10! pointer-events-auto"
+						class="pointer-events-auto size-10 rounded-full! md:size-9 {isStripHidden
+							? 'bg-transparent! hover:bg-transparent!'
+							: 'matte-key bg-surface-raised! hover:bg-surface-raised! dark:bg-muted-foreground/15! dark:hover:bg-muted-foreground/15!'}"
 						href={uiStore.isSidebarExpanded && !isLogoToggle ? ROUTES.START : undefined}
 						icon={isLogoToggle && logoHovered
 							? uiStore.isSidebarExpanded
@@ -617,26 +641,39 @@
 						tooltipSide={TooltipSide.RIGHT}
 					/>
 				</div>
+
+				<!-- a phone reaches search from a round key across from the logo, in place of the
+				     Search row among the sidebar's actions -->
+				{#if isOnMobile}
+					<ActionIcon
+						ariaLabel="Search"
+						class="matte-key size-10 rounded-full! bg-surface-raised! hover:bg-surface-raised! dark:bg-muted-foreground/15! dark:hover:bg-muted-foreground/15!"
+						icon={Search}
+						iconSize="size-4.5"
+						onclick={() => handleSidebarAction(SidebarAction.SEARCH)}
+						size="lg"
+					/>
+				{/if}
 			</div>
 
 			<div
 				in:fade={{ duration: 200 }}
 				out:fade={{ duration: 200 }}
-				class="mt-2 flex min-h-0 flex-1 flex-col gap-4 md:gap-1 md:transition-opacity md:duration-150 md:ease-out {isStripHidden
+				class="mt-2 flex min-h-0 flex-1 flex-col gap-7 max-md:mt-6 md:gap-1 md:transition-opacity md:duration-150 md:ease-out {isStripHidden
 					? 'md:opacity-0'
 					: ''}"
 			>
+				<!-- a phone has no footer: its items join these -->
 				<SidebarNavigationActions
 					class="px-2 md:my-3"
+					items={isOnMobile ? [...SIDEBAR_ACTIONS_ITEMS, ...SIDEBAR_FOOTER_ITEMS] : undefined}
 					onAction={handleSidebarAction}
-					onNavigate={() => {
-						if (deviceStore.isMobile) {
-							uiStore.isSidebarExpanded = false;
-						}
-					}}
+					onNavigate={navigateBehind}
 				/>
 
-				<div class="flex min-h-0 flex-1 flex-col overflow-y-auto opacity-(--sidebar-fade)">
+				<div
+					class="flex min-h-0 flex-1 flex-col overflow-y-auto opacity-(--sidebar-fade) max-md:pb-safe-2"
+				>
 					<SidebarNavigationConversationList
 						{allSelectedArePinned}
 						allVisibleSelected={visibleSelectionStats.visibleCount > 0 &&
@@ -665,6 +702,17 @@
 						visibleCount={visibleSelectionStats.visibleCount}
 					/>
 				</div>
+
+				<!-- the footer: managing the app around the chats, grouped in an inset surface at
+				     the bottom of the sidebar and of its collapsed strip alike (a phone lists its
+				     items with the actions above) -->
+				{#if !isOnMobile}
+					<SidebarNavigationActions
+						class="inset-group-surface mx-2 mb-2 p-1"
+						items={SIDEBAR_FOOTER_ITEMS}
+						onAction={handleSidebarAction}
+					/>
+				{/if}
 			</div>
 		</div>
 
