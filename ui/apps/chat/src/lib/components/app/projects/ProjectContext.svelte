@@ -8,7 +8,7 @@
 		DropdownMenuActions
 	} from '#lib/components/app/index.ts';
 	import { ICON_CLASS_DEFAULT, SECTION_ACTION_CLASS } from '#lib/constants/index.ts';
-	import { MentionPickerSource, ProjectContextKind } from '#lib/enums/index.ts';
+	import { ProjectContextKind } from '#lib/enums/index.ts';
 	import type { FileMentionEntry, ProjectContextItem } from '#lib/types/index.ts';
 	import { formatFileSize } from '#lib/utils/index.ts';
 
@@ -23,7 +23,6 @@
 
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let pickerAnchor = $state<HTMLDivElement | null>(null);
-	let pickerSource = $state<MentionPickerSource>(MentionPickerSource.FILES);
 	let isPickerOpen = $state(false);
 	let pickerQuery = $state('');
 
@@ -36,18 +35,12 @@
 		{
 			icon: FileIcon,
 			label: 'Reference files',
-			onclick: () => openPicker(MentionPickerSource.FILES),
-			separator: true
-		},
-		{
-			icon: Server,
-			label: 'MCP resources',
-			onclick: () => openPicker(MentionPickerSource.MCP_RESOURCES)
+			onclick: () => openPicker()
 		}
+		// MCP resources join here once the mention picker lists them
 	]);
 
-	function openPicker(source: MentionPickerSource) {
-		pickerSource = source;
+	function openPicker() {
 		pickerQuery = '';
 		isPickerOpen = true;
 	}
@@ -147,5 +140,4 @@
 	onClose={() => (isPickerOpen = false)}
 	onSelect={handleReferenceSelect}
 	showSearchInput
-	source={pickerSource}
 />

@@ -2,7 +2,7 @@
 	import ProjectContext from './ProjectContext.svelte';
 	import ProjectInstructions from './ProjectInstructions.svelte';
 	import * as Card from '@ggml-org/llama-ui/ui/card';
-	import { FileMentionEntryType, ProjectContextKind } from '#lib/enums/index.ts';
+	import { ProjectContextKind } from '#lib/enums/index.ts';
 	import { useChatScreenActiveModel } from '#lib/hooks/use-chat-screen-active-model.svelte.ts';
 	import { projectsStore } from '#lib/stores/index.ts';
 	import type { FileMentionEntry, Project, ProjectContextItem } from '#lib/types/index.ts';
@@ -47,19 +47,9 @@
 		);
 	}
 
-	/** A file or MCP resource picked with `@` is kept as a reference. */
+	/** A file picked with `@` is kept as a reference. */
 	async function handleAddReference(entry: FileMentionEntry) {
-		await addContextItems([
-			{
-				kind:
-					entry.type === FileMentionEntryType.MCP_RESOURCE
-						? ProjectContextKind.MCP_RESOURCE
-						: ProjectContextKind.FILE,
-				name: entry.name,
-				path: entry.path,
-				serverName: entry.serverName
-			}
-		]);
+		await addContextItems([{ kind: ProjectContextKind.FILE, name: entry.name, path: entry.path }]);
 	}
 </script>
 
