@@ -40,7 +40,7 @@
 		class="data-[vaul-drawer-direction=bottom]:h-[85dvh] data-[vaul-drawer-direction=bottom]:max-h-[85dvh] data-[vaul-drawer-direction=right]:w-[48rem] data-[vaul-drawer-direction=right]:max-w-[calc(100vw-2rem)] data-[vaul-drawer-direction=right]:sm:max-w-[48rem]"
 	>
 		<div class="flex shrink-0 items-center gap-2 border-b border-border/40 px-6 py-3">
-			<DISCOVER_ICON class="h-4 w-4 text-muted-foreground" />
+			<DISCOVER_ICON class="size-icon-md text-muted-foreground" />
 
 			<Drawer.Title class="text-sm font-medium">Hugging Face</Drawer.Title>
 
@@ -52,7 +52,7 @@
 				ariaLabel="Close"
 				class="ml-auto"
 				icon={X}
-				iconSize="h-4 w-4"
+				iconSize="size-icon-md"
 				onclick={() => uiStore.closeHubModelDetails()}
 				tooltip="Close"
 				tooltipAsTitle
