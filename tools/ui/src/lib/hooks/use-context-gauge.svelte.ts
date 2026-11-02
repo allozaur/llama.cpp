@@ -12,7 +12,13 @@ import {
 } from '$lib/components/app/chat/ChatForm/ChatFormContextGauge/context-gauge';
 import { STATS_UNITS } from '$lib/constants';
 import { ColorLevel } from '$lib/enums';
-import { chatStore, contextStatsStore, conversationsStore, modelsStore, serverStore } from '$lib/stores';
+import {
+	chatStore,
+	contextStatsStore,
+	conversationsStore,
+	modelsStore,
+	serverStore
+} from '$lib/stores';
 import type { DatabaseMessage } from '$lib/types';
 
 export interface UseContextGaugeReturn {
