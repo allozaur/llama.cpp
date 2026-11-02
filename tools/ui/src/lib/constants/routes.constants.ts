@@ -15,6 +15,8 @@ export const ROUTES = {
 	MCP_SERVERS: '#/mcp-servers',
 	/** Models manager. */
 	MODELS: '#/models',
+	/** Projects list. */
+	PROJECTS: '#/projects',
 	/** Search — mobile-only full-page conversation search. */
 	SEARCH: '#/search',
 	/** Root — start of the app. */
@@ -23,3 +25,6 @@ export const ROUTES = {
 
 /** SvelteKit route id of the models manager, as `page.route.id` reports it. */
 export const MODELS_ROUTE_ID = '/models';
+
+/** SvelteKit route id of the projects list, as `page.route.id` reports it. */
+export const PROJECTS_ROUTE_ID = '/projects';

@@ -19,12 +19,14 @@
 		ATTACHMENT_MENU_TEXT,
 		ATTACHMENT_MODALITY_TEXT,
 		ICON_CLASS_DEFAULT,
+		PROJECT_ICON,
 		SET_WORKING_DIRECTORY_LABEL
 	} from '$lib/constants';
 	import { getChatFormActionsContext } from '$lib/contexts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '$lib/enums/attachment.enums';
 	import { useAttachmentMenu } from '$lib/hooks/use-attachment-menu.svelte';
 	import { useToolsPanel } from '$lib/hooks/use-tools-panel.svelte';
+	import { conversationsStore, projectsStore, uiStore } from '$lib/stores';
 	import type { ToolGroup } from '$lib/types';
 	import type { Snippet } from 'svelte';
 
@@ -125,6 +127,27 @@
 							</span>
 						{/if}
 					</span>
+				</button>
+
+				<button
+					class={itemClass}
+					onclick={() => {
+						drawerOpen = false;
+						uiStore.openProjectPicker({
+							currentProjectId:
+								conversationsStore.activeConversation?.projectId ??
+								conversationsStore.preferences.pendingProjectId,
+							onSelect: (projectId) =>
+								void conversationsStore.assignActiveConversationProject(
+									projectsStore.get(projectId) ?? null
+								)
+						});
+					}}
+					type="button"
+				>
+					<PROJECT_ICON class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+					<span>{ATTACHMENT_MENU_TEXT.ADD_TO_PROJECT}</span>
 				</button>
 
 				<button

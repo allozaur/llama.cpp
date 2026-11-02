@@ -15,13 +15,19 @@
 		Trash2,
 		Unlink
 	} from '@lucide/svelte';
-	import { ContextMenuActions, DropdownMenuActions } from '$lib/components/app';
+	import {
+		ContextMenuActions,
+		DropdownMenuActions,
+		ProjectPrefix,
+		ProjectSubmenu
+	} from '$lib/components/app';
 	import { TruncatedText } from '$lib/components/app';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		FORK_TREE_DEPTH_PADDING,
 		ICON_CLASS_DEFAULT,
+		PROJECT_ICON,
 		ROW_LONG_PRESS_MS,
 		SHORTCUT_DELETE_CONVERSATION,
 		SHORTCUT_EDIT_CONVERSATION,
@@ -41,13 +47,15 @@
 		tabsStore,
 		uiStore
 	} from '$lib/stores';
-	import type { MenuAction } from '$lib/types';
+	import type { MenuAction, Project } from '$lib/types';
 	import { hapticTap } from '$lib/utils';
 	import { onMount, tick } from 'svelte';
 
 	interface Props {
 		isActive?: boolean;
 		depth?: number;
+		/** Optional trailing text, e.g. when the chat was last touched. */
+		meta?: string;
 		conversation: DatabaseConversation;
 		isSelectionMode?: boolean;
 		isSelected?: boolean;
@@ -59,6 +67,10 @@
 		onEnterSelectionMode?: (id: string) => void;
 		onSelectionClick?: (id: string, options: { shiftKey: boolean }) => void;
 		onRowMouseDown?: (id: string, event: MouseEvent) => void;
+		/** Project shown before the title, where the list does not group the chat under it. */
+		project?: Project;
+		/** Row density: `lg` is the roomier list outside the sidebar. */
+		size?: 'default' | 'lg';
 	}
 
 	let {
@@ -67,6 +79,7 @@
 		isActive = false,
 		isSelected = false,
 		isSelectionMode = false,
+		meta,
 		onDelete,
 		onEdit,
 		onEnterSelectionMode,
@@ -74,8 +87,12 @@
 		onSelect,
 		onSelectionClick,
 		onStop,
-		onToggleSelect
+		onToggleSelect,
+		project,
+		size = 'default'
 	}: Props = $props();
+
+	const isLarge = $derived(size === 'lg');
 
 	let renderActionsDropdown = $state(false);
 	let dropdownOpen = $state(false);
@@ -143,6 +160,9 @@
 
 	function setGroup(groupId: string | null) {
 		void conversationsStore.setConversationGroup(conversation.id, groupId);
+
+		// a chat shows under its project: moved to a group, it leaves the project
+		if (groupId && conversation.projectId) setProject(null);
 	}
 
 	// a group the chat points at may be gone; then it is in none
@@ -179,6 +199,38 @@
 	]);
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
+	function setProject(projectId: string | null) {
+		void conversationsStore.setConversationProject(conversation.id, projectId);
+	}
+
+	// a phone has no flyouts: the same entry opens the project picker there
+	function handlePickProject(event: Event) {
+		event.stopPropagation();
+		uiStore.openProjectPicker({ currentProjectId: conversation.projectId, onSelect: setProject });
+	}
+
+	// a chat in a project can move to another one or leave it, a loose chat can join one
+	let projectActions = $derived<MenuAction[]>([
+		{
+			icon: PROJECT_ICON,
+			label: conversation.projectId ? 'Change project' : 'Add to project',
+			onclick: handlePickProject,
+			submenu: projectSubmenu
+		},
+		...(conversation.projectId
+			? [
+					{
+						icon: Unlink,
+						label: 'Remove from project',
+						onclick: (event: Event) => {
+							event.stopPropagation();
+							setProject(null);
+						}
+					}
+				]
+			: [])
+	]);
+
 	let actions = $derived<MenuAction[]>([
 		...(canOpenInNewTab
 			? [
@@ -208,6 +260,7 @@
 			shortcut: SHORTCUT_EDIT_CONVERSATION
 		},
 		...groupActions,
+		...projectActions,
 		{
 			icon: Download,
 			label: 'Export',
@@ -217,11 +270,15 @@
 			},
 			shortcut: SHORTCUT_EXPORT_CONVERSATION
 		},
-		{
-			icon: ListChecks,
-			label: 'Select',
-			onclick: handleEnterSelectionMode
-		},
+		...(onEnterSelectionMode
+			? [
+					{
+						icon: ListChecks,
+						label: 'Select',
+						onclick: handleEnterSelectionMode
+					}
+				]
+			: []),
 		{
 			icon: Trash2,
 			label: 'Delete',
@@ -323,7 +380,8 @@
 		bind:this={rowElement}
 		style:--row-hold-ms="{ROW_LONG_PRESS_MS}ms"
 		class={[
-			'group flex min-h-9 w-full cursor-pointer items-center justify-between space-x-3 rounded-lg px-2 py-1.5 text-left select-none [-webkit-touch-callout:none] transition-[background-color,color,scale] hover:bg-foreground/10 hover:text-foreground md:min-h-8 md:py-1',
+			'group flex w-full cursor-pointer items-center justify-between space-x-3 rounded-lg text-left select-none [-webkit-touch-callout:none] transition-[background-color,color,scale] hover:bg-foreground/10 hover:text-foreground',
+			isLarge ? 'min-h-11 px-3 py-2' : 'min-h-9 px-2 py-1.5 md:min-h-8 md:py-1',
 			isLanding && 'invisible',
 			isActive ? 'bg-foreground/5 text-accent-foreground' : 'text-foreground/75',
 			contextMenuOpen && 'bg-foreground/10',
@@ -390,7 +448,7 @@
 								class="flex shrink-0 items-center text-muted-foreground transition-colors hover:text-foreground"
 								href={RouterService.chat(conversation.forkedFromConversationId)}
 							>
-								<GitBranch class="size-icon-sm" />
+								<GitBranch class={isLarge ? 'size-icon-md' : 'size-icon-sm'} />
 							</a>
 						{/snippet}
 					</Tooltip.Trigger>
@@ -412,9 +470,15 @@
 							role="button"
 							tabindex="0"
 						>
-							<Loader2 class="loading-icon size-icon-sm animate-spin" />
+							<Loader2
+								class="loading-icon {isLarge ? 'size-icon-md' : 'size-icon-sm'} animate-spin"
+							/>
 
-							<Square class="stop-icon hidden size-icon-xs fill-current text-destructive" />
+							<Square
+								class="stop-icon hidden {isLarge
+									? 'size-icon-sm'
+									: 'size-icon-xs'} fill-current text-destructive"
+							/>
 						</div>
 					</Tooltip.Trigger>
 
@@ -424,7 +488,24 @@
 				</Tooltip.Root>
 			{/if}
 
-			<TruncatedText class="text-sm" showTooltip={false} text={conversation.name} />
+			<!-- the project prefix and the title read as one label, spaced like a tab -->
+			<span class="flex min-w-0 flex-1 items-center gap-1">
+				{#if project}
+					<ProjectPrefix class="max-w-1/2 shrink-0 text-sm" name={project.name} />
+				{/if}
+
+				<TruncatedText
+					class={isLarge ? 'text-base' : 'text-sm'}
+					showTooltip={false}
+					text={conversation.name}
+				/>
+			</span>
+
+			{#if meta}
+				<span class="ml-auto {isLarge ? 'text-sm' : 'text-xs'} shrink-0 text-muted-foreground">
+					{meta}
+				</span>
+			{/if}
 		</div>
 
 		{#if !isSelectionMode && renderActionsDropdown}
@@ -449,6 +530,16 @@
 		label="Move to group"
 		onClose={close}
 		onSelect={setGroup}
+	/>
+{/snippet}
+
+{#snippet projectSubmenu({ close, kind }: { close: () => void; kind: MenuKind })}
+	<ProjectSubmenu
+		currentProjectId={conversation.projectId}
+		{kind}
+		label={conversation.projectId ? 'Change project' : 'Add to project'}
+		onClose={close}
+		onSelect={setProject}
 	/>
 {/snippet}
 
