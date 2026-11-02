@@ -94,9 +94,6 @@ class UiStore {
 	/** Open state of the Discover dialog. */
 	discoverModelsOpen = $state(false);
 
-	/** Open state of the servers dialog, the door to pairing on a phone. */
-	serversOpen = $state(false);
-
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -123,6 +120,8 @@ class UiStore {
 	projectDialog = $state<ProjectDialogOptions | null>(null);
 	/** Open state of the project picker, a phone's stand-in for the project submenus. */
 	projectPicker = $state<ProjectPickerOptions | null>(null);
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */

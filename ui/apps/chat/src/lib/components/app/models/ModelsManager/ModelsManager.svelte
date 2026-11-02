@@ -12,7 +12,7 @@
 	} from './utils';
 	import { LOCAL_BACKEND_ID, type ModalityKey, MODELS_TABLE_GROUP_LABELS } from '$lib/constants';
 	import { ModelCapability, ModelsTableGroupKind, ModelsTableServerKind } from '$lib/enums';
-	import { serversStore, modelsStore, uiStore } from '$lib/stores';
+	import { modelsStore, serversStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { filterModelOptions } from '$lib/utils';
 	import type { Snippet } from 'svelte';
