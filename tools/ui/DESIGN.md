@@ -839,6 +839,9 @@ icon buttons in the chat form are fully round.
   hairline (`edge-ambient-mid`), so it separates from the page without a visible border. It
   keeps nothing else of `card-surface`: no inner highlight ring, no shadow and no backdrop
   blur, which together read as a border, most in dark mode.
+- **Alerts:** an `Alert` is a card (`card-surface` on the card radius), never a bordered box.
+  The destructive kind keeps the card and tints its glass and hairline faintly with the
+  danger colour (`alert-danger-*`), with the title, description and icon in `fg-danger`.
 - **Sidebar:** `sidebar-surface`, the muted fill at 60% with no inner highlight and the
   ambient edge. On small screens it keeps a plain `shadow-md` instead.
 - **Fields:** `matte-well` with a 1px `line-field` outline and the standard 3px focus ring.
