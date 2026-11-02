@@ -26,6 +26,12 @@
 	--card-shadow: var(--elevation-surface);
 	--card-radius: var(--radius-card);
 
+	/* alert: a card in the page's flow. Its destructive kind tints the glass and the hairline
+	   with the danger colour, faintly, so the message, not the box, carries the warning */
+	--alert-danger-background: color-mix(in oklch, var(--fg-danger) 6%, var(--surface-glass));
+	--alert-danger-edge-side: color-mix(in oklch, var(--line-danger) 45%, transparent);
+	--alert-danger-edge-mid: color-mix(in oklch, var(--line-danger) 25%, transparent);
+
 	/* sidebar: a large ambient glass panel whose edge stays put on focus */
 	--sidebar-background: color-mix(in oklch, var(--surface-muted) 60%, transparent);
 	--sidebar-edge-side: var(--edge-ambient-side);
@@ -46,7 +52,7 @@
 	/* floating panels: menus, popovers, select lists, hover cards, drawers, dialogs */
 	--float-panel-background: color-mix(in oklch, var(--surface-raised) 86%, transparent);
 	/* in light mode a translucent modal greys over the dimmed page, so it stays solid white */
-	--float-panel-background-modal: var(--surface-page);
+	--float-panel-background-modal: var(--surface-raised);
 	--float-panel-text: var(--fg-default);
 	--float-panel-edge: var(--edge-raised);
 	--float-panel-highlight: var(--highlight-inner);

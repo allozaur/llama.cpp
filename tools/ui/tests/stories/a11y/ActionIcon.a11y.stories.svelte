@@ -10,7 +10,7 @@
 			layout: 'centered'
 		},
 		tags: ['!dev'],
-		title: 'Components/ActionIcon/Accessibility'
+		title: 'Design system/Actions/ActionIcon/Accessibility'
 	});
 </script>
 
