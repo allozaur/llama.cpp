@@ -2,6 +2,7 @@
 	import SidebarNavigationConversationItem from './SidebarNavigationConversationItem.svelte';
 	import SidebarNavigationDropZone from './SidebarNavigationDropZone.svelte';
 	import SidebarNavigationGroupSection from './SidebarNavigationGroupSection.svelte';
+	import SidebarNavigationProjectItem from './SidebarNavigationProjectItem.svelte';
 	import SidebarNavigationSectionHeading from './SidebarNavigationSectionHeading.svelte';
 	import SidebarNavigationSelectionBar from './SidebarNavigationSelectionBar.svelte';
 	import SidebarNavigationShowMore from './SidebarNavigationShowMore.svelte';
@@ -14,8 +15,14 @@
 		SIDEBAR_SHOW_MORE_ROW_CLASS
 	} from '$lib/constants';
 	import { SidebarSectionKind } from '$lib/enums';
-	import { conversationsStore, groupsStore, sidebarDragStore, uiStore } from '$lib/stores';
-	import type { MenuAction } from '$lib/types';
+	import {
+		conversationsStore,
+		groupsStore,
+		projectsStore,
+		sidebarDragStore,
+		uiStore
+	} from '$lib/stores';
+	import type { MenuAction, Project } from '$lib/types';
 	import { buildConversationTree } from '$lib/utils';
 	import { flip } from 'svelte/animate';
 	import { slide } from 'svelte/transition';
@@ -79,22 +86,66 @@
 	// the Recent heading's "more actions" dropdown and its right-click menu, and
 	// a right-click anywhere else in the list that no row or heading takes
 	const recentActions: MenuAction[] = [
-		{ icon: FolderPlus, label: 'New group', onclick: () => uiStore.openGroupDialog() }
+		{ icon: FolderPlus, label: 'New group', onclick: () => uiStore.openGroupDialog() },
+		{ icon: FolderPlus, label: 'New project', onclick: () => uiStore.openProjectDialog() }
 	];
 
 	let conversationTree = $derived(buildConversationTree(conversations));
 
-	// beside group sections it holds the chats in none of them
+	// in a project still there; a chat in one shows under its project's row, not in its group
+	function inProject(conversation: DatabaseConversation): boolean {
+		return Boolean(conversation.projectId && projectsStore.get(conversation.projectId));
+	}
+
+	function inGroup(item: { groupId?: string }): boolean {
+		return Boolean(item.groupId && groupsStore.get(item.groupId));
+	}
+
+	// beside group sections it holds the chats and projects in none of them
 	let recentLabel = $derived(groupsStore.groups.length > 0 ? 'Ungrouped' : 'Recent conversations');
+
+	// A project is a row that sits in Pinned, a group or Ungrouped like a chat,
+	// above the chats there and by name, so the rows do not jump around. An
+	// archived one is off the sidebar, its chats with it.
+	let sortedProjects = $derived(
+		projectsStore.projects
+			.filter((project) => !project.archived)
+			.sort((a, b) => a.name.localeCompare(b.name))
+	);
+	let pinnedProjects = $derived(sortedProjects.filter((project) => project.pinned));
+	let ungroupedProjects = $derived(
+		sortedProjects.filter((project) => !project.pinned && !inGroup(project))
+	);
+
+	// a project's unpinned chats, newest first; a pinned one stays in Pinned
+	let projectChats = $derived.by(() => {
+		const byProject: Record<string, DatabaseConversation[]> = {};
+
+		for (const conversation of conversations) {
+			if (!conversation.projectId || conversation.pinned) continue;
+
+			(byProject[conversation.projectId] ??= []).push(conversation);
+		}
+
+		for (const chats of Object.values(byProject)) {
+			chats.sort((a, b) => b.lastModified - a.lastModified);
+		}
+
+		return byProject;
+	});
 
 	// Every group is a section of its own, between Pinned and Recent. A pinned
 	// chat stays in Pinned; any other chat in a group shows in its section only.
 	let groupSections = $derived(
 		groupsStore.groups.map((group) => ({
 			conversations: conversations
-				.filter((conversation) => conversation.groupId === group.id && !conversation.pinned)
+				.filter(
+					(conversation) =>
+						conversation.groupId === group.id && !conversation.pinned && !inProject(conversation)
+				)
 				.sort((a, b) => b.lastModified - a.lastModified),
-			group
+			group,
+			projects: sortedProjects.filter((project) => !project.pinned && project.groupId === group.id)
 		}))
 	);
 
@@ -105,7 +156,7 @@
 	let unpinnedConversations = $derived(
 		conversationTree.filter(
 			({ conversation }) =>
-				!conversation.pinned && !(conversation.groupId && groupsStore.get(conversation.groupId))
+				!conversation.pinned && !inGroup(conversation) && !inProject(conversation)
 		)
 	);
 
@@ -115,7 +166,7 @@
 	// Pinned, the groups, then Recent by default; dragging a heading reorders them
 	let savedSections = $derived(
 		uiStore.orderSidebarSections([
-			...(pinnedConversations.length > 0
+			...(pinnedConversations.length > 0 || pinnedProjects.length > 0
 				? [{ id: SIDEBAR_SECTION_IDS.PINNED as string, kind: SidebarSectionKind.PINNED as const }]
 				: []),
 			...groupSections.map((section) => ({
@@ -149,42 +200,79 @@
 			: shown.slice(0, SIDEBAR_SECTION_PREVIEW_COUNT);
 	}
 
+	// a dragged project leaves its section until it is dropped somewhere
+	function notDragged(projects: Project[]): Project[] {
+		return projects.filter(
+			(project) => sidebarDragStore.projectDragId(project.id) !== sidebarDragStore.convId
+		);
+	}
+
 	function findConversation(convId: string) {
 		return conversationsStore.conversations.find((item) => item.id === convId);
 	}
 
-	function isPinned(convId: string): boolean {
-		return Boolean(findConversation(convId)?.pinned);
+	function isPinned(dragId: string): boolean {
+		const projectId = sidebarDragStore.projectIdOf(dragId);
+
+		if (projectId) return Boolean(projectsStore.get(projectId)?.pinned);
+
+		return Boolean(findConversation(dragId)?.pinned);
 	}
 
-	// the chats Ungrouped shows: neither pinned nor in a group that is still there
-	function isUngrouped(convId: string): boolean {
-		const conversation = findConversation(convId);
+	// what Ungrouped shows: neither pinned nor in a group, nor a chat in a project
+	function isUngrouped(dragId: string): boolean {
+		const projectId = sidebarDragStore.projectIdOf(dragId);
+
+		if (projectId) {
+			const project = projectsStore.get(projectId);
+
+			return Boolean(project && !project.pinned && !inGroup(project));
+		}
+
+		const conversation = findConversation(dragId);
 
 		return Boolean(
-			conversation &&
-			!conversation.pinned &&
-			!(conversation.groupId && groupsStore.get(conversation.groupId))
+			conversation && !conversation.pinned && !inGroup(conversation) && !inProject(conversation)
 		);
 	}
 
-	/** Dropping on Pinned pins the chat, wherever it came from. */
-	async function handleDropPinned(convId: string) {
-		const conversation = conversationsStore.conversations.find((item) => item.id === convId);
+	/** Dropping on Pinned pins the chat or project, wherever it came from. */
+	async function handleDropPinned(dragId: string) {
+		const projectId = sidebarDragStore.projectIdOf(dragId);
+
+		if (projectId) {
+			await projectsStore.setPinned(projectId, true);
+
+			return;
+		}
+
+		const conversation = findConversation(dragId);
 
 		if (conversation && !conversation.pinned)
-			await conversationsStore.toggleConversationPin(convId);
+			await conversationsStore.toggleConversationPin(dragId);
 	}
 
-	/** Dropping on Recent unpins the chat and takes it out of its group. */
-	async function handleDropRecent(convId: string) {
-		const conversation = conversationsStore.conversations.find((item) => item.id === convId);
+	/** Dropping on Recent unpins the chat or project and takes it out of its group and project. */
+	async function handleDropRecent(dragId: string) {
+		const projectId = sidebarDragStore.projectIdOf(dragId);
+
+		if (projectId) {
+			await projectsStore.setPinned(projectId, false);
+			await projectsStore.setGroup(projectId, null);
+
+			return;
+		}
+
+		const convId = dragId;
+		const conversation = findConversation(convId);
 
 		if (!conversation) return;
 
 		if (conversation.pinned) await conversationsStore.toggleConversationPin(convId);
 
 		if (conversation.groupId) await conversationsStore.setConversationGroup(convId, null);
+
+		if (conversation.projectId) await conversationsStore.setConversationProject(convId, null);
 	}
 </script>
 
@@ -217,6 +305,8 @@
 						conversationRow={conversationItem}
 						conversations={section.conversations}
 						group={section.group}
+						projectRow={projectItem}
+						projects={section.projects}
 					/>
 				{:else}
 					{@render recentSection()}
@@ -264,7 +354,8 @@
 			id: conversation.id,
 			lastModified: conversation.lastModified,
 			name: conversation.name,
-			pinned: conversation.pinned
+			pinned: conversation.pinned,
+			projectId: conversation.projectId
 		}}
 		{depth}
 		isActive={currentChatId === conversation.id}
@@ -278,7 +369,28 @@
 		{onSelectionClick}
 		{onStop}
 		{onToggleSelect}
+		project={conversation.pinned && conversation.projectId
+			? projectsStore.get(conversation.projectId)
+			: undefined}
 	/>
+{/snippet}
+
+{#snippet projectItem(project: Project)}
+	<SidebarNavigationProjectItem
+		conversationRow={conversationItem}
+		conversations={projectChats[project.id] ?? []}
+		{currentChatId}
+		{isSelectionMode}
+		{project}
+	/>
+{/snippet}
+
+{#snippet projectRows(projects: Project[])}
+	{#each notDragged(projects) as project (project.id)}
+		<li transition:slide={{ duration: SIDEBAR_ROW_SLIDE_MS }} class="relative p-0">
+			{@render projectItem(project)}
+		</li>
+	{/each}
 {/snippet}
 
 {#snippet pinnedSection()}
@@ -302,6 +414,8 @@
 
 		<CollapsibleRegion open={uiStore.isSidebarSectionOpen(SIDEBAR_SECTION_IDS.PINNED)}>
 			<ul class="flex w-full min-w-0 flex-col gap-4 md:gap-0.5 {className}">
+				{@render projectRows(pinnedProjects)}
+
 				{#each previewOf(SIDEBAR_SECTION_IDS.PINNED, pinnedConversations) as { conversation, depth } (conversation.id)}
 					<li transition:slide={{ duration: SIDEBAR_ROW_SLIDE_MS }} class="group/item relative p-0">
 						{@render conversationItem(conversation, depth)}
@@ -322,7 +436,7 @@
 		sectionId={SIDEBAR_SECTION_IDS.RECENT}
 	>
 		{#snippet heading()}
-			<!-- shown even with no chats yet: its menu is where a group is created -->
+			<!-- shown even with no chats yet: its menus are where groups and projects are created -->
 			<ContextMenuActions bind:open={recentMenuOpen} actions={recentActions}>
 				<SidebarNavigationSectionHeading
 					dragId={SIDEBAR_SECTION_IDS.RECENT}
@@ -351,13 +465,15 @@
 
 		<CollapsibleRegion open={uiStore.isSidebarSectionOpen(SIDEBAR_SECTION_IDS.RECENT)}>
 			<ul class="flex w-full min-w-0 flex-col gap-4 md:gap-0.5">
+				{@render projectRows(ungroupedProjects)}
+
 				{#each previewOf(SIDEBAR_SECTION_IDS.RECENT, unpinnedConversations) as { conversation, depth } (conversation.id)}
 					<li transition:slide={{ duration: SIDEBAR_ROW_SLIDE_MS }} class="group/item relative p-0">
 						{@render conversationItem(conversation, depth)}
 					</li>
 				{/each}
 
-				{#if conversations.length === 0}
+				{#if conversations.length === 0 && ungroupedProjects.length === 0}
 					<li class="px-2 py-4 text-center">
 						<p class="mb-4 p-4 text-sm text-muted-foreground">No conversations yet</p>
 					</li>
