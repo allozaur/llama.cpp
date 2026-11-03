@@ -27,6 +27,17 @@
 			</div>
 		</StateGalleryItem>
 
+		<StateGalleryItem label="inset-group-surface" note="rows grouped in a glass panel">
+			<!-- shown inside a sidebar-surface, the only place it reads as intended -->
+			<div class="sidebar-surface flex h-28 flex-col justify-end rounded-(--sidebar-radius) p-2">
+				<div class="inset-group-surface flex flex-col gap-1 p-1 text-sm">
+					<span class="rounded-md px-2 py-1">Models</span>
+
+					<span class="rounded-md px-2 py-1">Settings</span>
+				</div>
+			</div>
+		</StateGalleryItem>
+
 		<StateGalleryItem label="matte-float" note="menus, popovers, dialogs">
 			<div class="matte-float h-28 rounded-xl border"></div>
 		</StateGalleryItem>
