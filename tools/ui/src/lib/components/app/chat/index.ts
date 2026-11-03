@@ -516,6 +516,13 @@ export { default as ChatMessageActionIcons } from './ChatMessages/ChatMessageAct
 export { default as ChatMessageActionIconsBranchingControls } from './ChatMessages/ChatMessageActions/ChatMessageActionIcons/ChatMessageActionIconsBranchingControls.svelte';
 
 /**
+ * Right-click menu for user and assistant messages with the same actions as
+ * their action icons. Selected text, links, media, code and fields keep the
+ * browser's own menu.
+ */
+export { default as ChatMessageContextMenu } from './ChatMessages/ChatMessageActions/ChatMessageContextMenu.svelte';
+
+/**
  * Statistics display for assistant messages. Shows token counts (prompt/completion),
  * generation timing, tokens per second, and model name (when enabled in settings).
  * Data sourced from message.timings stored during generation.
@@ -537,6 +544,12 @@ export { default as ChatMessageMcpPrompt } from './ChatMessages/ChatMessage/Chat
  * the tool-call UI used.
  */
 export { default as ChatMessageCwdChange } from './ChatMessages/ChatMessage/ChatMessageCwdChange.svelte';
+
+/**
+ * The `Set working directory to <path>` row itself, shared by the synthetic
+ * cwd message and by the project folder row.
+ */
+export { default as ChatMessageCwdChangeRow } from './ChatMessages/ChatMessage/ChatMessageCwdChangeRow.svelte';
 
 /**
  * Generic wrapper for UI-generated (synthetic) messages. Routes the
