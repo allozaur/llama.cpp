@@ -41,7 +41,7 @@
 	{#if onclick}
 		<button
 			aria-label="Preview {name}"
-			class="block h-full w-full rounded-lg focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
+			class="block size-full rounded-lg focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
 			{onclick}
 			type="button"
 		>
@@ -53,7 +53,7 @@
 
 	{#if label}
 		<span
-			class="pointer-events-none absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white"
+			class="pointer-events-none absolute bottom-1 left-1 rounded-md bg-black/40 px-1.5 py-0.5 text-[10px] font-medium text-white matte-chip backdrop-blur-md [--badge-highlight:rgb(255_255_255/0.18)]"
 		>
 			{label}
 		</span>
