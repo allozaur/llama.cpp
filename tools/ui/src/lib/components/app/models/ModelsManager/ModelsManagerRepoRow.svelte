@@ -20,10 +20,13 @@
 
 	let { entry, expanded, indent = 0, onToggle }: Props = $props();
 
+	let serverCount = $derived(new Set(entry.quants.map((option) => option.serverId ?? '')).size);
 	let groupLabel = $derived(
-		entry.kind === ModelGroupKind.VARIANTS
-			? `${entry.quants.length} variants`
-			: `${entry.quants.length} quants available`
+		entry.kind === ModelGroupKind.SERVERS
+			? `${serverCount} server${serverCount === 1 ? '' : 's'}`
+			: entry.kind === ModelGroupKind.VARIANTS
+				? `${entry.quants.length} variants`
+				: `${entry.quants.length} quants available`
 	);
 	let anyLoaded = $derived(entry.quants.some((quant) => modelsStore.isModelRunning(quant.model)));
 	// a repo row stands for its quants, so it reports what they agree on

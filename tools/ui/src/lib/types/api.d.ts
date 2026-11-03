@@ -295,6 +295,11 @@ export interface ApiLlamaCppServerProps {
 	webui_settings?: Record<string, string | number | boolean>;
 	ui_settings?: Record<string, string | number | boolean>;
 	cors_proxy_enabled?: boolean;
+	/**
+	 * Access code a host started with `--connect` offers, so another device can
+	 * pair with it. Absent on a server that does not run a host.
+	 */
+	connect_code?: string;
 }
 
 export interface ApiChatCompletionRequest {
@@ -370,7 +375,9 @@ export interface ApiChatCompletionStreamChunk {
 		metadata?: { model?: string };
 		delta: {
 			content?: string;
+			reasoning?: string;
 			reasoning_content?: string;
+			reasoning_text?: string;
 			model?: string;
 			tool_calls?: ApiChatCompletionToolCallDelta[];
 		};
@@ -384,6 +391,17 @@ export interface ApiChatCompletionStreamChunk {
 		cache_n?: number;
 	};
 	prompt_progress?: ChatMessagePromptProgress;
+	/** Token counts, sent by OpenAI-compatible servers on the final chunk. */
+	usage?: ApiChatCompletionUsage;
+}
+
+export interface ApiChatCompletionUsage {
+	cached_tokens?: number;
+	completion_tokens?: number;
+	prompt_cache_hit_tokens?: number;
+	prompt_tokens?: number;
+	prompt_tokens_details?: { cached_tokens?: number; cache_write_tokens?: number };
+	total_tokens?: number;
 }
 
 export interface ApiChatCompletionResponse {

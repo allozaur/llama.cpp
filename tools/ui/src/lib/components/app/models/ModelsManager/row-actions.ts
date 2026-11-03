@@ -6,14 +6,24 @@ import type { MenuAction } from '$lib/types';
 import type { ModelOption } from '$lib/types/models';
 import { repoOf } from '$lib/utils';
 
+interface RowState {
+	/** Download state, when the row stands for a tracked download. */
+	download?: ModelRowDownloadState | null;
+	favorite: boolean;
+	isHidden: boolean;
+}
+
+interface RowHandlers {
+	onDelete: (option: ModelOption) => void;
+}
+
+/** Row actions follow the app's dropdown pattern: icon, label, separators, variants. */
 export function modelRowActions(
 	option: ModelOption,
-	favorite: boolean,
-	isHidden: boolean,
-	onDelete: (option: ModelOption) => void,
-	/** Download state, when the row stands for a tracked download. */
-	download?: ModelRowDownloadState | null
+	state: RowState,
+	handlers: RowHandlers
 ): MenuAction[] {
+	const { download, favorite, isHidden } = state;
 	// the details pane is keyed by repo, not by `<repo>:<quant>`; the entry exists only
 	// while Discover is on
 	const viewInDiscover = uiStore.isDiscoverEnabled
@@ -42,7 +52,7 @@ export function modelRowActions(
 			{
 				icon: Trash2,
 				label: isPaused ? 'Delete from disk' : 'Cancel download',
-				onclick: () => onDelete(option),
+				onclick: () => handlers.onDelete(option),
 				separator: true,
 				variant: 'destructive' as const
 			},
@@ -59,7 +69,7 @@ export function modelRowActions(
 		{
 			icon: Trash2,
 			label: 'Delete from disk',
-			onclick: () => onDelete(option),
+			onclick: () => handlers.onDelete(option),
 			separator: true,
 			variant: 'destructive' as const
 		},

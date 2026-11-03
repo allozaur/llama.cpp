@@ -31,6 +31,7 @@ import {
 	ReasoningFormat,
 	StreamConnectionState
 } from '$lib/enums';
+import { createChatStreamReader, extractModelName } from '$lib/services/chat-wire';
 import { modelsStore } from '$lib/stores/models/index.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { DatabaseMessageExtraMcpPrompt, DatabaseMessageExtraMcpResource } from '$lib/types';
@@ -42,6 +43,7 @@ import type {
 } from '$lib/types/api';
 import type { OpenAIToolDefinition } from '$lib/types/mcp';
 import { isAbortError } from '$lib/utils/abort';
+import { apiChatUrl, apiUrl } from '$lib/utils/api-base';
 import { ApiError } from '$lib/utils/api-fetch';
 import { getAuthHeaders, getJsonHeaders } from '$lib/utils/api-headers';
 import { formatAttachmentText } from '$lib/utils/formatters';
@@ -88,7 +90,7 @@ export class ChatService {
 	static async areAllSlotsIdle(model?: string | null, signal?: AbortSignal): Promise<boolean> {
 		try {
 			const url = model ? `${API_SLOTS.LIST}?model=${encodeURIComponent(model)}` : API_SLOTS.LIST;
-			const res = await fetch(url, { signal });
+			const res = await fetch(apiUrl(url), { signal });
 
 			if (!res.ok) return true;
 
@@ -484,7 +486,10 @@ export class ChatService {
 		let idEmitted = false;
 		let toolCallIndexOffset = 0;
 		let hasOpenToolCallBatch = false;
+		let firstTokenAt: number | null = null;
+		let usage: ApiChatCompletionUsage | undefined;
 
+		const streamReader = createChatStreamReader();
 		const finalizeOpenToolCallBatch = () => {
 			if (!hasOpenToolCallBatch) {
 				return;
@@ -523,6 +528,9 @@ export class ChatService {
 			if (!abortSignal?.aborted) {
 				onToolCallChunk?.(serializedToolCalls);
 			}
+		};
+		const markToken = () => {
+			firstTokenAt ??= Date.now();
 		};
 		const onVisibilityChange = () => {
 			if (typeof document === 'undefined') return;
@@ -625,59 +633,94 @@ export class ChatService {
 								continue;
 							}
 
+							let parsed: unknown;
+
 							try {
-								const parsed: ApiChatCompletionStreamChunk = JSON.parse(data);
-								const choice = parsed.choices?.[0];
+								parsed = JSON.parse(data);
+							} catch (parseError) {
+								console.error('Error parsing JSON chunk:', parseError);
 
-								if (choice?.finish_reason) finishReason = choice.finish_reason;
+								continue;
+							}
 
-								const content = choice?.delta?.content;
-								const reasoningContent = choice?.delta?.reasoning_content;
-								const toolCalls = choice?.delta?.tool_calls;
-								const timings = parsed.timings;
-								const promptProgress = parsed.prompt_progress;
-								const chunkModel = ChatService.extractModelName(parsed);
+							for (const event of streamReader.readChunk(parsed)) {
+								switch (event.type) {
+									case 'done':
+										streamFinished = true;
 
-								if (chunkModel && !modelEmitted) {
-									modelEmitted = true;
-									onModel?.(chunkModel);
+										break;
+
+									case 'error':
+										throw new Error(event.message);
+
+									case 'finish_reason':
+										finishReason = event.reason;
+
+										break;
+
+									case 'id':
+										if (!idEmitted) {
+											idEmitted = true;
+											onCompletionId?.(event.id);
+										}
+
+										break;
+
+									case 'model':
+										if (!modelEmitted) {
+											modelEmitted = true;
+											onModel?.(event.model);
+										}
+
+										break;
+
+									case 'prompt_progress':
+										ChatService.notifyTimings(undefined, event.progress, onTimings);
+
+										break;
+
+									case 'text':
+										finalizeOpenToolCallBatch();
+										aggregatedContent += event.text;
+
+										if (!abortSignal?.aborted) {
+											onChunk?.(event.text);
+										}
+
+										markToken();
+
+										break;
+
+									case 'thinking':
+										finalizeOpenToolCallBatch();
+										fullReasoningContent += event.text;
+
+										if (!abortSignal?.aborted) {
+											onReasoningChunk?.(event.text);
+										}
+
+										markToken();
+
+										break;
+
+									case 'timings':
+										ChatService.notifyTimings(event.timings, event.promptProgress, onTimings);
+										lastTimings = event.timings;
+
+										break;
+
+									case 'tool_calls':
+										processToolCallDelta(event.deltas);
+
+										break;
+
+									case 'usage':
+										// servers may split usage across chunks (some report input
+										// tokens on message_start and output tokens on message_delta)
+										usage = { ...usage, ...event.usage };
+
+										break;
 								}
-
-								if (parsed.id && !idEmitted) {
-									idEmitted = true;
-									onCompletionId?.(parsed.id);
-								}
-
-								if (promptProgress) {
-									ChatService.notifyTimings(undefined, promptProgress, onTimings);
-								}
-
-								if (timings) {
-									ChatService.notifyTimings(timings, promptProgress, onTimings);
-									lastTimings = timings;
-								}
-
-								if (content) {
-									finalizeOpenToolCallBatch();
-									aggregatedContent += content;
-
-									if (!abortSignal?.aborted) {
-										onChunk?.(content);
-									}
-								}
-
-								if (reasoningContent) {
-									finalizeOpenToolCallBatch();
-									fullReasoningContent += reasoningContent;
-
-									if (!abortSignal?.aborted) {
-										onReasoningChunk?.(reasoningContent);
-									}
-								}
-
-								processToolCallDelta(toolCalls);
-							} catch (e) {
-								console.error('Error parsing JSON chunk:', e);
 							}
 						}
 					}
@@ -788,7 +831,7 @@ export class ChatService {
 	 * conv::model identity when a model was bound at POST time.
 	 */
 	static async lookupStreamSessions(conversationIds: string[]): Promise<ApiStreamSession[]> {
-		const resp = await fetch(API_STREAM.LOOKUP, {
+		const resp = await fetch(apiUrl(API_STREAM.LOOKUP), {
 			body: JSON.stringify({ conversation_ids: conversationIds }),
 			headers: getJsonHeaders(),
 			method: 'POST'
@@ -879,7 +922,7 @@ export class ChatService {
 		}
 
 		try {
-			const response = await fetch(API_CHAT.COMPLETIONS, {
+			const response = await fetch(apiChatUrl(), {
 				body: JSON.stringify(requestBody),
 				headers: getJsonHeaders(),
 				method: 'POST',
@@ -1255,7 +1298,7 @@ export class ChatService {
 
 			// tag streaming requests with the conversation id, this single header is the opt in for the
 			// server side replay buffer and powers discoverActiveStream on tab reopen. with an explicit
-			// model the ::model suffix keeps the per model session distinct
+			// model the ::model suffix keeps the per model session distinct.
 			if (stream && conversationId) {
 				headers[HEADERS.X_CONVERSATION_ID_HEADER] = streamIdentity(conversationId, options.model);
 				// persist the pending stream before the fetch: a reload during the model load or
@@ -1263,7 +1306,7 @@ export class ChatService {
 				ChatService.saveStreamState(conversationId, 0, options.model ?? null);
 			}
 
-			const response = await fetch(API_CHAT.COMPLETIONS, {
+			const response = await fetch(apiChatUrl(), {
 				body: JSON.stringify(requestBody),
 				headers,
 				method: 'POST',
@@ -1375,7 +1418,7 @@ export class ChatService {
 		if (model) body.model = model;
 
 		try {
-			const res = await fetch(API_CHAT.CONTROL, {
+			const res = await fetch(apiUrl(API_CHAT.CONTROL), {
 				body: JSON.stringify(body),
 				headers: getJsonHeaders(),
 				method: 'POST'
@@ -1406,62 +1449,7 @@ export class ChatService {
 		const query = `${STREAM_QUERY_PARAMS.CONV_ID}=${encodeURIComponent(streamId)}`;
 		const offset = from === undefined ? '' : `&${STREAM_QUERY_PARAMS.FROM}=${from}`;
 
-		return `${API_STREAM.BASE}?${query}${offset}`;
-	}
-
-	/**
-	 * Extracts model name from Chat Completions API response data.
-	 * Handles various response formats including streaming chunks and final responses.
-	 *
-	 * WORKAROUND: In single model mode, llama-server returns a default/incorrect model name
-	 * in the response. We override it with the actual model name from serverStore.
-	 *
-	 * @param data - Raw response data from the Chat Completions API
-	 * @returns Model name string if found, undefined otherwise
-	 * @private
-	 */
-	private static extractModelName(data: unknown): string | undefined {
-		const asRecord = (value: unknown): Record<string, unknown> | undefined => {
-			return typeof value === 'object' && value !== null
-				? (value as Record<string, unknown>)
-				: undefined;
-		};
-		const getTrimmedString = (value: unknown): string | undefined => {
-			return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-		};
-		const root = asRecord(data);
-
-		if (!root) return undefined;
-
-		// 1) root (some implementations provide `model` at the top level)
-		const rootModel = getTrimmedString(root.model);
-
-		if (rootModel) {
-			return rootModel;
-		}
-
-		// 2) streaming choice (delta) or final response (message)
-		const firstChoice = Array.isArray(root.choices) ? asRecord(root.choices[0]) : undefined;
-
-		if (!firstChoice) {
-			return undefined;
-		}
-
-		// priority: delta.model (first chunk) else message.model (final response)
-		const deltaModel = getTrimmedString(asRecord(firstChoice.delta)?.model);
-
-		if (deltaModel) {
-			return deltaModel;
-		}
-
-		const messageModel = getTrimmedString(asRecord(firstChoice.message)?.model);
-
-		if (messageModel) {
-			return messageModel;
-		}
-
-		// avoid guessing from non-standard locations (metadata, etc.)
-		return undefined;
+		return apiUrl(`${API_STREAM.BASE}?${query}${offset}`);
 	}
 
 	/**
@@ -1497,7 +1485,7 @@ export class ChatService {
 			}
 
 			const data: ApiChatCompletionResponse = JSON.parse(responseText);
-			const responseModel = ChatService.extractModelName(data);
+			const responseModel = extractModelName(data);
 
 			if (responseModel) {
 				onModel?.(responseModel);

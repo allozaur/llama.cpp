@@ -5,11 +5,10 @@
  * No reactive state; consumed by toolsStore.
  */
 
-import { base } from '$app/paths';
-import { API_TOOLS, HEADERS, HOME_TILDE, SEARCH } from '$lib/constants';
+import { API_TOOLS, HEADERS, HOME_TILDE, LOCAL_BACKEND_ID, SEARCH } from '$lib/constants';
 import { BuiltInTool, GlobSearchType, ToolResponseField } from '$lib/enums';
 import type { GlobEntry, ServerToolInfo, ToolExecutionResult } from '$lib/types';
-import { apiFetch, buildCaseInsensitiveGlob, joinPath, lastPathSegment } from '$lib/utils';
+import { apiFetch, apiUrl, buildCaseInsensitiveGlob, joinPath, lastPathSegment } from '$lib/utils';
 import { getJsonHeaders } from '$lib/utils/api-headers';
 import { parseSseJsonStream, type SseJsonEvent } from '$lib/utils/sse';
 
@@ -31,6 +30,7 @@ export class ToolsService {
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: cwd ? { [HEADERS.X_TOOL_CWD_HEADER]: cwd } : undefined,
 			method: 'POST',
+			serverId: LOCAL_BACKEND_ID,
 			signal
 		});
 
@@ -70,6 +70,7 @@ export class ToolsService {
 			body: JSON.stringify({ params, tool: toolName }),
 			headers: Object.keys(headers).length > 0 ? headers : undefined,
 			method: 'POST',
+			serverId: LOCAL_BACKEND_ID,
 			signal
 		});
 	}
@@ -80,7 +81,8 @@ export class ToolsService {
 	 * @returns Array of tool definitions in OpenAI-compatible format
 	 */
 	static async list(): Promise<ServerToolInfo[]> {
-		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST);
+		// pinned to the local server: server tools do not exist on other servers
+		return apiFetch<ServerToolInfo[]>(API_TOOLS.LIST, { serverId: LOCAL_BACKEND_ID });
 	}
 
 	/**
@@ -133,11 +135,14 @@ export class ToolsService {
 		signal?: AbortSignal,
 		cwd?: string
 	): AsyncGenerator<ToolStreamEvent> {
+		// The tool runs where the tokens are generated, so it follows the active
+		// server: running it on the machine next to the server that happens to
+		// serve this UI would hand the wrong sandbox to a remote model.
 		const headers = getJsonHeaders();
 
 		if (cwd) headers[HEADERS.X_TOOL_CWD_HEADER] = cwd;
 
-		const response = await fetch(`${base}${API_TOOLS.EXECUTE}`, {
+		const response = await fetch(apiUrl(API_TOOLS.EXECUTE), {
 			body: JSON.stringify({ params, stream: true, tool: toolName }),
 			headers,
 			method: 'POST',

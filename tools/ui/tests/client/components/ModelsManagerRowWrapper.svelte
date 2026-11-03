@@ -12,7 +12,7 @@
 	let { onSelect, option, selected = false }: Props = $props();
 </script>
 
-<!-- The row actions mount a tooltip, which needs the provider +layout.svelte supplies. -->
+<!-- The row actions mount a tooltip, which needs the server +layout.svelte supplies. -->
 <Tooltip.Provider>
 	<ModelsManagerModelRow
 		isFavorite={() => false}
