@@ -24,7 +24,7 @@
 <div
 	bind:this={ref}
 	class={cn(
-		'flex flex-col gap-2 text-center sm:text-left sticky top-0 z-50 bg-background md:bg-transparent',
+		'flex flex-col gap-2 text-center sm:text-left sticky top-0 z-50 bg-surface-raised dark:bg-background md:bg-transparent',
 		className
 	)}
 	data-slot="dialog-header"
