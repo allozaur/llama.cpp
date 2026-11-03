@@ -220,6 +220,11 @@ export { default as ChatFormActionReasoning } from './ChatForm/ChatFormActions/C
 export { default as ChatFormActionAddToolsSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddToolsSubmenu.svelte';
 
 /**
+ * System message submenu of the add dropdown: prompts from the library, MCP prompts and a write-new entry.
+ */
+export { default as ChatFormActionAddSystemMessageSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddSystemMessageSubmenu.svelte';
+
+/**
  * Compact context-usage gauge with per-turn and cumulative breakdown in the tooltip.
  */
 export { default as ChatFormContextGauge } from './ChatForm/ChatFormContextGauge/ChatFormContextGauge.svelte';
@@ -578,6 +583,13 @@ export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/Cha
  * for the expanded view.
  */
 export { default as ChatMessageMcpPromptContent } from './ChatMessages/ChatMessage/ChatMessageMcpPrompt/ChatMessageMcpPromptContent.svelte';
+
+/**
+ * A system message made from a library prompt, laid out like the MCP prompt card:
+ * the prompt's name above, with an optional status (e.g. "Modified"), and its text
+ * in a card.
+ */
+export { default as ChatMessagePromptContent } from './ChatMessages/ChatMessage/ChatMessagePrompt/ChatMessagePromptContent.svelte';
 
 /**
  * Assistant message display component. Renders assistant responses with left-aligned styling.

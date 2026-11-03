@@ -104,6 +104,11 @@
 		}
 	}
 
+	/** Opens the argument form of a prompt, as if the user had picked it from the list. */
+	export function openArguments(prompt: MCPPromptInfo) {
+		handlePromptClick(prompt);
+	}
+
 	function handlePromptClick(prompt: MCPPromptInfo) {
 		const args = prompt.arguments ?? [];
 
