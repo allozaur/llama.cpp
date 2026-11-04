@@ -48,6 +48,12 @@ export const DISMISSED_RECOMMENDED_MCP_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP
 /** Key prefix for per-conversation resumable stream state, conversationId is appended */
 export const STREAM_RESUME_LOCALSTORAGE_KEY_PREFIX = `${STORAGE_APP_NAME}.streamResume.`;
 
+/**
+ * Key prefix for an agentic flow running in this tab, conversationId is appended. Session
+ * storage keeps the marker to this tab, it survives a reload of the tab and nothing else.
+ */
+export const AGENTIC_FLOW_SESSION_KEY_PREFIX = `${STORAGE_APP_NAME}.agenticFlow.`;
+
 // Deprecated old key names (kept for backward compat while users migrate)
 /** @deprecated Use {@link ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY} instead */
 export const DEPRECATED_ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.alwaysAllowedTools`;

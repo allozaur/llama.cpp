@@ -37,7 +37,7 @@ import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
-import type { AgenticToolPolicy } from '#lib/types/agentic.js';
+import type { AgenticFlowResume, AgenticToolPolicy } from '#lib/types/agentic.js';
 import type {
 	ApiChatMessageData,
 	ChatMessageCompactionTimings,
@@ -57,6 +57,7 @@ import {
 	getConversationModel,
 	isAbortError,
 	normalizeModelName,
+	parseToolCalls,
 	sliceAtLastCompaction
 } from '#lib/utils/index.ts';
 import { SvelteMap } from 'svelte/reactivity';
@@ -734,6 +735,69 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		}
 	}
 
+	/**
+	 * Continues an agentic flow the page was reloaded in the middle of. The flow runs in the tab, so
+	 * a reload keeps only the persisted turns. The last persisted message decides the next step:
+	 * tool calls without a persisted result run first, and once a turn has all its results the next
+	 * LLM turn starts. A flow that was stopped or finished leaves no marker and is not touched.
+	 */
+	async resumeInterruptedAgenticFlow(convId: string): Promise<void> {
+		if (!agenticStore.hasInterruptedFlow(convId)) return;
+
+		if (
+			this.isChatLoadingInternal(convId) ||
+			agenticStore.isRunning(convId) ||
+			this.streams.isResumeDeferred(convId)
+		) {
+			return;
+		}
+
+		// the marker is spent here, a flow started below sets it again
+		agenticStore.clearInterruptedFlow(convId);
+
+		if (conversationsStore.activeConversation?.id !== convId) return;
+
+		const messages = conversationsStore.activeMessages;
+		const last = messages.at(-1);
+		const interrupted = this.findInterruptedTurn(messages);
+
+		if (!last || !interrupted) return;
+
+		// busy before the first await, so a discovery run in between does not attach to the turn about to start
+		this.setChatLoading(convId, true);
+		this.setChatStreaming(
+			convId,
+			'',
+			interrupted.kind === 'resume' ? interrupted.turn.id : last.id
+		);
+
+		try {
+			if (interrupted.kind === 'resume') {
+				await this.streamChatCompletion(
+					messages,
+					interrupted.turn,
+					undefined,
+					undefined,
+					undefined,
+					undefined,
+					interrupted.resume
+				);
+
+				return;
+			}
+
+			// every result of the turn is in, the reload came before the next LLM turn was sent
+			const next = await this.createAssistantMessage(last.id);
+
+			conversationsStore.addMessageToActive(next);
+			await this.streamChatCompletion(messages, next);
+		} catch (error) {
+			console.error('resumeInterruptedAgenticFlow failed:', error);
+			this.setChatLoading(convId, false);
+			this.clearChatStreaming(convId);
+		}
+	}
+
 	async sendMessage(content: string, extras?: DatabaseMessageExtra[]): Promise<void> {
 		if (!content.trim() && (!extras || extras.length === 0)) return;
 
@@ -861,6 +925,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			});
 		}
 	}
+
 	setChatLoading(convId: string, loading: boolean): void {
 		if (loading) {
 			this.activity.markLocal(convId);
@@ -930,7 +995,8 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		onComplete?: (content: string) => Promise<void>,
 		onError?: (error: Error) => void,
 		modelOverride?: string | null,
-		firstUserMessageContent?: string
+		firstUserMessageContent?: string,
+		resume?: AgenticFlowResume
 	): Promise<void> {
 		// the ::model suffix in the stream identity is only for router mode, where it routes to the
 		// owning child. in single-model mode the identity stays the bare conv id so that attach, stop
@@ -1268,9 +1334,17 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 					...this.getApiOptions(),
 					...(effectiveModel ? { model: effectiveModel } : {})
 				},
+				resume,
 				signal: abortController.signal,
 				toolPolicy
 			});
+
+			// a resumed turn has no plain completion to fall back to, the tools went away
+			if (resume && !agenticResult.handled) {
+				cleanupStreamingState();
+
+				return;
+			}
 
 			if (agenticResult.handled) {
 				// Generate LLM based title for new conversations after agentic flow completes
@@ -1413,6 +1487,74 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		return Number(settingsStore.config.compactionPreservedSteps);
 	}
 
+	/**
+	 * The turn a reload interrupted. 'resume' is a persisted assistant turn with tool calls that still
+	 * lack a result; 'next' is a turn whose results are all in, so the next LLM turn is due.
+	 */
+	private findInterruptedTurn(
+		messages: DatabaseMessage[]
+	):
+		| { kind: 'resume'; turn: DatabaseMessage; resume: AgenticFlowResume }
+		| { kind: 'next' }
+		| null {
+		const last = messages.at(-1);
+
+		if (!last) return null;
+
+		if (last.role === MessageRole.ASSISTANT) {
+			const toolCalls = parseToolCalls(last.toolCalls);
+
+			if (toolCalls.length === 0) return null;
+
+			return {
+				kind: 'resume',
+				resume: {
+					answeredToolCallIds: [],
+					content: last.content,
+					reasoningContent: last.reasoningContent,
+					timings: $state.snapshot(last.timings),
+					toolCalls
+				},
+				turn: last
+			};
+		}
+
+		if (last.role !== MessageRole.TOOL) return null;
+
+		// the turn that asked for these tools is the last assistant message before its results
+		const answeredToolCallIds: string[] = [];
+
+		let turnIdx = messages.length - 1;
+
+		while (turnIdx >= 0 && messages[turnIdx].role !== MessageRole.ASSISTANT) {
+			const { toolCallId } = messages[turnIdx];
+
+			if (toolCallId) answeredToolCallIds.push(toolCallId);
+
+			turnIdx--;
+		}
+
+		const turn = messages[turnIdx];
+		const toolCalls = parseToolCalls(turn?.toolCalls);
+
+		if (!turn || toolCalls.length === 0) return null;
+
+		const pending = toolCalls.some((call) => !call.id || !answeredToolCallIds.includes(call.id));
+
+		if (!pending) return { kind: 'next' };
+
+		return {
+			kind: 'resume',
+			resume: {
+				answeredToolCallIds,
+				content: turn.content,
+				reasoningContent: turn.reasoningContent,
+				timings: $state.snapshot(turn.timings),
+				toolCalls
+			},
+			turn
+		};
+	}
 	private async generateTitleWithLLM(
 		userContent: string,
 		assistantContent: string,

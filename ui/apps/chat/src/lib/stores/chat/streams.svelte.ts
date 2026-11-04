@@ -29,6 +29,7 @@ import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 export interface ChatStreamHost {
 	activity: ChatActivityStore;
 	processing: ChatProcessingStore;
+	resumeInterruptedAgenticFlow(convId: string): Promise<void>;
 	chatStreamingStates: SvelteMap<
 		string,
 		{ response: string; messageId: string; model?: string | null }
@@ -68,96 +69,15 @@ export class ChatStreamManager {
 
 	constructor(private host: ChatStreamHost) {}
 
+	/**
+	 * Attaches the server stream of the conversation if one is live. Once discovery settles without a
+	 * pending model-load retry, an agentic flow the reload interrupted is continued.
+	 */
 	async discoverActiveStream(convId: string): Promise<void> {
-		if (!convId) return;
+		await this.probeAndAttach(convId);
 
-		if (this.host.chatStreamingStates.has(convId)) return;
-
-		if (this.host.activity.isLocal(convId) && !this.resumePendingConvs.has(convId)) return;
-
-		// concurrency guard: another discover may already be running for this conv (typical race
-		// between mount and visibilitychange on tab switch). a second concurrent fetch on the same
-		// /v1/stream would duplicate every byte into the DB message, this guard bounces it
-		if (this.discoveringConvs.has(convId)) return;
-
-		this.discoveringConvs.add(convId);
-
-		try {
-			// the model is frozen at POST time, rebuild the exact conv::model identity from the
-			// persisted state so the lookup key matches what the server stored. null means a single
-			// model conv with no ::suffix, only guess from the dropdown with no persisted state
-			const localState = ChatService.getStreamState(convId);
-			const streamId = ChatService.resumeStreamIdentity(
-				convId,
-				localState,
-				modelsStore.selectedModelName
-			);
-			// primary path: ask the server which sessions exist for this identity
-			const serverTarget = await this.probeServerStream(streamId);
-
-			if (serverTarget) {
-				// pass the full server side identity (may carry a ::model suffix) so the GET routes
-				// straight to the owning session, no probe or fan out
-				await this.attachServerStream(convId, serverTarget.conversation_id);
-
-				return;
-			}
-
-			// fallback: local state remembers an interrupted byte offset for this conv, the server may
-			// still have a live session matching that identity (we just lost the bytes mid stream). retry
-			// with the frozen identity, the server probe inside attachServerStream tells us if it exists
-			if (!localState) {
-				return;
-			}
-
-			// quiet status probe first: a full attach flips the loading UI on every try, probing
-			// keeps the retry loop invisible while the owning model is still loading (503)
-			const status = await ChatService.probeResumeStatus(streamId);
-
-			if (status === 503) {
-				// make the wait visible: the empty assistant row persisted at send time renders
-				// the processing info, whose model load percentage flows from the models feed
-				this.resumePendingConvs.add(convId);
-				this.host.setChatLoading(convId, true);
-
-				if (!this.resumeRetryTimers.has(convId)) {
-					this.resumeRetryTimers.set(
-						convId,
-						setTimeout(() => {
-							this.resumeRetryTimers.delete(convId);
-							void this.discoverActiveStream(convId);
-						}, STREAM_RESUME_RETRY_MS)
-					);
-				}
-
-				return;
-			}
-
-			if (this.resumePendingConvs.delete(convId) && status !== 200) {
-				// the wait is over without a session to attach, drop the visible loading state
-				this.host.setChatLoading(convId, false);
-			}
-
-			if (status === 0) {
-				// transient network failure, the next mount or visibility change retries
-				return;
-			}
-
-			if (status !== 200) {
-				// the session is gone (stopped, TTL expired), nothing to resume anymore
-				ChatService.clearStreamState(convId);
-
-				return;
-			}
-
-			await this.attachServerStream(convId, streamId);
-
-			// if attachServerStream failed (session gone, TTL expired), clear the local state to avoid retrying forever
-			if (!this.host.chatStreamingStates.has(convId) && !this.host.activity.isLocal(convId)) {
-				ChatService.clearStreamState(convId);
-			}
-		} finally {
-			this.discoveringConvs.delete(convId);
+		if (convId && !this.isResumeDeferred(convId)) {
+			await this.host.resumeInterruptedAgenticFlow(convId);
 		}
 	}
 
@@ -168,6 +88,11 @@ export class ChatStreamManager {
 	 */
 	getResumeModel(convId: string): string | null {
 		return ChatService.getStreamState(convId)?.model ?? null;
+	}
+
+	/** True while a resume waits for its owning model to load, the retry loop attaches it later. */
+	isResumeDeferred(convId: string): boolean {
+		return this.resumePendingConvs.has(convId) || this.resumeRetryTimers.has(convId);
 	}
 
 	/**
@@ -370,8 +295,16 @@ export class ChatStreamManager {
 		let streamedReasoningContent = '';
 
 		const cleanup = () => {
-			unlock();
+			// a late callback of this attach must not clear a newer generation on the same conversation,
+			// e.g. an agentic turn resumed right after the reload, so only this attach's state is dropped
+			this.host.clearChatStreaming(convId, targetMessageId);
+
+			if (this.host.chatStreamingStates.has(convId)) return;
+
+			this.host.setChatLoading(convId, false);
 			this.host.processing.setState(convId, null);
+			// the replay can settle after discovery has already returned, an interrupted flow waits for it
+			void this.host.resumeInterruptedAgenticFlow(convId);
 		};
 
 		try {
@@ -455,6 +388,99 @@ export class ChatStreamManager {
 		}
 
 		return -1;
+	}
+
+	private async probeAndAttach(convId: string): Promise<void> {
+		if (!convId) return;
+
+		if (this.host.chatStreamingStates.has(convId)) return;
+
+		if (this.host.activity.isLocal(convId) && !this.resumePendingConvs.has(convId)) return;
+
+		// concurrency guard: another discover may already be running for this conv (typical race
+		// between mount and visibilitychange on tab switch). a second concurrent fetch on the same
+		// /v1/stream would duplicate every byte into the DB message, this guard bounces it
+		if (this.discoveringConvs.has(convId)) return;
+
+		this.discoveringConvs.add(convId);
+
+		try {
+			// the model is frozen at POST time, rebuild the exact conv::model identity from the
+			// persisted state so the lookup key matches what the server stored. null means a single
+			// model conv with no ::suffix, only guess from the dropdown with no persisted state
+			const localState = ChatService.getStreamState(convId);
+			const streamId = ChatService.resumeStreamIdentity(
+				convId,
+				localState,
+				modelsStore.selectedModelName
+			);
+			// primary path: ask the server which sessions exist for this identity
+			const serverTarget = await this.probeServerStream(streamId);
+
+			if (serverTarget) {
+				// pass the full server side identity (may carry a ::model suffix) so the GET routes
+				// straight to the owning session, no probe or fan out
+				await this.attachServerStream(convId, serverTarget.conversation_id);
+
+				return;
+			}
+
+			// fallback: local state remembers an interrupted byte offset for this conv, the server may
+			// still have a live session matching that identity (we just lost the bytes mid stream). retry
+			// with the frozen identity, the server probe inside attachServerStream tells us if it exists
+			if (!localState) {
+				return;
+			}
+
+			// quiet status probe first: a full attach flips the loading UI on every try, probing
+			// keeps the retry loop invisible while the owning model is still loading (503)
+			const status = await ChatService.probeResumeStatus(streamId);
+
+			if (status === 503) {
+				// make the wait visible: the empty assistant row persisted at send time renders
+				// the processing info, whose model load percentage flows from the models feed
+				this.resumePendingConvs.add(convId);
+				this.host.setChatLoading(convId, true);
+
+				if (!this.resumeRetryTimers.has(convId)) {
+					this.resumeRetryTimers.set(
+						convId,
+						setTimeout(() => {
+							this.resumeRetryTimers.delete(convId);
+							void this.discoverActiveStream(convId);
+						}, STREAM_RESUME_RETRY_MS)
+					);
+				}
+
+				return;
+			}
+
+			if (this.resumePendingConvs.delete(convId) && status !== 200) {
+				// the wait is over without a session to attach, drop the visible loading state
+				this.host.setChatLoading(convId, false);
+			}
+
+			if (status === 0) {
+				// transient network failure, the next mount or visibility change retries
+				return;
+			}
+
+			if (status !== 200) {
+				// the session is gone (stopped, TTL expired), nothing to resume anymore
+				ChatService.clearStreamState(convId);
+
+				return;
+			}
+
+			await this.attachServerStream(convId, streamId);
+
+			// if attachServerStream failed (session gone, TTL expired), clear the local state to avoid retrying forever
+			if (!this.host.chatStreamingStates.has(convId) && !this.host.activity.isLocal(convId)) {
+				ChatService.clearStreamState(convId);
+			}
+		} finally {
+			this.discoveringConvs.delete(convId);
+		}
 	}
 
 	/**

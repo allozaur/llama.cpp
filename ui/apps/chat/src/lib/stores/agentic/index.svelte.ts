@@ -10,7 +10,11 @@
  * the permission/continue/steering gates owned by {@link AgenticGates}.
  */
 
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE } from '#lib/constants/index.ts';
+import {
+	AGENTIC_FLOW_SESSION_KEY_PREFIX,
+	DEFAULT_AGENTIC_CONFIG,
+	NEWLINE
+} from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -43,6 +47,7 @@ import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type {
 	AgenticFlowCallbacks,
 	AgenticFlowOptions,
+	AgenticFlowResume,
 	AgenticMessage,
 	AgenticToolCallList,
 	AgenticToolPolicy,
@@ -164,6 +169,14 @@ class AgenticStore {
 		this.updateSession(conversationId, { lastError: null });
 	}
 
+	clearInterruptedFlow(conversationId: string): void {
+		try {
+			sessionStorage.removeItem(AGENTIC_FLOW_SESSION_KEY_PREFIX + conversationId);
+		} catch {
+			// nothing to do, the marker is only a hint for resuming after a reload
+		}
+	}
+
 	clearSession(conversationId: string): void {
 		this.sessions.delete(conversationId);
 	}
@@ -276,6 +289,18 @@ class AgenticStore {
 		return this.sessions.get(conversationId)?.totalToolCalls ?? 0;
 	}
 
+	/**
+	 * True when this tab was running a flow for the conversation and the page went away before the
+	 * flow finished, so the persisted turns are missing their remaining tool results and turns.
+	 */
+	hasInterruptedFlow(conversationId: string): boolean {
+		try {
+			return sessionStorage.getItem(AGENTIC_FLOW_SESSION_KEY_PREFIX + conversationId) !== null;
+		} catch {
+			return false;
+		}
+	}
+
 	hasPendingSteeringMessage(conversationId: string): boolean {
 		return this.gates.hasPendingSteeringMessage(conversationId);
 	}
@@ -329,6 +354,7 @@ class AgenticStore {
 			flowRootMessageId,
 			messages,
 			options = {},
+			resume,
 			signal,
 			toolPolicy
 		} = params;
@@ -363,6 +389,8 @@ class AgenticStore {
 
 		if (hasMcpServers) mcpStore.acquireConnection();
 
+		this.markFlowRunning(conversationId);
+
 		try {
 			await this.executeAgenticLoop({
 				agenticConfig,
@@ -370,6 +398,7 @@ class AgenticStore {
 				conversationId,
 				messages: normalizedMessages,
 				options,
+				resume,
 				signal,
 				tools
 			});
@@ -383,6 +412,9 @@ class AgenticStore {
 
 			return { error: normalizedError, handled: true };
 		} finally {
+			// only a flow that never reaches this point (page reload, tab closed) leaves the marker behind
+			this.clearInterruptedFlow(conversationId);
+
 			this.updateSession(conversationId, {
 				flowRootMessageId: null,
 				isRunning: false,
@@ -430,9 +462,11 @@ class AgenticStore {
 		tools: ReturnType<typeof toolsStore.getEnabledToolsForLLM>;
 		agenticConfig: AgenticConfig;
 		callbacks: AgenticFlowCallbacks;
+		resume?: AgenticFlowResume;
 		signal?: AbortSignal;
 	}): Promise<void> {
-		const { agenticConfig, callbacks, conversationId, messages, options, signal, tools } = params;
+		const { agenticConfig, callbacks, conversationId, messages, options, resume, signal, tools } =
+			params;
 		const {
 			createAssistantMessage,
 			createToolResultMessage,
@@ -498,12 +532,15 @@ class AgenticStore {
 				await createAssistantMessage();
 			}
 
-			let turnContent = '';
-			let turnReasoningContent = '';
-			let turnToolCalls: ApiChatCompletionToolCall[] = [];
+			// a resumed turn ran its LLM call before the reload, only its tool calls are left to run
+			const resumedTurn = turn === 0 ? resume : undefined;
+
+			let turnContent = resumedTurn?.content ?? '';
+			let turnReasoningContent = resumedTurn?.reasoningContent ?? '';
+			let turnToolCalls: ApiChatCompletionToolCall[] = resumedTurn?.toolCalls ?? [];
 			let lastStreamingToolCallName = '';
 			let lastStreamingToolCallArgsLength = 0;
-			let turnTimings: ChatMessageTimings | undefined;
+			let turnTimings: ChatMessageTimings | undefined = resumedTurn?.timings;
 
 			const turnStats: ChatMessageAgenticTurnStats = {
 				llm: { predicted_ms: 0, predicted_n: 0, prompt_ms: 0, prompt_n: 0 },
@@ -512,93 +549,108 @@ class AgenticStore {
 				turn: turn + 1
 			};
 
-			try {
-				await ChatService.sendMessage(
-					sessionMessages as ApiChatMessageData[],
-					{
-						...options,
-						onChunk: (chunk: string) => {
-							turnContent += chunk;
-							onChunk?.(chunk);
-						},
-						onComplete: () => {
-							/* Completion handled after sendMessage resolves */
-						},
-						onCompletionId,
-						onError: (error: Error) => {
-							throw error;
-						},
-						onModel,
-						onReasoningChunk: (chunk: string) => {
-							turnReasoningContent += chunk;
-							onReasoningChunk?.(chunk);
-						},
-						onTimings: (timings?: ChatMessageTimings, progress?: ChatMessagePromptProgress) => {
-							onTimings?.(timings, progress);
+			if (!resumedTurn)
+				try {
+					await ChatService.sendMessage(
+						sessionMessages as ApiChatMessageData[],
+						{
+							...options,
+							onChunk: (chunk: string) => {
+								turnContent += chunk;
+								onChunk?.(chunk);
+							},
+							onComplete: () => {
+								/* Completion handled after sendMessage resolves */
+							},
+							onCompletionId,
+							onError: (error: Error) => {
+								throw error;
+							},
+							onModel,
+							onReasoningChunk: (chunk: string) => {
+								turnReasoningContent += chunk;
+								onReasoningChunk?.(chunk);
+							},
+							onTimings: (timings?: ChatMessageTimings, progress?: ChatMessagePromptProgress) => {
+								onTimings?.(timings, progress);
 
-							if (timings) {
-								capturedTimings = timings;
-								turnTimings = timings;
+								if (timings) {
+									capturedTimings = timings;
+									turnTimings = timings;
 
-								// completed turns + in-flight turn live counts
-								this.updateSession(conversationId, {
-									liveLlm: {
-										predicted_ms: agenticTimings.llm.predicted_ms + (timings.predicted_ms ?? 0),
-										predicted_n: agenticTimings.llm.predicted_n + (timings.predicted_n ?? 0),
-										prompt_ms: agenticTimings.llm.prompt_ms + (timings.prompt_ms ?? 0),
-										prompt_n: agenticTimings.llm.prompt_n + (timings.prompt_n ?? 0)
-									}
-								});
-							}
-						},
-						onToolCallChunk: (serialized: string) => {
-							try {
-								turnToolCalls = JSON.parse(serialized) as ApiChatCompletionToolCall[];
-
-								onToolCallsStreaming?.(turnToolCalls);
-
-								if (turnToolCalls.length > 0 && turnToolCalls[0]?.function) {
-									const name = turnToolCalls[0].function.name || '';
-									const args = turnToolCalls[0].function.arguments || '';
-									const argsLengthBucket = Math.floor(args.length / 100);
-
-									if (
-										name !== lastStreamingToolCallName ||
-										argsLengthBucket !== lastStreamingToolCallArgsLength
-									) {
-										lastStreamingToolCallName = name;
-										lastStreamingToolCallArgsLength = argsLengthBucket;
-										this.updateSession(conversationId, {
-											streamingToolCall: { arguments: args, name }
-										});
-									}
+									// completed turns + in-flight turn live counts
+									this.updateSession(conversationId, {
+										liveLlm: {
+											predicted_ms: agenticTimings.llm.predicted_ms + (timings.predicted_ms ?? 0),
+											predicted_n: agenticTimings.llm.predicted_n + (timings.predicted_n ?? 0),
+											prompt_ms: agenticTimings.llm.prompt_ms + (timings.prompt_ms ?? 0),
+											prompt_n: agenticTimings.llm.prompt_n + (timings.prompt_n ?? 0)
+										}
+									});
 								}
-							} catch {
-								/* Ignore parse errors during streaming */
-							}
+							},
+							onToolCallChunk: (serialized: string) => {
+								try {
+									turnToolCalls = JSON.parse(serialized) as ApiChatCompletionToolCall[];
+
+									onToolCallsStreaming?.(turnToolCalls);
+
+									if (turnToolCalls.length > 0 && turnToolCalls[0]?.function) {
+										const name = turnToolCalls[0].function.name || '';
+										const args = turnToolCalls[0].function.arguments || '';
+										const argsLengthBucket = Math.floor(args.length / 100);
+
+										if (
+											name !== lastStreamingToolCallName ||
+											argsLengthBucket !== lastStreamingToolCallArgsLength
+										) {
+											lastStreamingToolCallName = name;
+											lastStreamingToolCallArgsLength = argsLengthBucket;
+											this.updateSession(conversationId, {
+												streamingToolCall: { arguments: args, name }
+											});
+										}
+									}
+								} catch {
+									/* Ignore parse errors during streaming */
+								}
+							},
+							stream: true,
+							tools: tools.length > 0 ? tools : undefined
 						},
-						stream: true,
-						tools: tools.length > 0 ? tools : undefined
-					},
-					conversationId,
-					signal
-				);
+						conversationId,
+						signal
+					);
 
-				this.updateSession(conversationId, { streamingToolCall: null });
+					this.updateSession(conversationId, { streamingToolCall: null });
 
-				if (turnTimings) {
-					agenticTimings.llm.predicted_n += turnTimings.predicted_n || 0;
-					agenticTimings.llm.predicted_ms += turnTimings.predicted_ms || 0;
-					agenticTimings.llm.prompt_n += turnTimings.prompt_n || 0;
-					agenticTimings.llm.prompt_ms += turnTimings.prompt_ms || 0;
-					turnStats.llm.predicted_n = turnTimings.predicted_n || 0;
-					turnStats.llm.predicted_ms = turnTimings.predicted_ms || 0;
-					turnStats.llm.prompt_n = turnTimings.prompt_n || 0;
-					turnStats.llm.prompt_ms = turnTimings.prompt_ms || 0;
-				}
-			} catch (error) {
-				if (signal?.aborted) {
-					// Save whatever we have for this turn before exiting
+					if (turnTimings) {
+						agenticTimings.llm.predicted_n += turnTimings.predicted_n || 0;
+						agenticTimings.llm.predicted_ms += turnTimings.predicted_ms || 0;
+						agenticTimings.llm.prompt_n += turnTimings.prompt_n || 0;
+						agenticTimings.llm.prompt_ms += turnTimings.prompt_ms || 0;
+						turnStats.llm.predicted_n = turnTimings.predicted_n || 0;
+						turnStats.llm.predicted_ms = turnTimings.predicted_ms || 0;
+						turnStats.llm.prompt_n = turnTimings.prompt_n || 0;
+						turnStats.llm.prompt_ms = turnTimings.prompt_ms || 0;
+					}
+				} catch (error) {
+					if (signal?.aborted) {
+						// Save whatever we have for this turn before exiting
+						await onAssistantTurnComplete?.(
+							turnContent,
+							turnReasoningContent || undefined,
+							this.buildFinalTimings(capturedTimings, agenticTimings),
+							undefined
+						);
+						onFlowComplete?.(this.buildFinalTimings(capturedTimings, agenticTimings));
+
+						return;
+					}
+
+					const normalizedError = error instanceof Error ? error : new Error('LLM stream error');
+
+					// preserve partial output as is, the outer error dialog informs the user separately
 					await onAssistantTurnComplete?.(
 						turnContent,
 						turnReasoningContent || undefined,
@@ -607,22 +659,8 @@ class AgenticStore {
 					);
 					onFlowComplete?.(this.buildFinalTimings(capturedTimings, agenticTimings));
 
-					return;
+					throw normalizedError;
 				}
-
-				const normalizedError = error instanceof Error ? error : new Error('LLM stream error');
-
-				// preserve partial output as is, the outer error dialog informs the user separately
-				await onAssistantTurnComplete?.(
-					turnContent,
-					turnReasoningContent || undefined,
-					this.buildFinalTimings(capturedTimings, agenticTimings),
-					undefined
-				);
-				onFlowComplete?.(this.buildFinalTimings(capturedTimings, agenticTimings));
-
-				throw normalizedError;
-			}
 
 			// If the abort landed while ChatService.sendMessage was still resolving, the
 			// outer catch above never fires because ChatService swallows the AbortError
@@ -701,17 +739,22 @@ class AgenticStore {
 				normalizedCalls
 			);
 
-			// Add assistant message to session history
-			sessionMessages.push({
-				content: turnContent || undefined,
-				reasoning_content: turnReasoningContent || undefined,
-				role: MessageRole.ASSISTANT,
-				tool_calls: normalizedCalls
-			});
+			// Add assistant message to session history, a resumed turn is already in it
+			if (!resumedTurn) {
+				sessionMessages.push({
+					content: turnContent || undefined,
+					reasoning_content: turnReasoningContent || undefined,
+					role: MessageRole.ASSISTANT,
+					tool_calls: normalizedCalls
+				});
+			}
 
 			// Execute each tool call and create result messages
 			for (let i = 0; i < normalizedCalls.length; i++) {
 				const toolCall = normalizedCalls[i];
+
+				// the result of a resumed call was persisted before the reload, it is not run again
+				if (resumedTurn?.answeredToolCallIds.includes(toolCall.id)) continue;
 
 				if (signal?.aborted) {
 					onFlowComplete?.(this.buildFinalTimings(capturedTimings, agenticTimings));
@@ -727,6 +770,8 @@ class AgenticStore {
 					for (let j = i; j < normalizedCalls.length; j++) {
 						const remainingCall = normalizedCalls[j];
 						const interruptedContent = 'Tool execution was interrupted by a new user message.';
+
+						if (resumedTurn?.answeredToolCallIds.includes(remainingCall.id)) continue;
 
 						if (createToolResultMessage) {
 							await createToolResultMessage(remainingCall.id, interruptedContent);
@@ -1042,6 +1087,14 @@ class AgenticStore {
 		});
 
 		return { attachments, cleanedResult: cleanedLines.join(NEWLINE) };
+	}
+
+	private markFlowRunning(conversationId: string): void {
+		try {
+			sessionStorage.setItem(AGENTIC_FLOW_SESSION_KEY_PREFIX + conversationId, '1');
+		} catch {
+			// without the marker an interrupted flow is not resumed, the same as before resuming existed
+		}
 	}
 
 	private normalizeToolCalls(toolCalls: ApiChatCompletionToolCall[]): AgenticToolCallList {
