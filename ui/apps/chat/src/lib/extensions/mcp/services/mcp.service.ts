@@ -22,6 +22,7 @@ import {
 	DEFAULT_IMAGE_MIME_TYPE,
 	DEFAULT_MCP_CONFIG,
 	HEADERS,
+	LOCAL_BACKEND_ID,
 	MCP_RECONNECT,
 	NEWLINE
 } from '#lib/constants/index.ts';
@@ -543,7 +544,8 @@ export class MCPService {
 
 		if (useProxy) {
 			requestInit.headers = {
-				...getAuthHeaders(),
+				// the proxy is the local llama-server, so it takes the local key
+				...getAuthHeaders(LOCAL_BACKEND_ID),
 				...(requestInit.headers as Record<string, string>)
 			};
 		}
