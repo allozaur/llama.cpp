@@ -1,0 +1,76 @@
+<!-- The icon as a glyph of Llama Sans: a display lockup (U+E002), two buttons and a line of text (U+E001). -->
+<script lang="ts">
+	let { name = 'llama.cpp' }: { name?: string } = $props();
+</script>
+
+<section aria-label="The icon in Llama Sans" class="type">
+	<span class="kicker">In Llama Sans and Llama Mono · U+E002, U+E001</span>
+
+	<!-- the lockup icon, U+E002: the capital icon with the lockup's gap, typed before the name; llama.cpp in Llama Mono -->
+	<p class:mono={name === 'llama.cpp'} class="lockup display">{name}</p>
+
+	<p class="lockup ui">
+		<span class="pill"> Open in Llama</span><span class="pill ghost"> llama.app</span>
+	</p>
+
+	<p class="lockup text">
+		In small text and buttons the icon takes its capital form (U+E001), centred on the capitals, so
+		it holds its own in a line of text:  Llama,  LLAMA.CPP.
+	</p>
+</section>
+
+<style>
+	.type {
+		display: grid;
+		gap: 18px;
+	}
+	.kicker {
+		font: 500 12px var(--mono);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--l-muted);
+	}
+	.lockup {
+		margin: 0;
+	}
+	.display {
+		font:
+			700 clamp(48px, 9vw, 112px) / 1.15 'Llama Sans',
+			var(--body);
+	}
+	.display.mono {
+		font-family: var(--mono);
+		font-size: clamp(
+			43px,
+			8.1vw,
+			101px
+		); /* 90%: Llama Mono's U+E002 is 1 / 0.9 times Llama Sans's */
+	}
+	.ui {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.pill {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.5em 1em;
+		border-radius: 8px;
+		background: var(--l-ink);
+		color: var(--l-bg);
+		font:
+			500 15px / normal 'Llama Sans',
+			var(--body);
+	}
+	.pill.ghost {
+		background: none;
+		color: var(--l-ink);
+		box-shadow: inset 0 0 0 1px var(--l-ink);
+	}
+	.text {
+		max-width: 62ch;
+		font:
+			400 17px / 1.5 'Llama Sans',
+			var(--body);
+	}
+</style>
