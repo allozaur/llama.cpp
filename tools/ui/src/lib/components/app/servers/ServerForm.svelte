@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { QrCode } from '@lucide/svelte';
+	import { FlaskConical, QrCode, ShieldAlert } from '@lucide/svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as Tabs from '$lib/components/ui/tabs';
@@ -11,6 +11,8 @@
 		server: Server;
 		/** The endpoint refused the probe for want of a key. */
 		apiKeyRequired?: boolean;
+		/** Whether remote pairing is offered; it is experimental and off by default. */
+		canPair?: boolean;
 		/** Whether the browser can decode a camera frame; hides the scan affordance. */
 		canScan?: boolean;
 		/** Invalid access code, when the draft carries one. */
@@ -25,6 +27,7 @@
 
 	let {
 		apiKeyRequired = false,
+		canPair = false,
 		canScan = false,
 		codeError = null,
 		endpointError = null,
@@ -36,6 +39,7 @@
 	}: Props = $props();
 
 	let isRemote = $derived(server.kind === ServerKind.REMOTE);
+	let kinds = $derived(canPair ? [ServerKind.URL, ServerKind.REMOTE] : [ServerKind.URL]);
 </script>
 
 <div class="grid gap-5">
@@ -46,22 +50,43 @@
 	  translucent muted one - that fill is the trough's own colour, so the selected
 	  kind used to disappear into the trough it was meant to sit above.
 	-->
-	<Tabs.Root
-		class="w-full"
-		onValueChange={(value) => onChange({ kind: value as ServerKind })}
-		value={server.kind}
-	>
-		<Tabs.List class="bg-muted-foreground/10 w-full gap-1">
-			{#each [ServerKind.URL, ServerKind.REMOTE] as kind (kind)}
-				<Tabs.Trigger
-					class="data-[state=active]:border-muted hover:bg-muted-foreground/10"
-					value={kind}
-				>
-					{kind === ServerKind.REMOTE ? 'Remote server' : 'Server URL'}
-				</Tabs.Trigger>
-			{/each}
-		</Tabs.List>
-	</Tabs.Root>
+	<!-- with pairing off there is only the URL kind, so there is nothing to switch -->
+	{#if kinds.length > 1}
+		<Tabs.Root
+			class="w-full"
+			onValueChange={(value) => onChange({ kind: value as ServerKind })}
+			value={server.kind}
+		>
+			<Tabs.List class="bg-muted-foreground/10 w-full gap-1">
+				{#each kinds as kind (kind)}
+					<Tabs.Trigger
+						class="data-[state=active]:border-muted hover:bg-muted-foreground/10"
+						value={kind}
+					>
+						{kind === ServerKind.REMOTE ? 'Remote server' : 'Server URL'}
+
+						{#if kind === ServerKind.REMOTE}
+							<FlaskConical aria-label="Experimental" class="size-3.5 text-muted-foreground" />
+						{/if}
+					</Tabs.Trigger>
+				{/each}
+			</Tabs.List>
+		</Tabs.Root>
+	{/if}
+
+	{#if isRemote}
+		<div
+			class="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs"
+		>
+			<ShieldAlert class="mt-px size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+
+			<p class="text-muted-foreground">
+				<span class="font-medium text-foreground">Experimental.</span> The pass code is currently sent
+				to whichever peer answers on the public tracker, so someone watching it could capture the code.
+				Mutual authentication, where neither side sends it, is planned.
+			</p>
+		</div>
+	{/if}
 
 	{#if isRemote}
 		<div>

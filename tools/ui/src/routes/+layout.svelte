@@ -238,6 +238,11 @@
 		updateFavicon();
 	});
 
+	// turning the experimental remote pairing off closes the tunnels it opened
+	$effect(() => {
+		if (!remoteAccessStore.isEnabled) untrack(() => remoteAccessStore.syncServers());
+	});
+
 	// Initialize server properties on app load (run once)
 	$effect(() => {
 		// Only fetch if we don't already have props

@@ -142,6 +142,15 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
+				defaultValue: false,
+				help: 'Experimental: pair a llama-server started with --connect by its access code or QR code, and reach it peer-to-peer over WebRTC from any network. Servers added by URL work either way.',
+				isExperimental: true,
+				key: SETTINGS_KEYS.ENABLE_REMOTE_PAIRING,
+				label: 'Enable remote server pairing',
+				note: 'Known security gap: the pass code in the access code is sent to whichever peer answers on the public WebTorrent tracker, so someone watching that tracker could capture it. A mutual challenge-response, where both sides prove they know the code without ever sending it, is the planned fix.',
+				type: SettingsFieldType.CHECKBOX
+			},
+			{
 				defaultValue: true,
 				help: 'Choose how conversation titles are generated. The first non-empty line uses a fast deterministic rule; the LLM option uses a model-generated title from the first message exchange.',
 				key: SETTINGS_KEYS.TITLE_GENERATION_USE_FIRST_LINE,
@@ -732,6 +741,7 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 				label: s.label,
 				max: s.max,
 				min: s.min,
+				note: s.note,
 				options: s.options as SettingsFieldConfig['options'],
 				placeholder: s.placeholder,
 				radioOptions: s.radioOptions,

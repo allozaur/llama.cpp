@@ -16,11 +16,16 @@
  * Tunnels are opened lazily. Only the server the app opens with is connected
  * during startup; the rest connect when they are first needed - a model of
  * theirs is picked, or the user hits Connect on their card.
+ *
+ * The whole transport is experimental and sits behind a setting that is off by
+ * default: while it is off no tunnel opens, and the ones already open close.
  */
 
 import { browser } from '$app/environment';
-import { CODE_LENGTHS, WEBRTC_TIMEOUTS } from '$lib/constants';
+import { CODE_LENGTHS, SETTINGS_KEYS, WEBRTC_TIMEOUTS } from '$lib/constants';
 import { TunnelStatus } from '$lib/enums';
+// direct import between stores, not via the barrel, to avoid circular deps
+import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { Server } from '$lib/types';
 import { getServers } from '$lib/utils/api-base';
 import { codeOf, isRemoteServer, parseTunnelOrigin, tunnelHostLabel } from '$lib/utils/server';
@@ -51,6 +56,11 @@ class RemoteAccessStore {
 	private tunnels = new Map<string, ClientTunnel>();
 	/** Requests held back while their server's handshake runs. */
 	private waiters = new Map<string, Array<{ reject: (e: Error) => void; resolve: () => void }>>();
+
+	/** Whether the experimental remote pairing is turned on; every entry point hides without it. */
+	get isEnabled(): boolean {
+		return Boolean(settingsStore.getConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING));
+	}
 
 	/**
 	 * Open the tunnel of a remote server, or join the handshake already running.
@@ -209,13 +219,16 @@ class RemoteAccessStore {
 
 	/**
 	 * Drop the tunnels of servers that left the list or were disabled, so a
-	 * disabled server stops holding a data channel open.
+	 * disabled server stops holding a data channel open. Turning remote pairing
+	 * off disables them all.
 	 */
 	syncServers(): void {
 		const kept = new Set(
-			remoteServers()
-				.filter((server) => server.enabled)
-				.map((b) => b.id)
+			this.isEnabled
+				? remoteServers()
+						.filter((server) => server.enabled)
+						.map((b) => b.id)
+				: []
 		);
 
 		for (const serverId of [...this.tunnels.keys()]) {
@@ -258,6 +271,12 @@ class RemoteAccessStore {
 	/** Handshake a server's tunnel is not already running. */
 	private async open(serverId: string, generation: number): Promise<void> {
 		const server = getServers().find((candidate) => candidate.id === serverId);
+
+		if (!this.isEnabled) {
+			throw new Error(
+				'Remote server pairing is turned off. Turn it on in Settings, under General.'
+			);
+		}
 
 		if (!isRemoteServer(server) || !codeOf(server)) {
 			throw new Error('This server has no usable access code');

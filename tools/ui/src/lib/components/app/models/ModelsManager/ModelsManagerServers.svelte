@@ -14,6 +14,8 @@
 	let { class: className }: Props = $props();
 
 	let servers = $derived(serversStore.external);
+	/** Remote pairing is experimental and off by default; servers are then added by URL only. */
+	let canPair = $derived(remoteAccessStore.isEnabled);
 	/** Nothing to talk to: the page has no server and no server was paired. */
 	let isEmpty = $derived(serverStore.localServerMissing && servers.length === 0);
 
@@ -63,7 +65,7 @@
 	{#if !serverStore.localServerMissing}
 		<ServerCard
 			isLocal
-			onPair={(code) => handleAdd(ServerKind.REMOTE, code)}
+			onPair={canPair ? (code) => handleAdd(ServerKind.REMOTE, code) : undefined}
 			onToggle={(enabled) => serversStore.setLocalEnabled(enabled)}
 			server={serversStore.local}
 		/>
@@ -96,16 +98,28 @@
 				<p class="text-sm font-medium">This page has no server of its own</p>
 
 				<p class="text-xs text-muted-foreground">
-					Start one with <span class="font-mono">llama-server --connect</span> and paste the access code
-					it prints, or point at a llama-server by its URL.
+					{#if canPair}
+						Start one with <span class="font-mono">llama-server --connect</span> and paste the access
+						code it prints, or point at a llama-server by its URL.
+					{:else}
+						Point at a llama-server by its URL.
+					{/if}
 				</p>
 			</div>
 
-			<Button onclick={() => handleAdd(ServerKind.REMOTE)} size="sm">
-				<Radio />
+			{#if canPair}
+				<Button onclick={() => handleAdd(ServerKind.REMOTE)} size="sm">
+					<Radio />
 
-				Pair a remote server
-			</Button>
+					Pair a remote server
+				</Button>
+			{:else}
+				<Button onclick={() => handleAdd(ServerKind.URL)} size="sm">
+					<Plus />
+
+					Add new server
+				</Button>
+			{/if}
 		{:else}
 			<Button onclick={() => handleAdd()} size="sm">
 				<Plus />
@@ -114,7 +128,9 @@
 			</Button>
 
 			<p class="text-xs text-muted-foreground">
-				Point at another llama-server, or pair one by its access code.
+				{canPair
+					? 'Point at another llama-server, or pair one by its access code.'
+					: 'Point at another llama-server by its URL.'}
 			</p>
 		{/if}
 	</div>
