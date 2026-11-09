@@ -74,8 +74,12 @@ function loadHiddenModels(): Set<string> {
 
 	try {
 		const raw = localStorage.getItem(HIDDEN_MODELS_LOCALSTORAGE_KEY);
+		const ids = raw ? (JSON.parse(raw) as string[]) : [];
 
-		return raw ? new SvelteSet(JSON.parse(raw) as string[]) : new SvelteSet<string>();
+		// ids saved before models were qualified by server all belonged to the local one
+		return new SvelteSet(
+			ids.map((id) => (serverIdFromModelId(id) ? id : qualifyModelId(LOCAL_BACKEND_ID, id)))
+		);
 	} catch {
 		return new SvelteSet<string>();
 	}
@@ -371,11 +375,18 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 * server other than the active one.
 	 */
 	async ensureModelServer(modelName: string): Promise<void> {
-		const option = this.models.find((model) => model.model === modelName);
+		const options = this.models.filter((model) => model.model === modelName && model.serverId);
 
-		if (!option?.serverId || option.serverId === serversStore.active.id) return;
+		// the same model name can be served by several servers: stay on the active one
+		// when it has it, rather than switching to whichever server is listed first
+		if (
+			options.length === 0 ||
+			options.some((model) => model.serverId === serversStore.active.id)
+		) {
+			return;
+		}
 
-		await this.selectModelById(option.id);
+		await this.selectModelById(options[0].id);
 	}
 
 	/**
@@ -499,8 +510,13 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 	 * hidden by the user, so an automatic pick never lands on one it doesn't show.
 	 */
 	getVisibleModels(): ModelOption[] {
+		const activeServerId = serversStore.active.id;
+
+		// the active server's rows carry raw ids, hidden ones are saved server-qualified
 		return this.activeModels.filter(
-			(option) => this.props.getModelProps(option.model)?.ui !== false && !this.isHidden(option.id)
+			(option) =>
+				this.props.getModelProps(option.model)?.ui !== false &&
+				!this.isHidden(qualifyModelId(option.serverId ?? activeServerId, rawModelId(option.id)))
 		);
 	}
 
