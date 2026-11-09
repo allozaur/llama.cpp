@@ -40,7 +40,7 @@
 				size="icon"
 				variant="ghost"
 			>
-				<ArrowLeft class="size-icon-md" />
+				<ArrowLeft class="size-4" />
 			</Button>
 		{/if}
 
@@ -65,14 +65,14 @@
 						size="sm"
 						variant="secondary"
 					>
-						<DISCOVER_ICON class="size-icon-md" />
+						<DISCOVER_ICON class="size-4" />
 
 						Discover Models
 					</Button>
 				{/if}
 
 				<Button class="gap-1.5" onclick={() => (showServers = true)} size="sm" variant="secondary">
-					<Server class="size-icon-md" />
+					<Server class="size-4" />
 
 					Manage Servers
 				</Button>

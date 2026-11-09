@@ -36,7 +36,7 @@
 		versionStore
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
-	import { applySurfaceTheme, hapticTap, resolveTabView } from '$lib/utils';
+	import { hapticTap, resolveTabView } from '$lib/utils';
 	import { apiUrl } from '$lib/utils/api-base';
 	import { isLocalServer, isRemoteServer } from '$lib/utils/server';
 	import { ModeWatcher } from 'mode-watcher';
@@ -55,11 +55,6 @@
 	let innerWidth = $state(browser ? window.innerWidth : 0);
 
 	let chatSidebar: { editActiveConversation?: () => void } | undefined = $state();
-
-	// the light surface theme (Paper or Matte) follows the saved setting
-	$effect(() => {
-		applySurfaceTheme(settingsStore.config[SETTINGS_KEYS.SURFACE_THEME]);
-	});
 
 	let showBuildVersion = $derived(
 		settingsStore.config[SETTINGS_KEYS.SHOW_BUILD_VERSION] as boolean
