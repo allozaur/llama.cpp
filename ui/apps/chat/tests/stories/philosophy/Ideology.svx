@@ -1,0 +1,108 @@
+<!--
+	What we stand for (Philosophy › Ideology): why llama.cpp, Llama UI and the apps exist, before how they look or fit
+	together. Written for people first and readable as plain Markdown by agents too. Set in Editorial.
+-->
+
+<script>
+	import Figure from './Figure.svelte';
+	import Decided from './figures/Decided.svelte';
+	import Layers from './figures/Layers.svelte';
+	import Machine from './figures/Machine.svelte';
+	import Reach from './figures/Reach.svelte';
+	import Sharing from './figures/Sharing.svelte';
+	import Storyboard from './figures/Storyboard.svelte';
+	import Shows from './figures/Shows.svelte';
+	import Voice from './figures/Voice.svelte';
+</script>
+
+<p class="kicker">Philosophy · What we stand for</p>
+
+# Ideology
+
+<p class="lead">Why <strong>llama.cpp</strong>, <strong>Llama UI</strong> and the apps exist. <strong>Product</strong> covers how they fit together, <strong>Design</strong> how they look.</p>
+
+## Personal and private
+
+The model runs on a device you already own: your phone, laptop or desktop. It starts with sensible choices made for you, and every one of them can be changed if you want to.
+
+Your conversations stay on that device, and everything works offline, without an account. There is nothing to sign in to and nothing to send, so what you ask stays private and secure by default. That is what personal AI means here.
+
+<Figure n={1} caption="One device holds the conversations, the server and the model. The model is downloaded from Hugging Face once; nothing else leaves.">
+	<Machine />
+</Figure>
+
+## Open to everyone
+
+Open models run on hardware people already have, from a phone to a server. Making them run well there means capable AI doesn't depend on a subscription, a fast connection or a data centre.
+
+Access to AI should be as open as access to information: available to anyone, wherever they live and whatever they can pay. Running it well on ordinary machines is how llama.cpp works towards that.
+
+<Figure n={2} caption="Common machines and roughly the largest model each runs at a 4-bit quant. The bar is the model's share of the memory.">
+	<Reach />
+</Figure>
+
+## Simple by default, powerful on request
+
+Most people want help with a letter, a photo or a question, not a lesson in GGUF and quantization. Others want to tune every part. Both should feel at home.
+
+<Figure n={3} caption="An everyday question, and what the app decided so it could just work. Each decision is a setting a power user can change.">
+	<Decided />
+</Figure>
+
+Nothing comes pre-installed. The first run is a recommendation and one click, and Llama Chat opens on a conversation, not on settings.
+
+<Figure n={4} caption="The first run with Llama for Mac, in four frames from the real app and Llama Chat. Nothing comes pre-installed; settings wait until someone asks.">
+	<Storyboard />
+</Figure>
+
+Where exactly the line between the two sits is still open.
+
+## Shared
+
+Everything can stay on one device, fully local. It can also be shared, at home, at work or beyond. Your phone can pick up the conversations you started on your laptop<sup>1</sup>; a home server can run bigger models for the whole family; an office can run one server for everyone who works there.
+
+And compute can be shared with other people. Those who have the hardware can open it to those who don't, so they can use capable models too.
+
+<Figure n={5} caption="Four setups, from one person to anyone. In each, one machine runs the model and others use it from their own devices.">
+	<Sharing />
+</Figure>
+
+<p class="note"><sup>1</sup> Planned. Picking up a conversation on another device needs sessions that persist on the server, and a way to reach them from an app that only connects to it.</p>
+
+## Three layers
+
+Between a person and the AI are three layers, and they are different kinds of thing.
+
+- **Model:** the weights. They are research output, closer to science than to a product: on their own they have no user and no interface, and everything else is built on them. That is why they stay open; closing them would hold back everything built on top.
+- **Inference:** the engine and the server that run the model. Elsewhere this layer is a provider's API, with its terms and its monitoring. In the Llama stack it is llama-server on your own hardware, or on a server someone you trust shares, so you are the provider.
+- **Application:** where AI meets people and their work. This is where what the AI does has real effects, so this is where most of the responsibility lies.
+
+It is the difference between steel and a car, as [Clément Delangue put it](https://x.com/ClementDelangue/status/2084992457674990033): you test the car on the road, not the steel at the mill.
+
+So the application is the layer that most needs to be built in the open: its code public, its behaviour tested and judged by the people who use it, and anyone free to change it. That is why Llama Chat and Llama UI are open source.
+
+The **harness**, the agentic loop and the tools it can call, bridges the application and inference: the loop runs in the app, and its tools run in the app or in llama-server.
+
+<Figure n={6} caption="The three layers, from the one people use down to the weights, with the Llama part on each.">
+	<Layers />
+</Figure>
+
+## Voice
+
+We say what the product does, with real numbers, and show the real product. No hype, no fear, no superlatives.
+
+<Figure n={7} caption="What we write, and what we don't.">
+	<Voice />
+</Figure>
+
+## In practice
+
+- **Product:** choices made in advance for people starting out, and every setting for those who want it. It always shows which model runs on which server, needs no account and works offline.
+- **Design:** neutral, so the conversation stands out, and open, so anyone can restyle it.
+- **Communications:** the real app, real figures and the same plain voice.
+
+<Figure n={8} caption="A model row as the app shows it, the greys with one accent, and llama.app's link preview.">
+	<Shows />
+</Figure>
+
+<p class="colophon">Set in Llama Sans and Llama Mono. The three layers follow Clément Delangue’s comparison of model weights to steel.</p>
