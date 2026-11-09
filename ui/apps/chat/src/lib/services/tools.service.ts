@@ -135,14 +135,13 @@ export class ToolsService {
 		signal?: AbortSignal,
 		cwd?: string
 	): AsyncGenerator<ToolStreamEvent> {
-		// The tool runs where the tokens are generated, so it follows the active
-		// server: running it on the machine next to the server that happens to
-		// serve this UI would hand the wrong sandbox to a remote model.
-		const headers = getJsonHeaders();
+		// pinned to the local server like the tool list and the non-streaming
+		// call: the tools offered to the model are the local server's
+		const headers = getJsonHeaders(LOCAL_BACKEND_ID);
 
 		if (cwd) headers[HEADERS.X_TOOL_CWD_HEADER] = cwd;
 
-		const response = await fetch(apiUrl(API_TOOLS.EXECUTE), {
+		const response = await fetch(apiUrl(API_TOOLS.EXECUTE, LOCAL_BACKEND_ID), {
 			body: JSON.stringify({ params, stream: true, tool: toolName }),
 			headers,
 			method: 'POST',
