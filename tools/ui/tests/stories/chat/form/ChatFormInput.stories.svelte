@@ -38,16 +38,12 @@
 			<ChatFormInput {...common} disabled value="Waiting for the model to load" />
 		</StateGalleryItem>
 
-		<StateGalleryItem label="Rich, code span">
-			<ChatFormInput
-				{...common}
-				useRichInput
-				value="Why does `npm run check` fail after `npm install`?"
-			/>
+		<StateGalleryItem label="Code span">
+			<ChatFormInput {...common} value="Why does `npm run check` fail after `npm install`?" />
 		</StateGalleryItem>
 
-		<StateGalleryItem label="Rich, file mentions">
-			<ChatFormInput {...common} useRichInput value={mentionValue} />
+		<StateGalleryItem label="File mentions">
+			<ChatFormInput {...common} value={mentionValue} />
 		</StateGalleryItem>
 	</StateGallery>
 </Story>

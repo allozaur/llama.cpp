@@ -72,7 +72,7 @@
 	play={async ({ canvas, userEvent }) => {
 		const editor = await canvas.findByRole('textbox');
 
-		await userEvent.type(textarea, 'Explain how the KV cache works in llama.cpp');
+		await userEvent.type(editor, 'Explain how the KV cache works in llama.cpp');
 	}}
 />
 
@@ -84,7 +84,7 @@
 		const editor = await canvas.findByRole('textbox');
 
 		// a complete code span swaps the textarea for the rich input
-		await userEvent.type(textarea, 'Why does `npm run check` fail after `npm install`?');
+		await userEvent.type(editor, 'Why does `npm run check` fail after `npm install`?');
 	}}
 />
 
@@ -144,7 +144,7 @@
 	play={async ({ canvas, userEvent }) => {
 		const editor = await canvas.findByRole('textbox');
 
-		await userEvent.type(textarea, 'Hello');
+		await userEvent.type(editor, 'Hello');
 	}}
 />
 
