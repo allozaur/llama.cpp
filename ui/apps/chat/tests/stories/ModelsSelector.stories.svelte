@@ -134,7 +134,7 @@
 		<ModelsSelectorList
 			activeId={null}
 			currentModel={null}
-			groups={{ available: [] }}
+			groups={{ available: [], servers: [] }}
 			loaded={[loadedModels[0]]}
 			onSelect={handleSelect}
 		/>
@@ -147,7 +147,7 @@
 			activeId={null}
 			currentModel={null}
 			favorites={favoriteModels}
-			groups={{ available: [] }}
+			groups={{ available: [], servers: [] }}
 			onSelect={handleSelect}
 		/>
 	</div>

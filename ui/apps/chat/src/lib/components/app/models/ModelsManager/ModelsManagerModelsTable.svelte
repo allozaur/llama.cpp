@@ -227,9 +227,9 @@
 
 		{#if sortKey === key}
 			{#if sortAsc}
-				<ArrowUp class="size-icon-xs" />
+				<ArrowUp class="size-3" />
 			{:else}
-				<ArrowDown class="size-icon-xs" />
+				<ArrowDown class="size-3" />
 			{/if}
 		{/if}
 	</button>
@@ -313,9 +313,9 @@
 				: ''}"
 		>
 			{#if expanded}
-				<ChevronUp class="size-icon-sm text-muted-foreground" />
+				<ChevronUp class="size-3.5 text-muted-foreground" />
 			{:else}
-				<ChevronDown class="size-icon-sm text-muted-foreground" />
+				<ChevronDown class="size-3.5 text-muted-foreground" />
 			{/if}
 		</span>
 	</div>
@@ -382,13 +382,13 @@
 			{#if group.items.length > 0}
 				{#snippet groupIcon()}
 					{#if group.kind === ModelsTableGroupKind.DOWNLOADING}
-						<Download class="size-icon-sm shrink-0" />
+						<Download class="size-3.5 shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.FAVORITES}
-						<Heart class="size-icon-sm shrink-0" />
+						<Heart class="size-3.5 shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.LOADED}
-						<Power class="size-icon-sm shrink-0" />
+						<Power class="size-3.5 shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.HIDDEN}
-						<EyeOff class="size-icon-sm shrink-0" />
+						<EyeOff class="size-3.5 shrink-0" />
 					{:else if group.kind === ModelsTableGroupKind.LOCAL}
 						<Logo class="shrink-0" style="--size: 0.875rem" />
 					{/if}
