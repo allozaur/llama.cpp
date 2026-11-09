@@ -2,7 +2,7 @@
 	import { Server } from '@lucide/svelte';
 	import ModelsManagerServers from '$lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { deviceStore } from '$lib/stores';
+	import { deviceStore, remoteAccessStore } from '$lib/stores';
 
 	interface Props {
 		onOpenChange?: (open: boolean) => void;
@@ -35,7 +35,9 @@
 			</Dialog.Title>
 
 			<Dialog.Description class="sr-only">
-				Pair a remote server by its access code, or point at one by its URL.
+				{remoteAccessStore.isEnabled
+					? 'Pair a remote server by its access code, or point at one by its URL.'
+					: 'Point at a llama-server by its URL.'}
 			</Dialog.Description>
 		</Dialog.Header>
 

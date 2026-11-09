@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FlaskConical, RotateCcw } from '@lucide/svelte';
+	import { FlaskConical, RotateCcw, ShieldAlert } from '@lucide/svelte';
 	import { SettingsChatParameterSourceIndicator } from '$lib/components/app/settings';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
@@ -332,6 +332,14 @@
 						{#if field.help || SETTING_CONFIG_INFO[field.key]}
 							<p class="text-xs text-muted-foreground">
 								{field.help || SETTING_CONFIG_INFO[field.key]}
+							</p>
+						{/if}
+
+						{#if field.note}
+							<p class="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+								<ShieldAlert class="mt-px size-3.5 shrink-0" />
+
+								{field.note}
 							</p>
 						{/if}
 					</div>
