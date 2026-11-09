@@ -113,7 +113,8 @@
 					/>
 
 					{#if isCustomized}
-						<Badge class="h-5 shrink-0 px-1.5 text-caption-sm" variant="secondary">CUSTOMIZED</Badge>
+						<Badge class="h-5 shrink-0 px-1.5 text-caption-sm" variant="secondary">CUSTOMIZED</Badge
+						>
 					{/if}
 				</div>
 
