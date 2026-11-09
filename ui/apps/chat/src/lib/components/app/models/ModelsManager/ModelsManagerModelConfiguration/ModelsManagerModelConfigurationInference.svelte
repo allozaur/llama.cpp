@@ -98,7 +98,7 @@
 <div class="mt-4">
 	<CollapsibleSection triggerClass={sectionTrigger}>
 		{#snippet trigger()}
-			<SlidersHorizontal class="size-icon-sm text-muted-foreground" />
+			<SlidersHorizontal class="size-3.5 text-muted-foreground" />
 
 			<span class="text-sm font-medium">Sampling</span>
 		{/snippet}
@@ -173,7 +173,7 @@
 						>
 							{value}
 
-							<X class="size-icon-xs" />
+							<X class="size-3" />
 						</button>
 					{/each}
 				</div>
@@ -195,7 +195,7 @@
 
 	<CollapsibleSection triggerClass={sectionTrigger}>
 		{#snippet trigger()}
-			<Braces class="size-icon-sm text-muted-foreground" />
+			<Braces class="size-3.5 text-muted-foreground" />
 
 			<span class="text-sm font-medium">Structured output</span>
 		{/snippet}
@@ -237,7 +237,7 @@
 
 	<CollapsibleSection triggerClass={sectionTrigger}>
 		{#snippet trigger()}
-			<CircleDot class="size-icon-sm text-muted-foreground" />
+			<CircleDot class="size-3.5 text-muted-foreground" />
 
 			<span class="text-sm font-medium">Reasoning</span>
 		{/snippet}

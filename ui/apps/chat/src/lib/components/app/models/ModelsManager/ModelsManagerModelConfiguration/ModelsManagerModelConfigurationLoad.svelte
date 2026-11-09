@@ -95,7 +95,7 @@
 <div class="mt-4">
 	<CollapsibleSection triggerClass={sectionTrigger}>
 		{#snippet trigger()}
-			<ListOrdered class="size-icon-sm text-muted-foreground" />
+			<ListOrdered class="size-3.5 text-muted-foreground" />
 
 			<span class="text-sm font-medium">Advanced load params</span>
 		{/snippet}
@@ -173,7 +173,7 @@
 </div>
 
 <div class="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-	<Info class="mt-0.5 size-icon-sm shrink-0" />
+	<Info class="mt-0.5 size-3.5 shrink-0" />
 
 	<p>Changes apply on next load - eject and re-load to pick them up.</p>
 </div>
