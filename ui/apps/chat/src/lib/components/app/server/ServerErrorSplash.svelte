@@ -4,7 +4,13 @@
 	import { Label } from '@ggml/llama-ui/ui/label';
 	import { AlertTriangle, CheckCircle, Key, RefreshCw, XCircle } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
-	import { HEADERS, ICON_CLASS_DEFAULT, ROUTES, SETTINGS_KEYS } from '$lib/constants';
+	import {
+		HEADERS,
+		ICON_CLASS_DEFAULT,
+		LOCAL_BACKEND_ID,
+		ROUTES,
+		SETTINGS_KEYS
+	} from '$lib/constants';
 	import { KeyboardKey } from '$lib/enums';
 	import { serverStore, settingsStore } from '$lib/stores';
 	import { apiUrl } from '$lib/utils/api-base';
@@ -67,7 +73,7 @@
 			settingsStore.updateConfig(SETTINGS_KEYS.API_KEY, apiKeyInput.trim());
 
 			// Test the API key by making a real request to the server
-			const response = await fetch(apiUrl('/props'), {
+			const response = await fetch(apiUrl('/props', LOCAL_BACKEND_ID), {
 				headers: {
 					'Content-Type': 'application/json',
 					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKeyInput.trim()}`
