@@ -383,7 +383,7 @@
 				? 'min-h-11 px-3 py-2'
 				: 'min-h-9 px-2 py-1.5 max-md:min-h-12 max-md:rounded-2xl max-md:px-3.5 max-md:py-3 md:min-h-8 md:py-1',
 			isLanding && 'invisible',
-			isActive ? 'bg-accent text-accent-foreground' : 'text-foreground/75',
+			isActive ? 'selected-row-surface text-accent-foreground' : 'text-foreground/75',
 			contextMenuOpen && 'bg-foreground/10',
 			isSelected && 'bg-primary/10 hover:bg-primary/15',
 			isSelectionMode && 'is-selection-mode',
@@ -448,7 +448,7 @@
 								class="flex shrink-0 items-center text-muted-foreground transition-colors hover:text-foreground"
 								href={RouterService.chat(conversation.forkedFromConversationId)}
 							>
-								<GitBranch class={isLarge ? 'size-4' : 'size-3.5'} />
+								<GitBranch class={isLarge ? 'size-icon-md' : 'size-icon-sm'} />
 							</a>
 						{/snippet}
 					</Tooltip.Trigger>
@@ -471,13 +471,13 @@
 							tabindex="0"
 						>
 							<Loader2
-								class="loading-icon {isLarge ? 'size-4' : 'size-3.5'} animate-spin"
+								class="loading-icon {isLarge ? 'size-icon-md' : 'size-icon-sm'} animate-spin"
 							/>
 
 							<Square
 								class="stop-icon hidden {isLarge
-									? 'size-3.5'
-									: 'size-3'} fill-current text-destructive"
+									? 'size-icon-sm'
+									: 'size-icon-xs'} fill-current text-destructive"
 							/>
 						</div>
 					</Tooltip.Trigger>

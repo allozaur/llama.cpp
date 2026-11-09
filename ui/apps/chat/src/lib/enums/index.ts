@@ -107,6 +107,7 @@ export {
 	ScrollCarouselVariant,
 	SidebarAction,
 	SidebarSectionKind,
+	SurfaceTheme,
 	TooltipSide,
 	UrlProtocol
 } from './ui.enums';

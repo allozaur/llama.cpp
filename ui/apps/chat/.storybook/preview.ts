@@ -1,7 +1,12 @@
 import type { Preview } from '@storybook/sveltekit';
 import '../src/app.css';
+import './docs.css';
+import { applyColorScheme } from './color-scheme';
 import ModeWatcherDecorator from './decorators/ModeWatcherDecorator.svelte';
 import TooltipProviderDecorator from './decorators/TooltipProviderDecorator.svelte';
+
+applyColorScheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyColorScheme);
 
 const preview: Preview = {
 	parameters: {
@@ -16,6 +21,87 @@ const preview: Preview = {
 			disabled: true
 		},
 
+		options: {
+			// sidebar sections: the introduction, the philosophy, the brand (logo, type, colour), communications, then the UI: its foundations
+			// first, the full chat screen leading its folder
+			storySort: {
+				order: [
+					'Introduction',
+					'Agents',
+					['Design guidelines', 'Brand guidelines'],
+					'Philosophy',
+					['Ideology', 'Product', 'Design'],
+					'Architecture',
+					['Stack', 'Chat', 'Channels'],
+					'Brand',
+					[
+						'Logo',
+						['Overview', 'Icon', 'Usage', 'Assets', ['Logo', 'Social profiles', 'App icons']],
+						'Typography',
+						[
+							'Overview',
+							'Tester',
+							'Llama Sans',
+							['User Interface', 'Running text', 'Display', 'Glyphs'],
+							'Llama Mono',
+							['Terminal', 'User Interface', 'Logs', 'Diff', 'llama.cpp logo', 'Key visuals']
+						],
+						'Colors',
+						['Palette']
+					],
+					'Communications',
+					[
+						'Direction',
+						['Principles', 'Mood board', 'Specimen boards'],
+						'Foundations',
+						['Formats and grid', 'Grounds', 'Type'],
+						'Elements',
+						['Header and footer', 'Chips and labels', 'Figures and commands', 'Motifs', 'The app'],
+						'Modules',
+						['Headline blocks', 'Model cards', 'Stat cards', 'Product shot'],
+						'Key visuals',
+						['Statement', 'Product', 'Roster', 'Bulletin', 'Numeral', 'Receipt'],
+						'Applications',
+						[
+							'Model drop',
+							"What's new",
+							'Link previews',
+							'Open models poster',
+							'Microsoft Store',
+							'Mac App Store',
+							'Store scenes',
+							'Swag'
+						]
+					],
+					'UI',
+					[
+						'Foundations',
+						['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces', 'Brand'],
+						'Actions',
+						'Forms',
+						'Display',
+						'Overlays',
+						'Navigation',
+						'Patterns',
+						'Blocks',
+						[
+							'Chat',
+							['ChatScreen', ['ChatScreen', '*']],
+							'Content',
+							'Models',
+							'MCP',
+							'Navigation',
+							'Settings',
+							['DialogSettingsChat', 'Navigation', 'Sections'],
+							'App'
+						]
+					],
+					'Scrapbook',
+					['About', 'UI', 'Communications', 'Brand']
+				]
+			}
+		},
+
 		a11y: {
 			// 'todo' - show a11y violations in the test UI only
 			// 'error' - fail CI on a11y violations
@@ -23,11 +109,50 @@ const preview: Preview = {
 			test: 'todo'
 		}
 	},
+	// read by tests/stories/pace.ts; the test runner always plays at full speed
+	globalTypes: {
+		interactionPace: {
+			description: 'Speed of the interactions a story plays',
+			toolbar: {
+				dynamicTitle: true,
+				icon: 'timer',
+				items: [
+					{ title: 'Human pace', value: 'human' },
+					{ title: 'Instant', value: 'instant' }
+				],
+				title: 'Interaction pace'
+			}
+		},
+		// the light surface theme: Paper (white panels on a grey page) or Matte (grey glass on white)
+		surface: {
+			description: 'Light surface theme',
+			toolbar: {
+				dynamicTitle: true,
+				icon: 'paintbrush',
+				items: [
+					{ title: 'Paper', value: 'paper' },
+					{ title: 'Matte', value: 'matte' }
+				],
+				title: 'Surface'
+			}
+		}
+	},
+	initialGlobals: {
+		interactionPace: 'human',
+		surface: 'paper'
+	},
 	decorators: [
-		(story) => ({
+		(story, context) => {
+			document.documentElement.classList.toggle('theme-matte', context.globals.surface === 'matte');
+
+			return story();
+		},
+		// `parameters.colorScheme` fixes a story to light or dark, whatever the viewer chose (a scene in a store screenshot)
+		(story, context) => ({
 			Component: ModeWatcherDecorator,
 			props: {
-				children: story
+				children: story,
+				forced: context.parameters.colorScheme
 			}
 		}),
 		(story) => ({
