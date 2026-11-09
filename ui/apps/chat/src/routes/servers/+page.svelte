@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ModelsManagerServers from '$lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
 	import { APP_NAME } from '$lib/constants';
+	import { remoteAccessStore } from '$lib/stores';
 </script>
 
 <svelte:head>
@@ -16,7 +17,9 @@
 		<h1 class="text-2xl font-semibold tracking-tight">Servers</h1>
 
 		<p class="text-sm text-muted-foreground">
-			Pair a remote server by its access code, or point at one by its URL.
+			{remoteAccessStore.isEnabled
+				? 'Pair a remote server by its access code, or point at one by its URL.'
+				: 'Point at a llama-server by its URL.'}
 		</p>
 	</div>
 

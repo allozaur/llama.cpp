@@ -27,10 +27,12 @@ describe('servers on a phone', () => {
 
 	beforeEach(async () => {
 		opened.length = 0;
+		settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING, true);
 		await page.viewport(PHONE.width, PHONE.height);
 	});
 
 	afterEach(async () => {
+		settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING, false);
 		await page.viewport(DESKTOP.width, DESKTOP.height);
 	});
 
@@ -67,6 +69,17 @@ describe('servers on a phone', () => {
 		await screen.getByRole('tab', { name: 'Remote server' }).click();
 
 		await expect.element(screen.getByText('Not paired yet')).toBeVisible();
+	});
+
+	it('offers only a URL while pairing is switched off', async () => {
+		settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING, false);
+
+		const screen = render(DialogServersWrapper);
+
+		await screen.getByRole('button', { name: 'Add new server' }).click();
+
+		await expect.element(screen.getByRole('heading', { name: 'Add New Server' })).toBeVisible();
+		expect(screen.getByRole('tab', { name: 'Remote server' }).query()).toBeNull();
 	});
 
 	it('opens the form as a bottom drawer, and as a dialog on a desktop', async () => {

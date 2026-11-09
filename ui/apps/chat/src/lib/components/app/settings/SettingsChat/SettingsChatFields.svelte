@@ -5,7 +5,7 @@
 	import * as RadioGroup from '@ggml/llama-ui/ui/radio-group';
 	import * as Select from '@ggml/llama-ui/ui/select';
 	import { Textarea } from '@ggml/llama-ui/ui/textarea';
-	import { FlaskConical, RotateCcw } from '@lucide/svelte';
+	import { FlaskConical, RotateCcw, ShieldAlert } from '@lucide/svelte';
 	import { SettingsChatParameterSourceIndicator } from '$lib/components/app/settings';
 	import {
 		ICON_CLASS_DEFAULT,
@@ -343,6 +343,14 @@
 						{#if field.help || SETTING_CONFIG_INFO[field.key]}
 							<p class="text-xs text-muted-foreground">
 								{field.help || SETTING_CONFIG_INFO[field.key]}
+							</p>
+						{/if}
+
+						{#if field.note}
+							<p class="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+								<ShieldAlert class="mt-px size-3.5 shrink-0" />
+
+								{field.note}
 							</p>
 						{/if}
 					</div>

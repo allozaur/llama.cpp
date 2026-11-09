@@ -33,7 +33,7 @@
 		onDelete?: () => void;
 		onDisconnect?: (server: Server) => void;
 		onEdit?: () => void;
-		/** Pair this machine's own host, by the access code it advertises. */
+		/** Pair this machine's own host, by the access code it advertises; no Pair button without it. */
 		onPair?: (code: string) => void;
 		onToggle?: (enabled: boolean) => void;
 	}
@@ -212,9 +212,11 @@
 						<Copy class="h-3 w-3" />
 					</Button>
 
-					<Button class="h-6 px-2" onclick={() => onPair?.(hostCode)} size="sm" variant="secondary">
-						Pair
-					</Button>
+					{#if onPair}
+						<Button class="h-6 px-2" onclick={() => onPair(hostCode)} size="sm" variant="secondary">
+							Pair
+						</Button>
+					{/if}
 				</div>
 			</div>
 

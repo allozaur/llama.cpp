@@ -94,9 +94,15 @@ function withTransport(url: string): Promise<Response> {
 	return fetch(url);
 }
 
+// pairing is an experimental opt-in; these tests exercise it switched on
+beforeEach(() => {
+	settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING, true);
+});
+
 afterEach(() => {
 	remoteAccessStore.uninstallInterceptor();
 	window.fetch = originalFetch;
+	settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_REMOTE_PAIRING, false);
 });
 
 it('starts a paired server idle', () => {
