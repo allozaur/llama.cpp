@@ -63,6 +63,9 @@
 
 	let isEdit = $derived(server !== null);
 	let isRemote = $derived(isRemoteServer(draft));
+	// pairing is experimental and off by default; a remote server already saved
+	// still opens as one, so it can be edited or forgotten
+	let canPair = $derived(remoteAccessStore.isEnabled || (isEdit && isRemoteServer(server)));
 	let canScan = $derived(supportsQrScan());
 	let code = $derived(normalizeShareCode(draft.code ?? ''));
 	let title = $derived(
@@ -107,7 +110,10 @@
 
 		draft = server
 			? { ...server }
-			: { ...createServer(defaultKind), code: normalizeShareCode(defaultCode ?? '') };
+			: {
+					...createServer(remoteAccessStore.isEnabled ? defaultKind : ServerKind.URL),
+					code: normalizeShareCode(defaultCode ?? '')
+				};
 		testResult = null;
 		testing = false;
 		pairing = false;
@@ -251,6 +257,7 @@
 	<div class="space-y-4 py-4">
 		<ServerForm
 			{apiKeyRequired}
+			{canPair}
 			{canScan}
 			{codeError}
 			{endpointError}
