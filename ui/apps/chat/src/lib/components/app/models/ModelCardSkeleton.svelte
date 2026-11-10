@@ -11,22 +11,18 @@
 	let { class: className = '', description = false }: Props = $props();
 </script>
 
-<!-- Static skeleton of ModelCard: avatar and name, capability badges, footer facts. -->
+<!-- Static skeleton of ModelCard: avatar, name over its subline, capability icons, footer facts. -->
 <Card.Root class={['gap-3! bg-muted/30 p-4', className]}>
 	<div class="flex items-center gap-3">
-		<Skeleton class="h-9 w-9 shrink-0 rounded-full" />
+		<Skeleton class="size-9 shrink-0 rounded-md" />
 
 		<div class="min-w-0 flex-1 space-y-1.5">
 			<Skeleton class="h-4 w-36" />
 
-			<Skeleton class="h-3.5 w-20" />
+			<Skeleton class="h-3 w-20" />
 		</div>
-	</div>
 
-	<div class="flex flex-wrap gap-1.5">
-		<Skeleton class="h-5 w-16 rounded-md" />
-
-		<Skeleton class="h-5 w-20 rounded-md" />
+		<Skeleton class="h-3 w-12 shrink-0 self-start" />
 	</div>
 
 	{#if description}
