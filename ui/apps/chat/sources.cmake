@@ -3,8 +3,9 @@
 set(UI_SOURCE_GLOBS
     src/*
     static/*
-    # Llama UI, which the app compiles from source
+    # Llama UI and the harness, which the app compiles from source
     ../../lib/ui/src/lib/*
+    ../../lib/harness/src/*
 )
 
 set(UI_SOURCE_FILES
