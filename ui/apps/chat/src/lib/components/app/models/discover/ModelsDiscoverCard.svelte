@@ -69,7 +69,7 @@
 		<span class="flex items-center gap-3 whitespace-nowrap">
 			{#if summary.sizeRange}
 				<span class="inline-flex items-center gap-1" title="Download size">
-					<Database class="size-icon-xs" />
+					<Database class="size-3" />
 
 					{HuggingFaceService.formatSizeRange(summary.sizeRange.min, summary.sizeRange.max)}
 				</span>
@@ -77,7 +77,7 @@
 
 			{#if summary.contextLength}
 				<span class="inline-flex items-center gap-1" title="Context length">
-					<ScrollText class="size-icon-xs" />
+					<ScrollText class="size-3" />
 
 					{formatParameters(summary.contextLength)}
 				</span>
@@ -87,7 +87,7 @@
 
 	{#snippet footerEnd()}
 		<span class="inline-flex items-center gap-1 text-muted-foreground" title="Downloads">
-			<Download class="size-icon-xs" />
+			<Download class="size-3" />
 
 			{HuggingFaceService.formatDownloads(model.downloads)}
 		</span>
