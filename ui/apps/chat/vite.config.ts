@@ -16,6 +16,8 @@ import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv, type ProxyOptions, searchForWorkspaceRoot } from 'vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+// the harness has no build step in the repo: the app compiles it from source
+const LLAMA_HARNESS_ENTRY = resolve(__dirname, '../../lib/harness/src/index.ts');
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const browserBaseConfig: any = {
 	enabled: true,
@@ -89,13 +91,18 @@ export default defineConfig(({ mode }) => {
 
 		resolve: {
 			alias: {
+				'@ggml-org/llama-harness': LLAMA_HARNESS_ENTRY,
 				'katex-fonts': resolve('node_modules/katex/dist/fonts')
 			}
 		},
 
 		server: {
 			fs: {
-				allow: [searchForWorkspaceRoot(process.cwd()), resolve(__dirname, 'tests')]
+				allow: [
+					searchForWorkspaceRoot(process.cwd()),
+					resolve(__dirname, 'tests'),
+					resolve(__dirname, '../../lib/harness')
+				]
 			},
 			headers: {
 				'Cross-Origin-Embedder-Policy': 'require-corp',
