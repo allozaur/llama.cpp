@@ -1,14 +1,15 @@
 <script lang="ts">
 	import ModelCapabilityIcons from '../ModelCapabilityIcons.svelte';
 	import ModelCard from '../ModelCard.svelte';
-	import ModelId from '../ModelId.svelte';
 	import ModelOrgAvatar from '../ModelOrgAvatar.svelte';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import { Database, Download, ScrollText } from '@lucide/svelte';
 	import { useHubModelSummary } from '$lib/hooks/use-hub-model-summary.svelte';
 	import { HuggingFaceService } from '$lib/services';
-	import { modelsDiscoverStore } from '$lib/stores';
+	import { ModelsService } from '$lib/services/models.service';
+	import { modelsDiscoverStore, modelsStore } from '$lib/stores';
 	import type { HfModelInfo } from '$lib/types/huggingface';
-	import { formatParameters } from '$lib/utils';
+	import { formatParameters, repoOf } from '$lib/utils';
 
 	interface Props {
 		model: HfModelInfo;
@@ -25,7 +26,28 @@
 		() => true
 	);
 
+	let parsed = $derived(ModelsService.parseModelId(model.id));
 	let description = $derived(modelsDiscoverStore.descriptionFor(model.id));
+	let released = $derived(modelsDiscoverStore.releasedFor(model.id));
+
+	// one quiet line under the name: the size and the drafts the repo ships. A repo
+	// outside the curated catalog also names who quantized it, when not the model's own org
+	let subline = $derived(
+		[
+			parsed.params &&
+				`${parsed.params}${parsed.activatedParams ? `-${parsed.activatedParams}` : ''}`,
+			...summary.draftKinds.map((kind) => kind.toUpperCase()),
+			!released && summary.org !== summary.avatarOrg && summary.org
+		]
+			.filter(Boolean)
+			.join(' · ') || summary.org
+	);
+
+	// quants of this repo the server already has
+	let localModels = $derived(
+		modelsStore.models.filter((option) => repoOf(option.model) === model.id)
+	);
+	let isLoaded = $derived(localModels.some((option) => modelsStore.isModelLoaded(option.model)));
 </script>
 
 <ModelCard
@@ -41,32 +63,32 @@
 	{/snippet}
 
 	{#snippet title()}
-		<ModelId
-			class="min-w-0"
-			draftKinds={summary.draftKinds}
-			hideCapabilities
-			hideModalities
-			hideOrgName
-			modelId={model.id}
-			stackId
-		/>
+		<span class="flex min-w-0 flex-col gap-0.5">
+			<span class="truncate font-medium">{parsed.modelName ?? model.id}</span>
+
+			<span class="truncate font-mono text-xs text-muted-foreground tabular-nums">{subline}</span>
+		</span>
 	{/snippet}
 
-	<ModelCapabilityIcons
-		asBadges
-		modalities={summary.modalities}
-		supportsThinking={summary.supportsThinking}
-		supportsToolUse={summary.supportsToolUse}
-	/>
+	<!-- above the card's button, so each icon's tooltip is a trigger of its own -->
+	{#snippet actions()}
+		<span class="flex h-9 items-center pr-1.5">
+			<ModelCapabilityIcons
+				modalities={summary.modalities}
+				supportsThinking={summary.supportsThinking}
+				supportsToolUse={summary.supportsToolUse}
+			/>
+		</span>
+	{/snippet}
 
 	{#if description}
-		<p class="line-clamp-2 text-xs text-muted-foreground">{description}</p>
+		<p class="line-clamp-2 text-[13px] leading-snug text-pretty text-muted-foreground">
+			{description}
+		</p>
 	{/if}
 
-	<!-- what the download gives on the left, the way a local card leads with its context;
-	     how often it is pulled on the right. Likes and the last update live in the details -->
 	{#snippet footer()}
-		<span class="flex items-center gap-3 whitespace-nowrap">
+		<span class="flex items-center gap-3 whitespace-nowrap tabular-nums">
 			{#if summary.sizeRange}
 				<span class="inline-flex items-center gap-1" title="Download size">
 					<Database class="size-3" />
@@ -85,11 +107,29 @@
 		</span>
 	{/snippet}
 
+	<!-- a model the server already has says so; a catalog family dates itself, any other
+	     repo shows how often it is pulled -->
 	{#snippet footerEnd()}
-		<span class="inline-flex items-center gap-1 text-muted-foreground" title="Downloads">
-			<Download class="size-3" />
+		{#if localModels.length > 0}
+			<Badge
+				class="font-normal {isLoaded
+					? 'border-transparent bg-green-500/15 text-green-700 dark:text-green-400'
+					: ''}"
+				variant="secondary"
+			>
+				{isLoaded ? 'Loaded' : 'Downloaded'}
+			</Badge>
+		{:else if released}
+			<span class="text-muted-foreground tabular-nums" title="Released">{released}</span>
+		{:else}
+			<span
+				class="inline-flex items-center gap-1 text-muted-foreground tabular-nums"
+				title="Downloads"
+			>
+				<Download class="size-3" />
 
-			{HuggingFaceService.formatDownloads(model.downloads)}
-		</span>
+				{HuggingFaceService.formatDownloads(model.downloads)}
+			</span>
+		{/if}
 	{/snippet}
 </ModelCard>

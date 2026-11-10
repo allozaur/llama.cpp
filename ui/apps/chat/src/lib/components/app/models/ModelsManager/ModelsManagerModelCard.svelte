@@ -77,16 +77,19 @@
 		</span>
 	{/snippet}
 
+	<!-- what the model can do as icons beside its menu, each named in its tooltip -->
 	{#snippet actions()}
-		<DropdownMenuActions
-			actions={modelRowActions(option, { download, favorite, isHidden }, { onDelete })}
-			align="end"
-			triggerIcon={MoreHorizontal}
-			triggerTooltip="Model actions"
-		/>
-	{/snippet}
+		<span class="flex items-center gap-1.5">
+			<ModelCapabilities {option} />
 
-	<ModelCapabilities asBadges {option} />
+			<DropdownMenuActions
+				actions={modelRowActions(option, { download, favorite, isHidden }, { onDelete })}
+				align="end"
+				triggerIcon={MoreHorizontal}
+				triggerTooltip="Model actions"
+			/>
+		</span>
+	{/snippet}
 
 	{#if sidecarBadges?.length}
 		<div class="flex w-fit flex-col">
