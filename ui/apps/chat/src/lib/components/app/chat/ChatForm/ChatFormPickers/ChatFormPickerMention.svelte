@@ -2,6 +2,7 @@
 	import { File, Folder, Server } from '@lucide/svelte';
 	import { ChatFormPickerList, ChatFormPickerListItem } from '$lib/components/app/chat';
 	import HighlightedMatch from '$lib/components/app/forms/HighlightedMatch.svelte';
+	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { FILE_GLOB_SEARCH_PICKERS, HOME_TILDE, SEARCH } from '$lib/constants';
@@ -32,7 +33,8 @@
 	 * scoped to `scopePath`, and MCP resources are filtered client-side. The
 	 * parent owns the "dismissed token, don't re-open until it changes"
 	 * snapshot; a host without an `@` token shows the list's search field and
-	 * binds `query` instead.
+	 * binds `query` instead. With an on-screen keyboard it is a drawer with a
+	 * search field of its own, clear of the keyboard.
 	 */
 	interface Props {
 		class?: string;
@@ -41,6 +43,7 @@
 		source?: MentionPickerSource;
 		/** Renders the list's own search field, for hosts without an `@` token. */
 		showSearchInput?: boolean;
+		/** Two-way bound: the drawer's search field writes it. */
 		query: string;
 		customAnchor?: HTMLElement | null;
 		scopePath?: string | null;
@@ -75,11 +78,7 @@
 	// why instead of firing searches that would only fail.
 	const fileSearchKey = $derived(toolsStore.getPermissionKey(BuiltInTool.SERVER_FILE_GLOB_SEARCH));
 	// effective policy: the active conversation's tool policy, or global defaults
-	const fileSearchEnabled = $derived(
-		fileSearchKey !== null &&
-			conversationsStore.preferences.isToolEnabled(fileSearchKey) &&
-			conversationsStore.preferences.isCategoryEnabled(ToolSource.SERVER)
-	);
+	const fileSearchEnabled = $derived(conversationsStore.preferences.isFileSearchEnabled());
 
 	let searchResults = $state<FileMentionEntry[]>([]);
 	let searchError = $state<string | null>(null);
@@ -202,6 +201,9 @@
 			return 'File search is disabled - enable "Search files" in Settings > Tools to use @-mentions';
 		}
 
+		// nothing searched yet: the drawer opens before a query is typed
+		if (!trimmedQuery) return undefined;
+
 		return searchError ? `Search failed - ${searchError}` : 'No matching files or folders';
 	});
 
@@ -265,105 +267,137 @@
 	}
 </script>
 
-<Popover.Root
-	onOpenChange={(open) => {
-		if (!open) onClose();
-	}}
-	open={isOpen}
->
-	<!-- Invisible form-wide trigger: stops bits-ui's outside-click detector
-	     from closing the picker when the user clicks inside the textarea.
-	     We open programmatically via `open={isOpen}`, so it is inert
-	     (tabindex=-1 + pointer-events-none + opacity-0 + aria-hidden).
-	     Positioning comes from `customAnchor` at the form's top edge. -->
-	<Popover.Trigger
-		aria-hidden="true"
-		class="pointer-events-none absolute inset-0 opacity-0"
-		tabindex={-1}
+{#snippet picker(inDrawer: boolean)}
+	<ChatFormPickerList
+		bind:searchQuery={query}
+		{emptyMessage}
+		isLoading={search.isSearching}
+		itemKey={(entry) => entry.type + ':' + entry.path}
+		items={displayedItems}
+		onSearchClose={onClose}
+		scrollTrigger={nav.scrollTrigger}
+		searchPlaceholder="Search files and resources"
+		selectedIndex={nav.hoveredIndex}
+		showSearchInput={inDrawer || showSearchInput}
 	>
-		<span class="sr-only">Open file mention picker</span>
-	</Popover.Trigger>
-
-	<Popover.Content
-		align="start"
-		class={['w-[var(--bits-popover-anchor-width)] max-w-none rounded-xl p-0', className]}
-		{customAnchor}
-		onCloseAutoFocus={(event) => event.preventDefault()}
-		onOpenAutoFocus={(event) => event.preventDefault()}
-		onkeydown={handleKeydown}
-		preventScroll={false}
-		side="top"
-		sideOffset={12}
-	>
-		<ChatFormPickerList
-			bind:searchQuery={query}
-			{emptyMessage}
-			isLoading={search.isSearching}
-			itemKey={(entry) => entry.type + ':' + entry.path}
-			items={displayedItems}
-			onSearchClose={onClose}
-			scrollTrigger={nav.scrollTrigger}
-			searchPlaceholder="Search files and resources"
-			selectedIndex={nav.hoveredIndex}
-			{showSearchInput}
-		>
-			{#snippet item(entry, index, isSelected)}
-				<ChatFormPickerListItem
-					dataIndex={index}
-					{isSelected}
-					onclick={() => handleSelect(entry)}
-					onmouseenter={() => nav.setHover(index)}
-				>
-					{@const Icon =
+		{#snippet item(entry, index, isSelected)}
+			<ChatFormPickerListItem
+				dataIndex={index}
+				{isSelected}
+				onclick={() => handleSelect(entry)}
+				onmouseenter={() => nav.setHover(index)}
+			>
+				{@const Icon =
+					entry.type === FileMentionEntryType.DIRECTORY
+						? Folder
+						: entry.type === FileMentionEntryType.MCP_RESOURCE
+							? Server
+							: File}
+				<Icon
+					class={[
+						'mt-0.5 size-icon-md shrink-0',
 						entry.type === FileMentionEntryType.DIRECTORY
-							? Folder
-							: entry.type === FileMentionEntryType.MCP_RESOURCE
-								? Server
-								: File}
-					<Icon
-						class={[
-							'mt-0.5 size-icon-md shrink-0',
-							entry.type === FileMentionEntryType.DIRECTORY
-								? 'text-amber-500'
-								: 'text-muted-foreground'
-						]}
-					/>
+							? 'text-amber-500'
+							: 'text-muted-foreground'
+					]}
+				/>
 
-					<div class="flex min-w-0 flex-1 flex-col">
-						<div class="flex min-w-0 items-center gap-2">
-							{#if showTooltip}
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<span {...props} class="truncate text-sm font-medium">{entry.name}</span>
-										{/snippet}
-									</Tooltip.Trigger>
+				<div class="flex min-w-0 flex-1 flex-col">
+					<div class="flex min-w-0 items-center gap-2">
+						{#if showTooltip}
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<span {...props} class="truncate text-sm font-medium">{entry.name}</span>
+									{/snippet}
+								</Tooltip.Trigger>
 
-									<Tooltip.Content>
-										<p>{entry.path}</p>
-									</Tooltip.Content>
-								</Tooltip.Root>
-							{:else}
-								<span class="truncate text-sm font-medium">{entry.name}</span>
-							{/if}
+								<Tooltip.Content>
+									<p>{entry.path}</p>
+								</Tooltip.Content>
+							</Tooltip.Root>
+						{:else}
+							<span class="truncate text-sm font-medium">{entry.name}</span>
+						{/if}
 
-							<span
-								class="shrink-0 rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground"
-							>
-								{entry.type}
-							</span>
-						</div>
-
-						<span class="min-w-0 flex-1 truncate font-mono text-left text-xs">
-							{#if entry.type === FileMentionEntryType.MCP_RESOURCE}
-								{entry.serverName}
-							{:else}
-								<HighlightedMatch query={trimmedQuery} text={abbreviateHome(entry.path, home)} />
-							{/if}
+						<span
+							class="shrink-0 rounded-full bg-muted px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-muted-foreground"
+						>
+							{entry.type}
 						</span>
 					</div>
-				</ChatFormPickerListItem>
-			{/snippet}
-		</ChatFormPickerList>
-	</Popover.Content>
-</Popover.Root>
+
+					<span class="min-w-0 flex-1 truncate font-mono text-left text-xs">
+						{#if entry.type === FileMentionEntryType.MCP_RESOURCE}
+							{entry.serverName}
+						{:else}
+							<HighlightedMatch query={trimmedQuery} text={abbreviateHome(entry.path, home)} />
+						{/if}
+					</span>
+				</div>
+			</ChatFormPickerListItem>
+		{/snippet}
+	</ChatFormPickerList>
+{/snippet}
+
+<!-- with an on-screen keyboard it searches in a drawer with its own field, as each mobile
+     browser moves the page its own way when the keyboard opens; elsewhere the chat input
+     is the search field and the list floats above the form -->
+{#if deviceStore.isTouch}
+	<!-- autoFocus moves the focus, and with it the keyboard, from the message to the search field -->
+	<Drawer.Root
+		autoFocus
+		onOpenChange={(open) => {
+			if (!open) onClose();
+		}}
+		open={isOpen}
+	>
+		<Drawer.Content class="gap-0" onkeydown={handleKeydown}>
+			<Drawer.Header>
+				<Drawer.Title>Mention a file, folder or resource</Drawer.Title>
+
+				<Drawer.Description class="sr-only"
+					>Search for a file, folder or MCP resource to mention in the message</Drawer.Description
+				>
+			</Drawer.Header>
+
+			<div class="px-2 pb-safe-4">
+				{@render picker(true)}
+			</div>
+		</Drawer.Content>
+	</Drawer.Root>
+{:else}
+	<Popover.Root
+		onOpenChange={(open) => {
+			if (!open) onClose();
+		}}
+		open={isOpen}
+	>
+		<!-- Invisible form-wide trigger: stops bits-ui's outside-click detector
+		     from closing the picker when the user clicks inside the textarea.
+		     We open programmatically via `open={isOpen}`, so it is inert
+		     (tabindex=-1 + pointer-events-none + opacity-0 + aria-hidden).
+		     Positioning comes from `customAnchor` at the form's top edge. -->
+		<Popover.Trigger
+			aria-hidden="true"
+			class="pointer-events-none absolute inset-0 opacity-0"
+			tabindex={-1}
+		>
+			<span class="sr-only">Open file mention picker</span>
+		</Popover.Trigger>
+
+		<Popover.Content
+			align="start"
+			class={['w-[var(--bits-popover-anchor-width)] max-w-none rounded-xl p-0', className]}
+			{customAnchor}
+			onCloseAutoFocus={(event) => event.preventDefault()}
+			onOpenAutoFocus={(event) => event.preventDefault()}
+			onkeydown={handleKeydown}
+			preventScroll={false}
+			side="top"
+			sideOffset={12}
+		>
+			{@render picker(false)}
+		</Popover.Content>
+	</Popover.Root>
+{/if}
