@@ -22,7 +22,7 @@
 </script>
 
 {#snippet icon()}
-	<Sparkles class="size-icon-sm shrink-0" />
+	<Sparkles class="size-3.5 shrink-0" />
 {/snippet}
 
 <ModelsSection
