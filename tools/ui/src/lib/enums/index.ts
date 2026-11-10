@@ -27,7 +27,8 @@ export {
 	ReasoningFormat,
 	ChatFormCommandAction,
 	FileMentionEntryType,
-	ChatFormInputRichTokenKind
+	ChatFormInputRichTokenKind,
+	MentionPickerSource
 } from './chat.enums';
 
 export { SessionRecordType } from './conversation-import.enums';
