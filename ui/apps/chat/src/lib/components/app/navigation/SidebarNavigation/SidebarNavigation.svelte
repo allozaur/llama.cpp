@@ -543,7 +543,7 @@
 
 				break;
 			case SidebarAction.PROJECTS:
-				afterMobileClose(() => void goto(ROUTES.PROJECTS));
+				navigateBehind(() => goto(ROUTES.PROJECTS));
 
 				break;
 			case SidebarAction.MANAGE_MODELS:
