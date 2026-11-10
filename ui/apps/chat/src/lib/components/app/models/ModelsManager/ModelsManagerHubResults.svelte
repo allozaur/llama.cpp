@@ -25,7 +25,7 @@
 </script>
 
 {#snippet icon()}
-	<DISCOVER_ICON class="size-icon-sm shrink-0" />
+	<DISCOVER_ICON class="size-3.5 shrink-0" />
 {/snippet}
 
 <ModelsSection
