@@ -459,10 +459,10 @@
 
 	<!-- the grid has no columns: its order comes from the toolbar's sort menu -->
 	{#if !isGrid}
-	<div
-		class="{MODEL_ROW_GRID_CLASS} shrink-0 border-b border-border/30 px-2 pb-2 text-label-sm text-muted-foreground max-md:px-3 dark:border-border/20"
-	>
-		<span>{@render sortHeader(ModelsTableSortKey.NAME, 'Model')}</span>
+		<div
+			class="{MODEL_ROW_GRID_CLASS} shrink-0 border-b border-border/30 px-2 pb-2 text-label-sm text-muted-foreground max-md:px-3 dark:border-border/20"
+		>
+			<span>{@render sortHeader(ModelsTableSortKey.NAME, 'Model')}</span>
 
 			<span class="text-right whitespace-nowrap max-md:hidden">
 				{@render sortHeader(ModelsTableSortKey.CONTEXT, 'Context')}
