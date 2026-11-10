@@ -7,7 +7,7 @@
  * same fields, so a card or row renders the same either way.
  */
 
-import { MODELS_DISCOVER_CATALOG_BATCH } from '$lib/constants';
+import { MODELS_DISCOVER_CATALOG_BATCH, MODELS_DISCOVER_SEARCH_LIMIT } from '$lib/constants';
 import { HuggingFaceService } from '$lib/services';
 import type {
 	HfCatalogBuild,
@@ -61,11 +61,7 @@ class ModelsDiscoverStore {
 	 * as plain text; undefined for a repo outside the curated catalog.
 	 */
 	descriptionFor(modelId: string): string | undefined {
-		return this.catalog
-			.find((entry) =>
-				entry.sizes.some((size) => size.builds.some((build) => build.repo === modelId))
-			)
-			?.description?.replace(/(\*\*|__)(.+?)\1/g, '$2');
+		return this.catalogEntryFor(modelId)?.description?.replace(/(\*\*|__)(.+?)\1/g, '$2');
 	}
 
 	/**
@@ -129,6 +125,19 @@ class ModelsDiscoverStore {
 		}
 	}
 
+	/** Release month of a catalog family, e.g. `Aug 2025`; undefined outside the catalog. */
+	releasedFor(modelId: string): string | undefined {
+		const [year, month] = (this.catalogEntryFor(modelId)?.released ?? '').split('-').map(Number);
+
+		if (!year || !month) return undefined;
+
+		return new Date(Date.UTC(year, month - 1)).toLocaleDateString('en-US', {
+			month: 'short',
+			timeZone: 'UTC',
+			year: 'numeric'
+		});
+	}
+
 	/** Search all of HuggingFace; an empty query clears the results. */
 	async search(query: string): Promise<void> {
 		const trimmed = query.trim();
@@ -147,11 +156,11 @@ class ModelsDiscoverStore {
 		this.searching = true;
 
 		try {
-			const results = await HuggingFaceService.searchByQuery(trimmed, { limit: 50 });
+			const results = await this.searchHub(trimmed);
 
 			if (requestId !== this.searchRequestId) return;
 
-			this.searchResults = this.baseOrgFirst(results);
+			this.searchResults = results;
 			this.searchError = null;
 		} catch (err) {
 			if (requestId !== this.searchRequestId) return;
@@ -161,6 +170,16 @@ class ModelsDiscoverStore {
 		} finally {
 			if (requestId === this.searchRequestId) this.searching = false;
 		}
+	}
+
+	/**
+	 * One Hub search in the order every search surface lists it. Keeps no state, so a
+	 * second surface (the search dialog) never disturbs the models page's results.
+	 */
+	async searchHub(query: string): Promise<HfModelInfo[]> {
+		return this.baseOrgFirst(
+			await HuggingFaceService.searchByQuery(query.trim(), { limit: MODELS_DISCOVER_SEARCH_LIMIT })
+		);
 	}
 
 	/**
@@ -237,6 +256,12 @@ class ModelsDiscoverStore {
 					return build ? [build] : [];
 				})
 			);
+	}
+
+	private catalogEntryFor(modelId: string): HfCatalogEntry | undefined {
+		return this.catalog.find((entry) =>
+			entry.sizes.some((size) => size.builds.some((build) => build.repo === modelId))
+		);
 	}
 
 	/** Byte sizes of every non-sidecar quant file in a tree, shards collapsed. */

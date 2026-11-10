@@ -13,5 +13,8 @@ export const MODELS_DISCOVER_CATALOG_URL = 'https://llama.app/v1/catalog.json';
  */
 export const MODELS_DISCOVER_CATALOG_BATCH = 4;
 
-/** Quiet time after the last keystroke before the models page searches the Hub. */
+/** Quiet time after the last keystroke before a search field searches the Hub. */
 export const MODELS_DISCOVER_SEARCH_DEBOUNCE_MS = 300;
+
+/** Matches one Hub search asks for. */
+export const MODELS_DISCOVER_SEARCH_LIMIT = 50;
