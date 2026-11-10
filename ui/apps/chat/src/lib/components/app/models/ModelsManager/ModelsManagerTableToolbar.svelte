@@ -114,7 +114,7 @@
 				// a click on the active mode would clear the group; it keeps its mode instead
 				if (value) uiStore.setModelsViewMode(value as ModelsViewMode);
 			}}
-			size="icon-sm"
+			size="sm"
 			type="single"
 			value={uiStore.modelsViewMode}
 		>
@@ -125,7 +125,7 @@
 					title={mode.label}
 					value={mode.value}
 				>
-					<mode.icon class="size-icon-md" />
+					<mode.icon class="size-4" />
 				</ToggleGroup.Item>
 			{/each}
 		</ToggleGroup.Root>
