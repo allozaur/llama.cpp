@@ -5,6 +5,8 @@ import { mdsvex } from 'mdsvex';
 // CMake sets LLAMA_UI_OUT_DIR to the staging dir under the build tree; manual
 // `npm run build` runs without the env var default to ./dist.
 const outDir = process.env.LLAMA_UI_OUT_DIR ?? './dist';
+// CMake and Nix build a copy of this folder, so they set where the harness is.
+const harnessDir = process.env.LLAMA_HARNESS_DIR ?? '../../lib/harness';
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	extensions: ['.svelte', '.svx'],
@@ -17,6 +19,10 @@ const config = {
 			precompress: false,
 			strict: true
 		}),
+		// the harness has no build step in the repo: the app compiles it from source
+		alias: {
+			'@ggml/llama-harness': `${harnessDir}/src/index.ts`
+		},
 		output: {
 			bundleStrategy: 'single'
 		},

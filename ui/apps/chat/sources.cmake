@@ -3,6 +3,7 @@
 set(UI_SOURCE_GLOBS
     src/*
     static/*
+    ../../lib/harness/src/*
 )
 
 set(UI_SOURCE_FILES

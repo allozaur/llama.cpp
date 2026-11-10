@@ -389,7 +389,7 @@ function(npm_build out_var)
 
     message(STATUS "UI: running npm run build, output -> ${DIST_DIR}")
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env "LLAMA_UI_OUT_DIR=${DIST_DIR}" "LLAMA_UI_VERSION=${HF_VERSION}" "LLAMA_BUILD_NUMBER=${LLAMA_BUILD_NUMBER}"
+        COMMAND ${CMAKE_COMMAND} -E env "LLAMA_UI_OUT_DIR=${DIST_DIR}" "LLAMA_UI_VERSION=${HF_VERSION}" "LLAMA_BUILD_NUMBER=${LLAMA_BUILD_NUMBER}" "LLAMA_HARNESS_DIR=${LLAMA_SOURCE_DIR}/ui/lib/harness"
                 ${NPM_EXECUTABLE} run build
         WORKING_DIRECTORY "${WORK_DIR}"
         RESULT_VARIABLE rc
