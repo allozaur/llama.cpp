@@ -42,7 +42,7 @@
 		isCommandPickerOpen,
 		isMentionPickerOpen,
 		isPromptPickerOpen,
-		mentionQuery,
+		mentionQuery = $bindable(''),
 		onCommandPickerClose,
 		onCommandSelect,
 		onMentionOpened,
@@ -100,12 +100,12 @@
 />
 
 <ChatFormPickerMention
+	bind:query={mentionQuery}
 	bind:this={mentionPickerRef}
 	customAnchor={anchor}
 	isOpen={isMentionPickerOpen ?? false}
 	onClose={onMentionPickerClose ?? (() => {})}
 	onOpened={onMentionOpened}
 	onSelect={onMentionSelect ?? (() => {})}
-	query={mentionQuery ?? ''}
 	scopePath={scopePath ?? null}
 />

@@ -177,12 +177,18 @@
 				.getServers()
 				.some((s) => s.enabled && prefs.isServerToolsEnabled(s.id) && s.url.trim());
 		},
+		// a phone searches mentions in a drawer: each mobile browser moves the page its own
+		// way as the keyboard opens, so a list by the form can not stay clear of the text
+		mentionHasOwnSearch: () => deviceStore.isMobile,
 		onCompact: () => chatStore.compactConversation(),
 		openModelSelector: () => chatFormActionsRef?.openModelSelector(),
-		// TODO: no typed pickers with an on-screen keyboard for now: each mobile browser moves
-		// the page its own way as it opens, so a list by the form can not stay clear of the
-		// text. A drawer with its own search field (as the directory picker is) could.
-		opensOnInput: () => !deviceStore.isTouch,
+		// a phone has no `/` commands: a drawer on the first `/` would cover the message, and
+		// the prompt picker a command leads to is still a popover by the form
+		opensCommandsOnInput: () => !deviceStore.isMobile,
+		// with no file search to offer, a phone's drawer stays shut: a desktop's list says why
+		// by the form, a drawer would cover the message to say it
+		opensMentionsOnInput: () =>
+			!deviceStore.isMobile || conversationsStore.preferences.isFileSearchEnabled(),
 		setCaretOffset: (offset) => inputRef?.setCaretOffset(offset),
 		setValue: (v) => {
 			value = v;
@@ -653,6 +659,7 @@
 		class="pointer-events-none absolute right-0 left-0"
 	>
 		<ChatFormPickers
+			bind:mentionQuery={pickers.mentionQuery}
 			bind:this={pickersRef}
 			anchor={activePickerAnchor}
 			commandQuery={pickers.commandQuery}
@@ -660,7 +667,6 @@
 			isCommandPickerOpen={pickers.isCommandPickerOpen}
 			isMentionPickerOpen={pickers.isMentionPickerOpen}
 			isPromptPickerOpen={pickers.isPromptPickerOpen}
-			mentionQuery={pickers.mentionQuery}
 			onCommandPickerClose={pickers.handleCommandPickerClose}
 			onCommandSelect={pickers.handleCommandSelect}
 			onMentionOpened={() => inputRef?.focus()}

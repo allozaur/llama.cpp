@@ -20,8 +20,12 @@ export interface UseChatFormPickersOptions {
 	getCaretOffset: () => number | undefined;
 	setCaretOffset: (offset: number) => void;
 	focusInput: () => void;
-	/** Whether typing `/` or `@` opens a picker at all. */
-	opensOnInput: () => boolean;
+	/** Whether typing `/` opens the command picker. */
+	opensCommandsOnInput: () => boolean;
+	/** Whether typing `@` opens the mention picker. */
+	opensMentionsOnInput: () => boolean;
+	/** The mention picker has its own search field (a phone's drawer): a bare `@` opens it. */
+	mentionHasOwnSearch: () => boolean;
 	/** Gates `/model`. */
 	getShowModelSelector: () => boolean;
 	/** Gates `/prompt`. */
@@ -120,12 +124,10 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 	}
 
 	function handleInput() {
-		if (!opts.opensOnInput()) return;
-
 		const value = opts.getValue();
 		const cursor = opts.getCaretOffset() ?? value.length;
 
-		if (value.startsWith(PROMPT_TRIGGER_PREFIX)) {
+		if (opts.opensCommandsOnInput() && value.startsWith(PROMPT_TRIGGER_PREFIX)) {
 			isMentionPickerOpen = false;
 			mentionQuery = '';
 			isPromptPickerOpen = false;
@@ -194,19 +196,24 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 			isWorkingDirectoryPickerOpen = false;
 		}
 
-		const token = findMentionToken(value, cursor);
+		const token = opts.opensMentionsOnInput() ? findMentionToken(value, cursor) : null;
 
 		if (token) {
+			const hasOwnSearch = opts.mentionHasOwnSearch();
 			// Dismissed token stays literal: don't reopen until it changes.
+			// A picker with its own search field takes the focus, so there
+			// the token stays literal until it is deleted.
 			const isDismissedSticky =
 				mentionDismissedSnapshot !== null &&
 				mentionDismissedSnapshot.start === token.start &&
-				mentionDismissedSnapshot.query === token.query;
+				(hasOwnSearch || mentionDismissedSnapshot.query === token.query);
 
 			if (!isDismissedSticky) {
 				// Only search once a char follows `@`; a bare `@` is a no-op
 				// (otherwise the picker flashes an empty hint on re-type).
-				if (token.query.length > 0) {
+				// A picker with its own search field opens on the bare `@`:
+				// the query is typed there, and the token only seeds it.
+				if (hasOwnSearch || token.query.length > 0) {
 					mentionDismissedSnapshot = null;
 					isMentionPickerOpen = true;
 					mentionQuery = token.query;
