@@ -7,6 +7,8 @@ set(UI_SOURCE_GLOBS
     ../../lib/ui/src/lib/*
     # Llama Voice, also compiled from source
     ../../lib/voice/src/*
+    # the harness, also compiled from source
+    ../../lib/harness/src/*
 )
 
 set(UI_SOURCE_FILES
