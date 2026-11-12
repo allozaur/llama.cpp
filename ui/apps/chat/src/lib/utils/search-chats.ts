@@ -386,7 +386,8 @@ function formatMessage(
 	const text = message.content.trim();
 	const matchAt = matcher ? matcher.locate(text) : -1;
 	const body = excerpt(text, params.maxMessageChars, matchAt).replace(/\n+/g, '\n  ');
-	const files = (message.extra ?? []).map((e) => e.name).filter(Boolean);
+	// a prompt from the library is attached by its title, everything else by its file name
+	const files = (message.extra ?? []).map((e) => ('name' in e ? e.name : e.title)).filter(Boolean);
 	// names are user data, quote them so they cannot pass as result structure
 	const attachments =
 		files.length > 0 ? ` [attachments: ${files.map((f) => JSON.stringify(f)).join(', ')}]` : '';

@@ -35,7 +35,7 @@
 	}
 </script>
 
-<AlertDialog.Root {open} onOpenChange={handleOpenChange}>
+<AlertDialog.Root onOpenChange={handleOpenChange} {open}>
 	<AlertDialog.Content class="sm:max-w-2xl">
 		<AlertDialog.Header>
 			<AlertDialog.Title class="flex items-center gap-2">

@@ -31,6 +31,11 @@ import {
 let backend: StorageBackend = new IdbBackend();
 
 export class DatabaseService {
+	/** Whether conversations are stored in this browser's IndexedDB, so {@link readOnly} works. */
+	static get usesIndexedDb(): boolean {
+		return backend instanceof IdbBackend;
+	}
+
 	/**
 	 * Deletes multiple conversations in a single transaction. Each deleted
 	 * conversation has its direct children reparented to the nearest surviving
@@ -559,11 +564,6 @@ export class DatabaseService {
 		}
 
 		return backend.readOnly(fn);
-	}
-
-	/** Whether conversations are stored in this browser's IndexedDB, so {@link readOnly} works. */
-	static get usesIndexedDb(): boolean {
-		return backend instanceof IdbBackend;
 	}
 
 	/**

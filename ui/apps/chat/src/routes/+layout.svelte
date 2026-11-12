@@ -515,31 +515,31 @@
 		conversations={dropImport.ui.availableConversations}
 		messageCountMap={dropImport.ui.selectionMessageCountMap}
 		mode="import"
-		onConfirm={dropImport.handleSelectionConfirm}
 		onCancel={dropImport.cancelSelection}
+		onConfirm={dropImport.handleSelectionConfirm}
 	/>
 
 	<DialogSettingsImportPreview
 		bind:open={dropImport.ui.showSettingsPreview}
 		diff={dropImport.ui.settingsDiff}
-		onConfirm={dropImport.confirmSettingsImport}
 		onCancel={dropImport.cancelSettingsImport}
+		onConfirm={dropImport.confirmSettingsImport}
 	/>
 
 	<DialogImportConversationPreview
 		bind:open={dropImport.ui.showPreview}
 		conversationName={dropImport.ui.previewData?.conv.name}
 		messages={dropImport.ui.previewData?.messages}
-		onConfirm={dropImport.confirmImportSingle}
 		onCancel={dropImport.cancelPreview}
+		onConfirm={dropImport.confirmImportSingle}
 	/>
 
 	<DialogImportConversationsResult
 		bind:open={dropImport.ui.showOpenBulk}
 		conversations={dropImport.ui.importedConversations}
 		messageCountMap={dropImport.ui.bulkMessageCountMap}
-		onOpen={dropImport.openConversation}
 		onClose={dropImport.cancelBulk}
+		onOpen={dropImport.openConversation}
 	/>
 </Tooltip.Provider>
 

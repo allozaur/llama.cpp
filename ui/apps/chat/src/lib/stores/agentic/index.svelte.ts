@@ -796,7 +796,13 @@ class AgenticStore {
 			execution =
 				permission === ToolPermissionDecision.DENY
 					? { content: 'Tool execution was denied by the user.', isError: true }
-					: await this.dispatchTool({ callbacks, context, conversationId, effectiveModel, toolCall });
+					: await this.dispatchTool({
+							callbacks,
+							context,
+							conversationId,
+							effectiveModel,
+							toolCall
+						});
 		} catch (error) {
 			if (isAbortError(error)) throw error;
 

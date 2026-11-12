@@ -6,8 +6,8 @@ import ChatFormPickersHarness from './components/ChatFormPickersHarness.svelte';
 import ChatFormTestWrapper from './components/ChatFormTestWrapper.svelte';
 import { EditorView } from '@codemirror/view';
 import { BuiltInTool } from '$lib/enums';
-import { deviceStore } from '$lib/stores';
 import { ToolsService } from '$lib/services/tools.service';
+import { deviceStore } from '$lib/stores';
 import { toolsStore } from '$lib/stores/tools.svelte';
 import type { OpenAIToolDefinition } from '$lib/types';
 import { tick } from 'svelte';
@@ -205,7 +205,10 @@ describe('ChatForm pickers on a phone', () => {
 		const { container, text, type } = await renderForm({ expandable: true });
 
 		await type('one\ntwo\nthree\nfour ');
-		expect(container.querySelector('.chat-form-input.expanded')).not.toBeNull();
+		await userEvent.click(
+			container.querySelector<HTMLElement>('button[aria-label="Expand editor"]')!
+		);
+		await expect.poll(() => container.querySelector('.chat-form-input.expanded')).not.toBeNull();
 
 		await type('@');
 		await expect.poll(searchField).not.toBeNull();

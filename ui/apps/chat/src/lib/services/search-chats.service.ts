@@ -36,11 +36,16 @@ async function loadConversations(ids?: string[]): Promise<DatabaseConversation[]
 	});
 }
 
-/** Attachment payloads (base64 media, file text) are dropped as rows stream in, only their names are kept */
+/**
+ * Attachment payloads (base64 media, file text) are dropped as rows stream in, only their
+ * names are kept; a library prompt carries no payload, so it is kept as it is
+ */
 function withoutPayloads({ extra, ...message }: DatabaseMessage): DatabaseMessage {
 	return {
 		...message,
-		extra: extra?.map(({ name, type }) => ({ name, type })) as DatabaseMessage['extra']
+		extra: extra?.map((e) =>
+			'name' in e ? { name: e.name, type: e.type } : e
+		) as DatabaseMessage['extra']
 	};
 }
 

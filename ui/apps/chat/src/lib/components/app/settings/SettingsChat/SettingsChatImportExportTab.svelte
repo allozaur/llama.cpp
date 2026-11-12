@@ -421,8 +421,8 @@
 <DialogSettingsImportPreview
 	bind:open={showSettingsImportPreview}
 	diff={settingsImportDiff}
-	onConfirm={handleSettingsImportConfirm}
 	onCancel={handleSettingsImportCancel}
+	onConfirm={handleSettingsImportConfirm}
 />
 
 <DialogConversationSelection

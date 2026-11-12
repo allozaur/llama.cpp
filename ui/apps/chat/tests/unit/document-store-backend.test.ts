@@ -173,7 +173,7 @@ describe('DocumentStoreBackend', () => {
 });
 
 describe('DocumentStoreBackend records', () => {
-	const group = (id: string, updatedAt: number) => ({ createdAt: 0, id, name: id, updatedAt });
+	const group = (id: string, at: number) => ({ createdAt: at, id, name: id, updatedAt: at });
 
 	it('keeps groups per id, so two clients editing different groups both keep theirs', async () => {
 		DatabaseService.useBackend(newBackend());
