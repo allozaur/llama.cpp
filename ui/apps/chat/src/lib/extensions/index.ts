@@ -1,3 +1,12 @@
+export type {
+	FlowHook,
+	FlowInfo,
+	ToolGroupIdentityProps,
+	ToolProvider,
+	ToolProviderCall,
+	ToolProviderEmptyHint,
+	ToolProviderEntry
+} from './points/tools';
 export { ExtensionRegistry, extensions } from './registry.svelte';
 export type {
 	Extension,
@@ -6,10 +15,5 @@ export type {
 	ExtensionPoint,
 	ExtensionPoints,
 	ExtensionState,
-	ExtensionStatus,
-	FlowHook,
-	FlowInfo,
-	ToolProvider,
-	ToolProviderCall,
-	ToolProviderEntry
+	ExtensionStatus
 } from './types';
