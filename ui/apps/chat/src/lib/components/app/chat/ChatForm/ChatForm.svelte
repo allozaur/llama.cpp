@@ -24,6 +24,7 @@
 	import {
 		ContentPartType,
 		FileExtensionText,
+		FileMentionEntryType,
 		KeyboardKey,
 		MimeTypeText,
 		SpecialFileType,
@@ -600,12 +601,30 @@
 
 		if (!token) return;
 
+		if (entry.type === FileMentionEntryType.MCP_RESOURCE) {
+			attachMentionedResource(entry, token);
+
+			return;
+		}
+
 		const built = buildMentionInsertion(entry, value, token);
 
 		if (!built) return;
 
 		// one undoable edit; the input reports the new value like typing
 		inputRef?.replaceText(built.newValue, built.caretOffset);
+	}
+
+	/**
+	 * An MCP resource is attached to the chat context, so its content travels
+	 * with the message; the `@query` token is consumed instead of linked.
+	 */
+	function attachMentionedResource(entry: FileMentionEntry, token: { start: number; end: number }) {
+		const newValue = value.slice(0, token.start) + value.slice(token.end).replace(/^\s/, '');
+
+		inputRef?.replaceText(newValue, token.start);
+
+		void mcpStore.attachResource(entry.path);
 	}
 
 	async function handleMicClick() {

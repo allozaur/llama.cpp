@@ -30,7 +30,8 @@ export {
 	PdfViewMode,
 	ReasoningFormat,
 	ChatFormCommandAction,
-	FileMentionEntryType
+	FileMentionEntryType,
+	MentionPickerSource
 } from './chat.enums';
 
 export { SessionRecordType } from './conversation-import.enums';
