@@ -8,8 +8,8 @@
  */
 
 import { DEMO_MCP_PORT, DEMO_MCP_SERVERS, type DemoMcpServer } from './demo-config.ts';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { NodeStreamableHTTPServerTransport } from '@modelcontextprotocol/node';
+import { McpServer } from '@modelcontextprotocol/server';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { z } from 'zod';
 
@@ -19,7 +19,7 @@ function buildServer(fixture: DemoMcpServer): McpServer {
 	for (const tool of fixture.tools) {
 		server.registerTool(
 			tool.name,
-			{ description: tool.description, inputSchema: { query: z.string().optional() } },
+			{ description: tool.description, inputSchema: z.object({ query: z.string().optional() }) },
 			async () => ({ content: [{ text: tool.result, type: 'text' }] })
 		);
 	}
@@ -72,7 +72,7 @@ const httpServer = createServer(async (req, res) => {
 	}
 
 	const server = buildServer(fixture);
-	const transport = new StreamableHTTPServerTransport({
+	const transport = new NodeStreamableHTTPServerTransport({
 		enableJsonResponse: true,
 		sessionIdGenerator: undefined
 	});

@@ -6,20 +6,18 @@
  * formatting. No reactive state; consumed by mcpStore and its managers.
  */
 
-import { Client } from '@modelcontextprotocol/sdk/client';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { WebSocketClientTransport } from './mcp-websocket-transport';
 import {
+	Client,
+	type GetPromptResult,
+	type ListChangedHandlers,
+	type Prompt,
+	SdkHttpError,
+	SSEClientTransport,
 	StreamableHTTPClientTransport,
-	StreamableHTTPError
-} from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { WebSocketClientTransport } from '@modelcontextprotocol/sdk/client/websocket.js';
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type {
-	GetPromptResult,
-	ListChangedHandlers,
-	Prompt,
-	Tool
-} from '@modelcontextprotocol/sdk/types.js';
+	type Tool,
+	type Transport
+} from '@modelcontextprotocol/client';
 import {
 	CORS_PROXY,
 	CORS_PROXY_ENDPOINT,
@@ -116,7 +114,6 @@ export class MCPService {
 		try {
 			const result = await connection.client.callTool(
 				{ arguments: params.arguments, name: params.name },
-				undefined,
 				{ signal, timeout: connection.requestTimeoutMs }
 			);
 
@@ -649,7 +646,7 @@ export class MCPService {
 	 * @returns true if the error is a StreamableHTTP 404 (session not found)
 	 */
 	static isSessionExpiredError(error: unknown): boolean {
-		return error instanceof StreamableHTTPError && error.code === 404;
+		return error instanceof SdkHttpError && error.status === 404;
 	}
 
 	/**
@@ -1116,7 +1113,7 @@ export class MCPService {
 
 		return {
 			description: impl.description,
-			icons: impl.icons?.map((icon: MCPResourceIcon) => ({
+			icons: (impl.icons as MCPResourceIcon[] | undefined)?.map((icon) => ({
 				mimeType: icon.mimeType,
 				sizes: icon.sizes,
 				src: icon.src,
