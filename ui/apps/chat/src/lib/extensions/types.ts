@@ -4,6 +4,7 @@
  * same contract.
  */
 
+import type { SettingsAction } from './points/settings';
 import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
@@ -38,6 +39,8 @@ export interface ExtensionContext {
 export interface ExtensionPoints {
 	/** Runs around every agentic flow. */
 	flow: FlowHook;
+	/** Actions under the extension's settings, each opening what it manages from Settings. */
+	settingsActions: SettingsAction;
 	/** Tools the model can call, listed and run by the extension. */
 	tools: ToolProvider;
 }

@@ -4,10 +4,14 @@
  */
 
 import type { Extension } from '../types';
+import { contributeSettings } from './settings';
+import { contributeStartup } from './startup.svelte';
 import { contributeTools } from './tools';
 
 const mcp: Extension = {
 	activate(ctx) {
+		contributeSettings(ctx);
+		contributeStartup(ctx);
 		contributeTools(ctx);
 	}
 };

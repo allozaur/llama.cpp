@@ -9,7 +9,6 @@
 		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
-		DialogMcpServers,
 		DialogSearch,
 		DialogSettingsChat,
 		Logo,
@@ -33,6 +32,7 @@
 		SIDEBAR_TOGGLE_MS
 	} from '#lib/constants/index.ts';
 	import { SidebarAction, TooltipSide } from '#lib/enums/index.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import { useKeyboardShortcuts } from '#lib/hooks/use-keyboard-shortcuts.svelte.ts';
 	import { useMarqueeSelection } from '#lib/hooks/use-marquee-selection.svelte.ts';
 	import { RouterService } from '#lib/services/router.service.ts';
@@ -782,7 +782,16 @@
 
 <DialogSearch bind:open={searchOpen} onAction={handleSidebarAction} />
 
-<DialogMcpServers bind:open={uiStore.mcpServersOpen} />
+<!-- the dialogs of the extensions' settings actions -->
+{#each extensions.contributions('settingsActions') as action (action.id)}
+	<action.dialog
+		bind:open={
+			() => uiStore.settingsActionOpenId === action.id,
+			(open) =>
+				open ? uiStore.openSettingsAction(action.id) : uiStore.closeSettingsAction(action.id)
+		}
+	/>
+{/each}
 
 <DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
 

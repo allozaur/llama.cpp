@@ -110,9 +110,6 @@ class UiStore {
 	/** Set while the user drags the sidebar edge, so width transitions can step aside. */
 	isSidebarResizing = $state(false);
 
-	/** Open state of the MCP servers dialog. */
-	mcpServersOpen = $state(false);
-
 	/** Model the details drawer shows, a qualified id or a raw model name. */
 	modelDetailsFocus = $state<string | null>(null);
 
@@ -120,6 +117,8 @@ class UiStore {
 	modelsReturnRoute: ResolvedPathname = resolve(ROUTES.START);
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** The settings action of an extension whose dialog is open, by id; `null` while none is. */
+	settingsActionOpenId = $state<string | null>(null);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
@@ -182,6 +181,11 @@ class UiStore {
 		this.modelsSelectorCloseSignal++;
 	}
 
+	/** Close the dialog of a settings action, unless another one took its place. */
+	closeSettingsAction(id: string): void {
+		if (this.settingsActionOpenId === id) this.settingsActionOpenId = null;
+	}
+
 	/** Drop a removed section, e.g. a deleted group's, from the remembered order and folds. */
 	forgetSidebarSection(id: string): void {
 		this.expandedSidebarSections.delete(id);
@@ -233,11 +237,6 @@ class UiStore {
 		this.groupPicker = options;
 	}
 
-	/** Open the MCP servers dialog. */
-	openMcpServers(): void {
-		this.mcpServersOpen = true;
-	}
-
 	/** Open the model details drawer over the current page, without leaving it. */
 	openModelDetails(focus: string): void {
 		this.modelDetailsFocus = focus;
@@ -256,6 +255,11 @@ class UiStore {
 		if (!this.isModelsManagerShown || this.isModelsPageOpen) return;
 
 		void goto(resolve(ROUTES.MODELS));
+	}
+
+	/** Open the dialog of a settings action an extension contributed. */
+	openSettingsAction(id: string): void {
+		this.settingsActionOpenId = id;
 	}
 
 	/**

@@ -19,7 +19,7 @@
 export { default as DialogMcpServerAddNew } from './DialogMcpServerAddNew.svelte';
 
 /**
- * **DialogMcpServers** - MCP servers dialog, opened with `uiStore.openMcpServers`
+ * **DialogMcpServers** - MCP servers dialog, opened from Settings by Manage MCP servers
  *
  * Lists the MCP servers, to add, edit, turn on and remove them.
  */
