@@ -66,13 +66,13 @@ MCP servers and resources, settings sections, conversation search.
 
 ## How a message travels
 
-The agentic loop lives in the browser. It streams from the active server and runs any tool the model calls: in the browser, on llama-server, or on an MCP server.
+The agentic loop runs in the browser, through Llama Harness (`@ggml/llama-harness`, in `ui/lib/harness`). It streams from the active server and runs any tool the model calls: in the browser, on llama-server, or on an MCP server. Chat gives the harness its chat service and its tools, each behind the permission gate, and stores the messages it reports.
 
 <MessageFlow />
 
 ## Layers in the code
 
-`ui/apps/chat/src` runs one way: routes, components, hooks, stores, services, then storage or the server. Tags show where each layer lands: UI and UX go to `ui/lib/ui`; everything that decides what happens stays in `ui/apps/chat`.
+`ui/apps/chat/src` runs one way: routes, components, hooks, stores, services, then storage or the server. Tags show where each layer lands: UI and UX go to `ui/lib/ui`; everything that decides what happens stays in `ui/apps/chat`. The layers tagged `ui/lib/ui` have not moved yet: Chat still holds its own copy of them.
 
 <Layers>
 <Layer name="Routes" tag="ui/apps/chat" kind="new"><code>/</code> <code>/chat/[id]</code> <code>/projects/[projectId]/chat/[id]</code> <code>/library</code> <code>/models</code> <code>/servers</code> <code>/mcp-servers</code> <code>/settings</code> <code>/search</code></Layer>
@@ -80,6 +80,7 @@ The agentic loop lives in the browser. It streams from the active server and run
 <Layer name="UI components" tag="ui/lib/ui" kind="reuse">shadcn-svelte on bits-ui: alert, button, card, context-menu, dialog, drawer, dropdown-menu, input, popover, select, switch, table, tabs, tooltip and more.</Layer>
 <Layer name="Hooks" tag="split" kind="mix">use-chat-screen-active-model, use-processing-state, use-context-gauge, use-models-selector, use-tools-panel. Interaction hooks go with their components; hooks that read app stores stay in the app.</Layer>
 <Layer name="Stores" tag="ui/apps/chat" kind="new">chat, conversations, agentic, tools, permissions, mcp, models, models-discover, servers, remote-access, projects, groups, prompts, tabs, settings.</Layer>
+<Layer name="Agentic loop" tag="ui/lib/harness" kind="reuse">Llama Harness: streams a turn, runs the tools the model called, repeats until it answers without one. The agentic store drives it and keeps the tools, permissions and storage.</Layer>
 <Layer name="Services" tag="ui/apps/chat" kind="new">chat, models, props, database, mcp, tools, sandbox, servers, huggingface, settings, conversation-transfer.</Layer>
 <Layer name="Styles" tag="ui/lib/ui" kind="reuse">"Matte Glass" tokens in three tiers: primitives, semantic (light and dark), components. Documented in <code>DESIGN.md</code> and Storybook.</Layer>
 <Layer name="Storage + API" tag="outside" kind="ext">IndexedDB for conversations, projects, groups, prompts; localStorage for settings and permissions; llama-server <code>/v1</code>, <code>/props</code>, <code>/models</code>, <code>/tools</code>, <code>/slots</code>.</Layer>
@@ -88,7 +89,7 @@ The agentic loop lives in the browser. It streams from the active server and run
 ## What Chat keeps, what it hands off
 
 <Cards cols={2}>
-<Card title="Keeps">All business logic: conversations, tabs, groups, search, the agentic loop with tools, MCP and permission gates, projects, the models manager, Discover, downloads, model configuration and Servers.</Card>
+<Card title="Keeps">All business logic: conversations, tabs, groups, search, the tools, MCP and permission gates around the agentic loop, projects, the models manager, Discover, downloads, model configuration and Servers.</Card>
 <Card title="Gives the library">Presentation only: thread, composer, tool-call blocks, permission prompt, model selector, model card, capability badges. They take data in and report what the user did out.</Card>
 </Cards>
 
@@ -96,6 +97,6 @@ The agentic loop lives in the browser. It streams from the active server and run
 
 <Cards>
 <Card title="Thread + composer">Any app with a conversation reuses the thread and composer, and the Markdown renderer and editor with them.</Card>
-<Card title="Tool-call UI">An app that runs its own loop shows tool calls and permission prompts with the same library components.</Card>
+<Card title="The loop + tool-call UI">An app runs the same loop through Llama Harness, or puts its own behind the same interface, and shows tool calls and permission prompts with the same library components.</Card>
 <Card title="Model UI">The model selector, model card and badges serve every app and llama.app. Other apps call llama-server's OpenAI-compatible endpoints themselves; the full manager and Servers stay in Chat.</Card>
 </Cards>

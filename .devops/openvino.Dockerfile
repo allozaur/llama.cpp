@@ -34,6 +34,7 @@ COPY ui/apps/chat/package.json ui/apps/chat/package-lock.json ./
 RUN npm ci
 
 COPY ui/apps/chat/ ./
+COPY ui/lib/harness/ /app/ui/lib/harness/
 RUN LLAMA_BUILD_NUMBER="$APP_VERSION" npm run build
 
 ## Build Image

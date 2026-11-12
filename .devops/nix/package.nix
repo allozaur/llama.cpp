@@ -150,6 +150,9 @@ effectiveStdenv.mkDerivation (finalAttrs: {
       inherit nodejs;
     };
 
+    # the chat app compiles the harness from source, from outside its own folder
+    LLAMA_HARNESS_DIR = "${lib.cleanSource ../../ui/lib/harness}";
+
     installPhase = ''
       LLAMA_UI_OUT_DIR=$out npm run build --offline
     '';

@@ -422,7 +422,7 @@ Stores own reactive application state as Svelte 5 runes. Larger stores are split
 | `conversationsStore` | Conversation CRUD, message branching, navigation, import/export; composes `preferences`                                                   |
 | `modelsStore`        | Model list, selection, loading/unloading (ROUTER), recent picks, favorites, hidden models and list open state; composes `props`, `status` |
 | `mcpStore`           | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources`                                         |
-| `agenticStore`       | Multi-turn agentic loop orchestration, tool execution; composes `gates`                                                                   |
+| `agenticStore`       | Runs the agentic loop through `@ggml/llama-harness`: inference client, tool execution, persistence callbacks; composes `gates`            |
 | `serverStore`        | Server connection state, `/props`, role detection, modalities                                                                             |
 | `settingsStore`      | User preferences, theme, parameter sync with server defaults                                                                              |
 | `toolsStore`         | Tool registry: server + MCP tools, enabled set for the LLM                                                                                |

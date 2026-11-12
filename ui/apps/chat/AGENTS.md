@@ -1,6 +1,6 @@
 # Instructions for ui/apps/chat
 
-These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/apps/chat`: **Llama UI**, the design system and component library, and **Llama Chat**, the chat client built from it that llama-server bundles.
+These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/apps/chat`: **Llama Chat**, the chat client that llama-server bundles, and for now the design system it is built from. **Llama UI**, the library, is `ui/lib/ui` (`@ggml/llama-ui`), but Chat does not import it yet and keeps its own copy of the tokens and base components here, with `DESIGN.md`, `BRAND.md` and the full Storybook. The agentic loop is `ui/lib/harness` (`@ggml/llama-harness`).
 
 - **Design:** [DESIGN.md](DESIGN.md) holds the tokens, roles and rules, written for agents. Follow it for anything visual; when it and the CSS disagree, the CSS wins and DESIGN.md is updated.
 - **Why:** Storybook's **Philosophy** section explains the reasons, for people: **Ideology** ([Ideology.svx](tests/stories/philosophy/Ideology.svx)), **Product** ([Product.svx](tests/stories/philosophy/Product.svx)) and **Design** ([Design.svx](tests/stories/philosophy/Design.svx)).
