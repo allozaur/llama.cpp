@@ -1,8 +1,8 @@
 <script lang="ts" module>
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
 	import { Download, Pencil, Trash2 } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
 	const { Story } = defineMeta({
 		component: DropdownMenu.Root,

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import { KeyValuePairs } from '$lib/components/app';
-	import { Input } from '$lib/components/ui/input';
-	import { Switch } from '$lib/components/ui/switch';
 	import { CLI_FLAGS, HEADERS, MCP_SERVER_URL_PLACEHOLDER } from '$lib/constants';
 	import { UrlProtocol } from '$lib/enums';
 	import { mcpStore } from '$lib/stores';

@@ -3,9 +3,9 @@
 	import ModelOrgAvatar from '../../ModelOrgAvatar.svelte';
 	import ModelsDiscoverDetailsHfHubStats from './ModelsDiscoverDetailsHfHubStats.svelte';
 	import ModelsDiscoverDetailsMetadata from './ModelsDiscoverDetailsMetadata.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { ExternalLink } from '@lucide/svelte';
 	import { base } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
 	import { HuggingFaceService } from '$lib/services';
 	import type { HfModelDetailInfo, HfModelGguf } from '$lib/types/huggingface';
 	import type { ModelModalities } from '$lib/types/models';

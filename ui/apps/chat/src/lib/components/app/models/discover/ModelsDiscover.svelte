@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ModelsDiscoverListItem from './ModelsDiscoverList/ModelsDiscoverListItem.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Download } from '@lucide/svelte';
 	import { ModelsSection } from '$lib/components/app';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
@@ -8,7 +9,6 @@
 		ModelsDiscoverList,
 		ModelsDiscoverListSearch
 	} from '$lib/components/app/models/discover';
-	import { Button } from '$lib/components/ui/button';
 	import { ModelDownloadConfirmAction } from '$lib/enums';
 	import { HuggingFaceService } from '$lib/services';
 	import { modelsDiscoverStore, modelsStore, uiStore } from '$lib/stores';

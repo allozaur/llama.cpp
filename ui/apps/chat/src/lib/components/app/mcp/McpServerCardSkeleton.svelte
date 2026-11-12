@@ -1,6 +1,6 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import * as Card from '@ggml/llama-ui/ui/card';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 </script>
 
 <Card.Root class="grid gap-3 p-4">

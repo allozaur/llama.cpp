@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Label } from '$lib/components/ui/label';
 
 	const { Story } = defineMeta({
 		component: Checkbox,

@@ -4,8 +4,8 @@
 	fonts are embedded, and a same-origin scene in an iframe (the Store's quick chat) comes along.
 -->
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Download, LoaderCircle } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { domToPng, domToWebp } from 'modern-screenshot';
 	import type { Snippet } from 'svelte';
 

@@ -1,12 +1,12 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import { Braces, FolderOpen, Loader2, Plus, X } from '@lucide/svelte';
 	import {
 		McpResourcePreview,
 		McpResourcesBrowser,
 		McpResourceTemplateForm
 	} from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { ICON_CLASS_DEFAULT, PANEL_CLOSE_MOBILE_CLASS } from '$lib/constants';
 	import { deviceStore, mcpStore } from '$lib/stores';
 	import type { MCPResourceContent, MCPResourceInfo, MCPResourceTemplateInfo } from '$lib/types';

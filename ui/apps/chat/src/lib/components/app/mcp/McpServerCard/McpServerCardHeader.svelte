@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import { McpCapabilitiesBadges, McpServerIdentity } from '$lib/components/app/mcp';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Switch } from '$lib/components/ui/switch';
 	import { MCP_TRANSPORT_ICONS, MCP_TRANSPORT_LABELS } from '$lib/constants';
 	import { MCPTransportType } from '$lib/enums';
 	import type { MCPCapabilitiesInfo, MCPServerInfo } from '$lib/types';

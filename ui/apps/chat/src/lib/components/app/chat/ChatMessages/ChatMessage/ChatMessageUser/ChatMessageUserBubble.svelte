@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Card } from '@ggml/llama-ui/ui/card';
 	import { ChatAttachmentsList, MarkdownContent, MentionText } from '$lib/components/app';
-	import { Card } from '$lib/components/ui/card';
 	import { settingsStore } from '$lib/stores';
 	import type { DatabaseMessageExtra } from '$lib/types/database';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as DialogUI from '@ggml/llama-ui/ui/dialog';
 	import { X } from '@lucide/svelte';
 	import { ChatAttachmentsPreview } from '$lib/components/app';
-	import * as DialogUI from '$lib/components/ui/dialog';
 	import { KeyboardKey } from '$lib/enums';
 	import { Dialog } from 'bits-ui';
 

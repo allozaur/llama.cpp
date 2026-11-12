@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as ContextMenu from '@ggml/llama-ui/ui/context-menu';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
 	import { Check, FolderInput, Plus } from '@lucide/svelte';
 	import { SearchInput } from '$lib/components/app';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { MenuKind } from '$lib/enums';
 	import { groupsStore, uiStore } from '$lib/stores';

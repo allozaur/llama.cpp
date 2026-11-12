@@ -1,10 +1,10 @@
 <script lang="ts">
 	import MenuActionsList from './MenuActionsList.svelte';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import { Separator } from '@ggml/llama-ui/ui/separator';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { KeyboardShortcutInfo } from '$lib/components/app';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { Separator } from '$lib/components/ui/separator';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { MenuKind } from '$lib/enums';
 	import { deviceStore } from '$lib/stores';
 	import type { MenuAction } from '$lib/types';

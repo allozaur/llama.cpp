@@ -10,8 +10,8 @@
 	import Laptop from '../../brand/communications/posts/motifs/Laptop.svelte';
 	import Server from '../../brand/communications/posts/motifs/Server.svelte';
 	import WorkstationSmall from '../../brand/communications/posts/motifs/WorkstationSmall.svelte';
+	import * as Tabs from '@ggml/llama-ui/ui/tabs';
 	import { Globe, Laptop as LaptopIcon, Monitor, Smartphone, Tablet } from '@lucide/svelte';
-	import * as Tabs from '$lib/components/ui/tabs';
 	import type { Component } from 'svelte';
 
 	interface Setup {

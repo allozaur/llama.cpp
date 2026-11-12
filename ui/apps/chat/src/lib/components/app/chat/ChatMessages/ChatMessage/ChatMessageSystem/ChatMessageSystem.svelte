@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Card } from '@ggml/llama-ui/ui/card';
 	import { Check, X } from '@lucide/svelte';
 	import { ChatMessageActionIcons, MarkdownContent } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import { Card } from '$lib/components/ui/card';
 	import { INPUT_CLASSES } from '$lib/constants';
 	import { getChatMessageEditContext } from '$lib/contexts';
 	import { KeyboardKey } from '$lib/enums';

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
 	import { McpServerIdentity, TruncatedText } from '$lib/components/app';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { ToolSource } from '$lib/enums/tools.enums';
 	import { mcpStore, permissionsStore, toolsStore } from '$lib/stores';

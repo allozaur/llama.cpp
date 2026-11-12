@@ -10,7 +10,7 @@
 	import { specimen } from '../llama-sans/lib/specimen';
 	import Hero from '../llama-sans/overview/Hero.svelte';
 	import SansOverview from './SansOverview.svelte';
-	import * as Tabs from '$lib/components/ui/tabs';
+	import * as Tabs from '@ggml/llama-ui/ui/tabs';
 
 	type Variant = 'mono' | 'sans';
 

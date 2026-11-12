@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 
 	interface Props {
 		/** Row index; varies skeleton widths so the list does not look mechanical. */

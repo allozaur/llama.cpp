@@ -1,8 +1,8 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import * as Select from '@ggml/llama-ui/ui/select';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as Select from '$lib/components/ui/select';
 
 	const { Story } = defineMeta({
 		component: Select.Root,

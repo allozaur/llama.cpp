@@ -3,7 +3,7 @@
 	what isn't built yet: a dashed edge, dimmed, with a badge saying so.
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import type { Snippet } from 'svelte';
 
 	let {

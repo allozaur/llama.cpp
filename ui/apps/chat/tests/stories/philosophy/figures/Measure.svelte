@@ -1,7 +1,7 @@
 <!-- One real button on the 4px grid, with the roles that set each of its measurements -->
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Play } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
 
 	const specs = [
 		{ role: 'h-control-md', value: '36', what: 'control height' },

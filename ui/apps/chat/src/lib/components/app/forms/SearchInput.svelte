@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Input } from '@ggml/llama-ui/ui/input';
 	import { Search, X } from '@lucide/svelte';
-	import { Input } from '$lib/components/ui/input';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 
 	interface Props {

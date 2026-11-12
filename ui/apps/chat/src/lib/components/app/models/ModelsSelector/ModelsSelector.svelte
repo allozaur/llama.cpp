@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ModelLoadHighlight from '../ModelLoadHighlight.svelte';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { ChevronDown, Loader2 } from '@lucide/svelte';
 	import {
 		ModelId,
@@ -9,7 +10,6 @@
 		ModelsSelectorOption,
 		ModelsSelectorTriggerIcon
 	} from '$lib/components/app';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { DROPDOWN_MENU_CONTENT_SEARCH_SELECTOR, MODEL_ICON, SETTINGS_KEYS } from '$lib/constants';
 	import { KeyboardKey, ServerModelStatus } from '$lib/enums';
 	import { useChatFormModel } from '$lib/hooks/use-chat-form-model.svelte';

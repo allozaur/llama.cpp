@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ModelsManagerModelConfiguration from './ModelsManagerModelConfiguration/ModelsManagerModelConfiguration.svelte';
 	import { downloadGroups, findModelOption } from './utils';
-	import * as Drawer from '$lib/components/ui/drawer';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
 	import { conversationsStore, deviceStore, modelsStore, serverStore, uiStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { untrack } from 'svelte';

@@ -1,8 +1,8 @@
 <script lang="ts" module>
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import { MessagesSquare } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
 
 	const { Story } = defineMeta({
 		component: Empty.Root,

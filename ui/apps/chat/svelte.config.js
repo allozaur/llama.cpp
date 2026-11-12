@@ -1,3 +1,4 @@
+import { llamaUiPaths } from './scripts/llama-ui.js';
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { mdsvex } from 'mdsvex';
@@ -23,7 +24,15 @@ const config = {
 		paths: {
 			relative: true
 		},
-		router: { type: 'hash' }
+		router: { type: 'hash' },
+		typescript: {
+			// Llama UI's entry points and the types of what its sources import, see scripts/llama-ui.js
+			config: (tsconfig) => {
+				Object.assign(tsconfig.compilerOptions.paths, llamaUiPaths('../node_modules'));
+
+				return tsconfig;
+			}
+		}
 	},
 
 	// Consult https://svelte.dev/docs/kit/integrations

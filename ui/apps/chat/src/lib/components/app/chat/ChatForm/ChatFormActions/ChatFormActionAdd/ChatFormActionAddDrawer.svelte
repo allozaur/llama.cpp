@@ -1,4 +1,8 @@
 <script lang="ts">
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		ChevronDown,
 		ChevronRight,
@@ -10,10 +14,6 @@
 		PencilRuler,
 		Video
 	} from '@lucide/svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Collapsible from '$lib/components/ui/collapsible';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		ATTACHMENT_FILE_ITEMS,
 		ATTACHMENT_MENU_TEXT,

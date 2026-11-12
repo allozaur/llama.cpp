@@ -1,10 +1,10 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as ButtonGroup from '@ggml/llama-ui/ui/button-group';
 	import { ChevronDown, Copy, Pencil, Trash2 } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
 
 	const { Story } = defineMeta({
 		component: ButtonGroup.Root,

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { fly } from 'svelte/transition';
 
 	interface Props {

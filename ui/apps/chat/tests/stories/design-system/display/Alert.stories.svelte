@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import * as Alert from '@ggml/llama-ui/ui/alert';
 	import { CircleAlert, CircleCheck, Info, TriangleAlert } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as Alert from '$lib/components/ui/alert';
 
 	const { Story } = defineMeta({
 		component: Alert.Root,

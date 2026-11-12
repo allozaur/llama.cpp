@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { AlertTriangle, Server } from '@lucide/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { modelsStore, serverStore } from '$lib/stores';
 
