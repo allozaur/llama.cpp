@@ -16,17 +16,21 @@
 		type ModelDropCopy,
 		openModels,
 		type ReceiptCopy,
+		virtualModels,
+		type VirtualModelsCopy,
 		whatsNew,
 		type WhatsNewCopy
 	} from './communications/posts/post';
 	import Variants from './communications/posts/Variants.svelte';
+	import VirtualModelsPost from './communications/posts/VirtualModelsPost.svelte';
 	import WhatsNewPost from './communications/posts/WhatsNewPost.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
 	// Communications' applications: key visuals with real copy, the pieces that ship. Model drop is a carousel (a Roster
 	// cover, then a slide per model), What's new a Bulletin, llama.app's link preview a Product, llama.cpp's a
-	// Statement, Agents a Statement with the agents diagram for its motif (after Merve's post) and the open models
-	// poster a Receipt. The copy is in the controls
+	// Statement, Agents a Statement with the agents diagram for its motif (after Merve's post), Virtual models
+	// Julien's post in its own layout with our type and each project's own mark, and the open models poster a
+	// Receipt. The copy is in the controls
 	const { Story } = defineMeta({
 		parameters: {
 			controls: { disable: true },
@@ -158,6 +162,24 @@
 							/>{/snippet}
 					</Statement>
 				</StateGalleryItem>
+			{/each}
+		</StateGallery>
+	{/snippet}
+</Story>
+
+<Story args={{ ...virtualModels, overlay: false }} name="Virtual models" parameters={editable}>
+	{#snippet template(args)}
+		{@const copy = args as VirtualModelsCopy & { overlay: boolean }}
+		<StateGallery minItemWidth="28rem">
+			{#each [{ mark: 'llama.cpp', name: 'llama.cpp lockup' }, { mark: 'Llama', name: 'Llama lockup' }, { mark: 'icon', name: 'Icon' }] as const as v (v.mark)}
+				{#each tones as tone (tone)}
+					<StateGalleryItem
+						label="{v.name}, {tone}"
+						note="After Julien's post · {size('landscape')}"
+					>
+						<VirtualModelsPost {copy} mark={v.mark} overlay={copy.overlay} {tone} />
+					</StateGalleryItem>
+				{/each}
 			{/each}
 		</StateGallery>
 	{/snippet}

@@ -309,6 +309,28 @@ export const agentsPost: AgentsCopy = {
 	url: 'llama.app/docs/agents'
 };
 
+export interface VirtualModelsCopy {
+	/** the harness the model is picked in, and the model's id */
+	from: { model: string; name: string };
+	/** each model it can send a query to: where it runs, its name, and what runs it */
+	routes: { label: string; name: string; runner: 'Hugging Face' | 'llama.cpp' }[];
+	title: string;
+}
+
+/**
+ * Pi's Virtual Models, after Julien's post: one model picked in Pi that sends a simple question to a model in
+ * llama.cpp on your computer and a hard one to a hosted model on Hugging Face. His title and his two models, the
+ * local one first
+ */
+export const virtualModels: VirtualModelsCopy = {
+	from: { model: 'hybrid/auto', name: 'Pi' },
+	routes: [
+		{ label: 'Local', name: 'Qwen3.8 27B', runner: 'llama.cpp' },
+		{ label: 'Remote', name: 'GLM-5.3', runner: 'Hugging Face' }
+	],
+	title: 'Virtual Models'
+};
+
 export interface StoreLine {
 	headline: string;
 	lede?: string;
