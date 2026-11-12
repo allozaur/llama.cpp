@@ -1,4 +1,4 @@
-import { Client } from '@modelcontextprotocol/sdk/client';
+import { Client } from '@modelcontextprotocol/client';
 import { CORS_PROXY } from '#lib/constants/index.ts';
 import { MCPConnectionPhase, MCPTransportType } from '#lib/enums/index.ts';
 import { MCPService } from '#lib/extensions/mcp/services/mcp.service.ts';

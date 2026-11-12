@@ -10,7 +10,7 @@ import type {
 	ServerCapabilities as SDKServerCapabilities,
 	Tool,
 	Transport
-} from '@modelcontextprotocol/sdk';
+} from '@modelcontextprotocol/client';
 import type { ColorMode } from '#lib/enums/index.ts';
 import type { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel } from '#lib/enums/mcp.enums.ts';
 import type { ToolSource } from '#lib/enums/tools.enums.ts';
