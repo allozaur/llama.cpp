@@ -13,11 +13,11 @@ export interface ToolUiEntry {
 
 export interface ToolEntry {
 	source: ToolSource;
-	/** For MCP tools, the server display name (used for UI grouping) */
+	/** For a tool listed under a group, the group's display name (an MCP server's label) */
 	serverName?: string;
-	/** For MCP tools, the server ID (used for permission keys) */
+	/** For a tool listed under a group, the group's id (an MCP server's id), part of the keys */
 	serverId?: string;
-	/** Stable selection identity: server:name, mcp-<serverId>:name, mcp:name, custom:name */
+	/** Stable selection identity: <source>:name, or <source>-<serverId>:name under a group */
 	key: string;
 	definition: OpenAIToolDefinition;
 }
@@ -27,7 +27,7 @@ export interface ToolGroup {
 	/** Stable identity for keyed rendering and toggles, unique per group */
 	key: string;
 	label: string;
-	/** For MCP groups, the server ID */
+	/** For a group a tool provider lists, its id (an MCP server's id); unset for a category group */
 	serverId?: string;
 	tools: ToolEntry[];
 }
