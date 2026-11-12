@@ -15,7 +15,6 @@ import { REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY } from '$lib/constants';
 import { ReasoningEffort, ToolSource } from '$lib/enums';
 import { DatabaseService } from '$lib/services/database.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { toolsStore } from '$lib/stores/tools.svelte';
 import type { DatabaseConversation, ToolEntry, ToolGroup } from '$lib/types';
 
@@ -156,52 +155,36 @@ export class ConversationPreferences {
 		return !this._disabledToolCategories.has(source);
 	}
 
-	/** Group checkbox state: the category flag, or the server key for MCP groups. */
+	/** Group checkbox state: the category flag, or the group key for a group with an id. */
 	isGroupChecked(group: ToolGroup): boolean {
-		return group.source === ToolSource.MCP && group.serverId
-			? this.isServerToolsEnabled(group.serverId)
+		return group.serverId
+			? this.isServerToolsEnabled(group.serverId, group.source)
 			: this.isCategoryEnabled(group.source);
 	}
 
-	/** Server-scoped MCP group state: one key disables all of that server's tools. */
-	isServerToolsEnabled(serverId: string): boolean {
-		return this.isToolEnabled(toolsStore.getMcpServerToolsKey(serverId));
+	/**
+	 * State of a tool group with an id: one key disables all of the group's
+	 * tools. The source defaults to MCP, whose groups are its servers.
+	 */
+	isServerToolsEnabled(serverId: string, source: ToolSource = ToolSource.MCP): boolean {
+		return this.isToolEnabled(toolsStore.getGroupKey(source, serverId));
 	}
 
-	/** Effective state: own key, MCP server group key, and category all on. */
+	/** Effective state: own key, group key, and category all on. */
 	isToolActive(entry: ToolEntry): boolean {
 		return toolsStore.isEntryEnabled(entry, this._disabledTools, this._disabledToolCategories);
 	}
 
-	/** Own-level state: the tool key itself, ignoring category and server group. */
+	/** Own-level state: the tool key itself, ignoring category and group. */
 	isToolEnabled(key: string): boolean {
 		return !this._disabledTools.has(key);
 	}
 
-	/** True when a parent level (category or MCP server group) disables this entry. */
+	/** True when a parent level (category or group) disables this entry. */
 	isToolParentDisabled(entry: ToolEntry): boolean {
 		if (!this.isCategoryEnabled(entry.source)) return true;
 
-		return (
-			entry.source === ToolSource.MCP &&
-			!!entry.serverId &&
-			!this.isServerToolsEnabled(entry.serverId)
-		);
-	}
-
-	/**
-	 * MCP servers usable under the effective policy: globally enabled, url set,
-	 * MCP category on and the server-scoped key not disabled.
-	 */
-	policyEnabledServerIds(): string[] {
-		if (!this.isCategoryEnabled(ToolSource.MCP)) return [];
-
-		return mcpStore
-			.getServers()
-			.filter(
-				(server) => server.enabled && server.url.trim() && this.isServerToolsEnabled(server.id)
-			)
-			.map((server) => server.id);
+		return !!entry.serverId && !this.isServerToolsEnabled(entry.serverId, entry.source);
 	}
 
 	/** Reload persisted defaults, e.g. when the active conversation is cleared. */
@@ -287,15 +270,16 @@ export class ConversationPreferences {
 	}
 
 	async toggleGroup(group: ToolGroup): Promise<void> {
-		if (group.source === ToolSource.MCP && group.serverId) {
-			await this.toggleServerTools(group.serverId);
+		if (group.serverId) {
+			await this.toggleServerTools(group.serverId, group.source);
 		} else {
 			await this.toggleCategory(group.source);
 		}
 	}
 
-	async toggleServerTools(serverId: string): Promise<void> {
-		await this.toggleTool(toolsStore.getMcpServerToolsKey(serverId));
+	/** Toggle a tool group with an id; the source defaults to MCP, as in `isServerToolsEnabled`. */
+	async toggleServerTools(serverId: string, source: ToolSource = ToolSource.MCP): Promise<void> {
+		await this.toggleTool(toolsStore.getGroupKey(source, serverId));
 	}
 
 	async toggleTool(key: string): Promise<void> {

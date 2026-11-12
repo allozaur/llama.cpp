@@ -1,13 +1,15 @@
 // The agentic flow end to end, with the server and the tools mocked: what the
 // model is sent each turn, and the order the flow's callbacks fire in.
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/services/database.service', () => ({
 	DatabaseService: {}
 }));
 
 import { BuiltInTool, MessageRole, ToolPermissionDecision, ToolSource } from '$lib/enums';
+import type { Extension, ToolProvider } from '$lib/extensions';
+import { extensions } from '$lib/extensions';
 import { ChatService } from '$lib/services/chat.service';
 import { ToolsService } from '$lib/services/tools.service';
 import { agenticStore } from '$lib/stores/agentic/index.svelte';
@@ -100,6 +102,34 @@ function recorder() {
 	};
 }
 
+// the registry has no way to forget an extension, so every test registers its own
+let nextExtensionId = 0;
+
+const activeExtensionIds: string[] = [];
+
+async function activateExtension(extension: Extension): Promise<void> {
+	const id = `flow-test-${nextExtensionId++}`;
+
+	extensions.register({
+		description: 'A test extension',
+		id,
+		load: async () => ({ default: extension }),
+		name: id
+	});
+	await extensions.setEnabled(id, true);
+	activeExtensionIds.push(id);
+}
+
+function makeProvider(overrides: Partial<ToolProvider> = {}): ToolProvider {
+	return {
+		entries: () => [],
+		execute: async () => ({ content: '', isError: false }),
+		isConfigured: () => true,
+		source: ToolSource.MCP,
+		...overrides
+	};
+}
+
 function runFlow(callbacks: AgenticFlowCallbacks, signal?: AbortSignal) {
 	return agenticStore.runAgenticFlow({
 		callbacks,
@@ -120,6 +150,10 @@ beforeEach(() => {
 	vi.spyOn(toolsStore, 'getToolServerLabel').mockReturnValue('Browser');
 	vi.spyOn(toolsStore, 'getPermissionKey').mockReturnValue('tool-key');
 	vi.spyOn(permissionsStore, 'hasTool').mockReturnValue(true);
+});
+
+afterEach(async () => {
+	for (const id of activeExtensionIds.splice(0)) await extensions.setEnabled(id, false);
 });
 
 describe('agentic flow', () => {
@@ -368,5 +402,166 @@ describe('agentic flow', () => {
 		expect(named('createToolResultMessage')).toEqual([]);
 		expect(names().slice(-1)).toEqual(['onFlowComplete']);
 		expect(requests).toHaveLength(1);
+	});
+});
+
+describe('agentic flow with extensions', () => {
+	it('gets the providers ready, then runs a tool call through the provider of its source', async () => {
+		const order: string[] = [];
+		const execute = vi.fn<ToolProvider['execute']>(async () => {
+			order.push('execute');
+
+			return { content: 'found it', isError: false };
+		});
+
+		await activateExtension({
+			activate: (ctx) =>
+				ctx.contribute(
+					'tools',
+					makeProvider({ execute, prepare: async () => void order.push('prepare') })
+				)
+		});
+		mockTools(ToolSource.MCP, 'search');
+		vi.mocked(toolsStore.getEnabledToolsForLLM).mockImplementation(() => {
+			order.push('list');
+
+			return [{ function: { name: 'search', parameters: {} }, type: 'function' }];
+		});
+
+		const controller = new AbortController();
+		const requests = mockTurns(
+			(options) => options.onToolCallChunk?.(toolCalls('search')),
+			(options) => options.onChunk?.('done')
+		);
+		const { callbacks, named } = recorder();
+
+		expect(await runFlow(callbacks, controller.signal)).toEqual({ handled: true });
+		expect(order).toEqual(['prepare', 'list', 'execute']);
+		expect(execute.mock.calls[0][0]).toEqual({ arguments: '{}', id: 'call_0', name: 'search' });
+		expect(execute.mock.calls[0][1]).toBeInstanceOf(AbortSignal);
+		expect(requests[1][2]).toMatchObject({ content: 'found it', role: 'tool' });
+		expect(named('onFlowComplete')[0][1]).toMatchObject({
+			agentic: { toolCalls: [{ name: 'search', success: true }] }
+		});
+	});
+
+	it('reports a failing provider to the model and goes on', async () => {
+		await activateExtension({
+			activate: (ctx) =>
+				ctx.contribute(
+					'tools',
+					makeProvider({
+						execute: async () => {
+							throw new Error('server is down');
+						}
+					})
+				)
+		});
+		mockTools(ToolSource.MCP, 'search');
+
+		const requests = mockTurns(
+			(options) => options.onToolCallChunk?.(toolCalls('search')),
+			(options) => options.onChunk?.('sorry')
+		);
+
+		expect(await runFlow(recorder().callbacks)).toEqual({ handled: true });
+		expect(requests[1][2]).toMatchObject({ content: 'Error: server is down', role: 'tool' });
+	});
+
+	it('tells the model the tool is unknown when no extension provides its source', async () => {
+		mockTools(ToolSource.MCP, 'search');
+
+		const requests = mockTurns(
+			(options) => options.onToolCallChunk?.(toolCalls('search')),
+			(options) => options.onChunk?.('sorry')
+		);
+		const { callbacks, named } = recorder();
+
+		expect(await runFlow(callbacks)).toEqual({ handled: true });
+		expect(requests[1][2]).toMatchObject({ content: 'Error: Unknown tool: search', role: 'tool' });
+		expect(named('onFlowComplete')[0][1]).toMatchObject({
+			agentic: { toolCalls: [{ name: 'search', success: false }] }
+		});
+	});
+
+	it('is enabled by a configured provider alone', async () => {
+		vi.spyOn(toolsStore, 'browserTools', 'get').mockReturnValue([]);
+
+		const config = () => agenticStore.getConfig({ agenticMaxTurns: 5 } as never);
+
+		expect(config().enabled).toBe(false);
+
+		await activateExtension({
+			activate: (ctx) => ctx.contribute('tools', makeProvider({ isConfigured: () => false }))
+		});
+
+		expect(config().enabled).toBe(false);
+
+		await activateExtension({ activate: (ctx) => ctx.contribute('tools', makeProvider()) });
+
+		expect(config().enabled).toBe(true);
+	});
+
+	it('runs the flow hooks around the flow, also when one of them fails', async () => {
+		const order: string[] = [];
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		await activateExtension({
+			activate(ctx) {
+				ctx.contribute('flow', () => {
+					throw new Error('bad start');
+				});
+				ctx.contribute('flow', () => async () => {
+					order.push('failing end');
+
+					throw new Error('bad end');
+				});
+				ctx.contribute('flow', ({ conversationId }) => {
+					order.push(`start ${conversationId}`);
+
+					return () => void order.push('end');
+				});
+				ctx.contribute('flow', () => void order.push('start without end'));
+			}
+		});
+		mockTools(ToolSource.BROWSER, BuiltInTool.BROWSER_GET_DATETIME);
+		mockTurns((options) => {
+			order.push(`turn, running: ${agenticStore.isRunning(CONV_ID)}`);
+			options.onChunk?.('hi');
+		});
+
+		expect(await runFlow(recorder().callbacks)).toEqual({ handled: true });
+		expect(order).toEqual([
+			`start ${CONV_ID}`,
+			'start without end',
+			'turn, running: true',
+			'failing end',
+			'end'
+		]);
+		expect(warn).toHaveBeenCalledTimes(2);
+		expect(agenticStore.isRunning(CONV_ID)).toBe(false);
+	});
+
+	it('runs the end of the flow hooks when the flow fails', async () => {
+		const end = vi.fn();
+
+		await activateExtension({ activate: (ctx) => ctx.contribute('flow', () => end) });
+		mockTools(ToolSource.BROWSER, BuiltInTool.BROWSER_GET_DATETIME);
+		mockTurns(() => {
+			throw new Error('HTTP 500');
+		});
+
+		expect(await runFlow(recorder().callbacks)).toMatchObject({ handled: true });
+		expect(end).toHaveBeenCalledOnce();
+	});
+
+	it('leaves the flow hooks alone when no tool is enabled', async () => {
+		const hook = vi.fn();
+
+		await activateExtension({ activate: (ctx) => ctx.contribute('flow', hook) });
+		vi.spyOn(toolsStore, 'getEnabledToolsForLLM').mockReturnValue([]);
+
+		expect(await runFlow(recorder().callbacks)).toEqual({ handled: false });
+		expect(hook).not.toHaveBeenCalled();
 	});
 });

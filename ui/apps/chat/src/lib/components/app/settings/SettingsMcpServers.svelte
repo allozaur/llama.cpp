@@ -7,7 +7,8 @@
 	import { McpServerCard, McpServerCardSkeleton } from '$lib/components/app';
 	import { DialogMcpResourcesBrowser, DialogMcpServerAddNew } from '$lib/components/app/dialogs';
 	import { HealthCheckStatus } from '$lib/enums';
-	import { mcpStore, toolsStore } from '$lib/stores';
+	import { enableAllToolsForServer } from '$lib/extensions/mcp/tools';
+	import { mcpStore } from '$lib/stores';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
@@ -98,7 +99,7 @@
 								// Promote the connection so tools/prompts/resources become
 								// available right away instead of waiting for the next chat-init.
 								await mcpStore.runHealthCheck(server, true);
-								toolsStore.enableAllToolsForServer(server.id);
+								enableAllToolsForServer(server.id);
 							}
 						}}
 						onUpdate={(updates) => mcpStore.updateServer(server.id, updates)}

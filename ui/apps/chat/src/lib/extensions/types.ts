@@ -4,8 +4,7 @@
  * same contract.
  */
 
-import type { ToolSource } from '$lib/enums';
-import type { OpenAIToolDefinition, ToolExecutionResult } from '$lib/types';
+import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
 export interface ExtensionManifest {
@@ -56,40 +55,4 @@ export interface ExtensionStatus {
 	state: ExtensionState;
 	/** Why it failed to load or activate, when it did. */
 	error: string | null;
-}
-
-export interface FlowInfo {
-	conversationId: string;
-}
-
-/** Called when an agentic flow starts; a returned function runs when the flow ends. */
-export type FlowHook = (flow: FlowInfo) => void | (() => void | Promise<void>);
-
-export interface ToolProviderEntry {
-	definition: OpenAIToolDefinition;
-	/** The group the tool is listed under and switched off with, e.g. one MCP server's id. */
-	groupId: string;
-	groupLabel: string;
-}
-
-export interface ToolProviderCall {
-	/** The arguments as the model wrote them: a JSON string. */
-	arguments: string;
-	id?: string;
-	name: string;
-}
-
-export interface ToolProvider {
-	/** The tool category the provider's tools belong to. One provider per category. */
-	source: ToolSource;
-	/** The tools on offer right now. The tools store reads this reactively. */
-	entries(): ToolProviderEntry[];
-	/** Run one tool call. Throws when the call fails. */
-	execute(call: ToolProviderCall, signal?: AbortSignal): Promise<ToolExecutionResult>;
-	/** Icon URL of a group, when it has one. */
-	groupIcon?(groupId: string): string | null;
-	/** Whether the provider could offer tools under the current settings, connected or not. */
-	isConfigured(): boolean;
-	/** Get the tools ready to list and call, before a flow asks for them. */
-	prepare?(): Promise<void>;
 }

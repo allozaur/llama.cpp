@@ -4,9 +4,9 @@
  * Implements the MCP "Host" role, coordinating multiple server connections
  * and exposing a unified tool interface: lifecycle, name-conflict detection
  * and automatic tool-to-server routing. Owns connection state and raw
- * `Tool[]` per server; the OpenAI-compatible wire format is built in
- * toolsStore. Composes the health-check manager; uses MCPService for the
- * protocol layer.
+ * `Tool[]` per server; the OpenAI-compatible wire format is built in the
+ * MCP extension's tool provider. Composes the health-check manager; uses
+ * MCPService for the protocol layer.
  */
 
 import type { ListChangedHandlers } from '@modelcontextprotocol/sdk/types.js';

@@ -2,9 +2,9 @@
  * toolsStore - Tool registry and enablement
  *
  * Owns the server tool listing (with working-directory resolution), built-in
- * browser tools, MCP tools and per-tool enablement, exposed as a unified
- * tool set for the LLM and the tools UI. Consumed by the agentic loop and
- * the chat flows.
+ * browser tools, the tools extensions provide and per-tool enablement,
+ * exposed as a unified tool set for the LLM and the tools UI. Consumed by
+ * the agentic loop and the chat flows.
  */
 
 import { browser } from '$app/environment';
@@ -18,21 +18,15 @@ import {
 	TOOL_GROUP_LABELS,
 	TOOL_SERVER_LABELS
 } from '$lib/constants';
-import {
-	BuiltInTool,
-	GlobSearchType,
-	HealthCheckStatus,
-	JsonSchemaType,
-	ToolCallType,
-	ToolSource
-} from '$lib/enums';
+import { BuiltInTool, GlobSearchType, ToolSource } from '$lib/enums';
+import { extensions, type ToolGroupIdentityProps, type ToolProvider } from '$lib/extensions';
 import { ToolsService } from '$lib/services/tools.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { OpenAIToolDefinition, ToolEntry, ToolGroup } from '$lib/types';
 import { ApiError, buildSandboxToolDefinition } from '$lib/utils';
+import type { Component } from 'svelte';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 /** Stable selection identity for a tool, shared by the disabled set and the permission store */
@@ -71,7 +65,7 @@ class ToolsStore {
 
 			push({
 				definition: def,
-				key: this.toolKey(ToolSource.SERVER, name),
+				key: this.getToolKey(ToolSource.SERVER, name),
 				source: ToolSource.SERVER
 			});
 		}
@@ -81,21 +75,23 @@ class ToolsStore {
 
 			push({
 				definition: def,
-				key: this.toolKey(ToolSource.BROWSER, name),
+				key: this.getToolKey(ToolSource.BROWSER, name),
 				source: ToolSource.BROWSER
 			});
 		}
 
-		for (const { definition, serverId, serverName } of this.mcpEntries()) {
-			const name = definition.function.name;
+		for (const provider of this.providers) {
+			for (const { definition, groupId, groupLabel } of provider.entries()) {
+				const name = definition.function.name;
 
-			push({
-				definition,
-				key: this.toolKey(ToolSource.MCP, name, serverId),
-				serverId,
-				serverName,
-				source: ToolSource.MCP
-			});
+				push({
+					definition,
+					key: this.getToolKey(provider.source, name, groupId),
+					serverId: groupId,
+					serverName: groupLabel,
+					source: provider.source
+				});
+			}
 		}
 
 		for (const def of this.customTools) {
@@ -103,7 +99,7 @@ class ToolsStore {
 
 			push({
 				definition: def,
-				key: this.toolKey(ToolSource.CUSTOM, name),
+				key: this.getToolKey(ToolSource.CUSTOM, name),
 				source: ToolSource.CUSTOM
 			});
 		}
@@ -172,8 +168,9 @@ class ToolsStore {
 		return this._loading;
 	}
 
-	get mcpTools(): OpenAIToolDefinition[] {
-		return this.mcpEntries().map((e) => e.definition);
+	/** The tool providers of the active extensions. */
+	get providers(): ToolProvider[] {
+		return extensions.contributions('tools');
 	}
 
 	get serverHome(): string | null {
@@ -190,8 +187,9 @@ class ToolsStore {
 		const byKey = new SvelteMap<string, ToolGroup>();
 
 		for (const entry of this.allTools) {
-			const groupKey =
-				entry.source === ToolSource.MCP ? `mcp:${entry.serverId ?? ''}` : entry.source;
+			const groupKey = entry.serverId
+				? this.getGroupKey(entry.source, entry.serverId)
+				: entry.source;
 
 			let group = byKey.get(groupKey);
 
@@ -213,18 +211,9 @@ class ToolsStore {
 		return groups;
 	}
 
-	/** Enable all tools belonging to a specific MCP server */
-	enableAllToolsForServer(serverId: string): void {
-		const connection = mcpStore.getConnections().get(serverId);
-
-		if (!connection) return;
-
-		// the server-scoped group key disables every tool regardless of per-tool keys
-		this._disabledTools.delete(this.getMcpServerToolsKey(serverId));
-
-		for (const tool of connection.tools) {
-			this._disabledTools.delete(this.toolKey(ToolSource.MCP, tool.name, serverId));
-		}
+	/** Enable several tools or tool groups by key, in one write */
+	enableTools(keys: string[]): void {
+		for (const key of keys) this._disabledTools.delete(key);
 
 		this.persistDisabledTools();
 	}
@@ -262,8 +251,7 @@ class ToolsStore {
 	 * Enabled tool definitions for sending to the LLM. Callers pass an
 	 * explicit policy (the active conversation's, resolved with global
 	 * defaults when absent); without arguments the store defaults apply.
-	 * MCP tool schemas are normalized here so the wire payload is consistent
-	 * across all four sources (server, browser/sandbox, MCP, custom JSON).
+	 * The order is server, browser/sandbox, extension tools, custom JSON.
 	 * The API identifies tools by name, so a name is sent at most once.
 	 */
 	getEnabledToolsForLLM(
@@ -291,21 +279,63 @@ class ToolsStore {
 
 		for (const def of this._serverTools) take(def);
 		for (const def of this.browserTools) take(def);
-		// mcpEntries() over mcpStore directly so wire shape stays normalized and aligned with the tools UI.
-		for (const entry of this.mcpEntries()) take(entry.definition);
+
+		for (const provider of this.providers) {
+			for (const entry of provider.entries()) take(entry.definition);
+		}
+
 		for (const def of this.customTools) take(def);
 
 		return result;
 	}
 
-	/** Server-scoped tool key: disabling it disables all of that server's tools. */
-	getMcpServerToolsKey(serverId: string): string {
-		return `mcp:${serverId}`;
+	/** Icon URL of a tool group, when its provider has one */
+	getGroupIcon(group: ToolGroup): string | null {
+		if (!group.serverId) return null;
+
+		return this.providerFor(group.source)?.groupIcon?.(group.serverId) ?? null;
+	}
+
+	/** The component a provider draws a group's name with, null for the plain label */
+	getGroupIdentity(group: ToolGroup): Component<ToolGroupIdentityProps> | null {
+		if (!group.serverId) return null;
+
+		return this.providerFor(group.source)?.groupIdentity ?? null;
+	}
+
+	/**
+	 * Group-scoped tool key: disabling it disables all of that group's tools.
+	 * The keys are persisted, so the format must not change.
+	 */
+	getGroupKey(source: ToolSource, groupId: string): string {
+		return `${source}:${groupId}`;
 	}
 
 	/** Permission key for a tool name, identical to the selection key */
 	getPermissionKey(toolName: string): string | null {
 		return this.findEntryByName(toolName)?.key ?? null;
+	}
+
+	/** Icon URL for a call of a tool, from the first provider that has one for it */
+	getToolIcon(toolName: string | undefined): string | null {
+		if (!toolName) return null;
+
+		for (const provider of this.providers) {
+			const icon = provider.toolIcon?.(toolName);
+
+			if (icon) return icon;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Stable selection identity of a tool: `<source>:<name>`, or
+	 * `<source>-<groupId>:<name>` for a tool listed under a group. The keys
+	 * are persisted, so the format must not change.
+	 */
+	getToolKey(source: ToolSource, name: string, groupId?: string): string {
+		return groupId ? `${source}-${groupId}:${name}` : `${source}:${name}`;
 	}
 
 	/** Get the display label for the server that owns a given tool */
@@ -314,7 +344,7 @@ class ToolsStore {
 
 		if (!entry) return '';
 
-		if (entry.serverName) return mcpStore.getServerDisplayName(entry.serverName);
+		if (entry.serverName) return entry.serverName;
 
 		if (entry.source === ToolSource.SERVER) return TOOL_SERVER_LABELS[ToolSource.SERVER];
 
@@ -345,7 +375,7 @@ class ToolsStore {
 			const name = def.function.name;
 
 			return (
-				this.cwdAwareTools.has(name) && !disabledTools.has(this.toolKey(ToolSource.SERVER, name))
+				this.cwdAwareTools.has(name) && !disabledTools.has(this.getToolKey(ToolSource.SERVER, name))
 			);
 		});
 	}
@@ -408,8 +438,8 @@ class ToolsStore {
 
 		if (disabledTools.has(entry.key)) return false;
 
-		if (entry.source === ToolSource.MCP && entry.serverId) {
-			return !disabledTools.has(this.getMcpServerToolsKey(entry.serverId));
+		if (entry.serverId) {
+			return !disabledTools.has(this.getGroupKey(entry.source, entry.serverId));
 		}
 
 		return true;
@@ -482,35 +512,10 @@ class ToolsStore {
 		return null;
 	}
 
-	/** Get MCP tools from health check data, used when live connections aren't established yet */
-	private getMcpToolsFromHealthChecks(): {
-		serverId: string;
-		serverName: string;
-		tools: { name: string; description?: string }[];
-	}[] {
-		const result: ReturnType<ToolsStore['getMcpToolsFromHealthChecks']> = [];
-
-		for (const server of mcpStore.getServers()) {
-			if (!server.enabled) continue;
-
-			const health = mcpStore.getHealthCheckState(server.id);
-
-			if (health.status === HealthCheckStatus.SUCCESS && health.tools.length > 0) {
-				result.push({
-					serverId: server.id,
-					serverName: mcpStore.getServerLabel(server),
-					tools: health.tools
-				});
-			}
-		}
-
-		return result;
-	}
-
 	private groupLabel(entry: ToolEntry): string {
+		if (entry.serverId) return entry.serverName ?? '';
+
 		switch (entry.source) {
-			case ToolSource.MCP:
-				return entry.serverName ?? '';
 			case ToolSource.CUSTOM:
 				return TOOL_GROUP_LABELS[ToolSource.CUSTOM];
 			case ToolSource.BROWSER:
@@ -522,134 +527,6 @@ class ToolsStore {
 
 	private hasServerTool(name: BuiltInTool): boolean {
 		return this._serverTools.some((def) => def.function.name === name);
-	}
-
-	private inferTypeFromDefault(value: unknown): string | undefined {
-		if (typeof value === 'string') return 'string';
-
-		if (typeof value === 'boolean') return 'boolean';
-
-		if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'number';
-
-		if (Array.isArray(value)) return 'array';
-
-		if (value !== null && typeof value === 'object') return 'object';
-
-		return undefined;
-	}
-
-	private mcpDefinition(
-		name: string,
-		description: string | undefined,
-		schema?: Record<string, unknown>
-	): OpenAIToolDefinition {
-		return {
-			function: {
-				description,
-				name,
-				parameters: schema ?? { properties: {}, required: [], type: JsonSchemaType.OBJECT }
-			},
-			type: ToolCallType.FUNCTION
-		};
-	}
-
-	/** Normalize MCP tools from live connections when available, fall back to health check data */
-	private mcpEntries(): {
-		serverId: string;
-		serverName: string;
-		definition: OpenAIToolDefinition;
-	}[] {
-		const out: { serverId: string; serverName: string; definition: OpenAIToolDefinition }[] = [];
-		const connections = mcpStore.getConnections();
-
-		if (connections.size > 0) {
-			for (const [serverId, connection] of connections) {
-				const serverName = mcpStore.getServerDisplayName(serverId);
-
-				for (const tool of connection.tools) {
-					const rawSchema = (tool.inputSchema as Record<string, unknown>) ?? {
-						properties: {},
-						required: [],
-						type: JsonSchemaType.OBJECT
-					};
-
-					out.push({
-						definition: {
-							function: {
-								description: tool.description,
-								name: tool.name,
-								parameters: this.normalizeJsonSchema(rawSchema)
-							},
-							type: ToolCallType.FUNCTION
-						},
-						serverId,
-						serverName
-					});
-				}
-			}
-		} else {
-			for (const { serverId, serverName, tools } of this.getMcpToolsFromHealthChecks()) {
-				for (const tool of tools) {
-					out.push({
-						definition: this.mcpDefinition(tool.name, tool.description),
-						serverId,
-						serverName
-					});
-				}
-			}
-		}
-
-		return out;
-	}
-
-	/**
-	 * Recursively normalize a JSON Schema object: infers `type` from `default`
-	 * for properties / items that omit it, and descends into nested `properties`
-	 * and `items`. Returns a new object -- does not mutate the input.
-	 */
-	private normalizeJsonSchema(schema: Record<string, unknown>): Record<string, unknown> {
-		if (!schema || typeof schema !== 'object') return schema;
-
-		const normalized: Record<string, unknown> = { ...schema };
-
-		if (normalized.properties && typeof normalized.properties === 'object') {
-			const props = normalized.properties as Record<string, Record<string, unknown>>;
-			const normalizedProps: Record<string, Record<string, unknown>> = {};
-
-			for (const [key, prop] of Object.entries(props)) {
-				if (!prop || typeof prop !== 'object') {
-					normalizedProps[key] = prop;
-
-					continue;
-				}
-
-				const normalizedProp: Record<string, unknown> = { ...prop };
-
-				if (!normalizedProp.type && normalizedProp.default !== undefined) {
-					const inferred = this.inferTypeFromDefault(normalizedProp.default);
-
-					if (inferred) normalizedProp.type = inferred;
-				}
-
-				if (normalizedProp.properties) {
-					Object.assign(
-						normalizedProp,
-						this.normalizeJsonSchema(normalizedProp as Record<string, unknown>)
-					);
-				}
-
-				if (normalizedProp.items && typeof normalizedProp.items === 'object') {
-					normalizedProp.items = this.normalizeJsonSchema(
-						normalizedProp.items as Record<string, unknown>
-					);
-				}
-
-				normalizedProps[key] = normalizedProp;
-			}
-			normalized.properties = normalizedProps;
-		}
-
-		return normalized;
 	}
 
 	private persistDisabledToolCategories(): void {
@@ -674,6 +551,10 @@ class ToolsStore {
 		}
 	}
 
+	private providerFor(source: ToolSource): ToolProvider | undefined {
+		return this.providers.find((provider) => provider.source === source);
+	}
+
 	/**
 	 * `read_media` runs in the browser on top of the server's `read_file`, so it
 	 * exists only when that tool is served and the active model can perceive the
@@ -693,21 +574,6 @@ class ToolsStore {
 		if (!vision && !audio) return null;
 
 		return buildReadMediaToolDefinition(vision, audio);
-	}
-
-	private toolKey(source: ToolSource, name: string, serverId?: string): string {
-		switch (source) {
-			case ToolSource.MCP:
-				// with a serverId this is a per-tool key; without one it hits the
-				// server group key shape, which no MCP entry ever does
-				return serverId ? `mcp-${serverId}:${name}` : this.getMcpServerToolsKey(name);
-			case ToolSource.CUSTOM:
-				return `custom:${name}`;
-			case ToolSource.BROWSER:
-				return `browser:${name}`;
-			default:
-				return `server:${name}`;
-		}
 	}
 }
 
