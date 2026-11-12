@@ -1,6 +1,7 @@
 import jpgAsset from '../../fixtures/assets/1.jpg?url';
 import pdfAsset from '../../fixtures/assets/example.pdf?inline';
 import svgAsset from '../../fixtures/assets/hf-logo.svg?url';
+import { Sparkles } from '@lucide/svelte';
 import {
 	BuiltInTool,
 	ChatFormCommandAction,
@@ -148,10 +149,11 @@ export const mcpResources: MCPResourceInfo[] = [
 
 export const chatCommands: ChatFormCommand[] = [
 	{
-		action: ChatFormCommandAction.PROMPT,
 		description: 'Insert an MCP prompt',
 		disabled: false,
-		name: 'prompt'
+		icon: Sparkles,
+		name: 'prompt',
+		run: () => {}
 	},
 	{
 		action: ChatFormCommandAction.CWD,

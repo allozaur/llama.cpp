@@ -1,23 +1,37 @@
 import { SET_WORKING_DIRECTORY_LABEL } from '#lib/constants/index.ts';
 import { ChatFormCommandAction } from '#lib/enums/index.ts';
+import type { ComposerCommand } from '#lib/extensions/points/composer.ts';
 import type { ChatCommandsOptions, ChatFormCommand } from '#lib/types/index.ts';
 
+function toChatFormCommand(command: ComposerCommand): ChatFormCommand {
+	return {
+		description: command.description,
+		disabled: !command.isEnabled(),
+		icon: command.icon,
+		keywords: command.keywords,
+		name: command.name,
+		run: (composer, args) => command.run(composer, args)
+	};
+}
+
 /**
- * The slash commands surfaced by the `/` command picker, in display order.
+ * The slash commands surfaced by the `/` command picker, in display order:
+ * the built-in ones, with the ones extensions contribute before or after
+ * them, as their `order` says.
  *
  * Availability is supplied as predicates rather than store imports: this
  * module is re-exported through the `#lib/utils/index.ts` barrel, and importing
  * stores at module load would create a circular dependency (the stores
  * themselves import from `#lib/utils/index.ts`).
  */
-export function getChatCommands(options: ChatCommandsOptions): ChatFormCommand[] {
+export function getChatCommands(
+	options: ChatCommandsOptions,
+	contributed: ComposerCommand[] = []
+): ChatFormCommand[] {
+	const sorted = [...contributed].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
 	return [
-		{
-			action: ChatFormCommandAction.PROMPT,
-			description: 'Insert an MCP prompt',
-			disabled: !options.hasPrompts(),
-			name: 'prompt'
-		},
+		...sorted.filter((command) => (command.order ?? 0) < 0).map(toChatFormCommand),
 		{
 			action: ChatFormCommandAction.CWD,
 			description: SET_WORKING_DIRECTORY_LABEL,
@@ -37,6 +51,7 @@ export function getChatCommands(options: ChatCommandsOptions): ChatFormCommand[]
 			disabled: !options.canCompact(),
 			keywords: ['summarize', 'context'],
 			name: 'compact'
-		}
+		},
+		...sorted.filter((command) => (command.order ?? 0) >= 0).map(toChatFormCommand)
 	];
 }

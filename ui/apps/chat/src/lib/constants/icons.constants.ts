@@ -20,7 +20,6 @@ import {
 	Play as ResumeDownloadIcon,
 	Power as LoadIcon,
 	RotateCw as RetryIcon,
-	Sparkles as PromptCommandIcon,
 	Video as VideoIcon
 } from '@lucide/svelte';
 import { ChatFormCommandAction, FileTypeCategory, ModelCapability } from '#lib/enums/index.ts';
@@ -65,12 +64,11 @@ export const CAPABILITY_FLAG_KEYS: Record<ModelCapability, keyof ModelCapabiliti
 	[ModelCapability.TOOL_USE]: 'tools'
 };
 
-/** Icons of the slash-command picker, one per chat-form command. */
+/** Icons of the slash-command picker, one per built-in chat-form command. */
 export const CHAT_FORM_COMMAND_ICONS: Record<ChatFormCommandAction, Component> = {
 	[ChatFormCommandAction.COMPACT]: CompactCommandIcon,
 	[ChatFormCommandAction.CWD]: CwdCommandIcon,
-	[ChatFormCommandAction.MODEL]: MODEL_ICON,
-	[ChatFormCommandAction.PROMPT]: PromptCommandIcon
+	[ChatFormCommandAction.MODEL]: MODEL_ICON
 };
 
 /** Icons of the download control a manager row shows while it downloads. */
