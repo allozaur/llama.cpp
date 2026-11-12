@@ -24,6 +24,9 @@ export const DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabled
 
 /** Default disabled tool categories, seeded into newly created conversations */
 export const DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabledToolCategories`;
+
+/** The user's on/off choice per extension, by extension id */
+export const EXTENSIONS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.extensions`;
 export const FAVORITE_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.favoriteModels`;
 
 /** Open state the user set for a model list section or one of its families, by id. */
