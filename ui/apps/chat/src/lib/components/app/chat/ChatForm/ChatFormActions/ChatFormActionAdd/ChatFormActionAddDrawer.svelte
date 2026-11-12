@@ -113,7 +113,7 @@
 	const canUseCamera = $derived(chatFormActions.hasVisionModality && canPickFiles);
 
 	const toolsPanel = useToolsPanel();
-	const allGroups = $derived([...toolsPanel.categoryGroups, ...toolsPanel.mcpGroups]);
+	const allGroups = $derived([...toolsPanel.categoryGroups, ...toolsPanel.providerGroups]);
 	const enabledToolCount = $derived(
 		allGroups.reduce((n, group) => n + toolsPanel.getEnabledToolCount(group), 0)
 	);
@@ -293,9 +293,9 @@
 			</InsetList>
 		{/if}
 
-		{#if toolsPanel.mcpGroups.length > 0}
+		{#if toolsPanel.providerGroups.length > 0}
 			<InsetList title={ATTACHMENT_MENU_TEXT.MCP_SERVERS}>
-				{#each toolsPanel.mcpGroups as group (group.key)}
+				{#each toolsPanel.providerGroups as group (group.key)}
 					{@render groupRow(group)}
 				{/each}
 			</InsetList>

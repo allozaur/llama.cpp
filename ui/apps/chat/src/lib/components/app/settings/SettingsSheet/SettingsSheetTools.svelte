@@ -21,7 +21,7 @@
 		TOOL_SHOWN_ARG_PICK
 	} from '#lib/constants/index.ts';
 	import { useToolSettings } from '#lib/hooks/use-tool-settings.svelte.ts';
-	import { conversationsStore, mcpStore, permissionsStore, toolsStore } from '#lib/stores/index.ts';
+	import { conversationsStore, permissionsStore, toolsStore } from '#lib/stores/index.ts';
 	import type { ToolEntry, ToolGroup } from '#lib/types/index.ts';
 	import { getToolArgNames, getToolDisplay } from '#lib/utils/index.ts';
 
@@ -79,7 +79,7 @@
 	{:else}
 		<InsetList caption={toolSettings.scopeNote}>
 			{#each groups as group (group.key)}
-				{@const favicon = group.serverId ? mcpStore.getServerFavicon(group.serverId) : null}
+				{@const favicon = toolsStore.getGroupIcon(group)}
 
 				<InsetListSplitRow
 					onclick={() => onOpen({ groupKey: group.key, id: SettingsSheetPage.TOOL_GROUP })}
