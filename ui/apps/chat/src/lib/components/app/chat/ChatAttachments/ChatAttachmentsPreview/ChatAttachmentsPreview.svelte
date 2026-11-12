@@ -6,6 +6,7 @@
 		ChatAttachmentsPreviewThumbnailStrip
 	} from '$lib/components/app';
 	import { UI_DATA_ATTRS } from '$lib/constants';
+	import { extensions, findAttachmentRenderer } from '$lib/extensions';
 	import { modelsStore } from '$lib/stores';
 	import {
 		createBase64DataUrl,
@@ -14,8 +15,6 @@
 		getLanguageFromFilename,
 		isAudioFile,
 		isImageFile,
-		isMcpPrompt,
-		isMcpResource,
 		isPdfFile,
 		isTextFile,
 		isVideoFile
@@ -51,9 +50,11 @@
 		uploadedFiles = []
 	}: Props = $props();
 
+	// items an extension draws are shown by that extension, not here
+	let attachmentRenderers = $derived(extensions.contributions('attachmentRenderers'));
 	let allItems = $derived(
 		getAttachmentDisplayItems({ attachments, uploadedFiles })
-			.filter((item) => !isMcpPrompt(item) && !isMcpResource(item))
+			.filter((item) => !findAttachmentRenderer(attachmentRenderers, item))
 			.map(
 				(item): PreviewItem => ({
 					...item,

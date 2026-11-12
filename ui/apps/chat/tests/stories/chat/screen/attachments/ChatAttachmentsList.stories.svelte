@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { activateBuiltInExtensions } from '../../../helpers/extensions';
 	import StateGallery from '../../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../../helpers/StateGalleryItem.svelte';
 	import {
@@ -28,6 +29,7 @@
 	} from '../fixtures';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import ChatAttachmentsList from '$lib/components/app/chat/ChatAttachments/ChatAttachmentsList/ChatAttachmentsList.svelte';
+	import { expect } from 'storybook/test';
 
 	const { Story } = defineMeta({
 		component: ChatAttachmentsList,
@@ -40,7 +42,17 @@
 	const onFileRemove = (id: string) => console.log('remove', id);
 </script>
 
-<Story asChild name="States">
+<!-- the MCP extension draws the MCP items -->
+<Story
+	asChild
+	beforeEach={activateBuiltInExtensions}
+	name="States"
+	play={async ({ canvas }) => {
+		// the stored MCP resource is MCP's own chip, not the default text chip
+		await expect((await canvas.findAllByRole('button', { name: 'README.md' })).length).toBe(2);
+		await expect(canvas.queryByRole('button', { name: 'Preview README.md' })).toBeNull();
+	}}
+>
 	<StateGallery columns={1}>
 		<StateGalleryItem label="Pending uploads" note="chat form, removable">
 			<ChatAttachmentsList

@@ -2,12 +2,11 @@
 	import {
 		ChatAttachmentsListItem,
 		DialogChatAttachmentsPreview,
-		DialogMcpResourcePreview,
 		ScrollCarousel
 	} from '$lib/components/app';
 	import { ScrollCarouselVariant } from '$lib/enums';
-	import type { DatabaseMessageExtraMcpResource } from '$lib/types';
-	import { getAttachmentDisplayItems, isMcpPrompt, isMcpResource } from '$lib/utils';
+	import { extensions, findAttachmentRenderer } from '$lib/extensions';
+	import { getAttachmentDisplayItems } from '$lib/utils';
 
 	interface Props {
 		class?: string;
@@ -44,8 +43,6 @@
 	}: Props = $props();
 
 	let carouselRef: ScrollCarousel | undefined = $state();
-	let mcpResourcePreviewOpen = $state(false);
-	let mcpResourcePreviewExtra = $state<DatabaseMessageExtraMcpResource | null>(null);
 	let previewFocusIndex = $state(0);
 	let viewAllDialogOpen = $state(false);
 
@@ -55,17 +52,13 @@
 		event?.stopPropagation();
 		event?.preventDefault();
 
-		// Find the index of the clicked item among non-MCP attachments
-		const nonMcpItems = displayItems.filter((i) => !isMcpPrompt(i) && !isMcpResource(i));
-		const index = nonMcpItems.findIndex((i) => i.id === item.id);
+		// items an extension draws stay out of the built-in preview, so they do not count
+		const renderers = extensions.contributions('attachmentRenderers');
+		const previewItems = displayItems.filter((i) => !findAttachmentRenderer(renderers, i));
+		const index = previewItems.findIndex((i) => i.id === item.id);
 
 		previewFocusIndex = index >= 0 ? index : 0;
 		viewAllDialogOpen = true;
-	}
-
-	function openMcpResourcePreview(extra: DatabaseMessageExtraMcpResource) {
-		mcpResourcePreviewExtra = extra;
-		mcpResourcePreviewOpen = true;
 	}
 
 	$effect(() => {
@@ -83,7 +76,6 @@
 		{item}
 		{limitToSingleRow}
 		{onFileRemove}
-		onMcpResourcePreview={openMcpResourcePreview}
 		onPreview={(i: ChatAttachmentDisplayItem, event?: MouseEvent) => openPreview(i, event)}
 		{readonly}
 	/>
@@ -114,7 +106,3 @@
 	{previewFocusIndex}
 	{uploadedFiles}
 />
-
-{#if mcpResourcePreviewExtra}
-	<DialogMcpResourcePreview bind:open={mcpResourcePreviewOpen} extra={mcpResourcePreviewExtra} />
-{/if}
