@@ -13,4 +13,9 @@ export class RouterService {
 	static chat(id: string): ResolvedPathname {
 		return resolve(ROUTES.CHAT, { id });
 	}
+
+	/** Route of the page an extension contributes at `path`. */
+	static extensionPage(path: string): string {
+		return `${ROUTES.START}${path}`;
+	}
 }

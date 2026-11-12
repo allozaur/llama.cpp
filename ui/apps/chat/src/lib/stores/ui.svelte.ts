@@ -185,11 +185,12 @@ class UiStore {
 		if (this.collapsedSidebarSections.has(id)) this.toggleSidebarSection(id);
 	}
 
-	/** Whether a sidebar action shows: Models and MCP wait behind their settings. */
+	/**
+	 * Whether a sidebar action shows: Models waits behind its setting. MCP's entry is the MCP
+	 * extension's, which hides itself behind its own setting (`isMcpShown`).
+	 */
 	isSidebarActionShown(action: SidebarAction | undefined): boolean {
 		if (action === SidebarAction.MANAGE_MODELS) return this.isModelsManagerShown;
-
-		if (action === SidebarAction.MCP) return this.isMcpShown;
 
 		return true;
 	}
