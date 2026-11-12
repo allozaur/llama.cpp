@@ -56,6 +56,7 @@ import {
 	MimeTypePrefix,
 	ToolCallType
 } from '#lib/enums/index.ts';
+import { extensions } from '#lib/extensions/index.ts';
 import { ChatService } from '#lib/services/index.ts';
 import { ReadMediaService } from '#lib/services/read-media.service.ts';
 import { SandboxService } from '#lib/services/sandbox.service.ts';
@@ -65,7 +66,6 @@ import { ToolsService } from '#lib/services/tools.service.ts';
 import { AgenticGates } from '#lib/stores/agentic/gates.svelte.ts';
 import { backgroundTasksStore } from '#lib/stores/background-tasks.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 import { permissionsStore } from '#lib/stores/permissions.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
@@ -90,7 +90,6 @@ import type {
 	AgenticFlowParams,
 	AgenticFlowResult,
 	AgenticSession,
-	MCPToolCall,
 	PermissionAnswer,
 	PermissionRequest,
 	SettingsConfigType,
@@ -236,7 +235,7 @@ class AgenticStore {
 	getConfig(settings: SettingsConfigType): AgenticConfig {
 		const maxTurns = Number(settings.agenticMaxTurns) || DEFAULT_AGENTIC_CONFIG.maxTurns;
 		const hasTools =
-			mcpStore.hasEnabledServers() ||
+			toolsStore.providers.some((provider) => provider.isConfigured()) ||
 			toolsStore.serverTools.length > 0 ||
 			toolsStore.browserTools.length > 0 ||
 			toolsStore.customTools.length > 0;
@@ -406,8 +405,6 @@ class AgenticStore {
 			return { handled: false };
 		}
 
-		const hasMcpServers = conversationsStore.preferences.policyEnabledServerIds().length > 0;
-
 		console.log(`[AgenticStore] Starting agentic flow with ${tools.length} tools`);
 
 		const normalizedMessages: ApiChatMessageData[] = await ChatService.normalizeMessagesForApi(
@@ -424,7 +421,7 @@ class AgenticStore {
 			totalToolCalls: 0
 		});
 
-		if (hasMcpServers) mcpStore.acquireConnection();
+		const flowCleanups = this.startFlowHooks(conversationId);
 
 		try {
 			await this.executeAgenticLoop({
@@ -452,12 +449,12 @@ class AgenticStore {
 				liveLlm: null
 			});
 
-			if (hasMcpServers) {
-				await mcpStore
-					.releaseConnection()
-					.catch((err: unknown) =>
-						console.warn('[AgenticStore] Failed to release MCP connection:', err)
-					);
+			for (const cleanup of flowCleanups) {
+				try {
+					await cleanup();
+				} catch (err) {
+					console.warn('[AgenticStore] A flow hook failed to clean up:', err);
+				}
 			}
 		}
 	}
@@ -590,7 +587,8 @@ class AgenticStore {
 
 	/**
 	 * Run a tool call where its source runs it: on llama-server, in the
-	 * browser or on an MCP server. Throws when the call fails.
+	 * browser or in the extension that provides the tool. Throws when the
+	 * call fails.
 	 */
 	private async dispatchTool(params: {
 		callbacks: AgenticFlowCallbacks;
@@ -672,13 +670,14 @@ class AgenticStore {
 			return SandboxService.executeTool(toolName, args, signal);
 		}
 
-		const mcpCall: MCPToolCall = {
-			function: { arguments: toolCall.function.arguments, name: toolName },
-			id: toolCall.id
-		};
-		const executionResult = await mcpStore.executeTool(mcpCall, signal);
+		const provider = toolsStore.providers.find((p) => p.source === toolSource);
 
-		return { content: executionResult.content, isError: false };
+		if (!provider) throw new Error(`Unknown tool: ${toolName}`);
+
+		return provider.execute(
+			{ arguments: toolCall.function.arguments, id: toolCall.id, name: toolName },
+			signal
+		);
 	}
 
 	/**
@@ -1133,13 +1132,33 @@ class AgenticStore {
 	}
 
 	/**
+	 * Run the `flow` hooks of the extensions and collect what they want run
+	 * when the flow ends. A hook that throws is skipped.
+	 */
+	private startFlowHooks(conversationId: string): Array<() => void | Promise<void>> {
+		const cleanups: Array<() => void | Promise<void>> = [];
+
+		for (const hook of extensions.contributions('flow')) {
+			try {
+				const cleanup = hook({ conversationId });
+
+				if (cleanup) cleanups.push(cleanup);
+			} catch (err) {
+				console.warn('[AgenticStore] A flow hook failed:', err);
+			}
+		}
+
+		return cleanups;
+	}
+
+	/**
 	 * The tools a flow under this policy offers the model, none when agentic
 	 * is off. Server tools are fetched first: a disabled /tools endpoint stays
 	 * disabled for the life of the server, so the tools panel is the only
-	 * place that probes it again. Every settings-enabled MCP server is
-	 * initialized, and the collection filters by the policy, so switching
-	 * policies never re-initializes connections; a caller without a policy
-	 * falls back to the global defaults.
+	 * place that probes it again. The providers get their tools ready next,
+	 * and the collection filters by the policy, so switching policies never
+	 * makes a provider start over; a caller without a policy falls back to
+	 * the global defaults.
 	 */
 	/**
 	 * The catalog that loads MCP and custom tools on demand, or nothing when
@@ -1206,13 +1225,7 @@ class AgenticStore {
 
 		if (!this.getConfig(settingsStore.config).enabled) return [];
 
-		if (conversationsStore.preferences.policyEnabledServerIds().length > 0) {
-			const initialized = await mcpStore.ensureInitialized();
-
-			if (!initialized) {
-				console.log('[AgenticStore] MCP not initialized');
-			}
-		}
+		for (const provider of toolsStore.providers) await provider.prepare?.();
 
 		return this.offeredTools(toolPolicy);
 	}
