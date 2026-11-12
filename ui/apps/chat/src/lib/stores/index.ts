@@ -35,9 +35,6 @@ export { agenticStore } from './agentic/index.svelte';
 export { sidebarDragStore } from './sidebar-drag.svelte';
 export { conversationsStore } from './conversations/index.svelte';
 
-// MCP
-export { mcpStore } from './mcp/index.svelte';
-
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 

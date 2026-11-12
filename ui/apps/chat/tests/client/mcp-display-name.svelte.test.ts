@@ -1,5 +1,5 @@
-import { McpServerForm } from '#lib/components/app/mcp/index.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
+import McpServerForm from '#lib/extensions/mcp/components/McpServerForm.svelte';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
