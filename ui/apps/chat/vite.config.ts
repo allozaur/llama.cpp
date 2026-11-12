@@ -57,7 +57,11 @@ export default defineConfig(({ mode }) => {
 
 		server: {
 			fs: {
-				allow: [searchForWorkspaceRoot(process.cwd()), resolve(__dirname, 'tests')]
+				allow: [
+					searchForWorkspaceRoot(process.cwd()),
+					resolve(__dirname, 'tests'),
+					resolve(__dirname, '../../lib/harness')
+				]
 			},
 			headers: {
 				'Cross-Origin-Embedder-Policy': 'require-corp',

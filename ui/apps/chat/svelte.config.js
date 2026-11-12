@@ -18,6 +18,10 @@ const config = {
 			precompress: false,
 			strict: true
 		}),
+		// the harness has no build step in the repo: the app compiles it from source
+		alias: {
+			'@ggml/llama-harness': '../../lib/harness/src/index.ts'
+		},
 		output: {
 			bundleStrategy: 'single'
 		},
