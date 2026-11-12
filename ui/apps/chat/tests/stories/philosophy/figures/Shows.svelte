@@ -5,7 +5,7 @@
 <script lang="ts">
 	import LinkPreview from '../../brand/communications/posts/LinkPreview.svelte';
 	import { linkPreview } from '../../brand/communications/posts/post';
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 
 	const greys = [
 		'--neutral-50',

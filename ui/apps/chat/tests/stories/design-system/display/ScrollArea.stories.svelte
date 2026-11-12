@@ -1,7 +1,7 @@
 <script lang="ts" module>
+	import { ScrollArea } from '@ggml/llama-ui/ui/scroll-area';
+	import { Separator } from '@ggml/llama-ui/ui/separator';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import { Separator } from '$lib/components/ui/separator';
 
 	const { Story } = defineMeta({
 		component: ScrollArea,

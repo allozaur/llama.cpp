@@ -1,5 +1,9 @@
 <script lang="ts">
 	import ServerIcon from './ServerIcon.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Card from '@ggml/llama-ui/ui/card';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		Copy,
 		Pencil,
@@ -12,10 +16,6 @@
 	} from '@lucide/svelte';
 	import { DialogConfirmation } from '$lib/components/app/dialogs';
 	import Logo from '$lib/components/app/misc/Logo.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Switch } from '$lib/components/ui/switch';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ServerCardState, TunnelStatus } from '$lib/enums';
 	import { remoteAccessStore, serversModelsStore, serverStore } from '$lib/stores';
 	import type { Server } from '$lib/types';

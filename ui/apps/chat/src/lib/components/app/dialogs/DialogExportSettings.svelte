@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { Shield, ShieldOff } from '@lucide/svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import Label from '$lib/components/ui/label/label.svelte';
 
 	let {
 		includeSensitiveData = $bindable(false),

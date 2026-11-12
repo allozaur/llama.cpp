@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import type { PromptDraft } from '$lib/stores/prompts.svelte';
 	import type { DatabasePrompt } from '$lib/types';
 	import { untrack } from 'svelte';

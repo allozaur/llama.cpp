@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Card } from '@ggml/llama-ui/ui/card';
 	import { Check, ScanText, X } from '@lucide/svelte';
 	import {
 		ChatMessageActionIcons,
@@ -8,8 +10,6 @@
 		DialogPromptUpdate,
 		MarkdownContent
 	} from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import { Card } from '$lib/components/ui/card';
 	import { INPUT_CLASSES, SYSTEM_MESSAGE_PLACEHOLDER } from '$lib/constants';
 	import { getChatMessageEditContext } from '$lib/contexts';
 	import { AttachmentType, KeyboardKey, PromptDrift } from '$lib/enums';

@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { AlertTriangle, CheckCircle, Key, RefreshCw, XCircle } from '@lucide/svelte';
 	import { goto } from '$app/navigation';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import Label from '$lib/components/ui/label/label.svelte';
 	import {
 		HEADERS,
 		ICON_CLASS_DEFAULT,

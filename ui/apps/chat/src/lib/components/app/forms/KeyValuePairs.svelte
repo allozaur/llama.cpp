@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Input } from '@ggml/llama-ui/ui/input';
 	import { Plus, Trash2 } from '@lucide/svelte';
-	import { Input } from '$lib/components/ui/input';
 	import { KEY_VALUE_PAIR_KEY_MAX_LENGTH, KEY_VALUE_PAIR_VALUE_MAX_LENGTH } from '$lib/constants';
 	import type { KeyValuePair } from '$lib/types';
 	import {

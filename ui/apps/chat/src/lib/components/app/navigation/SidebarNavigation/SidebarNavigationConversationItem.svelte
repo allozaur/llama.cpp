@@ -1,5 +1,7 @@
 <script lang="ts">
 	import SidebarNavigationGroupSubmenu from './SidebarNavigationGroupSubmenu.svelte';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		Download,
 		FolderInput,
@@ -22,8 +24,6 @@
 		ProjectSubmenu
 	} from '$lib/components/app';
 	import { TruncatedText } from '$lib/components/app';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		FORK_TREE_DEPTH_PADDING,
 		ICON_CLASS_DEFAULT,

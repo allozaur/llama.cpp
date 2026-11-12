@@ -1,7 +1,7 @@
 <script lang="ts" module>
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Button } from '$lib/components/ui/button';
 
 	const { Story } = defineMeta({
 		component: AlertDialog.Root,

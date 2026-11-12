@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import { ScrollArea } from '@ggml/llama-ui/ui/scroll-area';
 	import SearchInput from '$lib/components/app/forms/SearchInput.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { UI_DATA_ATTRS } from '$lib/constants';
 	import { useMarqueeSelection } from '$lib/hooks/use-marquee-selection.svelte';
 	import { SvelteSet } from 'svelte/reactivity';

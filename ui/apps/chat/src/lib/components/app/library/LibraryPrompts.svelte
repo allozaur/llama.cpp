@@ -1,10 +1,10 @@
 <script lang="ts">
 	import LibraryPromptCard from './LibraryPromptCard.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 	import { Plus, ScanText, SearchX } from '@lucide/svelte';
 	import { DialogPrompt } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
-	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { chatStore, conversationsStore, promptsStore } from '$lib/stores';
 	import type { PromptDraft } from '$lib/stores/prompts.svelte';
 	import type { DatabasePrompt } from '$lib/types';

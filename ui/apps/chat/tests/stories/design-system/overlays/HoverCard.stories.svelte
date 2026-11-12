@@ -1,6 +1,6 @@
 <script lang="ts" module>
+	import * as HoverCard from '@ggml/llama-ui/ui/hover-card';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as HoverCard from '$lib/components/ui/hover-card';
 
 	const { Story } = defineMeta({
 		component: HoverCard.Root,

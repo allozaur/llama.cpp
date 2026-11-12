@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Check, ChevronDown, ChevronRight, Info, Loader2, PencilRuler } from '@lucide/svelte';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Collapsible from '$lib/components/ui/collapsible';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ATTACHMENT_MENU_TEXT, CLI_FLAGS, ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { useToolsPanel } from '$lib/hooks/use-tools-panel.svelte';
 	import { mcpStore, toolsStore } from '$lib/stores';

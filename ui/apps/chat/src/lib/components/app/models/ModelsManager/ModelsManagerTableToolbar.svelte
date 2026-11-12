@@ -1,9 +1,9 @@
 <script lang="ts">
 	import ModelsManagerFilters from './ModelsManagerFilters.svelte';
 	import { hasActiveFilters } from './utils';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { X } from '@lucide/svelte';
 	import { SearchInput } from '$lib/components/app/forms';
-	import { Button } from '$lib/components/ui/button';
 	import { type ModalityKey } from '$lib/constants';
 	import { ModelCapability } from '$lib/enums';
 	import { deviceStore, serversStore } from '$lib/stores';

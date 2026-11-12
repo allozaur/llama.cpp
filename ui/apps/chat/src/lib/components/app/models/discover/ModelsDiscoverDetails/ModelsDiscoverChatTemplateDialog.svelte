@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import { Check, Copy, X } from '@lucide/svelte';
 	import { SyntaxHighlightedCode } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { COPY_FEEDBACK_RESET_MS } from '$lib/constants';
 	import { copyToClipboard } from '$lib/utils';
 

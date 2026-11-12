@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import { Check, Plus } from '@lucide/svelte';
 	import { SearchInput } from '$lib/components/app';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { projectsStore, uiStore } from '$lib/stores';
 
 	let options = $derived(uiStore.projectPicker);

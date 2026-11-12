@@ -1,4 +1,5 @@
 import { buildInfoPlugin } from './scripts/vite-plugin-build-info';
+import { llamaUiPlugin } from './scripts/vite-plugin-llama-ui';
 import { nerdamerPlugin } from './scripts/vite-plugin-nerdamer';
 import { relativizeBasePlugin } from './scripts/vite-plugin-relativize-base';
 import { splashScreenPlugin } from './scripts/vite-plugin-splash-screen';
@@ -38,6 +39,7 @@ export default defineConfig(({ mode }) => {
 		},
 
 		plugins: [
+			llamaUiPlugin(),
 			tailwindcss(),
 			sveltekit(),
 			SvelteKitPWA(SVELTEKIT_PWA_OPTIONS),

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { ServerCard } from '$lib/components/app/servers';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { Server } from '$lib/types';
 
 	interface Props {

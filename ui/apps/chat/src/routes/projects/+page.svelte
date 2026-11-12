@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 	import { Archive, Plus } from '@lucide/svelte';
 	import { FloatingActionButton, ProjectCard } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
-	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { APP_NAME, PROJECT_ICON } from '$lib/constants';
 	import { projectsStore, uiStore } from '$lib/stores';
 

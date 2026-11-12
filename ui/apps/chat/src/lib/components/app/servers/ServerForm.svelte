@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import * as Tabs from '@ggml/llama-ui/ui/tabs';
 	import { FlaskConical, QrCode, ShieldAlert } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as Tabs from '$lib/components/ui/tabs';
 	import { CODE_LENGTHS } from '$lib/constants';
 	import { ServerKind } from '$lib/enums';
 	import type { Server } from '$lib/types';

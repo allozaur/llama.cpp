@@ -1,6 +1,6 @@
 <script lang="ts">
 	import MenuActionsList from './MenuActionsList.svelte';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
+	import * as ContextMenu from '@ggml/llama-ui/ui/context-menu';
 	import { MenuKind } from '$lib/enums';
 	import { deviceStore } from '$lib/stores';
 	import type { MenuAction } from '$lib/types';

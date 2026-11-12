@@ -1,11 +1,11 @@
 <script lang="ts">
 	import '../app.css';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { GlassKey, MenuIcon, SidebarNavigation } from '$lib/components/app';
 	import { PwaMetaTags, PwaRefreshAlert } from '$lib/components/pwa';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		BOX_BORDER,
 		CHAT_FORM_CHROME_FADE_MS,

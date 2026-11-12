@@ -1,6 +1,6 @@
 <!-- One decision through the three token tiers to the screen: the primary button's fill, as the CSS has it -->
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '@ggml/llama-ui/ui/button';
 
 	const tiers = [
 		{ name: '--neutral-900', note: 'a raw value (neutral-200 in dark mode)', tier: 'Primitive' },

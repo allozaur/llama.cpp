@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Card from '$lib/components/ui/card';
+	import * as Card from '@ggml/llama-ui/ui/card';
 	import type { RecommendedMCPServer } from '$lib/types';
 	import { mode } from 'mode-watcher';
 

@@ -1,6 +1,6 @@
 <script lang="ts" module>
+	import * as Table from '@ggml/llama-ui/ui/table';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as Table from '$lib/components/ui/table';
 
 	const { Story } = defineMeta({
 		component: Table.Root,

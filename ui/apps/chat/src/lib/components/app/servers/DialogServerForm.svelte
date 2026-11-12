@@ -1,9 +1,8 @@
 <script lang="ts">
 	import DialogServerCodeScanner from './DialogServerCodeScanner.svelte';
 	import ServerForm from './ServerForm.svelte';
-	import { CheckCircle2, Loader2, PlugZap, QrCode, XCircle } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import {
 		Drawer,
 		DrawerContent,
@@ -11,7 +10,8 @@
 		DrawerFooter,
 		DrawerHeader,
 		DrawerTitle
-	} from '$lib/components/ui/drawer';
+	} from '@ggml/llama-ui/ui/drawer';
+	import { CheckCircle2, Loader2, PlugZap, QrCode, XCircle } from '@lucide/svelte';
 	import { CODE_LENGTHS, SERVER_ID_PREFIX } from '$lib/constants';
 	import { ServerKind } from '$lib/enums';
 	import { ServersService } from '$lib/services';

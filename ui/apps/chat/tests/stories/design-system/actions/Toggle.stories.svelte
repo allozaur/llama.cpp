@@ -1,10 +1,10 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Toggle } from '@ggml/llama-ui/ui/toggle';
 	import { Bold, Italic, WrapText } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import { Toggle } from '$lib/components/ui/toggle';
 
 	const { Story } = defineMeta({
 		component: Toggle,

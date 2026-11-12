@@ -1,10 +1,10 @@
 <script lang="ts">
 	import ChatFormCurrentWorkingDirectoryChip from './ChatFormCurrentWorkingDirectoryChip.svelte';
 	import ChatFormCurrentWorkingDirectoryResultsList from './ChatFormCurrentWorkingDirectoryResultsList.svelte';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
+	import * as Popover from '@ggml/llama-ui/ui/popover';
 	import { FolderOpen, X } from '@lucide/svelte';
 	import SearchInput from '$lib/components/app/forms/SearchInput.svelte';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as Popover from '$lib/components/ui/popover';
 	import { DEFAULT_MOBILE_BREAKPOINT, HOME_TILDE, SEARCH, UI_DATA_ATTRS } from '$lib/constants';
 	import { BuiltInTool, GlobSearchType, KeyboardKey, ToolSource } from '$lib/enums';
 	import { useDebouncedSearch } from '$lib/hooks/use-debounced-search.svelte';

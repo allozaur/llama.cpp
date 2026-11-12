@@ -4,8 +4,8 @@
 	cinder mark is on it.
 -->
 <script lang="ts">
-	import { Label } from '$lib/components/ui/label';
-	import * as RadioGroup from '$lib/components/ui/radio-group';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import * as RadioGroup from '@ggml/llama-ui/ui/radio-group';
 
 	const plain = [
 		{ id: 'quick', name: 'Quick answers' },

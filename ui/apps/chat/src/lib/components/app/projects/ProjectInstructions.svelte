@@ -1,9 +1,9 @@
 <script lang="ts">
 	import ProjectSection from './ProjectSection.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import { Pencil } from '@lucide/svelte';
 	import { ActionIcon } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import { Textarea } from '$lib/components/ui/textarea';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 
 	interface Props {

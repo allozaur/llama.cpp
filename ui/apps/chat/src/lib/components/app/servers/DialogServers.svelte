@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import { Server } from '@lucide/svelte';
 	import ModelsManagerServers from '$lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { deviceStore, remoteAccessStore } from '$lib/stores';
 
 	interface Props {

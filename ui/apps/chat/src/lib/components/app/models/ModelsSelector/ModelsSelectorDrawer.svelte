@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Drawer, DrawerContent } from '@ggml/llama-ui/ui/drawer';
 	import { DropdownMenuSearchable } from '$lib/components/app';
-	import { Drawer, DrawerContent } from '$lib/components/ui/drawer';
 	import { uiStore } from '$lib/stores';
 	import type { Snippet } from 'svelte';
 

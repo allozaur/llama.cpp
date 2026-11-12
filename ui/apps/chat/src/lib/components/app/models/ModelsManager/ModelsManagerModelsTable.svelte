@@ -9,6 +9,7 @@
 		type ModelQuantGroup,
 		type ModelsTableGroup
 	} from './utils';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import {
 		ArrowDown,
 		ArrowUp,
@@ -29,7 +30,6 @@
 		ModelsSection
 	} from '$lib/components/app';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
-	import * as Empty from '$lib/components/ui/empty';
 	import {
 		FAMILY_ROW_WINDOW,
 		type ModalityKey,

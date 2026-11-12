@@ -4,12 +4,12 @@
 	numbers, shortcuts); Sans keeps the prose and the labels.
 -->
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Card from '@ggml/llama-ui/ui/card';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { Check, Copy, Gauge } from '@lucide/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 
 	let endpoint = $state('http://127.0.0.1:9931/v1');
 	let seed = $state('42');

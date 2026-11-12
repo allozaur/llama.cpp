@@ -4,7 +4,7 @@
 	and connect to a server you add. Bundled ships today; the other two are planned.
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 
 	const channels = [
 		{

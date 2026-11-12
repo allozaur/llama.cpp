@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Plus, Radio } from '@lucide/svelte';
 	import { DialogServerForm, ServerCard } from '$lib/components/app/servers';
-	import { Button } from '$lib/components/ui/button';
 	import { ServerKind } from '$lib/enums';
 	import { remoteAccessStore, serversModelsStore, serversStore, serverStore } from '$lib/stores';
 	import type { Server } from '$lib/types';

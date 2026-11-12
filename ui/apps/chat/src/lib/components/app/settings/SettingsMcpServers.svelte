@@ -1,11 +1,11 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import { Plus } from '@lucide/svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import { McpServerCard, McpServerCardSkeleton } from '$lib/components/app';
 	import { DialogMcpResourcesBrowser, DialogMcpServerAddNew } from '$lib/components/app/dialogs';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
 	import { HealthCheckStatus } from '$lib/enums';
 	import { mcpStore, toolsStore } from '$lib/stores';
 	import { onMount } from 'svelte';

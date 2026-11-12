@@ -5,10 +5,10 @@
 		type ResourceTreeNode,
 		sortTreeChildren
 	} from './mcp-resources-browser';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
 	import { Braces, ChevronDown, ChevronRight, FolderOpen, Loader2 } from '@lucide/svelte';
 	import { McpServerIdentity } from '$lib/components/app/mcp';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { mcpStore } from '$lib/stores';
 	import type { MCPResourceInfo, MCPResourceTemplateInfo, MCPServerResources } from '$lib/types';

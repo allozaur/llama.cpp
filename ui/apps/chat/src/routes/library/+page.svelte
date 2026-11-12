@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import { Library, Plus } from '@lucide/svelte';
 	import {
 		FloatingActionButton,
@@ -9,8 +11,6 @@
 		LibraryViewToggle,
 		SearchInput
 	} from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Empty from '$lib/components/ui/empty';
 	import { APP_NAME, LIBRARY_TABS } from '$lib/constants';
 	import { LibraryTab, LibraryView } from '$lib/enums';
 

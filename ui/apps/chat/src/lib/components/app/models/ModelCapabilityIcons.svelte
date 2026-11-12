@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		CAPABILITY_ICONS,
 		CAPABILITY_LABELS,

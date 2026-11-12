@@ -1,6 +1,6 @@
-import components from '../../../../src/lib/styles/tokens/components.css?raw';
-import primitives from '../../../../src/lib/styles/tokens/primitives.css?raw';
-import semantic from '../../../../src/lib/styles/tokens/semantic.css?raw';
+import components from '@ggml/llama-ui/styles/tokens/components.css?raw';
+import primitives from '@ggml/llama-ui/styles/tokens/primitives.css?raw';
+import semantic from '@ggml/llama-ui/styles/tokens/semantic.css?raw';
 
 export interface ColorToken {
 	name: string;

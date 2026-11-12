@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Card } from '@ggml/llama-ui/ui/card';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { TruncatedText } from '$lib/components/app/misc';
-	import { Card } from '$lib/components/ui/card';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { McpPromptVariant } from '$lib/enums';
 	import { mcpStore } from '$lib/stores';
 	import type { DatabaseMessageExtraMcpPrompt } from '$lib/types';

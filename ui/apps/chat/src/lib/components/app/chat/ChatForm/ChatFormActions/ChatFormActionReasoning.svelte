@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Check, Info, Lightbulb, LightbulbOff } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ICON_CLASS_DEFAULT, REASONING_EFFORT_LABELS } from '$lib/constants';
 	import { ReasoningEffort } from '$lib/enums';
 	import { useReasoningMenu } from '$lib/hooks/use-reasoning-menu.svelte';

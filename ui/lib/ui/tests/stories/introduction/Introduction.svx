@@ -28,6 +28,7 @@ Import the theme right after Tailwind, then the components:
 
 ```css
 @import 'tailwindcss';
+@import 'tw-animate-css';
 @import '@ggml/llama-ui/theme.css';
 ```
 

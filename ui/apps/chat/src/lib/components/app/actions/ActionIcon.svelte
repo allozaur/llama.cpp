@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, type ButtonSize, type ButtonVariant } from '$lib/components/ui/button';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { Button, type ButtonSize, type ButtonVariant } from '@ggml/llama-ui/ui/button';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { TooltipSide } from '$lib/enums';
 	import type { Component } from 'svelte';
 

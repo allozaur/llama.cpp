@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { DialogServers } from '$lib/components/app';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 
 	interface Props {
 		open?: boolean;

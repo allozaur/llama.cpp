@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Alert from '@ggml/llama-ui/ui/alert';
 	import { AlertTriangle, Loader2, RefreshCw, Server } from '@lucide/svelte';
-	import * as Alert from '$lib/components/ui/alert';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { useBackendAvailability } from '$lib/hooks/use-backend-availability.svelte';
 	import { serversStore, serverStore, uiStore } from '$lib/stores';

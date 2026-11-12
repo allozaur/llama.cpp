@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { RefreshCw } from '@lucide/svelte';
 	import {
 		SettingsChatDesktopSidebar,
@@ -9,7 +10,6 @@
 		SettingsFooter,
 		SettingsResetButton
 	} from '$lib/components/app/settings';
-	import { Button } from '$lib/components/ui/button';
 	import {
 		NUMERIC_FIELDS,
 		POSITIVE_INTEGER_FIELDS,

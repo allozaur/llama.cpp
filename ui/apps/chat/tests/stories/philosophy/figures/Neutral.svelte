@@ -4,7 +4,7 @@
 	nothing else does
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 
 	const greys = [25, 50, 100, 150, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(
 		(n) => `var(--neutral-${n})`

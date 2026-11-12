@@ -6,7 +6,7 @@
 	capital icon with its gap). Two columns on wide screens, one on narrow ones.
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 </script>
 
 <div class="map">

@@ -3,8 +3,8 @@
 	(Switch, ToggleGroup), and the exact setting it stands for in a second column. The same choice, two vocabularies.
 -->
 <script lang="ts">
-	import { Switch } from '$lib/components/ui/switch';
-	import * as ToggleGroup from '$lib/components/ui/toggle-group';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
+	import * as ToggleGroup from '@ggml/llama-ui/ui/toggle-group';
 </script>
 
 <div class="plain card-surface rounded-card" inert>

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import ChatScreenForm from '$lib/components/app/chat/ChatScreen/ChatScreenForm.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 </script>
 
 <Tooltip.Provider>

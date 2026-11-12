@@ -8,9 +8,9 @@
 		gaugePopup,
 		gaugePopupClose
 	} from './gauge-popup.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
 	import { FoldVertical, Loader2 } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Drawer from '$lib/components/ui/drawer';
 	import { useContextGauge } from '$lib/hooks/use-context-gauge.svelte';
 	import { agenticStore, chatStore, conversationsStore, deviceStore } from '$lib/stores';
 	import { formatParameters } from '$lib/utils/formatters';

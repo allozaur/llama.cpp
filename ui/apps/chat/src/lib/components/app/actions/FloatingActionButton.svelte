@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Portal } from 'bits-ui';
 	import type { Component } from 'svelte';
 

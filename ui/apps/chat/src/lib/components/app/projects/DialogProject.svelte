@@ -1,12 +1,12 @@
 <script lang="ts">
 	import ProjectContextList from './ProjectContextList.svelte';
 	import ProjectFolderPicker from './ProjectFolderPicker.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import { DialogConfirmation } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Textarea } from '$lib/components/ui/textarea';
 	import { PROJECT_NAME_MAX_LENGTH } from '$lib/constants';
 	import { projectsStore, uiStore } from '$lib/stores';
 	import type { ProjectDraft } from '$lib/types';

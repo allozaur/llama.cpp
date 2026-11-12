@@ -3,7 +3,7 @@
 	import TokenTier from './TokenTier.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// read from src/lib/styles/tokens/*.css, so the swatches follow the CSS as it changes
+	// read from ui/lib/ui/src/lib/styles/tokens/*.css, so the swatches follow the CSS as it changes
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'

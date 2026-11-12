@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { ArrowLeft, Server } from '@lucide/svelte';
 	import ModelsManager from '$lib/components/app/models/ModelsManager/ModelsManager.svelte';
 	import ModelsManagerServers from '$lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { APP_NAME, DISCOVER_ICON } from '$lib/constants';
 	import { modelsStore, uiStore } from '$lib/stores';
 	import { onMount } from 'svelte';
