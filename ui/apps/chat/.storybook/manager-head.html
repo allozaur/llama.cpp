@@ -1,0 +1,101 @@
+<!--
+	Old links keep working: stories that moved (Introduction/Assets and Brand/Assets to Brand/Logo/Assets,
+	Logo/Showcase to Logo/Overview, Brand/Communications to its own Communications section, then into Direction and Applications, the Llama Sans UI and Display pages, the Llama Sans stories into one Llama Sans item, the app icons into Logo/Usage …) redirect to
+	where they are now, and a link to a story that no longer exists opens Storybook's start page instead of the
+	"Couldn't find story" error.
+-->
+<script>
+	(function () {
+		var match = location.search.match(/[?&]path=\/(story|docs)\/([^&]+)/);
+
+		if (!match) return;
+
+		var id = decodeURIComponent(match[2]);
+
+		// moved stories, old id: new id
+		var moved = {
+			'brand-assets--logo': 'brand-logo-assets--logo',
+			'brand-assets--social-profiles': 'brand-logo-assets--social-profiles',
+			'brand-colors-accent-proposal--accent-proposal': 'brand-colors-palette--palette',
+			'brand-colors-communications--artwork': 'communications-direction--specimen-boards',
+			'brand-colors-communications--base': 'communications-direction--mood-board',
+			'brand-colors-communications--key-visuals': 'communications-direction--mood-board',
+			'brand-colors-palette-proposal--specimen-boards': 'communications-direction--specimen-boards',
+			'brand-colors-primitives--primitives': 'ui-foundations-colors--primitives',
+			'brand-communications--artwork': 'communications-direction--specimen-boards',
+			'brand-communications--key-visuals': 'communications-direction--mood-board',
+			'brand-communications--link-previews': 'communications-applications--link-previews',
+			'brand-communications--model-drop': 'communications-applications--model-drop',
+			'brand-communications--what-s-new': 'communications-applications--what-s-new',
+			'brand-logo-app-icons--icons': 'brand-logo-usage--app-icons-and-avatars',
+			'brand-logo-app-icons--splash-screens': 'ui-foundations-brand--splash-screens',
+			'brand-logo-icon--geometry': 'brand-logo-overview--overview',
+			'brand-logo-usage--app-icons': 'brand-logo-usage--app-icons-and-avatars',
+			'brand-logo-usage--splash-screens': 'ui-foundations-brand--splash-screens',
+			'brand-logo-usage--avatars': 'brand-logo-usage--app-icons-and-avatars',
+			'brand-logo-icon--usage': 'brand-logo-usage--glyphs',
+			'brand-logo-usage--lockup-in-context': 'brand-logo-lockup--lockup',
+			'brand-logo-usage--lockup-in-llama-mono': 'brand-logo-lockup--lockup',
+			'brand-logo-usage--sans-and-mono-lockups': 'brand-logo-lockup--lockup',
+			'brand-logo-usage--lockups': 'brand-logo-lockup--lockup',
+			'brand-typography-llama-mono--llama-cpp-logo': 'brand-logo-lockup--lockup',
+			'brand-logo-showcase--page': 'brand-logo-overview--overview',
+			'brand-typography-llama-sans-display--in-use': 'brand-typography-llama-sans--display',
+			'brand-typography-llama-sans-display--tester': 'brand-typography-tester--tester',
+			'brand-typography-llama-sans-display--weights': 'brand-typography-llama-sans--overview',
+			'brand-typography-llama-sans-ui--glyphs': 'brand-typography-llama-sans--glyphs',
+			'brand-typography-llama-sans-ui--interface': 'brand-typography-llama-sans--user-interface',
+			'brand-typography-llama-sans-ui--running-text': 'brand-typography-llama-sans--running-text',
+			'brand-typography-llama-sans-ui--tester': 'brand-typography-tester--tester',
+			'brand-typography-llama-sans-ui--weights': 'brand-typography-llama-sans--overview',
+			'brand-typography-llama-sans-display--display': 'brand-typography-llama-sans--display',
+			'brand-typography-llama-sans-glyphs--glyphs': 'brand-typography-llama-sans--glyphs',
+			'brand-typography-llama-sans-user-interface--user-interface':
+				'brand-typography-llama-sans--user-interface',
+			'brand-typography-llama-sans-running-text--running-text':
+				'brand-typography-llama-sans--running-text',
+			'brand-typography-overview--overview': 'brand-typography-llama-sans--overview',
+			'communications-artwork--artwork': 'communications-direction--specimen-boards',
+			'communications-key-visuals--key-visuals': 'communications-direction--mood-board',
+			'communications-posts--link-previews': 'communications-applications--link-previews',
+			'communications-posts--model-drop': 'communications-applications--model-drop',
+			'communications-posts--what-s-new': 'communications-applications--what-s-new',
+			'communications-key-visuals--words': 'communications-key-visuals--receipt',
+			'communications-swag--swag': 'communications-applications-swag--swag',
+			'introduction-design-philosophy--design-philosophy': 'philosophy-design--design',
+			'philosophy--design': 'philosophy-design--design',
+			'philosophy--ideology': 'philosophy-ideology--ideology',
+			'philosophy--product': 'philosophy-product--product',
+			'introduction-assets--assets': 'brand-logo-assets--logo',
+			'introduction-design-guidelines--docs': 'agents-design-guidelines--docs',
+			'introduction-brand-guidelines--docs': 'agents-brand-guidelines--docs'
+		};
+
+		// whole groups that moved, by id prefix
+		var movedGroups = [['brand-logo-lockup-proposal--', 'brand-logo-lockup--lockup']];
+
+		function go(to) {
+			var url =
+				location.pathname +
+				(to ? '?path=/' + (/--docs$/.test(to) ? 'docs' : 'story') + '/' + to : '');
+
+			if (url !== location.pathname + location.search) location.replace(url);
+		}
+
+		if (moved[id]) return go(moved[id]);
+
+		for (var i = 0; i < movedGroups.length; i++) {
+			if (id.indexOf(movedGroups[i][0]) === 0) return go(movedGroups[i][1]);
+		}
+
+		// any other id: open the start page if the story is gone
+		fetch('./index.json')
+			.then(function (response) {
+				return response.json();
+			})
+			.then(function (index) {
+				if (!index.entries || !index.entries[id]) go('');
+			})
+			.catch(function () {});
+	})();
+</script>

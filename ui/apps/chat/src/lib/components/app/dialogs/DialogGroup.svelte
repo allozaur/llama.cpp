@@ -1,9 +1,9 @@
 <script lang="ts">
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { FolderPlus, Pencil } from '@lucide/svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import { GROUP_NAME_MAX_LENGTH } from '$lib/constants';
 	import { groupsStore, uiStore } from '$lib/stores';
 	import { untrack } from 'svelte';

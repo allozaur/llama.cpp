@@ -11,14 +11,14 @@
 
 ## Where it comes from
 
-Llama UI is designed and built in llama.cpp, in `ui/apps/chat`, and its Storybook there is the source of truth: the **Philosophy**, the **Brand**, the **Communications** and every component of Llama Chat. This Storybook is a copy of it, cut down to what the package holds so far, with the same sections, the same toolbar and the same stories.
+The package lives in llama.cpp, in `ui/lib/ui`, and Llama Chat, in `ui/apps/chat`, is built on it: its tokens, fonts and base components come from here. Llama Chat's Storybook is still the full one, with the **Philosophy**, the **Brand**, the **Communications** and every component of Llama Chat. This Storybook has the same sections, the same toolbar and the same stories, cut down to what the package holds.
 
-Until `ui/apps/chat` uses this package itself, changes flow one way, from `ui/apps/chat` to here.
+The tokens, the fonts and the base components are changed here, and Llama Chat takes them as they are. What both still keep a copy of, the Model UI among them, flows one way for now, from `ui/apps/chat` to here.
 
 ## What's in it
 
 - **Foundations:** the primitive, semantic and component tokens, the type, corner, icon and control-height roles, the matte surfaces and elevations, and Llama Sans and Llama Mono.
-- **Components:** Button, Badge, Label, Switch and Tooltip.
+- **Components:** the 29 base components Llama Chat is built from, Alert to Tooltip. A few have stories here so far; all of them are drawn under **UI** in Llama Chat's Storybook.
 - **Model UI:** how a model is shown in Llama Chat and on llama.app: its name and badges, capability icons, maker's avatar and quant chips, under **UI › Blocks › Models**. They take model data in and report what the user did out.
 - **Scrapbook:** proposals and variations, rendered before anything is decided.
 
@@ -28,6 +28,7 @@ Import the theme right after Tailwind, then the components:
 
 ```css
 @import 'tailwindcss';
+@import 'tw-animate-css';
 @import '@ggml/llama-ui/theme.css';
 ```
 

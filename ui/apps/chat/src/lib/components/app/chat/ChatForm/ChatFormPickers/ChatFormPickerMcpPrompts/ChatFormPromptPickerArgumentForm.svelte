@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ChatFormPromptPickerArgumentInput from './ChatFormPromptPickerArgumentInput.svelte';
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import type { MCPPromptInfo } from '$lib/types';
 
 	interface Props {
@@ -67,7 +67,7 @@
 	{/if}
 
 	<div class="mt-8 flex justify-end gap-2">
-		<Button onclick={onCancel} size="sm" type="button" variant="secondary">Cancel</Button>
+		<Button onclick={onCancel} size="sm" type="button" variant="outline">Cancel</Button>
 
 		<Button size="sm" type="submit">Use Prompt</Button>
 	</div>

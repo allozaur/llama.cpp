@@ -1,6 +1,6 @@
 <script lang="ts">
 	import McpLogo from './McpLogo.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { ICON_CLASS_DEFAULT, MAX_DISPLAYED_MCP_AVATARS } from '$lib/constants';
 	import { HealthCheckStatus, ToolSource } from '$lib/enums';
 	import { conversationsStore, mcpStore } from '$lib/stores';

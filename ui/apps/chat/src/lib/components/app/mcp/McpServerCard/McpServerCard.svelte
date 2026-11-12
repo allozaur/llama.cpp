@@ -1,4 +1,6 @@
 <script lang="ts">
+	import * as Card from '@ggml/llama-ui/ui/card';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 	import {
 		McpConnectionLogs,
 		McpServerCardActions,
@@ -8,8 +10,6 @@
 		McpServerCardToolsList,
 		McpServerInfo
 	} from '$lib/components/app/mcp';
-	import * as Card from '$lib/components/ui/card';
-	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 	import { HealthCheckStatus } from '$lib/enums';
 	import { mcpStore } from '$lib/stores';

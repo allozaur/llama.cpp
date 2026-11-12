@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { McpServerForm } from '$lib/components/app/mcp';
-	import { Button } from '$lib/components/ui/button';
 	import { parseHeadersToArray } from '$lib/utils';
 
 	interface Props {
@@ -85,7 +85,7 @@
 		/>
 
 		<div class="flex items-center justify-end gap-2">
-			<Button onclick={onCancel} size="sm" variant="secondary">Cancel</Button>
+			<Button onclick={onCancel} size="sm" variant="outline">Cancel</Button>
 
 			<Button disabled={!canSave} size="sm" type="submit">
 				{serverUrl.trim() ? 'Update' : 'Add'}

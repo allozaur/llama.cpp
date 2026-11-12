@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, type ButtonSize, type ButtonVariant } from '$lib/components/ui/button';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { Button, type ButtonSize, type ButtonVariant } from '@ggml/llama-ui/ui/button';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { TooltipSide } from '$lib/enums';
 	import type { Component } from 'svelte';
 
@@ -26,7 +26,7 @@
 		disabled = false,
 		href = '',
 		icon,
-		iconSize = 'h-3 w-3',
+		iconSize = 'size-icon-md',
 		onclick,
 		size = 'sm',
 		stopPropagationOnClick = false,
@@ -44,7 +44,7 @@
 	<Button
 		{...props}
 		aria-label={ariaLabel || tooltip}
-		class="h-6 w-6 p-0 {className} flex hover:bg-transparent data-[state=open]:bg-transparent!"
+		class="size-6 p-0 {className} flex hover:bg-transparent data-[state=open]:bg-transparent!"
 		{disabled}
 		{href}
 		onclick={(e: MouseEvent) => {

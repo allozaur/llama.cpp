@@ -4,10 +4,10 @@
 	import ModelsManagerModelConfigurationActions from './ModelsManagerModelConfigurationActions.svelte';
 	import ModelsManagerModelConfigurationHeader from './ModelsManagerModelConfigurationHeader.svelte';
 	import ModelsManagerModelConfigurationInformation from './ModelsManagerModelConfigurationInformation.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Trash2 } from '@lucide/svelte';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
-	import { Button } from '$lib/components/ui/button';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ModelDownloadConfirmAction, ServerModelStatus } from '$lib/enums';
 	import { HuggingFaceService } from '$lib/services';
 	import { deviceStore, modelsStore, uiStore } from '$lib/stores';
@@ -204,7 +204,7 @@
 		size="sm"
 		variant="ghost"
 	>
-		<Trash2 class="h-4 w-4" />
+		<Trash2 class="size-icon-md" />
 		Delete this model from disk
 	</Button>
 {/snippet}

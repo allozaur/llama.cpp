@@ -1,0 +1,106 @@
+<!--
+	Architecture › Stack: the architecture drawing, the line between Llama UI and the apps, the repo layout and what an
+	app built on the library looks like. Set in the Philosophy pages' Editorial, through Frame.svelte.
+-->
+
+<script>
+	import Cards from './lib/components/ui/Cards.svelte';
+	import Card from './lib/components/ui/Card.svelte';
+	import ArchitectureDiagram from './lib/components/stack/ArchitectureDiagram.svelte';
+	import Legend from './lib/components/stack/Legend.svelte';
+	import Rule from './lib/components/stack/Rule.svelte';
+	import RuleSide from './lib/components/stack/RuleSide.svelte';
+	import Note from './lib/components/stack/Note.svelte';
+</script>
+
+<p class="kicker">Architecture · Llama UI and the apps</p>
+
+# One library, many apps
+
+Llama UI is the design system and component library: UI and UX, no business logic. [Llama Chat](/chat/) is one application built on it, the WebUI we ship today. Other apps can follow on the same parts. The llama.app website uses the same library, so models look and behave the same everywhere. The agentic loop is a package of its own, Llama Harness (`@ggml/llama-harness`), so an app can run it or bring its own. Splitting library, harness and apps lets anyone build their own app on the Llama stack, and lets Chat ship in more places.
+
+<Legend />
+
+<ArchitectureDiagram />
+
+<Rule title="Llama UI draws and handles interaction. Apps decide what happens.">
+<RuleSide side="lib" title="In Llama UI">Components, design tokens and the logic inside them: multi-step flows, drag to reorder, keyboard navigation, validation as you type, formatting a file size, checking whether a model fits in memory.</RuleSide>
+<RuleSide side="app" title="In the apps">Talking to llama-server, storing conversations and notes, running the agentic loop through Llama Harness and gating its tools, managing models and servers. Components get data in and report what the user did out.</RuleSide>
+</Rule>
+
+<Cards cols={2}>
+<Card kicker="Repo layout" title="The UI in a root folder">
+
+The packages live in `ui/lib`, one folder each, and the apps built on them in `ui/apps`. Llama Chat imports the library: its tokens, fonts and base components come from `ui/lib/ui`. This Storybook still lives in `ui/apps/chat`.
+
+```text
+ui/
+├── lib/
+│   └── ui/          @ggml/llama-ui
+└── apps/
+    └── chat/        @ggml/llama-chat
+                     (private, not published)
+
+still to come
+ui/
+├── lib/
+│   └── ui/          → ui.llama.app
+└── apps/
+    ├── chat/        published, + npx llama-chat
+    │                → chat.llama.app
+    ├── <app>/       other apps of ours
+    └── <example>/   many, any use case
+```
+
+<Note>Stays in the llama.cpp repo. npm packages give outside projects a clean import without a separate GitHub repo. The llama.app website stays in <code>ggml-org/llama-pages</code> and installs <code>@ggml/llama-ui</code>.</Note>
+
+</Card>
+<Card kicker="Build your own app" title="A chat app is a composition">
+
+The library draws the parts and handles interaction. The app owns the state and talks to llama-server. Llama Chat is the polished version of this. Examples in `ui/apps` stay small and developer-facing.
+
+```svelte
+<!-- MyApp.svelte -->
+<script>
+  import { Thread, Composer, ModelPicker }
+    from '@ggml/llama-ui';      // UI + UX
+  import { listModels, send }
+    from './server';             // your logic
+
+  let model = $state();
+  let messages = $state([]);
+</script>
+
+<ModelPicker models={await listModels()} bind:value={model} />
+<Thread {messages} />
+<Composer onsubmit={(text) => send(model, text, messages)} />
+```
+
+<Note>Illustrative only. Component names and API are not final; the first example app in <code>ui/apps</code> would pin this down.</Note>
+
+</Card>
+</Cards>
+
+## Where the docs live
+
+Two hosted Storybooks, one for each audience:
+
+- **ui.llama.app** documents the `@ggml/llama-ui` package for the people building on it: components, tokens, patterns and usage, built from `ui/lib/ui` and versioned with llama.cpp's releases.
+- **brand.llama.app** is the brand alone: the philosophy, the logo, the type, the colours and communications, built from `ggml-org/llama-brand`. It pulls in ui.llama.app through Storybook's composition, so one sidebar shows both, while the package's docs stay lean.
+
+For now both live in this one Storybook, in `ui/apps/chat`.
+
+## Llama Harness
+
+The agentic loop moves out of Chat into its own package, `@ggml/llama-harness`, in `ui/lib/harness`: headless TypeScript, no UI and no DOM. It needs an OpenAI-compatible endpoint, not llama-server specifically; model loading, `/props` and server tools are capabilities it detects and works without. The same loop runs in the browser, in Node and in the native apps.
+
+```ts
+interface Harness {
+  run(messages, tools, signal): AsyncIterable<HarnessEvent>
+}
+
+// HarnessEvent
+text · reasoning · tool_call · tool_result · done · error
+```
+
+The loop is swappable: an app can put its own behind the same contract, so Llama Chat can run another harness such as `pi` while Llama Harness stays the minimal default. The tools and the approval gate sit above it, so every loop gets the same ones: built-in tools in the app, `server.*` tools listed by llama-server, `mcp.<name>.*` tools from the MCP servers you add, and tools declared in JSON. One loop owns approvals, cancellation and history; llama-server offers tools but never runs a loop of its own.

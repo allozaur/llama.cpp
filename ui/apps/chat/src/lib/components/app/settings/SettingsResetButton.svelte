@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { RotateCcw } from '@lucide/svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Button } from '$lib/components/ui/button';
 	import { settingsStore } from '$lib/stores';
 
 	interface Props {
@@ -26,7 +26,7 @@
 
 {#if settingsStore.hasCustomSettings}
 	<Button onclick={handleResetClick} variant="outline">
-		<RotateCcw class="h-3 w-3" />
+		<RotateCcw class="size-icon-md" />
 
 		Reset to default
 	</Button>

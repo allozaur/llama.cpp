@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		CAPABILITY_ICONS,
 		CAPABILITY_LABELS,
@@ -25,7 +25,7 @@
 		gapClass = 'gap-1.25',
 		hideCapabilities = false,
 		hideModalities = false,
-		iconSize = 'h-3 w-3',
+		iconSize = 'size-icon-xs',
 		modalities,
 		supportsThinking = false,
 		supportsToolUse = false

@@ -1,0 +1,31 @@
+# Instructions for ui/apps/chat
+
+These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/apps/chat`: **Llama Chat**, the chat client that llama-server bundles. **Llama UI**, the library, is `ui/lib/ui` (`@ggml/llama-ui`): Chat imports its tokens, fonts and base components from there (`@ggml/llama-ui/ui/<name>`) and keeps no copy of them. `DESIGN.md`, `BRAND.md` and the full Storybook still live here.
+
+- **Design:** [DESIGN.md](DESIGN.md) holds the tokens, roles and rules, written for agents. Follow it for anything visual; when it and the CSS disagree, the CSS wins and DESIGN.md is updated.
+- **Why:** Storybook's **Philosophy** section explains the reasons, for people: **Ideology** ([Ideology.svx](tests/stories/philosophy/Ideology.svx)), **Product** ([Product.svx](tests/stories/philosophy/Product.svx)) and **Design** ([Design.svx](tests/stories/philosophy/Design.svx)).
+- **Components:** the `SKILL.md` next to a component folder (such as [src/lib/components/app/SKILL.md](src/lib/components/app/SKILL.md)) holds that folder's conventions.
+
+## Designing: render the options in the Scrapbook
+
+Whenever a design is being worked out (UI, UX, communications or the brand), offer to render the proposed iterations or variations in Storybook rather than only describing them, so they can be compared on screen.
+
+- Put them in the **Scrapbook** section, beside Agents, Philosophy, Brand, Communications and UI: `Scrapbook/UI/<topic>`, `Scrapbook/Communications/<topic>` or `Scrapbook/Brand/<topic>`.
+- One story per variation, named so they compare: `A · Compact`, `B · Spacious`.
+- Build them from the real components, tokens, fonts and files, in both themes, and at a phone width where it matters.
+- Once one is chosen, build it in its own section; the others stay in the Scrapbook as a record. [Scrapbook › About](tests/stories/scrapbook/About.svx) says the same for people.
+
+## Content is Markdown, custom pieces are Svelte: .svx
+
+Anything that is mostly content (a doc, an overview, a showcase or a Storybook page with prose) is written in Markdown, and whatever Markdown cannot express (a live example, a diagram, a real component) is a Svelte component placed in it. Together that is a `.svx` page, compiled by [mdsvex](https://mdsvex.pngwk.com).
+
+- Write the prose as plain Markdown, so it reads well as source, for people and for agents alike.
+- Put each custom piece in its own `.svelte` file and import it in the page's `<script>`. Keep logic and styles out of the `.svx` file.
+- Frame the page with a Svelte component that sets its typography, and show it in Storybook as a fullscreen story, as `philosophy/Design.stories.svelte` and `LogoShowcase.stories.svelte` do. Storybook's MDX is rendered with React and cannot hold Svelte components, so use MDX only for pages that are Markdown alone, such as Design guidelines.
+- Do not add another Markdown-to-HTML pipeline. Content goes through mdsvex; user and assistant messages go through `MarkdownContent`.
+
+### mdsvex versions
+
+- `ui/apps/chat` is on mdsvex `0.12.7`, which only Storybook's `.svx` pages use. The llama-brand showcase and specimen are on `1.0.0-next.3`, and `LogoShowcase.svx` comes from there.
+- mdsvex 1.0 is the direction. Move `ui/apps/chat` to it, pinned to an exact `next` version, while it only serves Storybook pages; write new `.svx` pages so they work on both.
+- Messages: 1.0's `@mdsvex/render` can render a document as it streams in (`@mdsvex/render/stream`) and as Svelte (`Node.svelte`). The plan is to swap the unified/remark/rehype pipeline inside `MarkdownContent` for it, keeping `MarkdownContent`'s API, so chat messages, the live-preview Markdown editor and the Notebook (which all render through `MarkdownContent`) switch together. Check parity first: GFM, math, Mermaid, the safe-HTML config, file-mention badges and the code-block actions, plus bundle size and streaming performance.

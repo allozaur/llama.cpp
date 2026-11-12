@@ -22,7 +22,7 @@ const preview: Preview = {
 		},
 
 		options: {
-			// the same sections as Llama UI's Storybook in llama.cpp (ui/apps/chat), with only what this package has so far:
+			// the same sections as Llama Chat's Storybook (ui/apps/chat), with only what this package has so far:
 			// the introduction, the UI with its foundations first and its blocks last, then the Scrapbook
 			storySort: {
 				order: [
