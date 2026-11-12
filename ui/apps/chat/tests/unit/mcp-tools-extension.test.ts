@@ -8,18 +8,20 @@ vi.mock('$lib/services/database.service', () => ({
 	DatabaseService: {}
 }));
 // the component draws on the app's component barrel, which needs a browser
-vi.mock('$lib/extensions/mcp/McpToolGroupIdentity.svelte', () => ({ default: () => {} }));
+vi.mock('$lib/extensions/mcp/components/contributions/McpToolGroupIdentity.svelte', () => ({
+	default: () => {}
+}));
 
 import { HealthCheckStatus, ToolSource } from '$lib/enums';
 import type { ExtensionContext, FlowHook, ToolProvider } from '$lib/extensions';
 import { extensions } from '$lib/extensions';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import {
 	contributeTools,
 	enableAllToolsForServer,
 	policyEnabledServerIds
 } from '$lib/extensions/mcp/tools';
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { toolsStore } from '$lib/stores/tools.svelte';
 import type { HealthCheckState, MCPConnection, MCPServerSettingsEntry } from '$lib/types';
 

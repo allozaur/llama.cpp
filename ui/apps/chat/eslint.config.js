@@ -8,6 +8,7 @@ import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import storybook from 'eslint-plugin-storybook';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript-eslint';
 
@@ -156,6 +157,86 @@ const blankLineBetweenAccessors = {
 		type: 'layout'
 	}
 };
+// The core never imports an extension's own code; an extension may import the
+// core. A module under src/lib/extensions/<id>/ can only be imported by a file
+// in that same folder. The registry's own files (the index, builtin,
+// registry.svelte, types and points/*) stay importable from anywhere, and
+// builtin.ts loads each extension's entry with a dynamic import.
+const LIB_DIR = fileURLToPath(new URL('./src/lib', import.meta.url));
+const EXTENSIONS_DIR = path.join(LIB_DIR, 'extensions');
+const EXTENSIONS_PUBLIC_FILES = new Set(['builtin', 'index', 'registry.svelte', 'types']);
+const noExtensionInternals = {
+	create(context) {
+		// path of a file inside src/lib/extensions as segments, or null for a file outside it
+		function extensionSegments(file) {
+			const relative = path.relative(EXTENSIONS_DIR, file);
+
+			if (relative.startsWith('..') || path.isAbsolute(relative)) return null;
+
+			return relative === '' ? [] : relative.split(path.sep);
+		}
+
+		function check(node, source, isDynamic) {
+			if (typeof source !== 'string') return;
+
+			let target;
+
+			if (source === '$lib' || source.startsWith('$lib/')) {
+				target = path.join(LIB_DIR, source.slice('$lib'.length));
+			} else if (source.startsWith('.')) {
+				target = path.resolve(path.dirname(context.filename), source);
+			} else {
+				return;
+			}
+
+			const segments = extensionSegments(target);
+
+			if (!segments || segments.length === 0 || segments[0] === 'points') return;
+
+			const id = segments[0];
+
+			if (segments.length === 1 && EXTENSIONS_PUBLIC_FILES.has(id.replace(/\.[jt]s$/, ''))) return;
+
+			const importer = extensionSegments(context.filename);
+
+			if (importer && importer.length > 1 && importer[0] === id) return;
+
+			const isEntry =
+				segments.length === 1 || (segments.length === 2 && /^index(\.[jt]s)?$/.test(segments[1]));
+
+			// the one place that names the extensions: it loads the entry of each, lazily
+			if (isDynamic && isEntry && importer?.length === 1 && importer[0] === 'builtin.ts') return;
+
+			context.report({ data: { id, source }, messageId: 'internal', node });
+		}
+
+		return {
+			ExportAllDeclaration(node) {
+				check(node, node.source.value, false);
+			},
+			ExportNamedDeclaration(node) {
+				if (node.source) check(node, node.source.value, false);
+			},
+			ImportDeclaration(node) {
+				check(node, node.source.value, false);
+			},
+			ImportExpression(node) {
+				if (node.source.type === 'Literal') check(node, node.source.value, true);
+			}
+		};
+	},
+	meta: {
+		docs: {
+			description: "Keep an extension's own code out of the rest of the app."
+		},
+		messages: {
+			internal:
+				'"{{source}}" is the own code of the "{{id}}" extension. Only files in src/lib/extensions/{{id}}/ can import it; the rest of the app uses the extension points.'
+		},
+		schema: [],
+		type: 'problem'
+	}
+};
 
 export default ts.config(
 	includeIgnoreFile(gitignorePath),
@@ -170,6 +251,7 @@ export default ts.config(
 			local: {
 				rules: {
 					'blank-line-between-accessors': blankLineBetweenAccessors,
+					'no-extension-internals': noExtensionInternals,
 					'padding-line-between-elements': paddingLineBetweenElements
 				}
 			},
@@ -188,6 +270,8 @@ export default ts.config(
 			'eol-last': 'error',
 			// Enforce a blank line between consecutive get/set accessors
 			'local/blank-line-between-accessors': 'error',
+			// The core does not import an extension's own code
+			'local/no-extension-internals': 'error',
 			// Require a blank line between sibling elements in a Svelte template
 			'local/padding-line-between-elements': 'error',
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
@@ -319,6 +403,11 @@ export default ts.config(
 				svelteConfig
 			}
 		}
+	},
+	{
+		// Tests and stories exercise an extension's code directly
+		files: ['tests/**'],
+		rules: { 'local/no-extension-internals': 'off' }
 	},
 	{
 		// Exclude generated build output and Storybook files from ESLint

@@ -1,5 +1,5 @@
 import type { ExtensionContext } from '../types';
-import McpServersPage from './McpServersPage.svelte';
+import McpServersPage from './components/contributions/McpServersPage.svelte';
 
 /** The MCP servers page. Its path is what `ROUTES.MCP_SERVERS` leads to. */
 export function contributePages(ctx: ExtensionContext): void {

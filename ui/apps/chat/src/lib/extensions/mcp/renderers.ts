@@ -4,9 +4,9 @@
  */
 
 import type { ExtensionContext } from '../types';
-import McpPromptAttachmentRenderer from './McpPromptAttachmentRenderer.svelte';
-import McpPromptMessageRenderer from './McpPromptMessageRenderer.svelte';
-import McpResourceAttachmentRenderer from './McpResourceAttachmentRenderer.svelte';
+import McpPromptAttachmentRenderer from './components/contributions/McpPromptAttachmentRenderer.svelte';
+import McpPromptMessageRenderer from './components/contributions/McpPromptMessageRenderer.svelte';
+import McpResourceAttachmentRenderer from './components/contributions/McpResourceAttachmentRenderer.svelte';
 import { AttachmentType, MessageRole } from '$lib/enums';
 import type { DatabaseMessage } from '$lib/types';
 import { isMcpPrompt, isMcpResource } from '$lib/utils';

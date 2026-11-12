@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { connectionLogs } from './fixtures';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import McpConnectionLogs from '$lib/components/app/mcp/McpConnectionLogs.svelte';
+	import McpConnectionLogs from '$lib/extensions/mcp/components/McpConnectionLogs.svelte';
 
 	const { Story } = defineMeta({
 		component: McpConnectionLogs,

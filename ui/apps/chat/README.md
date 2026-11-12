@@ -261,7 +261,6 @@ flowchart TB
         C_Sidebar["ChatSidebar"]
         C_Models["ModelsSelector"]
         C_Settings["ChatSettings"]
-        C_Mcp["McpServers"]
     end
 
     subgraph Hooks["🔌 Hooks"]
@@ -276,7 +275,6 @@ flowchart TB
         S1["chatStore"]
         S2["conversationsStore"]
         S3["modelsStore"]
-        S4["mcpStore"]
         S5["agenticStore"]
         S6["serverStore"]
         S7["settingsStore"]
@@ -288,9 +286,14 @@ flowchart TB
         SV2["ModelsService"]
         SV3["PropsService"]
         SV4["DatabaseService"]
-        SV5["MCPService"]
         SV6["ToolsService"]
         SV7["SandboxService"]
+    end
+
+    subgraph Mcp["MCP extension"]
+        C_Mcp["McpServers"]
+        S4["mcpStore"]
+        SV5["MCPService"]
     end
 
     subgraph Storage["💾 Storage"]
@@ -318,7 +321,8 @@ flowchart TB
     S2 --> SV4
     S3 --> SV2 & SV3
     S4 --> SV5
-    S5 --> SV1 & SV5 & SV6 & SV7
+    S5 --> SV1 & SV6 & SV7
+    S8 -. "tools extension point" .-> S4
     SV4 --> ST1
     SV1 --> API1
     SV2 --> API3
@@ -332,7 +336,7 @@ flowchart TB
 
 - **`/`** - Welcome screen, creates new conversation
 - **`/chat/[id]`** - Active chat interface
-- **`/mcp-servers`** - MCP server management
+- **`/mcp-servers`** - MCP server management, a page of the MCP extension shown by `[extensionPage]`
 - **`/search`** - Conversation search
 - **`/settings`** - Settings (optional `[[section]]`)
 - **`+layout.svelte`** - Sidebar, navigation, global initialization
@@ -421,11 +425,10 @@ Stores own reactive application state as Svelte 5 runes. Larger stores are split
 | `chatStore`          | Chat lifecycle, streaming, abort control, error handling; composes `processing`, `activity`, `streams`, `flows`                           |
 | `conversationsStore` | Conversation CRUD, message branching, navigation, import/export; composes `preferences`                                                   |
 | `modelsStore`        | Model list, selection, loading/unloading (ROUTER), recent picks, favorites, hidden models and list open state; composes `props`, `status` |
-| `mcpStore`           | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources`                                         |
 | `agenticStore`       | Runs the agentic loop through `@ggml/llama-harness`: inference client, tool execution, persistence callbacks; composes `gates`            |
 | `serverStore`        | Server connection state, `/props`, role detection, modalities                                                                             |
 | `settingsStore`      | User preferences, theme, parameter sync with server defaults                                                                              |
-| `toolsStore`         | Tool registry: server + MCP tools, enabled set for the LLM                                                                                |
+| `toolsStore`         | Tool registry: server tools and the tools of extensions (MCP), enabled set for the LLM                                                    |
 | `permissionsStore`   | Persisted tool permission grants                                                                                                          |
 | `contextStatsStore`  | Context window usage for the active conversation                                                                                          |
 | `draftMessagesStore` | Per-chat draft message/files                                                                                                              |
@@ -443,13 +446,29 @@ Services are a stateless protocol layer: static methods, pure I/O, no reactive s
 | `PropsService`                | `/props`, `/props?model=`                                                                                                     |
 | `HuggingFaceService`          | Hugging Face Hub metadata: model details, avatars, README and file tree, cached per repo and off unless the Hub setting is on |
 | `DatabaseService`             | IndexedDB operations via Dexie                                                                                                |
-| `MCPService`                  | MCP protocol: transports, connect, list/execute tools, prompts, resources                                                     |
 | `ToolsService`                | Server tool list/execute/stream (`/tools`)                                                                                    |
 | `SandboxService`              | Browser JS execution in a sandboxed worker                                                                                    |
 | `ParameterSyncService`        | Syncs settings with server defaults                                                                                           |
 | `ConversationTransferService` | Conversation import/export JSONL + ZIP format                                                                                 |
 | `MigrationService`            | Non-destructive localStorage/IndexedDB migrations                                                                             |
 | `RouterService`               | Dynamic route URL construction                                                                                                |
+
+#### Extensions (`src/lib/extensions/`)
+
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, sidebar entries, pages, slash commands, pickers, pending attachments, and message and attachment renderers.
+
+The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
+
+MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
+
+| Part                       | Responsibility                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `index.ts` and glue        | The extension: what MCP adds to each extension point (`tools.ts`, `composer.ts`, `pages.ts`, ...) |
+| `stores/` (`mcpStore`)     | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources` |
+| `services/` (`MCPService`) | MCP protocol: transports, connect, list/execute tools, prompts, resources                         |
+| `components/`              | Server cards and forms, resource browser, dialogs, the prompt picker and the chat renderers       |
+
+MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
 
 ---
 

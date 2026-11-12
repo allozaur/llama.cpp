@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { seedServerHealth, servers } from './fixtures';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import McpServerCard from '$lib/components/app/mcp/McpServerCard/McpServerCard.svelte';
+	import McpServerCard from '$lib/extensions/mcp/components/McpServerCard/McpServerCard.svelte';
 
 	const { Story } = defineMeta({
 		component: McpServerCard,

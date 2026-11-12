@@ -7,8 +7,8 @@ import type { ExtensionContext, ExtensionPage, NavigationItem } from '$lib/exten
 import { contributeNavigation } from '$lib/extensions/mcp/navigation';
 import { contributePages } from '$lib/extensions/mcp/pages';
 import { contributeStartup } from '$lib/extensions/mcp/startup.svelte';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import { RouterService } from '$lib/services/router.service';
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import { sidebarFooterItems } from '$lib/utils';
 import { flushSync } from 'svelte';

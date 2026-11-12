@@ -9,7 +9,7 @@ import { EXTENSIONS_LOCALSTORAGE_KEY, SETTINGS_KEYS } from '$lib/constants';
 import { MimeTypeText } from '$lib/enums';
 import { extensions } from '$lib/extensions';
 import { BUILT_IN_EXTENSIONS } from '$lib/extensions/builtin';
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { GetPromptResult, MCPPromptInfo, MCPResourceInfo } from '$lib/types';
 import { tick } from 'svelte';

@@ -1,5 +1,5 @@
 import { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel, MCPTransportType } from '$lib/enums';
-import { mcpStore } from '$lib/stores';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import type {
 	HealthCheckState,
 	MCPCapabilitiesInfo,

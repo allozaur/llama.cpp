@@ -1,5 +1,5 @@
 import type { ExtensionContext } from '../types';
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
+import { mcpStore } from './stores/index.svelte';
 import { untrack } from 'svelte';
 
 /**
