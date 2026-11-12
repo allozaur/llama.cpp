@@ -31,12 +31,13 @@ Llama UI is the design system and component library: UI and UX, no business logi
 <Cards cols={2}>
 <Card kicker="Repo layout" title="The UI in a root folder">
 
-The packages live in `ui/lib`, one folder each, and the apps built on them in `ui/apps`. Llama Chat imports the library: its tokens, fonts and base components come from `ui/lib/ui`. This Storybook still lives in `ui/apps/chat`.
+The packages live in `ui/lib`, one folder each, and the apps built on them in `ui/apps`. Llama Chat imports both packages: its tokens, fonts and base components come from `ui/lib/ui`, its agentic loop from `ui/lib/harness`. This Storybook still lives in `ui/apps/chat`.
 
 ```text
 ui/
 ├── lib/
-│   └── ui/          @ggml/llama-ui
+│   ├── ui/          @ggml/llama-ui
+│   └── harness/     @ggml/llama-harness
 └── apps/
     └── chat/        @ggml/llama-chat
                      (private, not published)
@@ -92,7 +93,7 @@ For now both live in this one Storybook, in `ui/apps/chat`.
 
 ## Llama Harness
 
-The agentic loop moves out of Chat into its own package, `@ggml/llama-harness`, in `ui/lib/harness`: headless TypeScript, no UI and no DOM. It needs an OpenAI-compatible endpoint, not llama-server specifically; model loading, `/props` and server tools are capabilities it detects and works without. The same loop runs in the browser, in Node and in the native apps.
+The agentic loop is its own package, `@ggml/llama-harness`, in `ui/lib/harness`: headless TypeScript, no UI and no DOM. It needs an OpenAI-compatible endpoint, not llama-server specifically; model loading, `/props` and server tools are capabilities it detects and works without. The same loop runs in the browser, in Node and in the native apps.
 
 ```ts
 interface Harness {
