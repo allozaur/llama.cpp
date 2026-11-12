@@ -121,7 +121,7 @@
 		showSearchInput={false}
 	>
 		{#snippet item(command, index, isSelected)}
-			{@const Icon = CHAT_FORM_COMMAND_ICONS[command.action]}
+			{@const Icon = 'action' in command ? CHAT_FORM_COMMAND_ICONS[command.action] : command.icon}
 			<ChatFormPickerListItem
 				dataIndex={index}
 				disabled={command.disabled}
