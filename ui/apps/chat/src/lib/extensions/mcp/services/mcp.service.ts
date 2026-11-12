@@ -173,7 +173,7 @@ export class MCPService {
 	 *
 	 * Performs the full MCP connection lifecycle:
 	 * 1. Transport creation (with automatic fallback)
-	 * 2. Client initialization and capability exchange
+	 * 2. Protocol negotiation (stateless `server/discover`, else the `initialize` handshake) and capability exchange
 	 * 3. Tool discovery via `listTools`
 	 *
 	 * Reports progress via `onPhase` callback at each step, enabling
@@ -237,6 +237,10 @@ export class MCPService {
 			{ transportType }
 		);
 
+		// Streamable HTTP servers can speak the stateless protocol (2026-07-28): probe with
+		// server/discover, fall back to the initialize handshake for older servers.
+		// SSE and WebSocket servers are session-only, a probe there can only fail the connection.
+		const negotiatesProtocol = transportType === MCPTransportType.STREAMABLE_HTTP;
 		const client = new Client(
 			{
 				name: effectiveClientInfo.name,
@@ -244,7 +248,8 @@ export class MCPService {
 			},
 			{
 				capabilities: effectiveCapabilities,
-				listChanged: listChangedHandlers
+				listChanged: listChangedHandlers,
+				versionNegotiation: { mode: negotiatesProtocol ? 'auto' : 'legacy' }
 			}
 		);
 		const runtimeErrorHandler = (error: Error) => {
@@ -288,10 +293,13 @@ export class MCPService {
 		// Phase: Initializing
 		onPhase?.(
 			MCPConnectionPhase.INITIALIZING,
-			this.createLog(MCPConnectionPhase.INITIALIZING, 'Sending initialize request...')
+			this.createLog(
+				MCPConnectionPhase.INITIALIZING,
+				negotiatesProtocol ? 'Negotiating protocol version...' : 'Sending initialize request...'
+			)
 		);
 
-		// The SDK timeout only covers the initialize request, not transport.start(),
+		// The SDK timeout only covers the handshake requests, not transport.start(),
 		// which can hang forever on an unreachable host (SSE endpoint wait, WebSocket
 		// handshake, proxied fetch). This race bounds the whole handshake and closes
 		// the transport on expiry so the underlying fetch or socket is aborted.
@@ -331,7 +339,7 @@ export class MCPService {
 				MCPConnectionPhase.ERROR,
 				this.createLog(
 					MCPConnectionPhase.ERROR,
-					`Connection failed during initialize: ${
+					`Connection failed during handshake: ${
 						error instanceof Error ? error.message : String(error)
 					}`,
 					MCPLogLevel.ERROR,
@@ -363,15 +371,20 @@ export class MCPService {
 		const serverCapabilities = client.getServerCapabilities();
 		const instructions = client.getInstructions();
 		const serverInfo = this.extractServerInfo(serverVersion);
+		const protocolVersion = client.getNegotiatedProtocolVersion();
+		const isStateless = client.getProtocolEra() === 'modern';
 
 		// Phase: Capabilities exchanged
 		onPhase?.(
 			MCPConnectionPhase.CAPABILITIES_EXCHANGED,
 			this.createLog(
 				MCPConnectionPhase.CAPABILITIES_EXCHANGED,
-				'Capabilities exchanged successfully',
+				`Capabilities exchanged successfully (protocol ${protocolVersion ?? 'unknown'}, ${
+					isStateless ? 'stateless' : 'initialize handshake'
+				})`,
 				MCPLogLevel.INFO,
 				{
+					protocolVersion,
 					serverCapabilities,
 					serverInfo
 				}
@@ -379,6 +392,7 @@ export class MCPService {
 			{
 				clientCapabilities: effectiveCapabilities,
 				instructions,
+				protocolVersion,
 				serverCapabilities,
 				serverInfo
 			}
@@ -426,7 +440,7 @@ export class MCPService {
 			clientCapabilities: effectiveCapabilities,
 			connectionTimeMs,
 			instructions,
-			protocolVersion: DEFAULT_MCP_CONFIG.protocolVersion,
+			protocolVersion,
 			requestTimeoutMs:
 				serverConfig.requestTimeoutMs ?? DEFAULT_MCP_CONFIG.requestTimeoutSeconds * 1000,
 			serverCapabilities,
@@ -592,6 +606,7 @@ export class MCPService {
 		try {
 			// Terminate the session first for streamable-http transports to cleanly
 			// close streams, matching the inspector's disconnect flow.
+			// No request is sent when the server gave no session (stateless protocol).
 			if (connection.transport instanceof StreamableHTTPClientTransport) {
 				await connection.transport.terminateSession();
 			}
@@ -814,7 +829,11 @@ export class MCPService {
 	 */
 	static async subscribeResource(connection: MCPConnection, uri: string): Promise<void> {
 		try {
-			await connection.client.subscribeResource({ uri });
+			if (connection.client.getProtocolEra() === 'modern') {
+				await this.listenToResource(connection, uri);
+			} else {
+				await connection.client.subscribeResource({ uri });
+			}
 
 			console.log(`[MCPService][${connection.serverName}] Subscribed to resource: ${uri}`);
 		} catch (error) {
@@ -857,7 +876,12 @@ export class MCPService {
 	 */
 	static async unsubscribeResource(connection: MCPConnection, uri: string): Promise<void> {
 		try {
-			await connection.client.unsubscribeResource({ uri });
+			if (connection.client.getProtocolEra() === 'modern') {
+				await connection.resourceSubscriptions?.get(uri)?.close();
+				connection.resourceSubscriptions?.delete(uri);
+			} else {
+				await connection.client.unsubscribeResource({ uri });
+			}
 
 			if (import.meta.env.DEV && import.meta.env.VITE_DEBUG) {
 				console.log(`[MCPService][${connection.serverName}] Unsubscribed from resource: ${uri}`);
@@ -1246,6 +1270,27 @@ export class MCPService {
 		}
 
 		return hints;
+	}
+
+	/**
+	 * Open a subscriptions/listen stream for one resource.
+	 * The stateless protocol has no resources/subscribe request.
+	 */
+	private static async listenToResource(connection: MCPConnection, uri: string): Promise<void> {
+		if (connection.resourceSubscriptions?.has(uri)) {
+			return;
+		}
+
+		const subscription = await connection.client.listen({ resourceSubscriptions: [uri] });
+
+		if (!subscription.honoredFilter.resourceSubscriptions?.includes(uri)) {
+			await subscription.close();
+
+			throw new Error(`Server did not accept the subscription to ${uri}`);
+		}
+
+		connection.resourceSubscriptions ??= new Map();
+		connection.resourceSubscriptions.set(uri, subscription);
 	}
 
 	/**
