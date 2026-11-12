@@ -12,7 +12,7 @@
  */
 
 import { REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY } from '$lib/constants';
-import { ReasoningEffort, ToolSource } from '$lib/enums';
+import { BuiltInTool, ReasoningEffort, ToolSource } from '$lib/enums';
 import { DatabaseService } from '$lib/services/database.service';
 import { PreferencesService } from '$lib/services/preferences.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
@@ -168,6 +168,13 @@ export class ConversationPreferences {
 
 	isCategoryEnabled(source: ToolSource): boolean {
 		return !this._disabledToolCategories.has(source);
+	}
+
+	/** True when `file_glob_search`, which the pickers search with, is served and left enabled. */
+	isFileSearchEnabled(): boolean {
+		const key = toolsStore.getPermissionKey(BuiltInTool.SERVER_FILE_GLOB_SEARCH);
+
+		return key !== null && this.isToolEnabled(key) && this.isCategoryEnabled(ToolSource.SERVER);
 	}
 
 	/** Group checkbox state: the category flag, or the server key for MCP groups. */

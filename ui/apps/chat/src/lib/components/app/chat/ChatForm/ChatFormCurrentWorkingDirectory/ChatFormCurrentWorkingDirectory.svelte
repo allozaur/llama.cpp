@@ -6,7 +6,7 @@
 	import * as Drawer from '$lib/components/ui/drawer';
 	import * as Popover from '$lib/components/ui/popover';
 	import { DEFAULT_MOBILE_BREAKPOINT, HOME_TILDE, SEARCH, UI_DATA_ATTRS } from '$lib/constants';
-	import { BuiltInTool, GlobSearchType, KeyboardKey, ToolSource } from '$lib/enums';
+	import { BuiltInTool, GlobSearchType, KeyboardKey } from '$lib/enums';
 	import { useDebouncedSearch } from '$lib/hooks/use-debounced-search.svelte';
 	import { usePickerNavigation } from '$lib/hooks/use-picker-navigation.svelte';
 	import { useScrollActiveRow } from '$lib/hooks/use-scroll-active-row.svelte';
@@ -61,11 +61,7 @@
 	// hidden too: it resolves the picked folder name through the same tool.
 	const fileSearchKey = $derived(toolsStore.getPermissionKey(BuiltInTool.SERVER_FILE_GLOB_SEARCH));
 	// effective policy: the active conversation's tool policy, or global defaults
-	const fileSearchEnabled = $derived(
-		fileSearchKey !== null &&
-			conversationsStore.preferences.isToolEnabled(fileSearchKey) &&
-			conversationsStore.preferences.isCategoryEnabled(ToolSource.SERVER)
-	);
+	const fileSearchEnabled = $derived(conversationsStore.preferences.isFileSearchEnabled());
 	const searchUnavailableMessage = $derived(
 		fileSearchKey === null
 			? 'File search is unavailable on this server - type a full path and press Enter'
