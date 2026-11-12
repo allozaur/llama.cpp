@@ -19,3 +19,7 @@ ui/
   harness. CMake builds it into llama-server (see `scripts/ui-assets.cmake`).
 
 Each folder is its own npm package with its own `package-lock.json`: run `npm ci` in the one you work on.
+
+The split between library and app is not finished. Llama Chat does not import `@ggml/llama-ui` yet: it still carries
+its own copy of the tokens and base components (`apps/chat/src/lib/components/ui`), with `DESIGN.md`, `BRAND.md` and
+the full Storybook beside it. `lib/ui` holds what llama.app uses today; Chat moves onto it next.
