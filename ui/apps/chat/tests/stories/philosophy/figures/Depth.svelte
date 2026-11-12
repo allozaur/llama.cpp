@@ -4,8 +4,8 @@
 	card (card-surface, matte glass) to read as one thing, and a floating menu (matte-float) over the page.
 -->
 <script lang="ts">
-	import { Button } from '#lib/components/ui/button';
-	import { Input } from '#lib/components/ui/input';
+	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import { Input } from '@ggml-org/llama-ui/ui/input';
 </script>
 
 <div class="depth" inert>

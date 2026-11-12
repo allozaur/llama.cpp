@@ -5,16 +5,16 @@
 	toward Display.
 -->
 <script lang="ts">
+	import { Badge } from '@ggml-org/llama-ui/ui/badge';
+	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import * as Card from '@ggml-org/llama-ui/ui/card';
+	import { Input } from '@ggml-org/llama-ui/ui/input';
+	import { Label } from '@ggml-org/llama-ui/ui/label';
+	import { Switch } from '@ggml-org/llama-ui/ui/switch';
+	import * as Table from '@ggml-org/llama-ui/ui/table';
+	import * as Tabs from '@ggml-org/llama-ui/ui/tabs';
+	import * as ToggleGroup from '@ggml-org/llama-ui/ui/toggle-group';
 	import { Download, Paperclip, Plus, Power, RotateCcw } from '@lucide/svelte';
-	import { Badge } from '#lib/components/ui/badge';
-	import { Button } from '#lib/components/ui/button';
-	import * as Card from '#lib/components/ui/card';
-	import { Input } from '#lib/components/ui/input';
-	import { Label } from '#lib/components/ui/label';
-	import { Switch } from '#lib/components/ui/switch';
-	import * as Table from '#lib/components/ui/table';
-	import * as Tabs from '#lib/components/ui/tabs';
-	import * as ToggleGroup from '#lib/components/ui/toggle-group';
 
 	let context = $state('32768');
 	let cache = $state('q8_0');

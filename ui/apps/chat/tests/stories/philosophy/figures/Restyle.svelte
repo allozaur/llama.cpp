@@ -8,9 +8,9 @@
 	blue default button on a grey one, and the wide switch with its capsule knob
 -->
 <script lang="ts">
-	import { Badge } from '#lib/components/ui/badge';
-	import { Button } from '#lib/components/ui/button';
-	import { Switch } from '#lib/components/ui/switch';
+	import { Badge } from '@ggml-org/llama-ui/ui/badge';
+	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 
 	const looks = [
 		{ label: 'As shipped', look: '' },

@@ -24,6 +24,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Llama UI, where the tokens and the fonts live
+const UI_LIB = path.resolve(ROOT, '../../lib/ui/src/lib');
 const SPACE = 'https://huggingface.co/spaces/ggml-org/llama-storybook';
 const args = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -141,10 +143,7 @@ const APP_ICONS = [
 ];
 
 function tokens() {
-	const primitives = fs.readFileSync(
-		path.join(ROOT, 'src/lib/styles/tokens/primitives.css'),
-		'utf8'
-	);
+	const primitives = fs.readFileSync(path.join(UI_LIB, 'styles/tokens/primitives.css'), 'utf8');
 	const grounds = fs.readFileSync(
 		path.join(ROOT, 'tests/stories/brand/communications/posts/grounds.css'),
 		'utf8'
@@ -325,7 +324,7 @@ function tokens() {
 	return {
 		color: { themes: [{ id: 'light', name: 'Light' }], tokens: color },
 		meta: {
-			note: 'Exported from ui/apps/chat in llama.cpp (src/lib/styles/tokens/primitives.css, the communications grounds and type scale) by scripts/export-design-system.mjs.',
+			note: 'Exported from ui/apps/chat in llama.cpp (ui/lib/ui/src/lib/styles/tokens/primitives.css, the communications grounds and type scale) by scripts/export-design-system.mjs.',
 			package: 'ui/apps/chat',
 			repo: 'ggml-org/llama.cpp',
 			source: 'github'
@@ -763,7 +762,7 @@ if (args[0] === 'index') {
 	write('tokens.json', `${JSON.stringify(tokens(), null, '\t')}\n`);
 
 	for (const font of ['LlamaSans.woff2', 'LlamaMono.woff2'])
-		write(`fonts/${font}`, fs.readFileSync(path.join(ROOT, 'src/lib/assets/fonts', font)));
+		write(`fonts/${font}`, fs.readFileSync(path.join(UI_LIB, 'assets/fonts', font)));
 
 	for (const [dir, file] of LOGO_FILES)
 		write(`assets/Logos/${file}`, fs.readFileSync(path.join(ROOT, LOGOS, dir, file)));

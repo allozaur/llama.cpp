@@ -1,7 +1,7 @@
 <script lang="ts" module>
+	import { Input } from '@ggml-org/llama-ui/ui/input';
+	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Input } from '#lib/components/ui/input';
-	import { Label } from '#lib/components/ui/label';
 
 	const { Story } = defineMeta({
 		component: Label,

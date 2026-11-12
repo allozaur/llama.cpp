@@ -24,8 +24,8 @@
 	import windowsTile from '../assets/files/native/windows/Square150x150Logo.scale-400.png';
 	import OpticalCentre from '../assets/OpticalCentre.svelte';
 	import { PATHS, SIZE } from '../logo-showcase/lib/logo';
+	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Download } from '@lucide/svelte';
-	import { Button } from '#lib/components/ui/button';
 	import { PWA_ASSET_GENERATOR, THEME_COLORS } from '#lib/constants/index.ts';
 
 	// the inks of llama-brand's light and dark favicons

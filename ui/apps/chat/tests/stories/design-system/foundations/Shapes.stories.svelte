@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// the corner roles from src/lib/styles/tokens/semantic.css
+	// the corner roles from ui/lib/ui/src/lib/styles/tokens/semantic.css
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'

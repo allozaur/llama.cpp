@@ -1,7 +1,7 @@
 <!--
 	The colours and gradients the brand's designs use (the logo, the specimen boards, the posters, the social assets),
 	as swatches: the grounds and inks, the gradients, and the colours for shapes and accents, with cinder as the one
-	accent orange. Flat colours read the design system's primitives (src/lib/styles/tokens/primitives.css); the
+	accent orange. Flat colours read the design system's primitives (ui/lib/ui/src/lib/styles/tokens/primitives.css); the
 	gradients are the ones the brand pages draw, from llama.app's hero.
 -->
 <script lang="ts">

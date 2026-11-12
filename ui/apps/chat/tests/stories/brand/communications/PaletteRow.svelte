@@ -8,11 +8,11 @@
 	import '../fonts/fonts.css';
 	import { noopChatActions, userMessage } from '../../chat/messages/fixtures';
 	import type { Palette } from './palettes';
+	import { Badge } from '@ggml-org/llama-ui/ui/badge';
 	import { ChevronRight, Clock, Download, Gauge, Hash } from '@lucide/svelte';
 	import ChatMessage from '#lib/components/app/chat/ChatMessages/ChatMessage/ChatMessage.svelte';
 	import ChatScreenForm from '#lib/components/app/chat/ChatScreen/ChatScreenForm.svelte';
 	import { BadgeInfo, BadgesModality } from '#lib/components/app/index.ts';
-	import { Badge } from '#lib/components/ui/badge';
 	import { ModelModality } from '#lib/enums/index.ts';
 	import { onMount } from 'svelte';
 

@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// the type roles from src/lib/styles/tokens/semantic.css: each sets size, line height and weight
+	// the type roles from ui/lib/ui/src/lib/styles/tokens/semantic.css: each sets size, line height and weight
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'

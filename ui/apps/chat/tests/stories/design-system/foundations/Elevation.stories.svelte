@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// the elevation tokens from src/lib/styles/tokens/semantic.css, each on a plain sample
+	// the elevation tokens from ui/lib/ui/src/lib/styles/tokens/semantic.css, each on a plain sample
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'
