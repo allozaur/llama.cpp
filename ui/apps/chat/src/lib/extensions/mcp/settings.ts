@@ -1,7 +1,7 @@
 import type { ExtensionContext } from '../types';
-import DialogMcpServers from '#lib/components/app/dialogs/DialogMcpServers.svelte';
-import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
-import SettingsMcpServers from '#lib/components/app/settings/SettingsMcpServers.svelte';
+import DialogMcpServers from './components/dialogs/DialogMcpServers.svelte';
+import McpLogo from './components/McpLogo.svelte';
+import SettingsMcpServers from './components/settings/SettingsMcpServers.svelte';
 import { MANAGE_MCP_SERVERS_LABEL, SETTINGS_KEYS } from '#lib/constants/index.ts';
 
 const MCP_SERVERS_ACTION_ID = 'mcp-servers';

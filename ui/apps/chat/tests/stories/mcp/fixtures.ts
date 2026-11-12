@@ -4,7 +4,7 @@ import {
 	MCPLogLevel,
 	MCPTransportType
 } from '#lib/enums/index.ts';
-import { mcpStore } from '#lib/stores/index.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import type {
 	HealthCheckState,
 	MCPCapabilitiesInfo,

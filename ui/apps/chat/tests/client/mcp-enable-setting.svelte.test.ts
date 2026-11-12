@@ -1,8 +1,8 @@
 // Enable MCP is a real switch: while it is off, an added and enabled server is not usable.
 
 import { SETTINGS_KEYS } from '#lib/constants/index.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { policyEnabledServerIds } from '#lib/extensions/mcp/tools.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 

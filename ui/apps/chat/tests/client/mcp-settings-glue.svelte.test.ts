@@ -6,7 +6,7 @@ import { MANAGE_MCP_SERVERS_LABEL, SETTINGS_KEYS } from '#lib/constants/index.ts
 import type { ExtensionContext, SettingsAction } from '#lib/extensions/index.ts';
 import { contributeSettings } from '#lib/extensions/mcp/settings.ts';
 import { contributeStartup } from '#lib/extensions/mcp/startup.svelte.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { flushSync } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
