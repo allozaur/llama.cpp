@@ -11,7 +11,10 @@ import {
 	Client,
 	type GetPromptResult,
 	type ListChangedHandlers,
+	type McpSubscription,
 	type Prompt,
+	SdkError,
+	SdkErrorCode,
 	SdkHttpError,
 	SSEClientTransport,
 	StreamableHTTPClientTransport,
@@ -25,6 +28,7 @@ import {
 	DEFAULT_IMAGE_MIME_TYPE,
 	DEFAULT_MCP_CONFIG,
 	HEADERS,
+	MCP_RECONNECT,
 	NEWLINE
 } from '$lib/constants';
 import {
@@ -66,6 +70,10 @@ import {
 	summarizeRequestBody,
 	throwIfAborted
 } from '$lib/utils';
+
+// The stores decide when to list again, so a list call must reach the server.
+// On a stateless connection the SDK can answer it from a cache the server set a TTL for.
+const FRESH_LIST = { cacheMode: 'refresh' } as const;
 
 interface ToolResultContentItem {
 	type: string;
@@ -127,7 +135,7 @@ export class MCPService {
 			}
 
 			// Let session-expired errors propagate unwrapped for reconnection handling
-			if (this.isSessionExpiredError(error)) {
+			if (this.isSessionExpiredError(error, connection)) {
 				throw error;
 			}
 
@@ -213,11 +221,12 @@ export class MCPService {
 			console.log(`[MCPService][${serverName}] Creating transport...`);
 		}
 
-		const {
-			stopPhaseLogging,
-			transport,
-			type: transportType
-		} = this.createTransport(serverName, serverConfig, (log) => onPhase?.(log.phase, log));
+		const createdTransport = this.createTransport(serverName, serverConfig, (log) =>
+			onPhase?.(log.phase, log)
+		);
+		const transportType = createdTransport.type;
+
+		let { stopPhaseLogging, transport } = createdTransport;
 
 		// Setup WebSocket reconnection handler
 		if (transportType === MCPTransportType.WEBSOCKET) {
@@ -241,6 +250,8 @@ export class MCPService {
 		// server/discover, fall back to the initialize handshake for older servers.
 		// SSE and WebSocket servers are session-only, a probe there can only fail the connection.
 		const negotiatesProtocol = transportType === MCPTransportType.STREAMABLE_HTTP;
+		const handshakeTimeoutMs =
+			serverConfig.handshakeTimeoutMs ?? DEFAULT_MCP_CONFIG.connectionTimeoutMs;
 		const client = new Client(
 			{
 				name: effectiveClientInfo.name,
@@ -249,7 +260,11 @@ export class MCPService {
 			{
 				capabilities: effectiveCapabilities,
 				listChanged: listChangedHandlers,
-				versionNegotiation: { mode: negotiatesProtocol ? 'auto' : 'legacy' }
+				versionNegotiation: {
+					mode: negotiatesProtocol ? 'auto' : 'legacy',
+					// half the handshake time, the rest is for the session handshake retry below
+					probe: { timeoutMs: handshakeTimeoutMs / 2 }
+				}
 			}
 		);
 		const runtimeErrorHandler = (error: Error) => {
@@ -303,9 +318,6 @@ export class MCPService {
 		// which can hang forever on an unreachable host (SSE endpoint wait, WebSocket
 		// handshake, proxied fetch). This race bounds the whole handshake and closes
 		// the transport on expiry so the underlying fetch or socket is aborted.
-		const handshakeTimeoutMs =
-			serverConfig.handshakeTimeoutMs ?? DEFAULT_MCP_CONFIG.connectionTimeoutMs;
-
 		try {
 			let handshakeTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -319,6 +331,35 @@ export class MCPService {
 			try {
 				await Promise.race([
 					client.connect(transport, { timeout: handshakeTimeoutMs }),
+					handshakeDeadline
+				]);
+			} catch (error) {
+				if (!negotiatesProtocol || !this.isProbeFailure(error)) {
+					throw error;
+				}
+
+				// The probe got no usable answer, which says nothing about the server.
+				// A server that only knows the session handshake can fail this way, so try that once.
+				onPhase?.(
+					MCPConnectionPhase.INITIALIZING,
+					this.createLog(
+						MCPConnectionPhase.INITIALIZING,
+						`Stateless protocol probe failed (${
+							error instanceof Error ? error.message : String(error)
+						}), using the session handshake`,
+						MCPLogLevel.WARN,
+						{ error: this.summarizeError(error) }
+					)
+				);
+
+				// the SDK closed the probed transport
+				stopPhaseLogging();
+				({ stopPhaseLogging, transport } = this.createTransport(serverName, serverConfig, (log) =>
+					onPhase?.(log.phase, log)
+				));
+
+				await Promise.race([
+					client.connect(transport, { prior: { kind: 'legacy' }, timeout: handshakeTimeoutMs }),
 					handshakeDeadline
 				]);
 			} finally {
@@ -373,6 +414,11 @@ export class MCPService {
 		const serverInfo = this.extractServerInfo(serverVersion);
 		const protocolVersion = client.getNegotiatedProtocolVersion();
 		const isStateless = client.getProtocolEra() === 'modern';
+
+		// list-changed notifications of a stateless connection
+		if (client.autoOpenedSubscription) {
+			void this.keepListening(serverName, client, client.autoOpenedSubscription);
+		}
 
 		// Phase: Capabilities exchanged
 		onPhase?.(
@@ -656,12 +702,19 @@ export class MCPService {
 	 * Detect if an error indicates an expired/invalidated MCP session.
 	 * Per MCP spec 2025-11-25: HTTP 404 means session invalidated, client MUST
 	 * discard its session ID and start a new session with a fresh initialize request.
+	 * A connection without a session (stateless protocol) has nothing to expire:
+	 * there a 404 is a failed request like any other.
 	 *
 	 * @param error - The caught error to inspect
-	 * @returns true if the error is a StreamableHTTP 404 (session not found)
+	 * @param connection - The connection the request was sent on
+	 * @returns true if the error is a StreamableHTTP 404 on a connection that has a session
 	 */
-	static isSessionExpiredError(error: unknown): boolean {
-		return error instanceof SdkHttpError && error.status === 404;
+	static isSessionExpiredError(error: unknown, connection: MCPConnection): boolean {
+		return (
+			error instanceof SdkHttpError &&
+			error.status === 404 &&
+			connection.transport.sessionId !== undefined
+		);
 	}
 
 	/**
@@ -699,12 +752,12 @@ export class MCPService {
 	 */
 	static async listPrompts(connection: MCPConnection): Promise<Prompt[]> {
 		try {
-			const result = await connection.client.listPrompts();
+			const result = await connection.client.listPrompts(undefined, FRESH_LIST);
 
 			return result.prompts ?? [];
 		} catch (error) {
 			// Let session-expired errors propagate for reconnection handling
-			if (this.isSessionExpiredError(error)) {
+			if (this.isSessionExpiredError(error, connection)) {
 				throw error;
 			}
 
@@ -725,14 +778,17 @@ export class MCPService {
 		cursor?: string
 	): Promise<{ resources: MCPResource[]; nextCursor?: string }> {
 		try {
-			const result = await connection.client.listResources(cursor ? { cursor } : undefined);
+			const result = await connection.client.listResources(
+				cursor ? { cursor } : undefined,
+				FRESH_LIST
+			);
 
 			return {
 				nextCursor: result.nextCursor,
 				resources: (result.resources ?? []) as MCPResource[]
 			};
 		} catch (error) {
-			if (this.isSessionExpiredError(error)) {
+			if (this.isSessionExpiredError(error, connection)) {
 				throw error;
 			}
 
@@ -753,14 +809,17 @@ export class MCPService {
 		cursor?: string
 	): Promise<{ resourceTemplates: MCPResourceTemplate[]; nextCursor?: string }> {
 		try {
-			const result = await connection.client.listResourceTemplates(cursor ? { cursor } : undefined);
+			const result = await connection.client.listResourceTemplates(
+				cursor ? { cursor } : undefined,
+				FRESH_LIST
+			);
 
 			return {
 				nextCursor: result.nextCursor,
 				resourceTemplates: (result.resourceTemplates ?? []) as MCPResourceTemplate[]
 			};
 		} catch (error) {
-			if (this.isSessionExpiredError(error)) {
+			if (this.isSessionExpiredError(error, connection)) {
 				throw error;
 			}
 
@@ -782,12 +841,12 @@ export class MCPService {
 	 */
 	static async listTools(connection: MCPConnection): Promise<Tool[]> {
 		try {
-			const result = await connection.client.listTools();
+			const result = await connection.client.listTools(undefined, FRESH_LIST);
 
 			return result.tools ?? [];
 		} catch (error) {
 			// Let session-expired errors propagate for reconnection handling
-			if (this.isSessionExpiredError(error)) {
+			if (this.isSessionExpiredError(error, connection)) {
 				throw error;
 			}
 
@@ -1273,6 +1332,76 @@ export class MCPService {
 	}
 
 	/**
+	 * Whether a negotiated connect failed on the server/discover probe itself:
+	 * HTTP 5xx, an unusable reply or no reply in time. A 401 or 403 has its own
+	 * error code and is not a probe failure. Neither is a probe that was aborted.
+	 */
+	private static isProbeFailure(error: unknown): boolean {
+		return (
+			error instanceof SdkError &&
+			(error.code === SdkErrorCode.EraNegotiationFailed ||
+				error.code === SdkErrorCode.RequestTimeout) &&
+			!isAbortError(error.cause)
+		);
+	}
+
+	/**
+	 * Keep a subscriptions/listen stream open on a stateless connection.
+	 * The SDK reports that a stream ended but does not listen again, so a stream cut by
+	 * the server or a proxy would stop its notifications for good.
+	 * Stops when the subscription or the client is closed.
+	 *
+	 * @param accept - Takes the reopened stream in place of the closed one, false to drop it
+	 */
+	private static async keepListening(
+		serverName: string,
+		client: Client,
+		subscription: McpSubscription,
+		accept: (closed: McpSubscription, reopened: McpSubscription) => boolean = () => true
+	): Promise<void> {
+		let delay = MCP_RECONNECT.INITIAL_DELAY;
+
+		while (true) {
+			const openedAt = performance.now();
+
+			// 'local' is our own close()
+			if ((await subscription.closed) === 'local') {
+				return;
+			}
+
+			// a stream that stayed open was cut, not refused: start the backoff again
+			if (performance.now() - openedAt > MCP_RECONNECT.MAX_DELAY) {
+				delay = MCP_RECONNECT.INITIAL_DELAY;
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, delay));
+			delay = Math.min(delay * MCP_RECONNECT.BACKOFF_MULTIPLIER, MCP_RECONNECT.MAX_DELAY);
+
+			// closing the client ends its streams too, and a closed client has no negotiated protocol
+			if (!client.transport || client.getProtocolEra() !== 'modern') {
+				return;
+			}
+
+			try {
+				const reopened = await client.listen(subscription.honoredFilter);
+
+				if (!accept(subscription, reopened)) {
+					await reopened.close();
+
+					return;
+				}
+
+				subscription = reopened;
+			} catch (error) {
+				console.warn(
+					`[MCPService][${serverName}] Failed to reopen the subscriptions/listen stream:`,
+					error
+				);
+			}
+		}
+	}
+
+	/**
 	 * Open a subscriptions/listen stream for one resource.
 	 * The stateless protocol has no resources/subscribe request.
 	 */
@@ -1291,6 +1420,22 @@ export class MCPService {
 
 		connection.resourceSubscriptions ??= new Map();
 		connection.resourceSubscriptions.set(uri, subscription);
+
+		void this.keepListening(
+			connection.serverName,
+			connection.client,
+			subscription,
+			(closed, reopened) => {
+				// unsubscribed, or subscribed again, while the stream was down
+				if (connection.resourceSubscriptions?.get(uri) !== closed) {
+					return false;
+				}
+
+				connection.resourceSubscriptions.set(uri, reopened);
+
+				return true;
+			}
+		);
 	}
 
 	/**

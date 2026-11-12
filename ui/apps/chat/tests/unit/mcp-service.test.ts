@@ -1,4 +1,4 @@
-import { Client } from '@modelcontextprotocol/client';
+import { Client, SdkErrorCode, SdkHttpError } from '@modelcontextprotocol/client';
 import { CORS_PROXY } from '$lib/constants';
 import { MCPConnectionPhase, MCPTransportType } from '$lib/enums';
 import { MCPService } from '$lib/extensions/mcp/services/mcp.service';
@@ -328,6 +328,29 @@ describe('MCPService', () => {
 					log.message === 'Protocol error: runtime protocol error'
 			)
 		).toHaveLength(0);
+	});
+
+	it('treats a 404 as an expired session only on a connection with a session', async () => {
+		const notFound = new SdkHttpError(SdkErrorCode.ClientHttpNotImplemented, 'Not Found', {
+			status: 404,
+			statusText: 'Not Found'
+		});
+		const connectionWith = (sessionId?: string) =>
+			({
+				client: { callTool: vi.fn().mockRejectedValue(notFound) },
+				requestTimeoutMs: 9000,
+				serverName: 'test-server',
+				transport: { sessionId }
+			}) as unknown as MCPConnection;
+		const params = { arguments: {}, name: 'tool' };
+
+		// propagates as it is, the store reconnects on it
+		await expect(MCPService.callTool(connectionWith('session-1'), params)).rejects.toBe(notFound);
+		await expect(MCPService.callTool(connectionWith(), params)).rejects.toThrow(
+			'Tool "tool" execution failed on server "test-server": Not Found'
+		);
+		expect(MCPService.isSessionExpiredError(notFound, connectionWith('session-1'))).toBe(true);
+		expect(MCPService.isSessionExpiredError(notFound, connectionWith())).toBe(false);
 	});
 
 	it('falls back to structuredContent when content array is empty', async () => {

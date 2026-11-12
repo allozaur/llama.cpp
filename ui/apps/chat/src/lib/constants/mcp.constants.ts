@@ -19,18 +19,10 @@ export const MCP_ALLOWED_ICON_MIME_TYPES = new Set([
 	MimeTypeImage.ICO_MICROSOFT
 ]);
 
-/**
- * MCP specification version this client targets.
- * Update when the upstream MCP spec introduces a new stable version:
- * https://spec.modelcontextprotocol.io/
- */
-export const MCP_PROTOCOL_VERSION = '2025-06-18';
-
 export const DEFAULT_MCP_CONFIG = {
 	capabilities: { tools: { listChanged: true } } as ClientCapabilities,
 	clientInfo: { name: MCP_CLIENT_NAME, version: DEFAULT_CLIENT_VERSION } as Implementation,
 	connectionTimeoutMs: 10_000, // 10 seconds for connection establishment
-	protocolVersion: MCP_PROTOCOL_VERSION,
 	requestTimeoutSeconds: 300 // 5 minutes for long-running tools
 } as const;
 
