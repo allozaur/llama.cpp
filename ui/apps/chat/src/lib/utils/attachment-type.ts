@@ -33,8 +33,18 @@ export function isTextFile(
 	}
 
 	if (attachment) {
+		if (
+			attachment.type === AttachmentType.TEXT ||
+			attachment.type === AttachmentType.LEGACY_CONTEXT
+		) {
+			return true;
+		}
+
+		// a kind only an extension draws reads as a text file while nothing claims it, when it carries text
 		return (
-			attachment.type === AttachmentType.TEXT || attachment.type === AttachmentType.LEGACY_CONTEXT
+			attachment.type !== AttachmentType.PDF &&
+			'content' in attachment &&
+			typeof attachment.content === 'string'
 		);
 	}
 
