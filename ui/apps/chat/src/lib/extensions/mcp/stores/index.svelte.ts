@@ -373,7 +373,7 @@ class MCPStore implements McpHealthHost {
 		try {
 			return await MCPService.callTool(connection, { arguments: args, name: toolName }, signal);
 		} catch (error) {
-			if (MCPService.isSessionExpiredError(error)) {
+			if (MCPService.isSessionExpiredError(error, connection)) {
 				await this.reconnectServer(serverName);
 
 				const newConnection = this.connections.get(serverName);
@@ -931,7 +931,7 @@ class MCPStore implements McpHealthHost {
 		}
 	}
 
-	/** Store a server config so auto-reconnect can rebuild the session. */
+	/** Store a server config so auto-reconnect can rebuild the connection. */
 	registerServerConfig(name: string, config: MCPServerConfig): void {
 		this.serverConfigs.set(name, config);
 	}
@@ -939,7 +939,7 @@ class MCPStore implements McpHealthHost {
 	/**
 	 * Release a connection reference.
 	 * By default, keeps connections alive for reuse (shutdownIfUnused=false).
-	 * MCP spec encourages long-lived sessions to avoid reconnection overhead.
+	 * A kept connection saves the handshake, and the session of a server that has one.
 	 */
 	async releaseConnection(shutdownIfUnused = false): Promise<void> {
 		this.activeFlowCount = Math.max(0, this.activeFlowCount - 1);
@@ -1129,7 +1129,6 @@ class MCPStore implements McpHealthHost {
 		return {
 			capabilities: DEFAULT_MCP_CONFIG.capabilities,
 			clientInfo: DEFAULT_MCP_CONFIG.clientInfo,
-			protocolVersion: DEFAULT_MCP_CONFIG.protocolVersion,
 			requestTimeoutMs: this.getRequestTimeoutMs(),
 			servers
 		};
@@ -1383,6 +1382,7 @@ class MCPStore implements McpHealthHost {
 	 * Immediately reconnect to a server by creating a fresh transport and session.
 	 * Used when a session-expired error (HTTP 404) is detected during tool execution.
 	 * Per MCP spec 2025-11-25: client MUST discard session ID and re-initialize.
+	 * Only connections with a session get here, a stateless connection has none to expire.
 	 *
 	 * Unlike autoReconnect (which uses exponential backoff for connectivity issues),
 	 * this performs a single immediate reconnection attempt since the server is known
