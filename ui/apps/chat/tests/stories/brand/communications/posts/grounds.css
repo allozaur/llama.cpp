@@ -1,0 +1,153 @@
+/*
+	Communications' grounds and type scale. A ground sets a piece's background and its inks as variables, which every
+	element and module reads (--p-bg, --p-base (a flat colour of the ground, for shapes that hide what is behind
+	them), --p-ink, --p-muted, --p-line, --p-card, --p-inset, --p-solid, --p-solid-ink,
+	--p-link). The type scale is in units (--u, a 24th of the format's short side), so a headline is the same weight of
+	the piece in a square post and on a billboard.
+*/
+
+.ground {
+	--sans: 'Llama Sans', var(--font-sans);
+	--mono: 'Llama Mono', var(--font-mono);
+	background: var(--p-bg);
+	color: var(--p-ink);
+	font: 400 calc(var(--u) * 0.62) / 1.4 var(--sans);
+	/* figures, meta lines and repo ids keep their columns */
+	font-variant-numeric: tabular-nums;
+	/* the text stack's rhythm, in every layout: a label to its headline, a headline to its lede, and the lede to what
+	   follows it (a command, chips, a caption) */
+	--stack-label: calc(var(--u) * 0.6);
+	--stack: calc(var(--u) * 1.2);
+	--stack-after: calc(var(--u) * 1.6);
+}
+
+.ground-light {
+	--p-base: #fafafa;
+	--p-bg: #fafafa;
+	--p-ink: #111111;
+	--p-muted: rgb(17 17 17 / 0.62);
+	--p-line: rgb(17 17 17 / 0.1);
+	--p-card: #ffffff;
+	--p-inset: var(--neutral-100);
+	--p-solid: #111111;
+	--p-solid-ink: #fafafa;
+	--p-link: var(--art-night-sky);
+}
+.ground-dark {
+	--p-base: #111111;
+	--p-bg: #111111;
+	--p-ink: #fafafa;
+	--p-muted: rgb(250 250 250 / 0.62);
+	--p-line: rgb(250 250 250 / 0.13);
+	--p-card: rgb(250 250 250 / 0.04);
+	--p-inset: rgb(250 250 250 / 0.06);
+	--p-solid: #fafafa;
+	--p-solid-ink: #111111;
+	--p-link: var(--art-day-sky);
+}
+.ground-sand {
+	--p-base: var(--sand-50);
+	--p-bg: var(--sand-50);
+	--p-ink: var(--sand-900);
+	--p-muted: color-mix(in oklab, var(--sand-900) 66%, transparent);
+	--p-line: color-mix(in oklab, var(--sand-900) 12%, transparent);
+	--p-card: var(--sand-100);
+	--p-inset: var(--sand-200);
+	--p-solid: var(--sand-900);
+	--p-solid-ink: var(--sand-50);
+	--p-link: var(--art-night-sky);
+}
+/* the day sky: llama.app's hero, deeper blue at the top and light at the horizon */
+.ground-day {
+	--p-base: #d0e4f7;
+	--p-bg:
+		radial-gradient(ellipse at 15% 10%, #dcecfb 0%, transparent 55%),
+		radial-gradient(ellipse at 90% 95%, #e8f2fc 0%, transparent 50%),
+		linear-gradient(160deg, #c4ddf6 0%, #d0e4f7 55%, #dfecf9 100%);
+	--p-ink: #111111;
+	--p-muted: rgb(17 17 17 / 0.62);
+	--p-line: rgb(17 17 17 / 0.1);
+	--p-card: rgb(255 255 255 / 0.9);
+	--p-inset: rgb(17 17 17 / 0.05);
+	--p-solid: #111111;
+	--p-solid-ink: #fafafa;
+	--p-link: var(--art-night-sky);
+}
+/* the night sky: darkest at the top, lifting a little towards the horizon, with a faint glow there; the steps are
+   small, so it reads as one dark blue */
+.ground-night {
+	--p-base: #13213a;
+	--p-bg:
+		radial-gradient(ellipse 120% 60% at 50% 115%, rgb(46 70 104 / 0.35) 0%, transparent 70%),
+		linear-gradient(180deg, #0f1a2b 0%, #13213a 55%, #182a45 100%);
+	--p-ink: #fafafa;
+	--p-muted: rgb(250 250 250 / 0.66);
+	--p-line: rgb(250 250 250 / 0.14);
+	--p-card: rgb(17 26 42 / 0.82);
+	--p-inset: rgb(250 250 250 / 0.07);
+	--p-solid: #fafafa;
+	--p-solid-ink: #111111;
+	--p-link: var(--art-day-sky);
+}
+/* the type scale, at a low specificity so a layout sets its own margins */
+:where(.ground) :where(.t-label) {
+	margin: 0;
+	color: var(--p-muted);
+	font: 500 calc(var(--u) * 0.54) / 1 var(--mono);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+:where(.ground) :where(.t-body) {
+	margin: 0;
+	font-size: calc(var(--u) * 0.62);
+	line-height: 1.4;
+	text-wrap: pretty;
+}
+/* a lede keeps to about 40 characters a line, so it doesn't run up to what stands beside it */
+:where(.ground) :where(.t-lede) {
+	max-width: calc(var(--u) * 17);
+	margin: 0;
+	color: var(--p-muted);
+	font-size: calc(var(--u) * 0.84);
+	line-height: 1.3;
+	text-wrap: pretty;
+}
+:where(.ground) :where(.t-headline, .t-display, .t-figure) {
+	margin: 0;
+	font-family: var(--sans);
+	font-weight: 700;
+	white-space: pre-line;
+	text-wrap: balance;
+}
+:where(.ground) :where(.t-headline) {
+	font-size: calc(var(--u) * 2);
+	line-height: 0.98;
+	letter-spacing: -0.02em;
+}
+:where(.ground) :where(.t-display) {
+	font-size: calc(var(--u) * 3.2);
+	line-height: 0.92;
+	letter-spacing: -0.035em;
+}
+:where(.ground) :where(.t-figure) {
+	font-size: calc(var(--u) * 5);
+	line-height: 0.85;
+	letter-spacing: -0.04em;
+}
+:where(.ground) :where(.t-mono) {
+	margin: 0;
+	font: 400 calc(var(--u) * 0.58) / 1.2 var(--mono);
+}
+
+/* a box a motif fills: the SVG takes the box's size, whatever the format, rather than growing with its width */
+.fill {
+	position: relative;
+	min-width: 0;
+	min-height: 0;
+}
+.fill > svg {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}

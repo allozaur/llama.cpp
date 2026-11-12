@@ -213,7 +213,7 @@
 
 			<div class="mt-2 flex justify-end gap-2">
 				<Button class="h-8 px-3" onclick={editCtx.cancel} size="sm" variant="outline">
-					<X class="mr-1 size-4" />
+					<X class="mr-1 size-icon-md" />
 
 					Cancel
 				</Button>
@@ -224,7 +224,7 @@
 					onclick={editCtx.save}
 					size="sm"
 				>
-					<Check class="mr-1 size-4" />
+					<Check class="mr-1 size-icon-md" />
 
 					Save
 				</Button>
@@ -320,7 +320,7 @@
 							{#if isExpanded && showExpandButton}
 								<div class="mb-2 flex justify-center">
 									<Button
-										class="rounded-full px-4 py-1.5 text-xs shadow-md"
+										class="rounded-full px-4 py-1.5 text-xs shadow-(--elevation-surface)"
 										onclick={(e) => {
 											e.stopPropagation();
 											toggleExpand();

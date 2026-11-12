@@ -9,10 +9,12 @@
 	}: TabsPrimitive.TriggerProps = $props();
 </script>
 
+<!-- muted until active; the list draws the raised chip or underline and slides it between triggers -->
 <TabsPrimitive.Trigger
 	bind:ref
 	class={cn(
-		"inline-flex h-[calc(100%-1px)] flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap text-foreground transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:shadow-sm dark:text-muted-foreground dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 dark:data-[state=active]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		"relative inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-control px-3 text-label font-medium whitespace-nowrap transition-colors duration-250 ease-[cubic-bezier(0.23,1,0.32,1)] outline-none hover:text-(--tabs-text-active) focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start group-data-[orientation=vertical]/tabs:py-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-md",
+		'data-[state=active]:text-(--tabs-text-active)',
 		className
 	)}
 	data-slot="tabs-trigger"

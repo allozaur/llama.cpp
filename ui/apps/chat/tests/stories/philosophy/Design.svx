@@ -1,0 +1,165 @@
+<!--
+	The design philosophy (Philosophy › Design): why the brand, Llama UI and Llama Chat look and work the way they do.
+	Written for people first and readable as plain Markdown by agents too; the how, for agents first, is DESIGN.md (Design guidelines).
+	Set in Editorial; every figure is built from the real components, fonts and tokens.
+-->
+
+<script>
+	import ArtColours from './figures/ArtColours.svelte';
+	import Figure from './Figure.svelte';
+	import Goblet from './figures/Goblet.svelte';
+	import Grotesque from './figures/Grotesque.svelte';
+	import IconSizes from './figures/IconSizes.svelte';
+	import Measure from './figures/Measure.svelte';
+	import Assets from './figures/Assets.svelte';
+	import Depth from './figures/Depth.svelte';
+	import Boards from '../brand/communications/Boards.svelte';
+	import Names from './figures/Names.svelte';
+	import Neutral from './figures/Neutral.svelte';
+	import Posts from './figures/Posts.svelte';
+	import Quantized from './figures/Quantized.svelte';
+	import Restyle from './figures/Restyle.svelte';
+	import Tokens from './figures/Tokens.svelte';
+</script>
+
+<p class="kicker">Philosophy · Design</p>
+
+# Design
+
+<p class="lead">Why the brand, <strong>Llama UI</strong> and <strong>Llama Chat</strong> look the way they do. The three share one set of decisions; the rules themselves are in <strong>Design guidelines</strong>.</p>
+
+## Recognisable, easy to change
+
+The character lives in three places: the icon, the details of the type and one accent colour. Everything else is neutral, so an app built on Llama UI can add its own colour or logo without undoing ours.
+
+<Figure n={1} caption="Real controls as Llama UI ships them, then made to look like GitHub’s and macOS’s: the colours through the component tokens, the sizes and corners through a few CSS rules. The components stay the same.">
+	<Restyle />
+</Figure>
+
+## Function first
+
+Every element has a job and a reason for its size and place. Proportion and finish do the rest; there is no ornament. That is the approach of Swiss typography and the Bauhaus.
+
+In practice the system has few roles and uses them everywhere. A button has no height, radius or icon size of its own; it takes the control's, so buttons, fields and toggles line up.
+
+<Figure n={2} caption="A real button at 2× on the 4px grid. Each measurement comes from a role every control shares.">
+	<Measure />
+</Figure>
+
+## A little shape
+
+Shadows are subtle. Where it helps, an element gets a little shape: a soft shadow, a matte glass panel, or a hairline edge that melts into its shadow. It is a light touch of the physical, never decoration for its own sake.
+
+The shape follows the job. A raised button reads as something to press, a recessed field as somewhere to type, a lifted card as one thing, a menu as floating above the page. Depth tells elements and their roles apart, shows which sits above which, and leads the eye.
+
+<Figure n={3} caption="Real surfaces from Llama UI, each with the shape of its job: raised, recessed, lifted and floating.">
+	<Depth />
+</Figure>
+
+## The crystal goblet
+
+In *The Crystal Goblet*, Beatrice Warde compared good typography to a clear wine glass: it shows the wine, not itself. In Llama Chat the wine is the conversation. The interface around it is grey, its surfaces are matte, and its type is set for reading.
+
+<Figure n={4} caption="A real exchange in Llama Chat. The messages carry the colour and weight; the interface stays neutral.">
+	<Goblet />
+</Figure>
+
+Colour or weight in the interface always means something: a status, a selection, focus or an action that can't be undone.
+
+## Design lives in code
+
+The tokens are CSS, and when the docs and the CSS disagree, the CSS wins. Every component and screen in this Storybook is the real implementation, and the key visuals in **Communications** are built from real Llama Chat screens, so they can't show what the app doesn't do.
+
+<Figure n={5} caption="The primary fill through the three token tiers. Change the primitive and the rest follows, in both themes.">
+	<Tokens />
+</Figure>
+
+The brand assets are generated too. Scripts build the fonts from their sources, and the lockups, app icons, profile pictures and headers from the icon and the fonts. A change to a source is made once, and every file is rebuilt from it.
+
+<Figure n={6} caption="Real files built from the same sources: a lockup, app icons for three platforms, a profile picture and an X header. How the icon itself is drawn is in Brand › Logo › Overview.">
+	<Assets />
+</Figure>
+
+## The icon at every size
+
+The icon is one solid shape: straight lines and two rounded corners. It reads the same from a 14px favicon to a 7500px cover, in one colour, on light or dark. It is also a glyph in both fonts (U+E000 to U+E002), so it can be typed inline and takes the colour and weight of the text around it.
+
+<Figure n={7} caption="The icon from 14 to 160px. Below, U+E002 in Llama Sans, in a sentence and in a real button.">
+	<IconSizes />
+</Figure>
+
+## Playing with the mark
+
+The outline is simple enough to stay recognisable whatever fills it, so artwork can fill it. The filling has to explain something true about llama.cpp.
+
+The quantized L is the first example: the icon quantized the way llama.cpp quantizes a model. The exact outline at 16 bits at the top, then half the precision at each step, through 8 and 4 bits, to whole pixels at 2 bits at the foot. It reads as the icon, explains quantization, and asks how much detail a shape can lose before it stops being itself.
+
+<Figure n={8} caption="The quantized L from Communications › Swag: the icon at four bit depths with its legend, and on a black t-shirt.">
+	<Quantized />
+</Figure>
+
+The outline stays exact, the colours stay ink and cinder, and the idea has to be accurate.
+
+## Grotesque type
+
+Llama Sans is a grotesque, the family that began with Akzidenz-Grotesk in 1898 and Neue Haas Grotesk in 1957, renamed Helvetica in 1960. Grotesques set Müller-Brockmann's Tonhalle posters, the American Airlines logo, the New York subway signs, the first iPhone and Apple's San Francisco. They have lasted because they are plain and neutral enough for any message.
+
+<Figure n={9} caption="The grotesque line, each name set in Llama Sans; then the letters that make Llama Sans its own, and Llama Mono's cells.">
+	<Grotesque />
+</Figure>
+
+Llama Sans is built from Geist, an open neo-grotesk, with changes drawn from Akzidenz-Grotesk and Neue Haas Grotesk: rounder curves, open angled terminals, a tailless a and a narrow t. It is one variable font with an optical-size axis, so the browser picks UI or Display spacing from the font size. Llama Mono has the same letters in a fixed width, and keeps l, 1, I and | distinct. Both are under the SIL Open Font License.
+
+## Neutral by default
+
+Most of the interface is grey. Each group of colours has one job:
+
+- **Greys:** pages, surfaces, lines and text, in light and dark.
+- **Status colours** (green, amber, red and blue): status only. Each has one root colour that its surfaces, lines and lamps derive from.
+- **Art colours:** the day sky and the night sky, for grounds and illustrations in communications. There is no red, so artwork never looks like an error.
+- **Cinder** (#EE6C1E): the one accent, for the .cpp in the llama.cpp logotype and small details such as the section numbers on this page.
+
+<Figure n={10} caption="The palette by how much of it you see: mostly greys, the rest as slivers. Below, the real badges, the only place status colours appear.">
+	<Neutral />
+</Figure>
+
+Backgrounds are neutral too. Only the Llama lockup goes on colour: the day sky and the night sky.
+
+Beyond the greys, communications have four colours, each from the world llama.cpp runs in. **Sand** is the warm ground for posters and boards, and a nod to silicon, made from sand, that every chip is built on. **Day sky** and **night sky** are llama.app's hero by day and after dark, the grounds Llama goes on. **Cinder** is the one warm accent.
+
+<Figure n={11} caption="Sand, the day sky, the night sky and cinder, as the real tokens.">
+	<ArtColours />
+</Figure>
+
+## Two names, one family
+
+**Llama** is the product: capital L, Llama Sans, allowed on colour. **llama.cpp** is the engine: lowercase, Llama Mono Bold, .cpp in cinder, on neutral grounds only. Both use the same icon glyph, which ties the two lockups together.
+
+<Figure n={12} caption="Both lockups typed: U+E002 and the name, in each font. Llama on the day sky; llama.cpp on light and dark.">
+	<Names />
+</Figure>
+
+## Communications
+
+Posts, link previews, posters and the site follow the app's rules: neutral grounds, Llama Sans and Llama Mono, typed lockups, and colour only from sand, the two skies and cinder. Llama posts may use the day sky and the night sky; llama.cpp posts stay on light and dark.
+
+Each post is a Svelte template with its copy kept as data, and the key visuals use real Llama Chat screens, so a new post is new copy, not a new design.
+
+<Figure n={13} caption="The real templates from Communications › Applications: a model drop post on light, llama.app's link preview on the day sky, and llama.cpp's GitHub preview on dark.">
+	<Posts />
+</Figure>
+
+Artwork has more room. The specimen boards follow the Swiss format: one face set large on sand, sky or grey grounds, with cinder as the only warm accent.
+
+<Figure n={14} caption="Specimen boards and posters for Llama Sans, in the brand palette.">
+	<Boards />
+</Figure>
+
+## When something new comes up
+
+1. Reuse an existing role before adding a token, and an existing component before writing a new one.
+2. Give every colour and effect a job, or leave it out.
+3. Prefer generated or derived values to hand-tuned ones, and note the reason next to the value.
+4. Keep it in code, in this Storybook.
+
+<p class="colophon">Set in Llama Sans and Llama Mono. Every figure is drawn with the real components, fonts and tokens.</p>
