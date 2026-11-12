@@ -1,0 +1,74 @@
+"""Llama Mono's glyph grid, exported from the design system's own font
+(ui/lib/ui/src/lib/assets/fonts/LlamaMono.woff2) in the shape of the Llama Sans specimen's grid, so GlyphGrid draws
+both, its cells as wide as Llama Sans's so the glyphs come out at the same size. The icon lockup (U+E002) is left out: it is wider than a cell. Run from ui/apps/chat:
+
+    uvx --with brotli --from fonttools python tests/stories/brand/llama-mono/data/build_glyphs.py
+"""
+
+import json
+import os
+
+from fontTools.pens.boundsPen import BoundsPen
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.transformPen import TransformPen
+from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
+
+FONT = "../../lib/ui/src/lib/assets/fonts/LlamaMono.woff2"
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "glyphs.json")
+SANS = "tests/stories/brand/llama-sans/lib/data/specimen.json"
+WEIGHT = 400
+GROUPS = [("Uppercase", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+          ("Lowercase", "abcdefghijklmnopqrstuvwxyz"),
+          ("Figures", "0123456789"),
+          ("Punctuation & symbols", ".,:;!?'\"-–—()[]/&@#%*+=$€"),
+          ("For code", "{}<>|\\~^`_"),
+          ("Llama icon · U+E000", "")]
+
+
+def bounds(font, ch):
+    gs = font.getGlyphSet()
+    pen = BoundsPen(gs)
+    gs[font.getBestCmap()[ord(ch)]].draw(pen)
+    return pen.bounds
+
+
+def path(font, ch, dx, top):
+    """SVG path of a glyph, flipped and placed (dx, top) in its cell, rounded to whole units."""
+    name = font.getBestCmap()[ord(ch)]
+    gs = font.getGlyphSet()
+    pen = SVGPathPen(gs, ntos=lambda v: f"{v:.0f}")
+    gs[name].draw(TransformPen(pen, (1, 0, 0, -1, round(dx), top)))
+    return pen.getCommands(), font["hmtx"][name][0]
+
+
+def main():
+    font = instantiateVariableFont(TTFont(FONT), {"wght": WEIGHT})
+    os2 = font["OS/2"]
+    asc, dsc = round(bounds(font, "l")[3]), round(bounds(font, "p")[1])
+    top, bot = asc + 60, dsc - 40
+    chars = [c for _, s in GROUPS for c in s]
+    with open(SANS) as f:
+        vw = json.load(f)["grid"]["width"]
+
+    cells = []
+    for c in chars:
+        _, adv = path(font, c, 0, top)
+        dx = (vw - adv) / 2
+        d, _ = path(font, c, dx, top)
+        cells.append({"ch": c, "adv": adv, "dx": round(dx), "d": d})
+
+    grid = {
+        "variant": "Mono", "width": vw, "height": top - bot,
+        "guides": {"base": top, "x": top - os2.sxHeight, "cap": top - os2.sCapHeight,
+                   "asc": top - asc, "dsc": top - dsc},
+        "groups": [{"title": t, "chars": list(s)} for t, s in GROUPS],
+        "cells": {str(WEIGHT): cells},
+    }
+    with open(OUT, "w") as f:
+        json.dump(grid, f, ensure_ascii=False, separators=(",", ":"))
+    print("wrote", OUT, os.path.getsize(OUT) // 1024, "KB")
+
+
+if __name__ == "__main__":
+    main()

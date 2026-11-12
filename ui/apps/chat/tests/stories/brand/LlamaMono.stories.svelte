@@ -1,16 +1,20 @@
 <script lang="ts" module>
+	import glyphs from './llama-mono/data/glyphs.json';
 	import Diff from './llama-mono/Diff.svelte';
 	import KeyVisuals from './llama-mono/KeyVisuals.svelte';
-	import LlamaCppLogo from './llama-mono/LlamaCppLogo.svelte';
 	import Logs from './llama-mono/Logs.svelte';
 	import MonoInterface from './llama-mono/MonoInterface.svelte';
 	import MonoPage from './llama-mono/MonoPage.svelte';
 	import Terminal from './llama-mono/Terminal.svelte';
+	import GlyphGrid from './llama-sans/lib/components/GlyphGrid.svelte';
+	import type { Specimen } from './llama-sans/lib/specimen';
 	import OverviewFrame from './llama-sans/overview/OverviewFrame.svelte';
+	import SpecimenFrame from './llama-sans/SpecimenFrame.svelte';
+	import TypographyOverview from './typography/TypographyOverview.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// Llama Mono in use: the terminal, the user interface beside Llama Sans, logs and tables, diffs, the llama.cpp logo it
-	// sets, and its key visuals. The font itself is on the Typography overview's Mono tab
+	// Llama Mono: its overview, then in use: the terminal, the user interface beside Llama Sans, logs and tables, diffs
+	// and its key visuals; then every glyph, at Llama Sans's cell size (the llama.cpp lockup is Brand/Logo/Lockup)
 	const { Story } = defineMeta({
 		parameters: {
 			controls: { disable: true },
@@ -19,6 +23,12 @@
 		title: 'Brand/Typography/Llama Mono'
 	});
 </script>
+
+<Story asChild name="Overview">
+	<OverviewFrame>
+		<TypographyOverview variant="mono" />
+	</OverviewFrame>
+</Story>
 
 <Story asChild name="Terminal">
 	<OverviewFrame>
@@ -60,16 +70,10 @@
 	</OverviewFrame>
 </Story>
 
-<Story asChild name="llama.cpp logo">
-	<OverviewFrame>
-		<MonoPage
-			intro="llama.cpp's lockup is set in Llama Mono: its lockup glyph, U+E002, then the name in lowercase Bold, with .cpp in cinder. It always sits on a neutral ground."
-			kicker="Llama Mono · the lockup"
-			title="llama.cpp logo"
-		>
-			<LlamaCppLogo />
-		</MonoPage>
-	</OverviewFrame>
+<Story asChild name="Glyphs">
+	<SpecimenFrame variant="UI">
+		<GlyphGrid comparing={false} grid={glyphs as unknown as Specimen['grid']} weight={400} />
+	</SpecimenFrame>
 </Story>
 
 <Story asChild name="Key visuals">
