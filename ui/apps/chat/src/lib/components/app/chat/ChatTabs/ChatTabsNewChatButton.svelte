@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Plus } from '@lucide/svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ICON_CLASS_DEFAULT } from '$lib/constants';
 
 	interface Props {

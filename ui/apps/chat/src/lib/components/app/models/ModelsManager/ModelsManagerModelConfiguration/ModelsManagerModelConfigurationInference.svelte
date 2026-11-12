@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { ModelOverride } from '../utils';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Slider } from '@ggml/llama-ui/ui/slider';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import { Braces, CircleDot, SlidersHorizontal, X } from '@lucide/svelte';
 	import { CollapsibleSection } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Input } from '$lib/components/ui/input';
-	import { Slider } from '$lib/components/ui/slider';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Textarea } from '$lib/components/ui/textarea';
 	import { SAMPLING_DEFAULTS } from '$lib/constants';
 
 	interface Props {

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { isLocalOption } from './ModelsManager/utils';
-	import { cn } from '$lib/components/ui/utils';
+	import { cn } from '@ggml/llama-ui/utils';
 	import { MODEL_ID } from '$lib/constants';
 	import { HuggingFaceService } from '$lib/services';
 	import type { ModelOption } from '$lib/types/models';

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import { AlertTriangle, X } from '@lucide/svelte';
 	import { ChatForm, DialogConfirmation } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
 	import { getChatMessageEditContext } from '$lib/contexts';
 	import { KeyboardKey, MessageRole } from '$lib/enums';
 	import { chatStore } from '$lib/stores';

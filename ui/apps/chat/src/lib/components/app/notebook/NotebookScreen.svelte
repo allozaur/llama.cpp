@@ -1,5 +1,7 @@
 <script lang="ts">
 	import NotebookEditor from './NotebookEditor.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Play, Redo, Square, Undo } from '@lucide/svelte';
 	import {
 		ChatFormContextGauge,
@@ -9,8 +11,6 @@
 		ModelsSelector
 	} from '$lib/components/app';
 	import ContextGaugePopup from '$lib/components/app/chat/ChatForm/ChatFormContextGauge/ContextGaugePopup.svelte';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import {
 		AUTO_SCROLL_AT_BOTTOM_THRESHOLD,
 		AUTO_SCROLL_INTERVAL,

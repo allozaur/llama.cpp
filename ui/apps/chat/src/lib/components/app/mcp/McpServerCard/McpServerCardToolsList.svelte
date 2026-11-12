@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 
 	interface Tool {
 		name: string;

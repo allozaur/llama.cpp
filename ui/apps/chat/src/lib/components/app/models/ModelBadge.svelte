@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ModelId from './ModelId.svelte';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { ActionIconCopyToClipboard, BadgeInfo } from '$lib/components/app';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { MODEL_ICON } from '$lib/constants';
 	import { modelsStore, serverStore } from '$lib/stores';
 

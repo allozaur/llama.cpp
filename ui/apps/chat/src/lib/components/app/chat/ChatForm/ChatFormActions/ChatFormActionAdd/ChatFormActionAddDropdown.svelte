@@ -1,14 +1,14 @@
 <script lang="ts">
+	import { buttonVariants } from '@ggml/llama-ui/ui/button';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
+	import { cn } from '@ggml/llama-ui/utils';
 	import { File, Folder, Image, Mic, Plus, Video } from '@lucide/svelte';
 	import {
 		ChatFormActionAddSystemMessageSubmenu,
 		ChatFormActionAddToolsSubmenu,
 		ProjectSubmenu
 	} from '$lib/components/app';
-	import { buttonVariants } from '$lib/components/ui/button';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { cn } from '$lib/components/ui/utils';
 	import {
 		ATTACHMENT_FILE_ITEMS,
 		ATTACHMENT_MENU_TEXT,

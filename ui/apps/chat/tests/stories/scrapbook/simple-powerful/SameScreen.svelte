@@ -4,9 +4,9 @@
 	open beside it. Built from the real Button, Badge and token surfaces.
 -->
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { ArrowUp, Camera, SlidersHorizontal } from '@lucide/svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
 
 	const asks = [
 		'Write a thank-you note to my neighbour',

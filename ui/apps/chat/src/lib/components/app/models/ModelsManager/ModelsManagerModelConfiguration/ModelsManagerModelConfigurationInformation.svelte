@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { modelDraftsFor, modelQuantLabel, modelSizeLabel, resolveModelSize } from '../utils';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import {
 		ActionIconCopyToClipboard,
 		BadgesModality,
 		CollapsibleSection
 	} from '$lib/components/app';
-	import { Badge } from '$lib/components/ui/badge';
 	import { HuggingFaceService } from '$lib/services';
 	import { modelsStore } from '$lib/stores';
 	import type { ApiLlamaCppServerProps } from '$lib/types/api';

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { KeyboardShortcutInfo } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
 	import {
 		ICON_CLASS_DEFAULT,
 		ICON_STRIP_TRANSITION_DELAY_MULTIPLIER,

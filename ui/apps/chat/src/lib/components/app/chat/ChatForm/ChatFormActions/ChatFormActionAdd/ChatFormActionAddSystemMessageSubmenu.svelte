@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
 	import { MessageSquare, Plus } from '@lucide/svelte';
 	import { McpLogo } from '$lib/components/app';
 	import SearchInput from '$lib/components/app/forms/SearchInput.svelte';
-	import Badge from '$lib/components/ui/badge/badge.svelte';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { getChatFormActionsContext } from '$lib/contexts';
 	import { useSystemMessagePrompts } from '$lib/hooks/use-system-message-prompts.svelte';
 	import type { MCPPromptInfo } from '$lib/types';

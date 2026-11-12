@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { classify, draftBadgeOf, sortDraftKinds } from './download-options.utils';
 	import ModelsDiscoverDetailsDownloadOptionsRow from './ModelsDiscoverDetailsDownloadOptionsRow.svelte';
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import * as Select from '@ggml/llama-ui/ui/select';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Select from '$lib/components/ui/select';
 	import {
 		ModelDownloadConfirmAction,
 		ModelDraftSidecar,

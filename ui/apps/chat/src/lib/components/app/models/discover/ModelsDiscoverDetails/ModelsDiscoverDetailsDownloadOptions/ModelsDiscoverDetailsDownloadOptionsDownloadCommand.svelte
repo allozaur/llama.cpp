@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as Select from '@ggml/llama-ui/ui/select';
 	import { Check, Copy } from '@lucide/svelte';
-	import * as Select from '$lib/components/ui/select';
 	import { COPY_FEEDBACK_RESET_MS, MODEL_ID, SERVE_COMMAND, SPEC_TYPE } from '$lib/constants';
 	import type { ModelDraftSidecar } from '$lib/enums';
 	import { copyToClipboard } from '$lib/utils';

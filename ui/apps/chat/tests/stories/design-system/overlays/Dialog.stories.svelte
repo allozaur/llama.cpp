@@ -1,9 +1,9 @@
 <script lang="ts" module>
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 
 	const { Story } = defineMeta({
 		component: Dialog.Root,

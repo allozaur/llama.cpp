@@ -1,8 +1,8 @@
 <script lang="ts">
 	import ProjectSection from './ProjectSection.svelte';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
 	import { File as FileIcon, Paperclip, Plus, Server, X } from '@lucide/svelte';
 	import { ActionIcon, ChatFormPickerMention, DropdownMenuActions } from '$lib/components/app';
-	import * as Empty from '$lib/components/ui/empty';
 	import { ICON_CLASS_DEFAULT, SECTION_ACTION_CLASS } from '$lib/constants';
 	import { ProjectContextKind } from '$lib/enums';
 	import type { FileMentionEntry, ProjectContextItem } from '$lib/types';

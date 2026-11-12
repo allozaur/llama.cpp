@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as ToggleGroup from '@ggml/llama-ui/ui/toggle-group';
 	import { LayoutGrid, List } from '@lucide/svelte';
-	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { FILTER_TOGGLE_ITEM_CLASS } from '$lib/constants';
 	import { LibraryView } from '$lib/enums';
 

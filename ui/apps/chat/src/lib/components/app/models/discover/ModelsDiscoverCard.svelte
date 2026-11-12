@@ -2,8 +2,8 @@
 	import ModelCapabilityIcons from '../ModelCapabilityIcons.svelte';
 	import ModelCard from '../ModelCard.svelte';
 	import ModelOrgAvatar from '../ModelOrgAvatar.svelte';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import { Database, Download, ScrollText } from '@lucide/svelte';
-	import { Badge } from '$lib/components/ui/badge';
 	import { useHubModelSummary } from '$lib/hooks/use-hub-model-summary.svelte';
 	import { HuggingFaceService } from '$lib/services';
 	import { ModelsService } from '$lib/services/models.service';

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as Card from '@ggml/llama-ui/ui/card';
 	import { MessageSquarePlus, MoreHorizontal, Pencil, Trash2 } from '@lucide/svelte';
 	import { ContextMenuActions, DialogConfirmation, DropdownMenuActions } from '$lib/components/app';
-	import * as Card from '$lib/components/ui/card';
 	import type { DatabasePrompt, MenuAction } from '$lib/types';
 	import { formatRelativeTime } from '$lib/utils';
 

@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import * as RadioGroup from '@ggml/llama-ui/ui/radio-group';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Label } from '$lib/components/ui/label';
-	import * as RadioGroup from '$lib/components/ui/radio-group';
 
 	const { Story } = defineMeta({
 		component: RadioGroup.Root,

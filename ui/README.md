@@ -12,14 +12,12 @@ ui/
 ```
 
 - [`lib/ui`](lib/ui/README.md) draws the parts and handles interaction, with no business logic. It is built with
-  `@sveltejs/package` and published to npm as `@ggml/llama-ui`.
+  `@sveltejs/package` and published to npm as `@ggml/llama-ui`. Apps in this repo skip the package: they compile
+  its sources as part of their own build, so they hold no copy of a component, a token or a font.
 - [`lib/harness`](lib/harness/README.md) is the agentic loop: plain TypeScript with no UI and no dependencies. An app
   gives it an inference client and tools, and reads its events.
 - [`apps/chat`](apps/chat/README.md) talks to llama-server, stores conversations and runs the agentic loop through the
   harness. CMake builds it into llama-server (see `scripts/ui-assets.cmake`).
 
-Each folder is its own npm package with its own `package-lock.json`: run `npm ci` in the one you work on.
-
-The split between library and app is not finished. Llama Chat does not import `@ggml/llama-ui` yet: it still carries
-its own copy of the tokens and base components (`apps/chat/src/lib/components/ui`), with `DESIGN.md`, `BRAND.md` and
-the full Storybook beside it. `lib/ui` holds what llama.app uses today; Chat moves onto it next.
+Each folder is its own npm package with its own `package-lock.json`: run `npm ci` in the one you work on. Building,
+checking and testing `apps/chat` needs no install in `lib/ui`.

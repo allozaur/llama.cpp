@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ChatFormPromptPickerArgumentInput from './ChatFormPromptPickerArgumentInput.svelte';
-	import { Button } from '$lib/components/ui/button';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import type { MCPPromptInfo } from '$lib/types';
 
 	interface Props {

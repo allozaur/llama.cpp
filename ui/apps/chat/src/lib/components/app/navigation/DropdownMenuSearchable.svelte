@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { cn } from '@ggml/llama-ui/utils';
 	import { SearchInput } from '$lib/components/app';
-	import { cn } from '$lib/components/ui/utils.js';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

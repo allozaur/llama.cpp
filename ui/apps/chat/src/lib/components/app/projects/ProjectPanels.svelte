@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ProjectContext from './ProjectContext.svelte';
 	import ProjectInstructions from './ProjectInstructions.svelte';
-	import * as Card from '$lib/components/ui/card';
+	import * as Card from '@ggml/llama-ui/ui/card';
 	import { ProjectContextKind } from '$lib/enums';
 	import { useChatScreenActiveModel } from '$lib/hooks/use-chat-screen-active-model.svelte';
 	import { projectsStore } from '$lib/stores';

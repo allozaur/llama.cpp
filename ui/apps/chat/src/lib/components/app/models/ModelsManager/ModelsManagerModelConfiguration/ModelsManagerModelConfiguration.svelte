@@ -6,11 +6,11 @@
 	import ModelsManagerModelConfigurationInference from './ModelsManagerModelConfigurationInference.svelte';
 	import ModelsManagerModelConfigurationInformation from './ModelsManagerModelConfigurationInformation.svelte';
 	import ModelsManagerModelConfigurationLoad from './ModelsManagerModelConfigurationLoad.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Tabs from '@ggml/llama-ui/ui/tabs';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Trash2 } from '@lucide/svelte';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
-	import { Button } from '$lib/components/ui/button';
-	import * as Tabs from '$lib/components/ui/tabs';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { LOAD_DEFAULTS, MODEL_ID } from '$lib/constants';
 	import { ModelDownloadConfirmAction, ServerModelStatus } from '$lib/enums';
 	import { HuggingFaceService } from '$lib/services';

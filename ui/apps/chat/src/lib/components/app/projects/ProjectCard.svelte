@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Card from '@ggml/llama-ui/ui/card';
 	import {
 		Archive,
 		ArchiveRestore,
@@ -10,7 +11,6 @@
 	} from '@lucide/svelte';
 	import { goto } from '$app/navigation';
 	import { ContextMenuActions, DialogConfirmation, DropdownMenuActions } from '$lib/components/app';
-	import * as Card from '$lib/components/ui/card';
 	import { RouterService } from '$lib/services';
 	import { projectsStore, uiStore } from '$lib/stores';
 	import type { MenuAction, Project } from '$lib/types';

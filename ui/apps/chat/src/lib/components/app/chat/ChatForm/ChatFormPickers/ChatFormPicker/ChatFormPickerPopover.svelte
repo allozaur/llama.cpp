@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Popover from '$lib/components/ui/popover';
+	import * as Popover from '@ggml/llama-ui/ui/popover';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Label } from '$lib/components/ui/label';
-	import { Switch } from '$lib/components/ui/switch';
 
 	const { Story } = defineMeta({
 		component: Switch,

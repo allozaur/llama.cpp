@@ -1,10 +1,10 @@
 <script lang="ts">
 	import ModelsManagerModelConfigurationActions from './ModelsManagerModelConfigurationActions.svelte';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Server, X } from '@lucide/svelte';
 	import { Logo, ModelAvatar, ModelCapabilities, ModelId } from '$lib/components/app';
 	import { ServerIcon } from '$lib/components/app/servers';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
 	import { LOCAL_BACKEND_ID } from '$lib/constants';
 	import { ServerModelStatus } from '$lib/enums';
 	import { deviceStore } from '$lib/stores';

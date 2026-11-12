@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
+	import { ScrollArea } from '@ggml/llama-ui/ui/scroll-area';
 	import { MessageSquarePlus } from '@lucide/svelte';
 	import SearchInput from '$lib/components/app/forms/SearchInput.svelte';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { ScrollArea } from '$lib/components/ui/scroll-area';
 	import { UI_DATA_ATTRS } from '$lib/constants';
 
 	interface Props {

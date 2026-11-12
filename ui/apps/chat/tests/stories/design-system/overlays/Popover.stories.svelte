@@ -1,9 +1,9 @@
 <script lang="ts" module>
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import * as Popover from '@ggml/llama-ui/ui/popover';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import * as Popover from '$lib/components/ui/popover';
 
 	const { Story } = defineMeta({
 		component: Popover.Root,

@@ -1,8 +1,8 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Textarea } from '$lib/components/ui/textarea';
 
 	const { Story } = defineMeta({
 		component: Textarea,

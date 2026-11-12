@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { X } from '@lucide/svelte';
 	import { ActionIcon } from '$lib/components/app/actions';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { conversationsStore, projectsStore, uiStore } from '$lib/stores';
 	import type { Project } from '$lib/types';
 

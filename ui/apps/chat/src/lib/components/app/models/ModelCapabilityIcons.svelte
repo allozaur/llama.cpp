@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import {
 		CAPABILITY_ICONS,
 		CAPABILITY_LABELS,

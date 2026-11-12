@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
 	import { MessageSquarePlus } from '@lucide/svelte';
 	import ChatMessages from '$lib/components/app/chat/ChatMessages/ChatMessages.svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
 	interface Props {
 		open: boolean;

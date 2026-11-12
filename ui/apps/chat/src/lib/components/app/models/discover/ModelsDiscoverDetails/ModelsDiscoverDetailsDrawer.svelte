@@ -1,8 +1,8 @@
 <script lang="ts">
 	import ModelsDiscoverDetailsContainer from './ModelsDiscoverDetailsContainer.svelte';
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
 	import { X } from '@lucide/svelte';
 	import { ActionIcon } from '$lib/components/app';
-	import * as Drawer from '$lib/components/ui/drawer';
 	import { DISCOVER_ICON } from '$lib/constants';
 	import { deviceStore, uiStore } from '$lib/stores';
 	import { untrack } from 'svelte';

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import {
 		ChatFormPickerItemHeader,
 		ChatFormPickerList,
@@ -7,7 +8,6 @@
 		ChatFormPickerPopover,
 		ChatFormPromptPickerArgumentForm
 	} from '$lib/components/app/chat';
-	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import { KeyboardKey } from '$lib/enums';
 	import { mcpStore } from '$lib/stores';
 	import type { GetPromptResult, MCPPromptInfo, MCPServerSettingsEntry } from '$lib/types';

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { Button, buttonVariants } from '@ggml/llama-ui/ui/button';
+	import * as ButtonGroup from '@ggml/llama-ui/ui/button-group';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import { cn } from '@ggml/llama-ui/utils';
 	import { ChevronDown, ShieldQuestion } from '@lucide/svelte';
 	import { ChatMessageActionCard } from '$lib/components/app';
-	import { Button, buttonVariants } from '$lib/components/ui/button';
-	import * as ButtonGroup from '$lib/components/ui/button-group';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { cn } from '$lib/components/ui/utils';
 	import { TOOL_SERVER_LABELS } from '$lib/constants';
 	import { ToolPermissionDecision, ToolSource } from '$lib/enums';
 	import { toolsStore } from '$lib/stores';

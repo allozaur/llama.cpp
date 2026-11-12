@@ -24,6 +24,9 @@ RUN npm ci
 
 COPY ui/apps/chat/ ./
 COPY ui/lib/harness/ /app/ui/lib/harness/
+# the app compiles Llama UI from its source next to it
+COPY ui/lib/ui/package.json /app/ui/lib/ui/package.json
+COPY ui/lib/ui/src/lib/ /app/ui/lib/ui/src/lib/
 RUN LLAMA_BUILD_NUMBER="$APP_VERSION" npm run build
 
 FROM ${BASE_CUDA_DEV_CONTAINER} AS build

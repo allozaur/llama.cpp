@@ -1,12 +1,12 @@
 <script lang="ts">
+	import { Checkbox } from '@ggml/llama-ui/ui/checkbox';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Label } from '@ggml/llama-ui/ui/label';
+	import * as RadioGroup from '@ggml/llama-ui/ui/radio-group';
+	import * as Select from '@ggml/llama-ui/ui/select';
+	import { Textarea } from '@ggml/llama-ui/ui/textarea';
 	import { FlaskConical, RotateCcw, ShieldAlert } from '@lucide/svelte';
 	import { SettingsChatParameterSourceIndicator } from '$lib/components/app/settings';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Input } from '$lib/components/ui/input';
-	import Label from '$lib/components/ui/label/label.svelte';
-	import * as RadioGroup from '$lib/components/ui/radio-group';
-	import * as Select from '$lib/components/ui/select';
-	import { Textarea } from '$lib/components/ui/textarea';
 	import {
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,

@@ -1,6 +1,6 @@
 <script lang="ts">
+	import * as AlertDialog from '@ggml/llama-ui/ui/alert-dialog';
 	import { ArrowRight, Settings as SettingsIcon } from '@lucide/svelte';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 
 	export interface SettingsDiffEntry {
 		key: string;

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import * as Drawer from '@ggml/llama-ui/ui/drawer';
+	import * as Popover from '@ggml/llama-ui/ui/popover';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { File, Folder, Server } from '@lucide/svelte';
 	import { ChatFormPickerList, ChatFormPickerListItem } from '$lib/components/app/chat';
 	import HighlightedMatch from '$lib/components/app/forms/HighlightedMatch.svelte';
-	import * as Drawer from '$lib/components/ui/drawer';
-	import * as Popover from '$lib/components/ui/popover';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { FILE_GLOB_SEARCH_PICKERS, HOME_TILDE, SEARCH } from '$lib/constants';
 	import {
 		BuiltInTool,

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import ModelCardSkeleton from '../ModelCardSkeleton.svelte';
 	import ModelsDiscoverCard from './ModelsDiscoverCard.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Sparkles } from '@lucide/svelte';
 	import { ModelsSection, ScrollCarousel } from '$lib/components/app';
-	import { Button } from '$lib/components/ui/button';
 	import { MODEL_CARD_CAROUSEL_CLASS } from '$lib/constants';
 	import { modelsDiscoverStore, uiStore } from '$lib/stores';
 	import { untrack } from 'svelte';

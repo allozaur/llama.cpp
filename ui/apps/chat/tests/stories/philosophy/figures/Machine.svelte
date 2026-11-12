@@ -4,7 +4,7 @@
 	boundary's label carries the cinder dot.
 -->
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 
 	const chats = ['A letter to the landlord', 'What is in this photo?', 'Plan for Saturday'];
 </script>

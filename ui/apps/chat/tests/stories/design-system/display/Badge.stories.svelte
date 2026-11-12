@@ -1,8 +1,8 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Badge, type BadgeVariant } from '@ggml/llama-ui/ui/badge';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 
 	const { Story } = defineMeta({
 		component: Badge,

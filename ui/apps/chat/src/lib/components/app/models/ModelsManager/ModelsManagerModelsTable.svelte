@@ -10,6 +10,8 @@
 		type ModelQuantGroup,
 		type ModelsTableGroup
 	} from './utils';
+	import * as Empty from '@ggml/llama-ui/ui/empty';
+	import * as Select from '@ggml/llama-ui/ui/select';
 	import {
 		ArrowDown,
 		ArrowUp,
@@ -30,8 +32,6 @@
 		ModelsSection
 	} from '$lib/components/app';
 	import { DialogConfirmDownload } from '$lib/components/app/dialogs';
-	import * as Empty from '$lib/components/ui/empty';
-	import * as Select from '$lib/components/ui/select';
 	import {
 		FAMILY_ROW_WINDOW,
 		FILTER_TRIGGER_CLASS,

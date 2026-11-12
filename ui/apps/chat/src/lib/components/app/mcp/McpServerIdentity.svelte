@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import { ExternalLink } from '@lucide/svelte';
 	import { McpLogo } from '$lib/components/app/mcp';
 	import { TruncatedText } from '$lib/components/app/misc';
-	import { Badge } from '$lib/components/ui/badge';
 	import type { MCPServerInfo } from '$lib/types';
 	import { sanitizeExternalUrl } from '$lib/utils';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Page from '../../../src/routes/(chat)/+page.svelte';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 </script>
 
 <!--

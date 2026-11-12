@@ -1,10 +1,10 @@
 <script lang="ts">
 	import ModelsManagerFilters from './ModelsManagerFilters.svelte';
 	import { hasActiveFilters } from './utils';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as ToggleGroup from '@ggml/llama-ui/ui/toggle-group';
 	import { LayoutGrid, List, X } from '@lucide/svelte';
 	import { SearchInput } from '$lib/components/app/forms';
-	import { Button } from '$lib/components/ui/button';
-	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { FILTER_TOGGLE_ITEM_CLASS, type ModalityKey } from '$lib/constants';
 	import { ModelCapability, ModelsViewMode } from '$lib/enums';
 	import { deviceStore, serversStore, uiStore } from '$lib/stores';

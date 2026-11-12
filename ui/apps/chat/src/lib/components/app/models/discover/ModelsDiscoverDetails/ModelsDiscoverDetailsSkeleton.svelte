@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Skeleton } from '@ggml/llama-ui/ui/skeleton';
 </script>
 
 <!-- Static skeleton of ModelsDiscoverDetails: header, metadata chips, download options and readme lines. -->

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import * as Dialog from '@ggml/llama-ui/ui/dialog';
 	import { Settings, X } from '@lucide/svelte';
 	import { SettingsChat } from '$lib/components/app/settings';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { PANEL_CLOSE_MOBILE_CLASS } from '$lib/constants';
 	import { deviceStore } from '$lib/stores';
 

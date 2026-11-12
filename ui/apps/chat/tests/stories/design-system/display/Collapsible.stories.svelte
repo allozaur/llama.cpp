@@ -1,10 +1,10 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Collapsible from '@ggml/llama-ui/ui/collapsible';
 	import { ChevronsUpDown } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { Button } from '$lib/components/ui/button';
-	import * as Collapsible from '$lib/components/ui/collapsible';
 
 	const { Story } = defineMeta({
 		component: Collapsible.Root,

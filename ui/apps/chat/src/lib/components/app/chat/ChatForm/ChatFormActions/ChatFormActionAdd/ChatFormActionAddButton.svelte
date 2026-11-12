@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { Plus } from '@lucide/svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { ATTACHMENT_TOOLTIP_TEXT, ICON_CLASS_DEFAULT } from '$lib/constants';
 
 	interface Props {

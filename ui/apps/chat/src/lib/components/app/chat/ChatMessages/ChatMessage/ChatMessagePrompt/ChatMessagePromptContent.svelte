@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Card } from '@ggml/llama-ui/ui/card';
 	import { ScanText } from '@lucide/svelte';
 	import { TruncatedText } from '$lib/components/app/misc';
-	import { Card } from '$lib/components/ui/card';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

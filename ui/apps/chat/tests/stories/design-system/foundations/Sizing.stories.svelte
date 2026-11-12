@@ -4,7 +4,7 @@
 	import { Settings } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
-	// control heights and icon sizes from src/lib/styles/tokens/semantic.css, and the 4px spacing grid
+	// control heights and icon sizes from ui/lib/ui/src/lib/styles/tokens/semantic.css, and the 4px spacing grid
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'

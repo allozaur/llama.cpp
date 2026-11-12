@@ -1,12 +1,12 @@
 <script lang="ts">
 	import type { ModelOverride } from '../utils';
+	import { Badge } from '@ggml/llama-ui/ui/badge';
+	import { Button } from '@ggml/llama-ui/ui/button';
+	import { Input } from '@ggml/llama-ui/ui/input';
+	import { Slider } from '@ggml/llama-ui/ui/slider';
+	import { Switch } from '@ggml/llama-ui/ui/switch';
 	import { Info, ListOrdered } from '@lucide/svelte';
 	import { CollapsibleSection } from '$lib/components/app';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { Slider } from '$lib/components/ui/slider';
-	import { Switch } from '$lib/components/ui/switch';
 	import { LOAD_DEFAULTS, SPECULATIVE_OPTIONS } from '$lib/constants';
 	import type { ModelLoadProgress } from '$lib/types/models';
 	import { formatParameters } from '$lib/utils/formatters';

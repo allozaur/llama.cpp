@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { AlertCircle, Loader2 } from '@lucide/svelte';
 	import { X } from '@lucide/svelte';
 	import { ActionIcon } from '$lib/components/app';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { mcpStore } from '$lib/stores';
 	import type { MCPResourceAttachment } from '$lib/types';
 	import { getResourceDisplayName, getResourceIcon } from '$lib/utils';

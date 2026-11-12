@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as Alert from '@ggml/llama-ui/ui/alert';
+	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Eye, FileText, Info } from '@lucide/svelte';
 	import { SyntaxHighlightedCode } from '$lib/components/app';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
 	import { ICON_CLASS_DEFAULT, PDF_AS_IMAGES_LEGACY_CONTENT_REGEX } from '$lib/constants';
 	import { AttachmentType, MimeTypeApplication, PdfViewMode } from '$lib/enums';
 	import type { ChatAttachmentDisplayItem } from '$lib/types';

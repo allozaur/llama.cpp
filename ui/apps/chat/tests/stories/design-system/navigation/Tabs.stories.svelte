@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
+	import * as Tabs from '@ggml/llama-ui/ui/tabs';
 	import { Cpu, MessageSquare, Wrench } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import * as Tabs from '$lib/components/ui/tabs';
 
 	const { Story } = defineMeta({
 		component: Tabs.Root,

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import * as ContextMenu from '@ggml/llama-ui/ui/context-menu';
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
+	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { KeyboardShortcutInfo } from '$lib/components/app';
-	import * as ContextMenu from '$lib/components/ui/context-menu';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { MenuKind } from '$lib/enums';
 	import { deviceStore } from '$lib/stores';
 	import type { MenuAction } from '$lib/types';
