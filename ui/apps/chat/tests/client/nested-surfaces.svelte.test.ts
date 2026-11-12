@@ -4,12 +4,34 @@
 // group's, so its radius is the group's less the padding between their edges.
 
 import '../../src/app.css';
+import { Puzzle } from '@lucide/svelte';
 import SidebarNavigationActions from '$lib/components/app/navigation/SidebarNavigation/SidebarNavigationActions.svelte';
 import SidebarNavigationFooter from '$lib/components/app/navigation/SidebarNavigation/SidebarNavigationFooter.svelte';
 import { SIDEBAR_ACTIONS_ITEMS, SIDEBAR_FOOTER_ITEMS } from '$lib/constants';
+import { extensions } from '$lib/extensions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
+
+// an extension's item is a footer row like the app's own, as MCP's is in the app
+extensions.register({
+	description: 'A sidebar footer item',
+	id: 'footer-fixture',
+	load: async () => ({
+		default: {
+			activate(ctx) {
+				ctx.contribute('navigation', {
+					icon: Puzzle,
+					id: 'fixture',
+					placement: 'footer',
+					route: '#/fixture',
+					tooltip: 'Fixture'
+				});
+			}
+		}
+	}),
+	name: 'Footer fixture'
+});
 
 function px(value: string): number {
 	return parseFloat(value);
@@ -19,7 +41,7 @@ async function renderFooter() {
 	const screen = render(SidebarNavigationFooter, {});
 	const rows = () => [...screen.container.querySelectorAll<HTMLElement>('[data-slot="button"]')];
 
-	await vi.waitFor(() => expect(rows()).toHaveLength(SIDEBAR_FOOTER_ITEMS.length));
+	await vi.waitFor(() => expect(rows()).toHaveLength(SIDEBAR_FOOTER_ITEMS.length + 1));
 
 	const group = rows()[0].parentElement?.parentElement;
 
@@ -32,6 +54,7 @@ describe('nested surfaces', () => {
 	// the footer is a desktop's and a tablet's: a phone lists its items with the sidebar's actions
 	beforeEach(async () => {
 		await page.viewport(1280, 900);
+		await extensions.activateEnabled();
 	});
 
 	it('round the footer group from its tokens', async () => {

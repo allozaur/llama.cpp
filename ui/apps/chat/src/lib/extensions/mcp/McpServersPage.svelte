@@ -1,11 +1,6 @@
 <script lang="ts">
-	import { SettingsMcpServers } from '$lib/components/app/settings';
-	import { APP_NAME } from '$lib/constants';
+	import SettingsMcpServers from '$lib/components/app/settings/SettingsMcpServers.svelte';
 </script>
-
-<svelte:head>
-	<title>MCP Servers - {APP_NAME}</title>
-</svelte:head>
 
 <!-- a phone's MCP servers: the page the sidebar opens there, where a desktop or tablet opens the
      MCP servers dialog -->

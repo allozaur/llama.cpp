@@ -4,6 +4,8 @@
  * same contract.
  */
 
+import type { NavigationItem } from './points/navigation';
+import type { ExtensionPage } from './points/pages';
 import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
@@ -38,6 +40,10 @@ export interface ExtensionContext {
 export interface ExtensionPoints {
 	/** Runs around every agentic flow. */
 	flow: FlowHook;
+	/** Entries in the sidebar, each opening a page of the extension or a dialog. */
+	navigation: NavigationItem;
+	/** Pages of the extension, each at a path of its own. */
+	pages: ExtensionPage;
 	/** Tools the model can call, listed and run by the extension. */
 	tools: ToolProvider;
 }

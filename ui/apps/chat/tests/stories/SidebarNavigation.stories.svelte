@@ -1,7 +1,20 @@
 <script lang="ts" module>
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import SidebarNavigation from '$lib/components/app/navigation/SidebarNavigation/SidebarNavigation.svelte';
+	import { extensions } from '$lib/extensions';
+	import { BUILT_IN_EXTENSIONS } from '$lib/extensions/builtin';
 	import { waitFor } from 'storybook/test';
+
+	// the app registers and activates its extensions at startup; the story does it for the sidebar's MCP entry
+	async function activateExtensions() {
+		for (const manifest of BUILT_IN_EXTENSIONS) {
+			if (!extensions.extensions.some((extension) => extension.id === manifest.id)) {
+				extensions.register(manifest);
+			}
+		}
+
+		await extensions.activateEnabled();
+	}
 
 	const { Story } = defineMeta({
 		component: SidebarNavigation,
@@ -52,6 +65,8 @@
 	asChild
 	name="Default"
 	play={async () => {
+		await activateExtensions();
+
 		const { conversationsStore } = await import('$lib/stores/conversations/index.svelte');
 
 		waitFor(() =>

@@ -4,12 +4,15 @@
 	import { page } from '$app/state';
 	import { KeyboardShortcutInfo } from '$lib/components/app';
 	import {
+		EXTENSION_PAGE_ROUTE_ID,
 		ICON_CLASS_DEFAULT,
 		ICON_STRIP_TRANSITION_DELAY_MULTIPLIER,
 		ICON_STRIP_TRANSITION_DURATION,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '$lib/constants';
 	import { SidebarAction } from '$lib/enums';
+	import type { NavigationItem } from '$lib/extensions';
+	import { RouterService } from '$lib/services/router.service';
 	import { deviceStore } from '$lib/stores';
 	import type { DesktopIconStripItem } from '$lib/types';
 	import { hapticTap } from '$lib/utils';
@@ -23,11 +26,19 @@
 		/** The items to show: the sidebar's top actions unless given, e.g. its footer's. */
 		items?: DesktopIconStripItem[];
 		onAction?: (action: SidebarAction) => void;
+		/** Opens an item an extension contributed. */
+		onContributed?: (item: NavigationItem) => void;
 		/** Follows a route item, so a phone can open its page behind the sidebar and then close it. */
 		onNavigate?: (go: () => Promise<unknown>) => void;
 	}
 
-	let { class: className, items = SIDEBAR_ACTIONS_ITEMS, onAction, onNavigate }: Props = $props();
+	let {
+		class: className,
+		items = SIDEBAR_ACTIONS_ITEMS,
+		onAction,
+		onContributed,
+		onNavigate
+	}: Props = $props();
 
 	// the models manager stays desktop-only: a phone picks its models in the selector; a phone
 	// reaches search from the round key at the top of the sidebar instead
@@ -49,12 +60,16 @@
 		}, ICON_STRIP_TRANSITION_DELAY_MULTIPLIER * actions.length);
 	});
 
-	/** Click handler of one icon strip item: a sidebar action or a route. */
+	/** Click handler of one icon strip item: a sidebar action, an extension's item or a route. */
 	function itemClickHandler(item: DesktopIconStripItem): (() => void) | undefined {
-		const { action, route } = item;
+		const { action, contributed, route } = item;
 
 		if (action) {
 			return () => onAction?.(action);
+		}
+
+		if (contributed) {
+			return () => onContributed?.(contributed);
 		}
 
 		if (route) {
@@ -64,11 +79,15 @@
 		return undefined;
 	}
 
-	function isItemActive(item: {
-		activeRouteId?: string;
-		activeRoutePrefix?: string;
-		activeUrlIncludes?: string;
-	}): boolean {
+	function isItemActive(item: DesktopIconStripItem): boolean {
+		// an extension's item is lit while the page it opens is the one shown
+		if (item.contributed) {
+			return (
+				page.route.id === EXTENSION_PAGE_ROUTE_ID &&
+				RouterService.extensionPage(page.params.extensionPage ?? '') === item.contributed.route
+			);
+		}
+
 		if (item.activeRouteId) {
 			return page.route.id === item.activeRouteId;
 		}
