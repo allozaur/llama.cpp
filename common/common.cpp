@@ -1017,14 +1017,14 @@ std::filesystem::path fs_get_config_directory() {
 std::filesystem::path fs_get_data_directory() {
     std::filesystem::path data_directory;
 #if defined(_WIN32)
-    data_directory = common_get_path_from_env("APPDATA");
+    data_directory = common_get_env("APPDATA");
     if (data_directory.empty()) {
         throw std::runtime_error("Failed to find %APPDATA% directory");
     }
 #elif defined(__APPLE__)
     data_directory = get_home_directory() / "Library/Application Support";
 #else
-    data_directory = common_get_path_from_env("XDG_DATA_HOME");
+    data_directory = common_get_env("XDG_DATA_HOME");
     if (data_directory.empty()) {
         data_directory = get_home_directory() / ".local/share";
     }
