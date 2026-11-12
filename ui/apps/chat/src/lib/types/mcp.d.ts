@@ -5,6 +5,7 @@ import type {
 	ClientCapabilities as SDKClientCapabilities,
 	GetPromptResult,
 	Implementation as SDKImplementation,
+	McpSubscription,
 	Prompt,
 	PromptMessage,
 	ServerCapabilities as SDKServerCapabilities,
@@ -137,6 +138,8 @@ export interface MCPConnection {
 	connectionTimeMs: number;
 	/** Configured timeout for individual requests (tool calls, etc.) in milliseconds */
 	requestTimeoutMs: number;
+	/** Open resource update streams by URI, stateless protocol only */
+	resourceSubscriptions?: Map<string, McpSubscription>;
 }
 
 /**
