@@ -86,11 +86,11 @@ export enum ConversationShareScope {
 	UP_TO_MESSAGE = 'up-to-message'
 }
 
+/** What a built-in slash command of the chat form does. */
 export enum ChatFormCommandAction {
 	COMPACT = 'compact',
 	CWD = 'cwd',
 	MODEL = 'model',
-	PROMPT = 'prompt',
 	SYSTEM_MESSAGE = 'system-message'
 }
 

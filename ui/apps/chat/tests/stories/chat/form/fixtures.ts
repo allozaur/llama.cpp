@@ -148,10 +148,11 @@ export const mcpResources: MCPResourceInfo[] = [
 
 export const chatCommands: ChatFormCommand[] = [
 	{
-		action: ChatFormCommandAction.PROMPT,
 		description: 'Insert an MCP prompt',
 		disabled: false,
-		name: 'prompt'
+		name: 'prompt',
+		run: () => {},
+		takesArgument: true
 	},
 	{
 		action: ChatFormCommandAction.CWD,

@@ -1,4 +1,14 @@
 export type {
+	ComposerAttachments,
+	ComposerAttachmentsProps,
+	ComposerCommand,
+	ComposerHandle,
+	ComposerPicker,
+	ComposerPickerExports,
+	ComposerPickerProps
+} from './points/composer';
+export type { SettingsAction, SettingsActionDialog } from './points/settings';
+export type {
 	FlowHook,
 	FlowInfo,
 	ToolGroupIdentityProps,
@@ -7,7 +17,6 @@ export type {
 	ToolProviderEmptyHint,
 	ToolProviderEntry
 } from './points/tools';
-export type { SettingsAction, SettingsActionDialog } from './points/settings';
 export { ExtensionRegistry, extensions } from './registry.svelte';
 export type {
 	Extension,
