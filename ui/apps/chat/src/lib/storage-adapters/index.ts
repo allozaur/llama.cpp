@@ -5,7 +5,7 @@
  * elsewhere (Postgres via Supabase or Neon, PocketBase, ...), implement
  * StorageAdapter in a file next to this one and add its definition below.
  *
- * @see tools/ui/docs/storage-adapters.md - the contract and example schemas
+ * @see ui/apps/chat/docs/storage-adapters.md - the contract and example schemas
  */
 
 import { llamaServerStorageAdapter } from './llama-server.adapter';
