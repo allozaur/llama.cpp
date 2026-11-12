@@ -13,7 +13,7 @@ import { MCPService } from '../services/mcp.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { MCPHealthCheckManager, type McpHealthHost } from './health.svelte';
 import { mcpResourceStore } from './resources.svelte';
-import type { ListChangedHandlers } from '@modelcontextprotocol/sdk/types.js';
+import type { ListChangedHandlers } from '@modelcontextprotocol/client';
 import { SETTINGS_KEYS } from '#lib/constants/index.ts';
 import {
 	CACHE,
