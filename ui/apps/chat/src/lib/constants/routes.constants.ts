@@ -26,8 +26,8 @@ export const ROUTES = {
 /** SvelteKit route id of the models manager, as `page.route.id` reports it. */
 export const MODELS_ROUTE_ID = '/models';
 
-/** SvelteKit route id of the MCP servers page, as `page.route.id` reports it. */
-export const MCP_SERVERS_ROUTE_ID = '/mcp-servers';
+/** SvelteKit route id of every page an extension contributes, as `page.route.id` reports it. */
+export const EXTENSION_PAGE_ROUTE_ID = '/[extensionPage]';
 
 /** SvelteKit route id of the settings page, as `page.route.id` reports it. */
 export const SETTINGS_ROUTE_ID = '/settings';
