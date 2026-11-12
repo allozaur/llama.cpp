@@ -29,21 +29,24 @@ Llama UI is the design system and component library: UI and UX, no business logi
 </Rule>
 
 <Cards cols={2}>
-<Card kicker="Repo layout" planned title="Promote the UI to a root folder">
+<Card kicker="Repo layout" title="The UI in a root folder">
 
-Today the library and the Chat app share one folder.
+The packages live in `ui/lib`, one folder each, and the apps built on them in `ui/apps`. Llama Chat imports the library: its tokens, fonts and base components come from `ui/lib/ui`. This Storybook still lives in `ui/apps/chat`.
 
 ```text
-today
-ui/apps/chat/            lib + Chat, mixed
-
-proposed
 ui/
-├── lib/             @ggml/llama-ui
-│                    → ui.llama.app
+├── lib/
+│   └── ui/          @ggml/llama-ui
 └── apps/
-    ├── chat/        @ggml/llama-chat
-    │                + npx llama-chat
+    └── chat/        @ggml/llama-chat
+                     (private, not published)
+
+still to come
+ui/
+├── lib/
+│   └── ui/          → ui.llama.app
+└── apps/
+    ├── chat/        published, + npx llama-chat
     │                → chat.llama.app
     ├── <app>/       other apps of ours
     └── <example>/   many, any use case

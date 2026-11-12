@@ -1,9 +1,9 @@
 <!--
 	How the products and their repositories relate: llama.brand is the source of the brand, llama.cpp holds the engine
-	and Llama UI (ui/apps/chat, which the server bundles as Llama Chat), and the native apps run the server and open Llama
-	Chat. Checked against the repos: both apps manage a llama-server process and show its built-in web UI, and
-	Llama-Windows is a port of Llama-macOS. Each repo's label starts with the icon, typed as Llama Mono's U+E002 (the
-	capital icon with its gap). Two columns on wide screens, one on narrow ones.
+	with Llama UI (ui/lib/ui) and Llama Chat (ui/apps/chat, which the server bundles), and the native apps run the server
+	and open Llama Chat. Checked against the repos: both apps manage a llama-server process and show its built-in web
+	UI, and Llama-Windows is a port of Llama-macOS. Each repo's label starts with the icon, typed as Llama Mono's U+E002
+	(the capital icon with its gap). Two columns on wide screens, one on narrow ones.
 -->
 <script lang="ts">
 	import { Badge } from '@ggml/llama-ui/ui/badge';
@@ -31,7 +31,7 @@
 	<div class="link down to-cpp">
 		<span class="line"></span>
 
-		<span class="label">The fonts and the icon, copied into <code>ui/apps/chat</code></span>
+		<span class="label">The fonts and the icon, copied into <code>ui/lib/ui</code></span>
 	</div>
 
 	<div class="link down to-apps">
@@ -60,7 +60,8 @@
 				<span class="part-name">Llama UI <span class="arrow">→</span> Llama Chat</span>
 
 				<span class="part-note"
-					><code>ui/apps/chat</code>: the components, and the chat client the server bundles</span
+					><code>ui/lib/ui</code>: the components. <code>ui/apps/chat</code>: the chat client the
+					server bundles</span
 				>
 			</div>
 		</div>
