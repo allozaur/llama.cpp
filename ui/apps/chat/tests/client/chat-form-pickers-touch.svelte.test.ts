@@ -1,11 +1,12 @@
-// Guards the chat form's typed pickers on a phone: `@` opens a drawer with a search
+// Guards the chat form's typed pickers with a finger: `@` opens a drawer with a search
 // field of its own, since a list by the form can not be placed reliably around the
-// on-screen keyboard, and `/` opens nothing. A desktop keeps its lists by the form.
+// on-screen keyboard, and `/` opens nothing. With a mouse the lists stay by the form.
 
 import ChatFormPickersHarness from './components/ChatFormPickersHarness.svelte';
 import ChatFormTestWrapper from './components/ChatFormTestWrapper.svelte';
 import { EditorView } from '@codemirror/view';
 import { BuiltInTool } from '$lib/enums';
+import { deviceStore } from '$lib/stores';
 import { ToolsService } from '$lib/services/tools.service';
 import { toolsStore } from '$lib/stores/tools.svelte';
 import type { OpenAIToolDefinition } from '$lib/types';
@@ -29,6 +30,18 @@ const PICKER_MOUNT_MS = 300;
 // the reactive field so the derived gates recompute.
 function setServerTools(defs: OpenAIToolDefinition[]) {
 	(toolsStore as unknown as { _serverTools: OpenAIToolDefinition[] })._serverTools = defs;
+}
+
+/** A phone: its size, and a finger as the main pointer, so typing uses the on-screen keyboard. */
+async function asPhone() {
+	vi.spyOn(deviceStore, 'isTouch', 'get').mockReturnValue(true);
+	await page.viewport(PHONE.width, PHONE.height);
+}
+
+/** A desktop: its size, and a mouse. */
+async function asDesktop() {
+	vi.spyOn(deviceStore, 'isTouch', 'get').mockReturnValue(false);
+	await page.viewport(DESKTOP.width, DESKTOP.height);
 }
 
 async function renderForm(props: { expandable?: boolean } = {}) {
@@ -81,7 +94,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('opens the command picker on a desktop', async () => {
-		await page.viewport(DESKTOP.width, DESKTOP.height);
+		await asDesktop();
 
 		const { type } = await renderForm();
 
@@ -91,7 +104,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('searches mentions by the form on a desktop, once a character follows the @', async () => {
-		await page.viewport(DESKTOP.width, DESKTOP.height);
+		await asDesktop();
 
 		const { type } = await renderForm();
 
@@ -107,7 +120,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('opens no picker for a / on a phone', async () => {
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { type } = await renderForm();
 
@@ -119,7 +132,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('opens a drawer with a search field for an @ on a phone', async () => {
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { type } = await renderForm();
 
@@ -133,7 +146,7 @@ describe('ChatForm pickers on a phone', () => {
 
 	it('opens no drawer for an @ on a phone when there is no file search to offer', async () => {
 		setServerTools([]);
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { type } = await renderForm();
 
@@ -144,7 +157,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('inserts the mention picked in the drawer where the @ was', async () => {
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { caret, editor, text, type } = await renderForm();
 
@@ -161,7 +174,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('leaves the message and the caret alone when the drawer is dismissed', async () => {
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { caret, editor, text, type } = await renderForm();
 
@@ -187,7 +200,7 @@ describe('ChatForm pickers on a phone', () => {
 	});
 
 	it('opens the drawer from the expanded sheet too', async () => {
-		await page.viewport(PHONE.width, PHONE.height);
+		await asPhone();
 
 		const { container, text, type } = await renderForm({ expandable: true });
 
