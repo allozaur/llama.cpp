@@ -21,7 +21,7 @@
 	const multilineValue =
 		'Explain how the KV cache works in llama.cpp.\nKeep it short, and list the main flags that change its size.';
 
-	const mentionValue = `Summarize [README.md](file://${SERVER_HOME}/llama.cpp/README.md) and [ui](file://${SERVER_HOME}/llama.cpp/ui/apps/chat/) please`;
+	const mentionValue = `Summarize [README.md](file://${SERVER_HOME}/llama.cpp/README.md) and [chat](file://${SERVER_HOME}/llama.cpp/ui/apps/chat/) please`;
 </script>
 
 <Story asChild name="States">
