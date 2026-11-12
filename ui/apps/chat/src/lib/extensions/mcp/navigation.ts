@@ -1,6 +1,6 @@
 import type { ExtensionContext } from '../types';
-import DialogMcpServers from '#lib/components/app/dialogs/DialogMcpServers.svelte';
-import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
+import DialogMcpServers from './components/dialogs/DialogMcpServers.svelte';
+import McpLogo from './components/McpLogo.svelte';
 import { ROUTES } from '#lib/constants/index.ts';
 // direct import of the store, not via the barrel, to avoid circular deps
 import { uiStore } from '#lib/stores/ui.svelte.ts';

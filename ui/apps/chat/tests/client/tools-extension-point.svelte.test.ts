@@ -9,10 +9,10 @@ import {
 } from '#lib/constants/index.ts';
 import { ToolSource } from '#lib/enums/index.ts';
 import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { extensions } from '#lib/extensions/registry.svelte.ts';
 import { useToolsPanel, type UseToolsPanelReturn } from '#lib/hooks/use-tools-panel.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type { MCPConnection } from '#lib/types/index.ts';

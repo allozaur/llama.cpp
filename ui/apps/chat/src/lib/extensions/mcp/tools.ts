@@ -6,11 +6,11 @@
 
 import type { FlowHook, ToolProvider, ToolProviderEntry } from '../points/tools';
 import type { ExtensionContext } from '../types';
-import McpToolGroupIdentity from './McpToolGroupIdentity.svelte';
+import McpToolGroupIdentity from './components/contributions/McpToolGroupIdentity.svelte';
+import { mcpStore } from './stores/index.svelte';
 import { HealthCheckStatus, JsonSchemaType, ToolCallType, ToolSource } from '#lib/enums/index.ts';
 // direct imports of the stores, not via the barrel, to avoid circular deps
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import { uiStore } from '#lib/stores/ui.svelte.ts';
 

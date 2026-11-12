@@ -14,10 +14,10 @@ import {
 	SpecialFileType,
 	ToolSource
 } from '#lib/enums/index.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import {
 	conversationsStore,
-	mcpStore,
 	modelsStore,
 	serverStore,
 	settingsStore,
