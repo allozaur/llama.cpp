@@ -195,7 +195,6 @@ export type MCPServerConfig = {
 
 export type MCPClientConfig = {
 	servers: Record<string, MCPServerConfig>;
-	protocolVersion?: string;
 	capabilities?: ClientCapabilities;
 	clientInfo?: Implementation;
 	requestTimeoutMs?: number;
