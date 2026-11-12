@@ -220,6 +220,11 @@ export { default as ChatFormActionReasoning } from './ChatForm/ChatFormActions/C
 export { default as ChatFormActionAddToolsSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddToolsSubmenu.svelte';
 
 /**
+ * System message submenu of the add dropdown: prompts from the library, MCP prompts and a write-new entry.
+ */
+export { default as ChatFormActionAddSystemMessageSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddSystemMessageSubmenu.svelte';
+
+/**
  * Compact context-usage gauge with per-turn and cumulative breakdown in the tooltip.
  */
 export { default as ChatFormContextGauge } from './ChatForm/ChatFormContextGauge/ChatFormContextGauge.svelte';
@@ -252,6 +257,14 @@ export { default as ChatFormInput } from './ChatForm/ChatFormInput/ChatFormInput
  * and is enforced on tool calls via the `x-tool-cwd` request header.
  */
 export { default as ChatFormCurrentWorkingDirectory } from './ChatForm/ChatFormCurrentWorkingDirectory/ChatFormCurrentWorkingDirectory.svelte';
+
+/**
+ * **ChatFormProjectChip** - The chat's project under the chat form
+ *
+ * Shown beside the working directory. A click changes the project and the
+ * hover × takes the chat out of it.
+ */
+export { default as ChatFormProjectChip } from './ChatForm/ChatFormProjectChip/ChatFormProjectChip.svelte';
 
 /**
  * **ChatFormPickerMcpPrompts** - MCP prompt selection interface
@@ -544,6 +557,12 @@ export { default as ChatMessageMcpPrompt } from './ChatMessages/ChatMessage/Chat
 export { default as ChatMessageCwdChange } from './ChatMessages/ChatMessage/ChatMessageCwdChange.svelte';
 
 /**
+ * The `Set working directory to <path>` row itself, shared by the synthetic
+ * cwd message and by the project folder row.
+ */
+export { default as ChatMessageCwdChangeRow } from './ChatMessages/ChatMessage/ChatMessageCwdChangeRow.svelte';
+
+/**
  * Generic wrapper for UI-generated (synthetic) messages. Routes the
  * working-directory change to ChatMessageCwdChange and renders a muted
  * fallback for any other synthetic text, so no synthetic message ever
@@ -564,6 +583,13 @@ export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/Cha
  * for the expanded view.
  */
 export { default as ChatMessageMcpPromptContent } from './ChatMessages/ChatMessage/ChatMessageMcpPrompt/ChatMessageMcpPromptContent.svelte';
+
+/**
+ * A system message made from a library prompt, laid out like the MCP prompt card:
+ * the prompt's name above, with an optional status (e.g. "Modified"), and its text
+ * in a card.
+ */
+export { default as ChatMessagePromptContent } from './ChatMessages/ChatMessage/ChatMessagePrompt/ChatMessagePromptContent.svelte';
 
 /**
  * Assistant message display component. Renders assistant responses with left-aligned styling.
@@ -669,11 +695,13 @@ export { default as ChatScreen } from './ChatScreen/ChatScreen.svelte';
  * **ChatTabs** - Browser-style tab bar for open conversations
  *
  * Horizontal strip of tabs rendered above ChatScreen in the chat layout,
- * one per conversation tracked by tabsStore. The active tab follows the
- * route's conversation id; clicking a tab navigates to it, middle-click or
- * the close button closes it (switching to the left neighbor when closing
- * the active tab), and a trailing "+" button starts a new chat. Shows a
- * spinner on tabs with a running generation. Desktop-only.
+ * showing the tabs of the route's view (see `resolveTabView`): every open
+ * tab in the regular view, or the chats of the open project in a project
+ * view, led by the project breadcrumb. The active tab follows the route;
+ * clicking a tab navigates to it, middle-click or the close button closes
+ * it (switching to the left neighbor when closing the active tab), and a
+ * trailing "+" button starts a new chat, inside the project in a project
+ * view. Shows a spinner on tabs with a running generation. Desktop-only.
  */
 export { default as ChatTabs } from './ChatTabs/ChatTabs.svelte';
 

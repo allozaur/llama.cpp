@@ -1,12 +1,19 @@
-import { MODEL_ICON } from './icons.constants';
+import { MODEL_ICON, PROJECT_ICON } from './icons.constants';
 import {
 	SHORTCUT_MODELS,
 	SHORTCUT_NEW_CHAT,
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MCP_SERVERS_ROUTE_ID, MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
-import { Search, Settings, SquarePen } from '@lucide/svelte';
+import {
+	MCP_SERVERS_ROUTE_ID,
+	MODELS_ROUTE_ID,
+	PROJECTS_ROUTE_ID,
+	ROUTES,
+	SERVERS_ROUTE_ID,
+	SETTINGS_ROUTE_ID
+} from './routes.constants';
+import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
@@ -48,6 +55,8 @@ export const SIDEBAR_SECTION_IDS = {
 	/** Followed by the group id: one section per group. */
 	GROUP_PREFIX: 'group:',
 	PINNED: 'pinned',
+	/** Followed by the project id: one section per project. */
+	PROJECT_PREFIX: 'project:',
 	RECENT: 'recent'
 } as const;
 
@@ -95,8 +104,8 @@ export const STATS_UNITS = {
 
 export const DEFAULT_MOBILE_BREAKPOINT = 768;
 
-/** Models listed per remote provider before the "+ X more" line; search covers the rest. */
-export const REMOTE_PROVIDER_MODEL_LIMIT = 12;
+/** Models listed per remote server before the "+ X more" line; search covers the rest. */
+export const REMOTE_SERVER_MODEL_LIMIT = 12;
 
 /** Orgs whose avatar is dark and needs inverting in dark mode. */
 export const DARK_INVERT_AVATAR_ORGS = ['openai'];
@@ -163,7 +172,19 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		keys: SHORTCUT_NEW_CHAT,
 		tooltip: 'New chat'
 	},
-	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' }
+	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
+	{
+		action: SidebarAction.PROJECTS,
+		activeRouteId: PROJECTS_ROUTE_ID,
+		icon: PROJECT_ICON,
+		tooltip: 'Projects'
+	},
+	{
+		activeRoutePrefix: '/library',
+		icon: Library,
+		route: ROUTES.LIBRARY,
+		tooltip: 'Library'
+	}
 ];
 
 /** The sidebar's footer: managing the app around the chats. */
@@ -180,6 +201,12 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		activeRouteId: MCP_SERVERS_ROUTE_ID,
 		icon: McpLogo,
 		tooltip: 'MCP'
+	},
+	{
+		action: SidebarAction.SERVERS,
+		activeRouteId: SERVERS_ROUTE_ID,
+		icon: Server,
+		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,

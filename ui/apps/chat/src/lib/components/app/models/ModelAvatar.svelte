@@ -1,22 +1,29 @@
 <script lang="ts">
 	import ModelOrgAvatar from './ModelOrgAvatar.svelte';
-	import { HF_BASE_MODEL_TAG_REGEX, SETTINGS_KEYS } from '$lib/constants';
+	import { Logo } from '$lib/components/app/misc';
+	import { ServerIcon } from '$lib/components/app/servers';
+	import {
+		HF_BASE_MODEL_TAG_REGEX,
+		LOCAL_BACKEND_ID,
+		MODEL_ICON,
+		SETTINGS_KEYS
+	} from '$lib/constants';
 	import { HuggingFaceService, ModelsService } from '$lib/services';
 	import { settingsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { nearViewport, orgOf } from '$lib/utils';
+	import { getServer } from '$lib/utils/api-base';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
 		class?: string;
-		/** Rendered when the model has neither an org avatar nor a provider mark. */
+		/** Rendered when the model has neither an org avatar nor a server mark. */
 		fallback?: Snippet;
 		option: ModelOption;
 		quantPositionClass?: string;
 		quantSize?: string;
 		/** Show the base model's org as the main image, the repo (quantizer) org as the
-		 *  corner badge. The base org costs one Hub request per repo. Left unset with
-		 *  {@link showRepoOrgAvatar}, the row follows the family grouping. */
+		 *  corner badge. The base org costs one Hub request per repo. */
 		showBaseModelAvatar?: boolean;
 		/** Show the repo's own org as the main image, skipping the base model.
 		 *  Used inside a heading that already carries the base org. */
@@ -40,6 +47,11 @@
 
 	let parsedId = $derived(ModelsService.parseModelId(option.model));
 	let orgName = $derived(parsedId.orgName);
+	// a model whose id carries no `org/name` is not a Hugging Face repo, so the
+	// server's own mark identifies it better than an initial
+	let useServerIcon = $derived(!orgName);
+	// the bundled server has no favicon to resolve, its mark is the llama.cpp logo
+	let isLocal = $derived(getServer(option.serverId)?.id === LOCAL_BACKEND_ID);
 	// A row names neither flag: a family heading already carries the base org, so a
 	// grouped list shows the repo's own org, and an ungrouped one the base org with the
 	// quantizer badge. A caller that names one of the two keeps control of the avatar.
@@ -87,7 +99,19 @@
 	});
 </script>
 
-{#if orgName && hubEnabled}
+{#if useServerIcon}
+	<span class={['inline-flex shrink-0', className]}>
+		<ServerIcon class={size} server={getServer(option.serverId)}>
+			{#snippet fallback()}
+				{#if isLocal}
+					<Logo class={size} style="--size: 100%" />
+				{:else}
+					<MODEL_ICON class={size} />
+				{/if}
+			{/snippet}
+		</ServerIcon>
+	</span>
+{:else if orgName && hubEnabled}
 	<span
 		use:nearViewport={() => (isNearViewport = true)}
 		class={['inline-flex shrink-0', className]}

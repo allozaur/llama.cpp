@@ -10,7 +10,10 @@
 		DialogGroup,
 		DialogGroupPicker,
 		DialogMcpServers,
+		DialogProject,
+		DialogProjectPicker,
 		DialogSearch,
+		DialogServers,
 		DialogSettingsChat,
 		Logo,
 		ModelsManagerModelDrawer,
@@ -303,7 +306,11 @@
 	}
 
 	function selectConversation(id: string) {
-		navigateBehind(() => goto(RouterService.chat(id)));
+		const conversation = conversationsStore.conversations.find((conv) => conv.id === id);
+
+		navigateBehind(() =>
+			goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
+		);
 	}
 
 	async function handleEditConversation(id: string) {
@@ -532,6 +539,10 @@
 				openSearch();
 
 				break;
+			case SidebarAction.PROJECTS:
+				navigateBehind(() => goto(ROUTES.PROJECTS));
+
+				break;
 			case SidebarAction.MANAGE_MODELS:
 				openDialog(() => uiStore.openModelsManager());
 
@@ -540,6 +551,11 @@
 			case SidebarAction.MCP:
 				if (isOnMobile) navigateBehind(() => goto(ROUTES.MCP_SERVERS));
 				else openDialog(() => (mcpDialogOpen = true));
+
+				break;
+			case SidebarAction.SERVERS:
+				if (isOnMobile) navigateBehind(() => goto(ROUTES.SERVERS));
+				else openDialog(() => uiStore.openServers());
 
 				break;
 			case SidebarAction.SETTINGS:
@@ -763,6 +779,12 @@
 <DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
+
+<DialogProject />
+
+<DialogProjectPicker />
+
+<DialogServers bind:open={uiStore.serversOpen} />
 
 <style>
 	aside {

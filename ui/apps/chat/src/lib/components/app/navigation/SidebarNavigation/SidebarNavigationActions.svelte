@@ -30,7 +30,8 @@
 	let { class: className, items = SIDEBAR_ACTIONS_ITEMS, onAction, onNavigate }: Props = $props();
 
 	// the models manager stays desktop-only: a phone picks its models in the selector; a phone
-	// reaches search from the round key at the top of the sidebar instead
+	// reaches search from the round key at the top of the sidebar instead. Servers is the
+	// exception a phone cannot do without: it is the only door to pairing
 	const actions = $derived(
 		items.filter(
 			(item) =>

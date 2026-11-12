@@ -26,7 +26,9 @@ export enum SidebarAction {
 	MANAGE_MODELS = 'manage-models',
 	MCP = 'mcp',
 	NEW_CHAT = 'new-chat',
+	PROJECTS = 'projects',
 	SEARCH = 'search',
+	SERVERS = 'servers',
 	SETTINGS = 'settings'
 }
 
@@ -77,4 +79,14 @@ export enum ColorLevel {
 export enum MenuKind {
 	CONTEXT = 'context',
 	DROPDOWN = 'dropdown'
+}
+
+/** What a project context item points at. */
+export enum ProjectContextKind {
+	/** File uploaded and stored with the project, like a chat attachment. */
+	ATTACHMENT = 'attachment',
+	/** Path on the server filesystem, added through the `@` picker. */
+	FILE = 'file',
+	/** MCP resource, added through the `@` picker. */
+	MCP_RESOURCE = 'mcp-resource'
 }

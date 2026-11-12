@@ -2,7 +2,6 @@
 	import '../app.css';
 	import { browser } from '$app/environment';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { GlassKey, MenuIcon, SidebarNavigation } from '$lib/components/app';
 	import { PwaMetaTags, PwaRefreshAlert } from '$lib/components/pwa';
@@ -14,7 +13,6 @@
 		FAVICON_SELECTORS,
 		HEADERS,
 		MODELS_ROUTE_ID,
-		NEW_CHAT_TAB_ID,
 		ROUTES,
 		SETTINGS_KEYS,
 		TOOLTIP_DELAY_DURATION
@@ -29,6 +27,9 @@
 		deviceStore,
 		mcpStore,
 		modelsStore,
+		remoteAccessStore,
+		serversModelsStore,
+		serversStore,
 		serverStore,
 		settingsStore,
 		tabsStore,
@@ -36,7 +37,9 @@
 		versionStore
 	} from '$lib/stores';
 	import { initStores } from '$lib/stores/init';
-	import { hapticTap } from '$lib/utils';
+	import { hapticTap, resolveTabView } from '$lib/utils';
+	import { apiUrl } from '$lib/utils/api-base';
+	import { isLocalServer, isRemoteServer } from '$lib/utils/server';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -82,13 +85,14 @@
 		// only makes sense with conversation tabs enabled
 		if (!settingsStore.config.conversationTabs) return;
 
-		const openTabs = tabsStore.openTabs;
+		// a project view cycles through its own tabs
+		const view = resolveTabView(page, tabsStore.openTabs, conversationsStore.conversations);
+		const openTabs = view.ids;
 
 		if (openTabs.length === 0) return;
 
-		const activeId = page.params.id ?? NEW_CHAT_TAB_ID;
-		const idx = openTabs.indexOf(activeId);
-		// active tab not in list (e.g. a non-chat route): start from an edge
+		const idx = openTabs.indexOf(view.activeId ?? '');
+		// active tab not in list: start from an edge
 		const targetIdx =
 			idx === -1
 				? direction === 1
@@ -96,7 +100,7 @@
 					: openTabs.length - 1
 				: (idx + direction + openTabs.length) % openTabs.length;
 
-		void tabsStore.activate(openTabs[targetIdx]);
+		void goto(view.hrefFor(openTabs[targetIdx]));
 	}
 
 	function navigateToConversation(direction: -1 | 1) {
@@ -107,7 +111,7 @@
 		const currentId = page.params.id;
 
 		if (!currentId) {
-			goto(RouterService.chat(allConvs[direction === 1 ? 0 : allConvs.length - 1].id));
+			goto(RouterService.conversation(allConvs[direction === 1 ? 0 : allConvs.length - 1]));
 
 			return;
 		}
@@ -119,7 +123,7 @@
 		const targetIdx = idx + direction;
 
 		if (targetIdx >= 0 && targetIdx < allConvs.length) {
-			goto(RouterService.chat(allConvs[targetIdx].id));
+			goto(RouterService.conversation(allConvs[targetIdx]));
 		} else {
 			conversationsStore.openNewChat();
 		}
@@ -146,6 +150,24 @@
 		return uiStore.isSidebarExpanded ? 'translateX(var(--sidebar-reveal))' : undefined;
 	});
 
+	// The same slide for what moves with the page from outside it, like a page's floating key,
+	// which is portalled to the body so its place on screen never depends on the slid page's box:
+	// the offset, whether a finger drives it (no easing then), and whether the page is aside (no
+	// taps then, as inside it)
+	$effect(() => {
+		const root = document.documentElement;
+		const offset =
+			sidebarReveal.dragOffset !== null
+				? `${sidebarReveal.dragOffset}px`
+				: uiStore.isSidebarExpanded
+					? 'var(--sidebar-reveal)'
+					: '0px';
+
+		root.style.setProperty('--sidebar-reveal-x', deviceStore.isMobile ? offset : '0px');
+		root.toggleAttribute('data-sidebar-reveal-dragging', sidebarReveal.dragOffset !== null);
+		root.toggleAttribute('data-sidebar-revealed', sidebarReveal.isRevealed);
+	});
+
 	// the models page returns to wherever it was reached from, by any kind of navigation
 	afterNavigate(() => uiStore.rememberModelsReturnRoute());
 
@@ -170,9 +192,7 @@
 
 		untrack(() => {
 			if (
-				(page.route.id === '/(chat)' ||
-					page.route.id === '/(chat)/chat/[id]' ||
-					page.route.id === MODELS_ROUTE_ID) &&
+				(page.route.id === '/(chat)' || !!page.params.id || page.route.id === MODELS_ROUTE_ID) &&
 				page.status !== 401 &&
 				page.status !== 403
 			) {
@@ -181,7 +201,7 @@
 					[HEADERS.AUTHORIZATION]: `${HEADERS.BEARER}${apiKey.trim()}`
 				};
 
-				fetch(`${base}/props`, { headers })
+				fetch(apiUrl('/props'), { headers })
 					.then((response) => {
 						if (response.status === 401 || response.status === 403) {
 							window.location.reload();
@@ -196,7 +216,7 @@
 
 	onMount(() => {
 		updateFavicon();
-		// snapshot of every backend running stream on first load, populates the sidebar spinners
+		// snapshot of every server running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet
 		void chatStore.syncRemoteRunningStreams();
 	});
@@ -207,12 +227,21 @@
 		if (document.visibilityState !== 'visible') return;
 
 		void chatStore.syncRemoteRunningStreams();
+
+		// mobile browsers drop a peer connection when the tab is backgrounded, so a
+		// tunnel that was open is asked for again on the way back
+		remoteAccessStore.recoverChannels();
 	}
 
 	$effect(() => {
 		void deviceStore.systemTheme.isDark;
 
 		updateFavicon();
+	});
+
+	// turning the experimental remote pairing off closes the tunnels it opened
+	$effect(() => {
+		if (!remoteAccessStore.isEnabled) untrack(() => remoteAccessStore.syncServers());
 	});
 
 	// Initialize server properties on app load (run once)
@@ -244,37 +273,34 @@
 		});
 	}
 
-	// Fetch router models when in router mode (for status and modalities)
-	// Wait for models to be loaded first, run only once
-	let routerModelsFetched = false;
-
-	$effect(() => {
-		const isRouter = serverStore.isRouterMode;
-		const modelsCount = modelsStore.models.length;
-
-		// Only fetch router models once when we have models loaded and in router mode
-		if (isRouter && modelsCount > 0 && !routerModelsFetched) {
-			routerModelsFetched = true;
-
-			untrack(() => {
-				modelsStore.fetchRouterModels();
-			});
-		}
-	});
-
-	// Live model status and load progress via the /models/sse feed (router mode)
+	// Live model status and load progress via the /models/sse feed (router mode).
+	// The feed is kept for the session: switching to an external server and back
+	// must not tear it down and reconnect on every tab switch.
 	$effect(() => {
 		if (!browser) return;
 
-		if (!serverStore.isRouterMode) return;
+		if (!serverStore.localIsRouter) return;
 
 		untrack(() => {
 			modelsStore.status.subscribe();
 		});
+	});
 
-		return () => {
-			modelsStore.status.unsubscribe();
-		};
+	// The active server's own feed, when it is not the built-in one: a llama.cpp
+	// server serves /models/sse at its origin, so a router behind a tunnel animates
+	// its loads the way a local one does. It follows that server being reachable,
+	// and the operations that wait on a load keep their polling as the fallback.
+	$effect(() => {
+		if (!browser) return;
+
+		const server = serversStore.active;
+		const reachable =
+			!isLocalServer(server) &&
+			(isRemoteServer(server)
+				? remoteAccessStore.isConnected(server.id)
+				: serversModelsStore.get(server.id).loaded);
+
+		untrack(() => modelsStore.status.subscribeServer(reachable ? server.id : null));
 	});
 
 	// Background MCP server health checks on app load.

@@ -10,6 +10,7 @@
 		ChatFormInputFileInputInvisible,
 		ChatFormMcpResourcesList,
 		ChatFormPickers,
+		ChatFormProjectChip,
 		DialogMcpResourcesBrowser
 	} from '$lib/components/app';
 	import {
@@ -37,6 +38,7 @@
 		deviceStore,
 		mcpStore,
 		modelsStore,
+		projectsStore,
 		serverStore,
 		settingsStore,
 		toolsStore,
@@ -66,7 +68,7 @@
 		isAudioRecordingSupported,
 		microphoneUnavailableReason
 	} from '$lib/utils/browser-only';
-	import { onMount, untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import type { ClassValue } from 'svelte/elements';
 	import { toast } from 'svelte-sonner';
 
@@ -94,6 +96,7 @@
 		onStop?: () => void;
 		onSubmit?: () => void;
 		onSystemPromptClick?: (draft: { message: string; files: ChatUploadedFile[] }) => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		onUploadedFileRemove?: (fileId: string) => void;
 		onUploadedFilesChange?: (files: ChatUploadedFile[]) => void;
 		onValueChange?: (value: string) => void;
@@ -110,6 +113,7 @@
 		onStop,
 		onSubmit,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		onUploadedFileRemove,
 		onUploadedFilesChange,
 		onValueChange,
@@ -126,8 +130,12 @@
 	let audioRecorder: AudioRecorder | undefined;
 	let chatFormActionsRef: ChatFormActions | undefined = $state(undefined);
 	let fileInputRef: ChatFormInputFileInputInvisible | undefined = $state(undefined);
-	let pickersRef: { handleKeydown: (event: KeyboardEvent) => boolean } | undefined =
-		$state(undefined);
+	let pickersRef:
+		| {
+				handleKeydown: (event: KeyboardEvent) => boolean;
+				openPromptArguments: (prompt: MCPPromptInfo) => void;
+		  }
+		| undefined = $state(undefined);
 	let inputRef: ChatFormInput | undefined = $state(undefined);
 
 	// Audio Recording State
@@ -146,6 +154,14 @@
 	let cwd = $derived(
 		conversationsStore.activeConversation?.cwd ?? conversationsStore.preferences.pendingCwd
 	);
+
+	// the project the chat is in, or the one picked for the chat about to start
+	let project = $derived.by(() => {
+		const active = conversationsStore.activeConversation;
+		const projectId = active ? active.projectId : conversationsStore.preferences.pendingProjectId;
+
+		return projectId ? projectsStore.get(projectId) : undefined;
+	});
 
 	let showWorkingDirectory = $derived(conversationsStore.preferences.hasEnabledCwdTools());
 	// On a desktop the chip under the form shows a directory once one is set, and the + menu
@@ -489,6 +505,12 @@
 		}
 	}
 
+	async function handleMcpPromptArguments(prompt: MCPPromptInfo) {
+		pickers.openPromptPicker();
+		await tick();
+		pickersRef?.openPromptArguments(prompt);
+	}
+
 	function handlePromptLoadStart(
 		placeholderId: string,
 		promptInfo: MCPPromptInfo,
@@ -787,10 +809,12 @@
 					{isRecording}
 					micWarning={micUnavailableReason ?? micError}
 					onFileUpload={handleFileUpload}
+					onMcpPromptClick={handleMcpPromptArguments}
 					onMicClick={handleMicClick}
 					{onStop}
 					onSystemPromptClick={() =>
 						onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+					{onSystemPromptWithContent}
 					onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 						? pickers.handleWorkingDirectoryOpen
 						: undefined}
@@ -817,7 +841,37 @@
 		></div>
 	{/if}
 
-	{#if showWorkingDirectory}
+	{#if project}
+		<!-- the chat's context: its project and, once one is set, its working directory -->
+		<div
+			class={[
+				'mt-1.5 flex min-w-0 items-center gap-1 self-start',
+				// the expanded phone sheet reaches the screen's bottom
+				isExpanded && 'max-md:hidden'
+			]}
+		>
+			<ChatFormProjectChip {disabled} {project} />
+
+			{#if showWorkingDirectoryChip}
+				<span aria-hidden="true" class="text-xs text-muted-foreground">·</span>
+			{/if}
+
+			{#if showWorkingDirectory}
+				<ChatFormCurrentWorkingDirectory
+					bind:query={pickers.workingDirectoryQuery}
+					class="!mt-0"
+					customAnchor={activePickerAnchor}
+					directory={cwd}
+					{disabled}
+					isOpen={pickers.isWorkingDirectoryPickerOpen}
+					onChange={handleWorkingDirectoryChange}
+					onClose={pickers.handleWorkingDirectoryClose}
+					onOpen={pickers.handleWorkingDirectoryOpen}
+					showChip={showWorkingDirectoryChip}
+				/>
+			{/if}
+		</div>
+	{:else if showWorkingDirectory}
 		<!-- opened from the chip, the + menu, a phone chat's header or `/cwd` -->
 		<ChatFormCurrentWorkingDirectory
 			bind:query={pickers.workingDirectoryQuery}

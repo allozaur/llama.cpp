@@ -8,9 +8,53 @@
  */
 
 // API utilities
-export { getAuthHeaders, getJsonHeaders, sanitizeHeaders } from './api-headers';
+export {
+	apiChatUrl,
+	apiModelsUrl,
+	apiUrl,
+	getServer,
+	getServerBaseUrl,
+	getServers,
+	type ServersSnapshot
+} from './api-base';
+export {
+	getAuthHeaders,
+	getAuthHeadersForServer,
+	getJsonHeaders,
+	sanitizeHeaders
+} from './api-headers';
 export { ApiError, apiDelete, apiFetch, apiFetchWithParams, apiPost } from './api-fetch';
 export { validateApiKey } from './api-key-validation';
+export {
+	serverChatUrl,
+	serverFaviconUrl,
+	serverModelsUrl,
+	serverOrigin,
+	codeOf,
+	createLocalServer,
+	createRemoteServer,
+	createUrlServer,
+	hostOf,
+	isHttpUrl,
+	isLocalServer,
+	isReachableServer,
+	isRemoteServer,
+	normalizeShareCode,
+	parseServersSettings,
+	parseTunnelOrigin,
+	readModelContextLength,
+	tunnelHostLabel,
+	tunnelOrigin
+} from './server';
+export { serverCardStatusOf } from './server-status';
+export type { ServerCardFacts, ServerCardStatus } from './server-status';
+// Whether an endpoint is a llama.cpp server at all
+export { isLlamaCppProps } from './server-props';
+
+// Camera access code scanning (native BarcodeDetector where the browser has one)
+export { scanFrameForCode, supportsQrScan } from './qr-scan';
+// Access code as a QR code, the other end of the scanner above
+export { qrCodeDataUrl } from './qr-code';
 
 // Attachment utilities
 export { getAttachmentDisplayItems, isMcpPrompt, isMcpResource } from './attachment-display';
@@ -52,6 +96,7 @@ export {
 	filterModelOptions,
 	groupFavoriteOptions,
 	groupModelOptions,
+	groupServerOptions,
 	windowLocalGroups,
 	type GroupedModelOptions,
 	type ModelItem,
@@ -121,6 +166,10 @@ export {
 // Model name utilities
 export { isValidModelName, normalizeModelName, orgOf, repoOf } from './model-names';
 
+// Server-qualified model option ids
+export { serverIdFromModelId, qualifyModelId, rawModelId } from './model-option-id';
+export { groupModelFamilies, modelFamilyKey, type ModelFamilyGroup } from './model-families';
+
 // Sidecar token utilities
 export {
 	directoryOf,
@@ -163,6 +212,8 @@ export { extractSseDataPayload, parseSseJsonStream, splitSseRecords } from './ss
 // Stream session identity (conversation-id based)
 export { streamIdentity } from './stream-identity';
 
+export { buildTimingsFromUsage, usageTokenCounts } from './timings';
+
 // MCP utilities
 export {
 	detectMcpTransportFromUrl,
@@ -181,7 +232,10 @@ export {
 	downloadResourceContent,
 	getMcpIconUrl,
 	getMcpServerFaviconFallback,
-	getMcpServerLabel
+	getMcpServerLabel,
+	buildMcpPromptId,
+	isMcpPromptId,
+	parseMcpPromptId
 } from './mcp';
 
 // URI Template utilities
@@ -222,7 +276,16 @@ export {
 	type PathQuery
 } from './working-directory';
 
-export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
+// Project system prompt section (instructions + referenced documents)
+export { buildProjectSystemPrompt, estimateProjectContext } from './project-prompt';
+export { getPromptDrift } from './prompt-drift';
+export {
+	projectNewChatTabId,
+	projectOfNewChatTab,
+	resolveTabTarget,
+	resolveTabView,
+	type TabView
+} from './chat-tabs';
 
 // Shared `file_glob_search` runner with a short-lived result cache
 export { runGlobSearch, runGlobSearchWithChildren } from './glob-search';
@@ -379,7 +442,6 @@ export { remToPx } from './css';
 
 // Audio format helper (used by agentic store and chat service)
 export { getAudioInputFormat } from './audio-format';
-export { groupModelFamilies, modelFamilyKey, type ModelFamilyGroup } from './model-families';
 
 // Svelte actions
 export { nearViewport } from './near-viewport';

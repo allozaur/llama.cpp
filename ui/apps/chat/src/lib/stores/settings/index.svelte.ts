@@ -9,7 +9,7 @@
 
 import { browser } from '$app/environment';
 import { SETTING_CONFIG_DEFAULT, SETTINGS_KEYS } from '$lib/constants';
-import { ColorMode } from '$lib/enums';
+import { ColorMode, ServerKind } from '$lib/enums';
 import { ParameterSyncService } from '$lib/services/parameter-sync.service';
 import { SettingsService } from '$lib/services/settings.service';
 import { deviceStore } from '$lib/stores/device.svelte';
@@ -88,6 +88,28 @@ class SettingsStore {
 			includeSensitiveData
 				? { ...this.config }
 				: Object.fromEntries(Object.entries(this.config).filter(([key]) => key !== 'apiKey'));
+
+		// Servers each carry a credential: an API key, or the access code that
+		// opens a tunnel to someone's machine. Keys go unless the user opts in; a
+		// remote server without its code is meaningless, so it goes whole.
+		if (SETTINGS_KEYS.SERVERS in configToExport && !includeSensitiveData) {
+			try {
+				const servers = JSON.parse(configToExport[SETTINGS_KEYS.SERVERS] as string) as Array<
+					Record<string, unknown>
+				>;
+				const safeServers = servers
+					.filter((server) => server.kind !== ServerKind.REMOTE)
+					.map((server) => {
+						delete server.apiKey;
+
+						return server;
+					});
+
+				configToExport[SETTINGS_KEYS.SERVERS] = JSON.stringify(safeServers);
+			} catch {
+				delete (configToExport as Record<string, unknown>)[SETTINGS_KEYS.SERVERS];
+			}
+		}
 
 		// Handle MCP servers: exclude custom headers unless user opts in
 		if ('mcpServers' in configToExport && !includeSensitiveData) {

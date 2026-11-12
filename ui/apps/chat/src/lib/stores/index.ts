@@ -41,11 +41,24 @@ export { mcpStore } from './mcp/index.svelte';
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 
+// SERVERS
+export { serversStore } from './servers.svelte';
+export { serversModelsStore } from './serversModels.svelte';
+
+// REMOTE ACCESS (WebRTC tunnels to remote servers)
+export { remoteAccessStore } from './remote-access.svelte';
+
 // MODELS
 export { modelsStore } from './models/index.svelte';
 
 // MODELS DISCOVER (HuggingFace browse state for the discover dialog)
 export { modelsDiscoverStore } from './models-discover/index.svelte';
+
+// PROJECTS (shared instructions and context for chats)
+export { projectsStore } from './projects.svelte';
+
+// PROMPTS (reusable system messages kept in the library)
+export { promptsStore } from './prompts.svelte';
 
 // SERVER
 export { serverStore } from './server.svelte';

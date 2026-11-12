@@ -17,9 +17,11 @@ import {
 	TITLE_GENERATION
 } from '$lib/constants';
 import {
+	AttachmentType,
 	ErrorDialogType,
 	MessageRole,
 	MessageType,
+	ProjectContextKind,
 	ReasoningEffort,
 	StreamConnectionState
 } from '$lib/enums';
@@ -34,6 +36,7 @@ import { type ChatStreamHost, ChatStreamManager } from '$lib/stores/chat/streams
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
 import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
+import { projectsStore } from '$lib/stores/projects.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import { toolsStore } from '$lib/stores/tools.svelte';
@@ -49,6 +52,7 @@ import type {
 } from '$lib/types';
 import type { AgenticToolPolicy } from '$lib/types/agentic';
 import {
+	buildProjectSystemPrompt,
 	canCompactMessages,
 	compactionCut,
 	filterByLeafNodeId,
@@ -199,46 +203,80 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 				return;
 			}
 
-			const am = conversationsStore.activeMessages;
-			const firstActiveMessage = am.find((m) => m.parent === rootId);
-			const systemMessage = await DatabaseService.createSystemMessage(
+			const systemMessage = await this.insertSystemMessage(
 				activeConv.id,
-				SYSTEM_MESSAGE_PLACEHOLDER,
-				rootId
+				rootId,
+				rootMessage,
+				SYSTEM_MESSAGE_PLACEHOLDER
 			);
 
-			if (firstActiveMessage) {
-				await DatabaseService.updateMessage(firstActiveMessage.id, {
-					parent: systemMessage.id
-				});
-				await DatabaseService.updateMessage(systemMessage.id, {
-					children: [firstActiveMessage.id]
-				});
-				const updatedRootChildren = rootMessage
-					? rootMessage.children.filter((id: string) => id !== firstActiveMessage.id)
-					: [];
-
-				await DatabaseService.updateMessage(rootId, {
-					children: [
-						...updatedRootChildren.filter((id: string) => id !== systemMessage.id),
-						systemMessage.id
-					]
-				});
-				const firstMsgIndex = conversationsStore.findMessageIndex(firstActiveMessage.id);
-
-				if (firstMsgIndex !== -1)
-					conversationsStore.updateMessageAtIndex(firstMsgIndex, {
-						parent: systemMessage.id
-					});
-			}
-
-			conversationsStore.activeMessages.unshift(systemMessage);
 			this.pendingEditMessageId = systemMessage.id;
 			conversationsStore.updateConversationTimestamp();
 		} catch (error) {
 			console.error('Failed to add system prompt:', error);
 		}
 	}
+	/**
+	 * Sets the conversation's system message to a prompt's text and links the
+	 * message to the prompt. Replaces the system message when there is one.
+	 *
+	 * @param content - Prompt text to use as the system message
+	 * @param link - Prompt id and title the message is linked to
+	 */
+	async addSystemPromptFromPrompt(
+		content: string,
+		link: { promptId: string; title: string }
+	): Promise<void> {
+		let activeConv = conversationsStore.activeConversation;
+
+		if (!activeConv) {
+			await conversationsStore.createConversation();
+			activeConv = conversationsStore.activeConversation;
+		}
+
+		if (!activeConv) return;
+
+		const extra: DatabaseMessageExtra[] = [{ type: AttachmentType.PROMPT, ...link }];
+
+		try {
+			const allMessages = await conversationsStore.getConversationMessages(activeConv.id);
+			const rootMessage = allMessages.find((m) => m.type === 'root' && m.parent === null);
+			const rootId = rootMessage
+				? rootMessage.id
+				: await DatabaseService.createRootMessage(activeConv.id);
+			const existingSystemMessage = allMessages.find(
+				(m) => m.role === MessageRole.SYSTEM && m.parent === rootId
+			);
+
+			if (existingSystemMessage) {
+				const trimmed = content.trim();
+
+				await DatabaseService.updateMessage(existingSystemMessage.id, {
+					content: trimmed,
+					extra
+				});
+
+				const index = conversationsStore.findMessageIndex(existingSystemMessage.id);
+
+				if (index !== -1) {
+					conversationsStore.updateMessageAtIndex(index, { content: trimmed, extra });
+				} else {
+					conversationsStore.activeMessages.unshift({
+						...existingSystemMessage,
+						content: trimmed,
+						extra
+					});
+				}
+			} else {
+				await this.insertSystemMessage(activeConv.id, rootId, rootMessage, content, extra);
+			}
+
+			conversationsStore.updateConversationTimestamp();
+		} catch (error) {
+			console.error('Failed to add system prompt from prompt:', error);
+		}
+	}
+
 	cancelPreEncode(): void {
 		if (this.preEncodeAbortController) {
 			this.preEncodeAbortController.abort();
@@ -263,6 +301,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		this.clearChatStreaming(convId);
 		this.processing.setState(convId, null);
 	}
+
 	clearChatStreaming(convId: string, messageId?: string): void {
 		// session aware: a stale generation must not wipe a newer one's streaming state on the
 		// same conversation, that would drop the frozen stop identity and stop the wrong session
@@ -278,7 +317,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		this.isEditModeActive = false;
 		this.addFilesHandler = null;
 	}
-
 	clearPendingEditMessageId(): void {
 		this.pendingEditMessageId = null;
 	}
@@ -734,6 +772,10 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		}
 	}
 
+	/**
+	 * Sends a message, creating the conversation when none is active. A new
+	 * conversation joins the pending project and starts with its context.
+	 */
 	async sendMessage(content: string, extras?: DatabaseMessageExtra[]): Promise<void> {
 		if (!content.trim() && (!extras || extras.length === 0)) return;
 
@@ -756,9 +798,25 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		// Cancel any in-flight pre-encode request
 		this.cancelPreEncode();
 
+		const pendingProjectId = conversationsStore.preferences.pendingProjectId;
+		const project =
+			!activeConv && pendingProjectId ? projectsStore.get(pendingProjectId) : undefined;
+		const projectItems = project ? $state.snapshot(project.contextItems) : [];
+
+		// MCP resources of the project are attached here so the consume below picks them up
+		for (const item of projectItems) {
+			if (item.kind !== ProjectContextKind.MCP_RESOURCE || !item.path) continue;
+
+			await mcpStore.attachResource(item.path);
+		}
+
+		const projectExtras = projectItems
+			.filter((item) => item.kind === ProjectContextKind.ATTACHMENT && item.extra)
+			.map((item) => item.extra!);
 		// Consume MCP resource attachments - converts them to extras and clears the live store
 		const resourceExtras = mcpStore.consumeResourceAttachmentsAsExtras();
-		const allExtras = resourceExtras.length > 0 ? [...(extras || []), ...resourceExtras] : extras;
+		const addedExtras = [...projectExtras, ...resourceExtras];
+		const allExtras = addedExtras.length > 0 ? [...(extras || []), ...addedExtras] : extras;
 
 		let isNewConversation = false;
 
@@ -780,7 +838,14 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			if (isNewConversation) {
 				const rootId = await DatabaseService.createRootMessage(currentConv.id);
 				const currentConfig = settingsStore.config;
-				const systemPrompt = currentConfig.systemMessage?.toString().trim();
+				// a project conversation starts from the project's instructions and
+				// referenced documents, ahead of the global system message
+				const projectPrompt = buildProjectSystemPrompt(
+					currentConv.projectId ? projectsStore.get(currentConv.projectId) : undefined
+				);
+				const systemPrompt = [currentConfig.systemMessage?.toString().trim(), projectPrompt]
+					.filter(Boolean)
+					.join('\n\n');
 
 				let sysOrRootId = rootId;
 
@@ -861,6 +926,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			});
 		}
 	}
+
 	setChatLoading(convId: string, loading: boolean): void {
 		if (loading) {
 			this.activity.markLocal(convId);
@@ -869,7 +935,6 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 			this.setChatReasoning(convId, false);
 		}
 	}
-
 	setChatReasoning(convId: string, reasoning: boolean): void {
 		if (reasoning) this.chatReasoningStates.set(convId, true);
 		else this.chatReasoningStates.delete(convId);
@@ -932,6 +997,15 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		modelOverride?: string | null,
 		firstUserMessageContent?: string
 	): Promise<void> {
+		// a conversation keeps the model that generated it, which can belong to
+		// another server; make that server active so the request is not sent to
+		// a server that does not serve the model
+		const requestedModel = modelOverride ?? getConversationModel(allMessages);
+
+		if (requestedModel) {
+			await modelsStore.ensureModelServer(requestedModel);
+		}
+
 		// the ::model suffix in the stream identity is only for router mode, where it routes to the
 		// owning child. in single-model mode the identity stays the bare conv id so that attach, stop
 		// and reattach all agree, regardless of fresh send vs regenerate passing a resolved model
@@ -1418,10 +1492,9 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		assistantContent: string,
 		convId: string
 	): Promise<void> {
-		const effectiveModel =
-			serverStore.isRouterMode && modelsStore.selectedModelName
-				? modelsStore.selectedModelName
-				: undefined;
+		const effectiveModel = serverStore.isRouterMode
+			? (modelsStore.activeModelId ?? undefined)
+			: undefined;
 		const configValue = settingsStore.config;
 		const titlePromptTemplate =
 			typeof configValue.titleGenerationPrompt === 'string' &&
@@ -1463,6 +1536,53 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		convId: string
 	): { response: string; messageId: string } | undefined {
 		return this.chatStreamingStates.get(convId);
+	}
+
+	/**
+	 * Creates a system message under the root, makes it the parent of the
+	 * conversation's first message and shows it at the top of the active messages.
+	 */
+	private async insertSystemMessage(
+		convId: string,
+		rootId: string,
+		rootMessage: DatabaseMessage | undefined,
+		content: string,
+		extra?: DatabaseMessageExtra[]
+	): Promise<DatabaseMessage> {
+		const am = conversationsStore.activeMessages;
+		const firstActiveMessage = am.find((m) => m.parent === rootId);
+		const systemMessage = await DatabaseService.createSystemMessage(convId, content, rootId, extra);
+
+		if (firstActiveMessage) {
+			await DatabaseService.updateMessage(firstActiveMessage.id, {
+				parent: systemMessage.id
+			});
+			await DatabaseService.updateMessage(systemMessage.id, {
+				children: [firstActiveMessage.id]
+			});
+
+			const updatedRootChildren = rootMessage
+				? rootMessage.children.filter((id: string) => id !== firstActiveMessage.id)
+				: [];
+
+			await DatabaseService.updateMessage(rootId, {
+				children: [
+					...updatedRootChildren.filter((id: string) => id !== systemMessage.id),
+					systemMessage.id
+				]
+			});
+
+			const firstMsgIndex = conversationsStore.findMessageIndex(firstActiveMessage.id);
+
+			if (firstMsgIndex !== -1)
+				conversationsStore.updateMessageAtIndex(firstMsgIndex, {
+					parent: systemMessage.id
+				});
+		}
+
+		conversationsStore.activeMessages.unshift(systemMessage);
+
+		return systemMessage;
 	}
 
 	/**

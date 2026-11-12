@@ -1,21 +1,25 @@
 <script lang="ts">
 	import { ChevronLeft, CircleAlert, Loader2 } from '@lucide/svelte';
 	import { CollapsibleSection } from '$lib/components/app';
+	import { ServerIcon } from '$lib/components/app/servers';
 	import { modelsStore } from '$lib/stores';
+	import { getServer } from '$lib/utils/api-base';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
 		children: Snippet;
+		/** Renders the server's logo in the header. */
+		serverId?: string;
 		/** Extra classes for the chevron, to line it up with a row's own control. */
 		chevronClass?: string;
 		/** Number shown next to the label, omitted when undefined. */
 		count?: number;
 		error?: boolean;
-		/** Overrides the backend logo, used for sections without a backend. */
+		/** Overrides the server logo, used for sections without a server. */
 		icon?: Snippet;
 		label: string;
 		loading?: boolean;
-		/** Renders the back control, for a drilled-in provider. */
+		/** Renders the back control, for a drilled-in server. */
 		onBack?: () => void;
 		/** Persists the open state under this id, e.g. a section key. */
 		persistKey?: string;
@@ -41,6 +45,7 @@
 		persistKey,
 		revealChevronOnHover = false,
 		sectionHeaderClass = 'm-0 px-2 py-2 text-[13px] font-semibold text-muted-foreground select-none',
+		serverId,
 		sticky = false,
 		stickyClass = 'sticky z-10 bg-popover'
 	}: Props = $props();
@@ -63,7 +68,7 @@
 	{#snippet trigger()}
 		{#if onBack}
 			<button
-				aria-label="Back to all providers"
+				aria-label="Back to all servers"
 				class="-ml-1 inline-flex shrink-0 cursor-pointer items-center rounded-sm p-0.5 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
 				onclick={(event) => {
 					// the back control must not collapse the list it is leaving
@@ -78,6 +83,8 @@
 
 		{#if icon}
 			{@render icon()}
+		{:else if serverId}
+			<ServerIcon class="h-3.5 w-3.5" server={getServer(serverId)} />
 		{/if}
 
 		<span class="truncate">{label}</span>

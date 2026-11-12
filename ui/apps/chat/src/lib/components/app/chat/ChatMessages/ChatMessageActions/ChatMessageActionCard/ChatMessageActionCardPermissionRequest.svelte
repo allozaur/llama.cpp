@@ -61,14 +61,14 @@
 					</DropdownMenu.Item>
 				{:else}
 					{@const source = toolsStore.getToolSource(toolName)}
-					{@const providerName =
+					{@const serverName =
 						source === ToolSource.SERVER
 							? TOOL_SERVER_LABELS[ToolSource.SERVER]
 							: source === ToolSource.CUSTOM
 								? TOOL_SERVER_LABELS[ToolSource.CUSTOM]
 								: 'MCP Tools'}
 					<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS_SERVER)}>
-						Approve all tools from {providerName}
+						Approve all tools from {serverName}
 					</DropdownMenu.Item>
 				{/if}
 			</DropdownMenu.Content>

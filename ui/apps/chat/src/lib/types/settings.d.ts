@@ -29,6 +29,8 @@ export interface SettingsEntry {
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
 	radioOptions?: Array<{ value: string; label: string; key: string; isExperimental?: boolean }>;
 	isExperimental?: boolean;
+	/** Caveat shown under the help text, e.g. a known security limitation. */
+	note?: string;
 	isPositiveInteger?: boolean;
 	/** When true, the field is rendered as a password input (e.g. API key). */
 	isPrivate?: boolean;
@@ -57,6 +59,8 @@ export interface SettingsFieldConfig {
 	label: string;
 	type: SettingsFieldType;
 	isExperimental?: boolean;
+	/** Caveat shown under the help text, e.g. a known security limitation. */
+	note?: string;
 	isPositiveInteger?: boolean;
 	isPrivate?: boolean;
 	placeholder?: string;

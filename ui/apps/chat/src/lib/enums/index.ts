@@ -14,6 +14,8 @@ export {
 	ToolCallType
 } from './agentic.enums';
 
+export { ServerKind, ServerCardState, TunnelStatus } from './servers.enums';
+
 export {
 	ChatMessageStatsView,
 	ChatMessageStatisticsMode,
@@ -82,6 +84,7 @@ export {
 	ModelGroupKind,
 	ModelRowDownloadState,
 	ModelsTableGroupKind,
+	ModelsTableServerKind,
 	ModelsTableSortKey
 } from './model.enums';
 
@@ -100,6 +103,7 @@ export {
 	HtmlInputType,
 	McpPromptVariant,
 	MenuKind,
+	ProjectContextKind,
 	ScrollCarouselVariant,
 	SidebarAction,
 	SidebarSectionKind,
@@ -120,3 +124,6 @@ export {
 } from './tools.enums';
 
 export { SplashOrientation } from './splash.enums';
+
+export { LibraryItemKind, LibraryTab, LibraryView } from './library.enums';
+export { PromptDrift } from './prompt.enums';

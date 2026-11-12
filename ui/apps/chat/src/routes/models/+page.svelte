@@ -1,9 +1,14 @@
 <script lang="ts">
+	import { ArrowLeft, Server } from '@lucide/svelte';
 	import ModelsManager from '$lib/components/app/models/ModelsManager/ModelsManager.svelte';
+	import ModelsManagerServers from '$lib/components/app/models/ModelsManager/ModelsManagerServers.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { APP_NAME, DISCOVER_ICON } from '$lib/constants';
 	import { modelsStore, uiStore } from '$lib/stores';
 	import { onMount } from 'svelte';
+
+	// the manager's second view: the servers its models come from
+	let showServers = $state(false);
 
 	// a direct load lands here before any chat has listed the models, and the root
 	// layout fetches the router details once that list arrives. An already loaded
@@ -27,27 +32,59 @@
 	class="mx-auto flex h-[100dvh] w-full max-w-7xl flex-col gap-6 px-4 pt-(--page-top) md:px-8 md:pt-6"
 >
 	<div class="flex items-start gap-4">
+		{#if showServers}
+			<Button
+				aria-label="Back to models"
+				class="shrink-0"
+				onclick={() => (showServers = false)}
+				size="icon"
+				variant="ghost"
+			>
+				<ArrowLeft class="size-4" />
+			</Button>
+		{/if}
+
 		<div class="flex min-w-0 flex-col gap-1">
-			<h1 class="text-2xl font-semibold tracking-tight">Models</h1>
+			<h1 class="text-2xl font-semibold tracking-tight">
+				{showServers ? 'Servers' : 'Models'}
+			</h1>
 
 			<p class="text-sm text-muted-foreground">
-				Load, configure and remove the models this server can run.
+				{showServers
+					? 'Pair or point at the llama.cpp servers your models come from.'
+					: 'Load, configure and remove the models this server can run.'}
 			</p>
 		</div>
 
-		{#if uiStore.isDiscoverEnabled}
-			<Button
-				class="ml-auto shrink-0 gap-1.5"
-				onclick={() => uiStore.openModelsDiscover()}
-				size="sm"
-				variant="tertiary"
-			>
-				<DISCOVER_ICON class="h-3.5 w-3.5" />
+		{#if !showServers}
+			<div class="ml-auto flex shrink-0 items-center gap-2">
+				{#if uiStore.isDiscoverEnabled}
+					<Button
+						class="gap-1.5"
+						onclick={() => uiStore.openModelsDiscover()}
+						size="sm"
+						variant="secondary"
+					>
+						<DISCOVER_ICON class="size-4" />
 
-				Discover Models
-			</Button>
+						Discover Models
+					</Button>
+				{/if}
+
+				<Button class="gap-1.5" onclick={() => (showServers = true)} size="sm" variant="secondary">
+					<Server class="size-4" />
+
+					Manage Servers
+				</Button>
+			</div>
 		{/if}
 	</div>
 
-	<ModelsManager class="min-h-0" />
+	{#if showServers}
+		<div class="min-h-0 flex-1 overflow-y-auto">
+			<ModelsManagerServers />
+		</div>
+	{:else}
+		<ModelsManager class="min-h-0" />
+	{/if}
 </div>
