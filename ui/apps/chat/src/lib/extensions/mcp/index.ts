@@ -4,9 +4,12 @@
  */
 
 import type { Extension } from '../types';
+import { contributeTools } from './tools';
 
 const mcp: Extension = {
-	activate() {}
+	activate(ctx) {
+		contributeTools(ctx);
+	}
 };
 
 export default mcp;

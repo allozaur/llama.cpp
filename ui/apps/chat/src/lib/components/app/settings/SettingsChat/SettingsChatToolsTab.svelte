@@ -3,7 +3,7 @@
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
-	import { McpServerIdentity, TruncatedText } from '#lib/components/app/index.ts';
+	import { TruncatedText } from '#lib/components/app/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
 		SETTINGS_KEYS,
@@ -12,7 +12,6 @@
 	import { ToolSource } from '#lib/enums/tools.enums.ts';
 	import {
 		conversationsStore,
-		mcpStore,
 		permissionsStore,
 		settingsStore,
 		toolsStore
@@ -108,17 +107,11 @@
 						onclick={(e) => e.stopPropagation()}
 					/>
 
-					{@const faviconUrl = group.serverId ? mcpStore.getServerFavicon(group.serverId) : null}
+					{@const GroupIdentity = toolsStore.getGroupIdentity(group)}
 
 					<span class="inline-flex min-w-0 items-center gap-1.5 font-medium">
-						{#if group.source === 'mcp'}
-							<McpServerIdentity
-								displayName={group.label}
-								{faviconUrl}
-								iconClass={ICON_CLASS_DEFAULT}
-								iconRounded="rounded-sm"
-								showVersion={false}
-							/>
+						{#if GroupIdentity && group.serverId}
+							<GroupIdentity groupId={group.serverId} label={group.label} />
 						{:else}
 							<TruncatedText class="font-medium" text={group.label} />
 						{/if}
