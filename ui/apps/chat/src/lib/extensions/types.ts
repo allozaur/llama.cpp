@@ -4,6 +4,7 @@
  * same contract.
  */
 
+import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './points/composer';
 import type { NavigationItem } from './points/navigation';
 import type { ExtensionPage } from './points/pages';
 import type { FlowHook, ToolProvider } from './points/tools';
@@ -38,6 +39,12 @@ export interface ExtensionContext {
 
 /** Every extension point, with the shape of what goes into it. */
 export interface ExtensionPoints {
+	/** Attachments held outside the chat form's files until the message is sent. */
+	composerAttachments: ComposerAttachments;
+	/** Slash commands in the chat form's `/` picker. */
+	composerCommands: ComposerCommand;
+	/** Popover pickers the chat form mounts, opened by a command. */
+	composerPickers: ComposerPicker;
 	/** Runs around every agentic flow. */
 	flow: FlowHook;
 	/** Entries in the sidebar, each opening a page of the extension or a dialog. */

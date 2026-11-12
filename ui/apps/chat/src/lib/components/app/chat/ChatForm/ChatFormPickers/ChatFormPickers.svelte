@@ -1,13 +1,8 @@
 <script lang="ts">
 	import ChatFormPickerCommand from './ChatFormPickerCommand.svelte';
-	import ChatFormPickerMcpPrompts from './ChatFormPickerMcpPrompts/ChatFormPickerMcpPrompts.svelte';
 	import ChatFormPickerMention from './ChatFormPickerMention.svelte';
-	import type {
-		ChatFormCommand,
-		FileMentionEntry,
-		GetPromptResult,
-		MCPPromptInfo
-	} from '$lib/types';
+	import type { ComposerHandle, ComposerPicker, ComposerPickerExports } from '$lib/extensions';
+	import type { ChatFormCommand, FileMentionEntry } from '$lib/types';
 
 	interface Props {
 		/** What every picker's popover floats by. */
@@ -15,49 +10,46 @@
 		isCommandPickerOpen?: boolean;
 		commandQuery?: string;
 		commands?: ChatFormCommand[];
-		isPromptPickerOpen?: boolean;
-		promptSearchQuery?: string;
+		/** Handed to the pickers extensions contribute. */
+		composer: ComposerHandle;
+		/** The pickers extensions contribute. */
+		pickers?: ComposerPicker[];
+		/** The contributed picker that is open, if any. */
+		openPickerId?: string | null;
+		pickerQuery?: string;
 		isMentionPickerOpen?: boolean;
 		mentionQuery?: string;
 		scopePath?: string | null;
 		onCommandPickerClose?: () => void;
 		onCommandSelect?: (command: ChatFormCommand) => void;
-		onPromptPickerClose?: () => void;
+		onPickerClose?: () => void;
 		onMentionPickerClose?: () => void;
 		onMentionOpened?: () => void;
 		onMentionSelect?: (entry: FileMentionEntry) => void;
-		onPromptLoadStart?: (
-			placeholderId: string,
-			promptInfo: MCPPromptInfo,
-			args?: Record<string, string>
-		) => void;
-		onPromptLoadComplete?: (placeholderId: string, result: GetPromptResult) => void;
-		onPromptLoadError?: (placeholderId: string, error: string) => void;
 	}
 
 	let {
 		anchor,
 		commandQuery,
 		commands = [],
+		composer,
 		isCommandPickerOpen,
 		isMentionPickerOpen,
-		isPromptPickerOpen,
 		mentionQuery,
 		onCommandPickerClose,
 		onCommandSelect,
 		onMentionOpened,
 		onMentionPickerClose,
 		onMentionSelect,
-		onPromptLoadComplete,
-		onPromptLoadError,
-		onPromptLoadStart,
-		onPromptPickerClose,
-		promptSearchQuery,
+		onPickerClose,
+		openPickerId = null,
+		pickerQuery,
+		pickers = [],
 		scopePath
 	}: Props = $props();
 
 	let commandPickerRef: ChatFormPickerCommand | undefined = $state(undefined);
-	let promptPickerRef: ChatFormPickerMcpPrompts | undefined = $state(undefined);
+	let contributedPickerRefs: Record<string, ComposerPickerExports | undefined> = $state({});
 	let mentionPickerRef: ChatFormPickerMention | undefined = $state(undefined);
 
 	/** Delegate keyboard events to the active picker child; true if handled. */
@@ -66,7 +58,7 @@
 			return true;
 		}
 
-		if (isPromptPickerOpen && promptPickerRef?.handleKeydown(event)) {
+		if (openPickerId !== null && contributedPickerRefs[openPickerId]?.handleKeydown(event)) {
 			return true;
 		}
 
@@ -88,16 +80,18 @@
 	query={commandQuery ?? ''}
 />
 
-<ChatFormPickerMcpPrompts
-	bind:this={promptPickerRef}
-	customAnchor={anchor}
-	isOpen={isPromptPickerOpen}
-	onClose={onPromptPickerClose}
-	{onPromptLoadComplete}
-	{onPromptLoadError}
-	{onPromptLoadStart}
-	searchQuery={promptSearchQuery}
-/>
+{#each pickers as picker (picker.id)}
+	{@const isOpen = openPickerId === picker.id}
+
+	<picker.component
+		bind:this={contributedPickerRefs[picker.id]}
+		anchor={anchor ?? null}
+		{composer}
+		{isOpen}
+		onClose={onPickerClose ?? (() => {})}
+		query={isOpen ? (pickerQuery ?? '') : ''}
+	/>
+{/each}
 
 <ChatFormPickerMention
 	bind:this={mentionPickerRef}

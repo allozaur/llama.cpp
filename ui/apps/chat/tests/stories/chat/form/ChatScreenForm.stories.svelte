@@ -1,4 +1,5 @@
 <script lang="ts" module>
+	import { activateBuiltInExtensions } from '../../helpers/extensions';
 	import {
 		cwdServerTools,
 		fileAttachments,
@@ -25,7 +26,11 @@
 	import { expect, screen } from 'storybook/test';
 
 	const { Story } = defineMeta({
-		beforeEach: resetPointerEvents,
+		// the MCP stories show what the MCP extension adds to the form
+		beforeEach: async () => {
+			resetPointerEvents();
+			await activateBuiltInExtensions();
+		},
 		component: ChatScreenForm,
 		parameters: {
 			layout: 'centered'

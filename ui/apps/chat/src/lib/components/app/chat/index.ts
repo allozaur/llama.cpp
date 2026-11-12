@@ -116,12 +116,13 @@ export { default as ChatAttachmentsPreviewCurrentItem } from './ChatAttachments/
  * **ChatForm** - Main chat input component with rich features
  *
  * The primary input interface for composing and sending chat messages.
- * Orchestrates text input, file attachments, audio recording, and MCP prompts.
+ * Orchestrates text input, file attachments, audio recording, and what extensions
+ * add to it: slash commands, pickers and pending attachments (see `$lib/extensions/points/composer`).
  * Used by ChatScreenForm and ChatMessageEditForm for both new conversations and message editing.
  *
  * **Architecture:**
  * - Composes ChatFormInput (a live-preview markdown editor), ChatFormActions,
- *   and ChatFormPickerMcpPrompts
+ *   and ChatFormPickers
  * - Manages file upload state via `uploadedFiles` bindable prop
  * - Integrates with ModelsSelectorDropdown for model selection in router mode
  * - Communicates with parent via callbacks (onSubmit, onFilesAdd, onStop, etc.)
@@ -130,14 +131,14 @@ export { default as ChatAttachmentsPreviewCurrentItem } from './ChatAttachments/
  * - IME-safe Enter key handling (waits for composition end)
  * - Shift+Enter for newline, Enter for submit
  * - Paste handler for files and long text (> {pasteLongTextToFileLen} chars → file conversion)
- * - Keyboard shortcut `/` triggers MCP prompt picker
+ * - Typing `/` opens the slash-command picker
  *
  * **Features:**
  * - Auto-growing live-preview markdown editor with placeholder
  * - File upload via button dropdown (images/text/PDF), drag-drop, or paste
  * - Audio recording with WAV conversion (when model supports audio)
- * - MCP prompt picker with search and argument forms
- * - MCP reource picker with component to list attached resources at the bottom of Chat Form
+ * - Slash commands, pickers and pending attachments contributed by extensions: the MCP
+ *   prompt picker and the list of attached MCP resources come from the MCP extension
  * - Model selector integration (router mode)
  * - Loading state with stop button, disabled state for errors
  *
@@ -362,8 +363,8 @@ export { default as ChatFormPickerMention } from './ChatForm/ChatFormPickers/Cha
 export { default as ChatFormPickerCommand } from './ChatForm/ChatFormPickers/ChatFormPickerCommand.svelte';
 
 /**
- * Hosts the chat-form pickers (slash-command, MCP prompt, file mention)
- * and delegates keyboard events to the active one.
+ * Hosts the chat-form pickers (slash-command, file mention and the ones
+ * extensions contribute) and delegates keyboard events to the active one.
  */
 export { default as ChatFormPickers } from './ChatForm/ChatFormPickers/ChatFormPickers.svelte';
 
