@@ -11,6 +11,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import {
 	MODELS_ROUTE_ID,
+	MODELS_VIEW_MODE_LOCALSTORAGE_KEY,
 	ROUTES,
 	SETTINGS_KEYS,
 	SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY,
@@ -20,6 +21,7 @@ import {
 	SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY,
 	SIDEBAR_WIDTH_LOCALSTORAGE_KEY
 } from '$lib/constants';
+import { ModelsViewMode } from '$lib/enums';
 import { deviceStore } from '$lib/stores/device.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { Group } from '$lib/types/groups';
@@ -88,12 +90,6 @@ class UiStore {
 	/** Set when a flow outside the chat wants the composer focused once it can take it. */
 	composerFocusRequested = $state(false);
 
-	/** Repo the Discover dialog selects when it opens, set by a model row. */
-	discoverModelFocus = $state<string | null>(null);
-
-	/** Open state of the Discover dialog. */
-	discoverModelsOpen = $state(false);
-
 	/** Sidebar sections showing all their chats past the preview, for this session. */
 	expandedSidebarSections = new SvelteSet<string>();
 
@@ -102,6 +98,9 @@ class UiStore {
 
 	/** Open state of the group picker, a phone's stand-in for the group submenus. */
 	groupPicker = $state<GroupPickerOptions | null>(null);
+
+	/** Hugging Face repo the Hub details drawer shows, e.g. `ggml-org/gemma-3-4b-it-GGUF`. */
+	hubModelFocus = $state<string | null>(null);
 
 	/** Whether the main chat form is expanded into its large editor. */
 	isComposerExpanded = $state(false);
@@ -116,6 +115,8 @@ class UiStore {
 	modelsReturnRoute: string = ROUTES.START;
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** Table or grid of cards on the models page; remembered across reloads. */
+	modelsViewMode = $state<ModelsViewMode>(this.loadModelsViewMode());
 	/** Open state of the project dialog, `null` while closed. */
 	projectDialog = $state<ProjectDialogOptions | null>(null);
 	/** Open state of the project picker, a phone's stand-in for the project submenus. */
@@ -132,6 +133,11 @@ class UiStore {
 	/** Whether Discover is turned on; every Discover entry point hides without it. */
 	get isDiscoverEnabled(): boolean {
 		return Boolean(settingsStore.getConfig(SETTINGS_KEYS.ENABLE_DISCOVER_MODELS));
+	}
+
+	/** Whether the Hub details drawer is open. */
+	get isHubModelDetailsOpen(): boolean {
+		return this.hubModelFocus !== null;
 	}
 
 	/** Whether the model details drawer is open. */
@@ -156,6 +162,11 @@ class UiStore {
 		if (!browser || deviceStore.isMobile) return;
 
 		localStorage.setItem(SIDEBAR_EXPANDED_LOCALSTORAGE_KEY, String(expanded));
+	}
+
+	/** Close the Hub details drawer. */
+	closeHubModelDetails(): void {
+		this.hubModelFocus = null;
 	}
 
 	/** Close the model details drawer. */
@@ -204,17 +215,21 @@ class UiStore {
 		this.groupPicker = options;
 	}
 
-	/** Open the model details drawer over the current page, without leaving it. */
-	openModelDetails(focus: string): void {
-		this.modelDetailsFocus = focus;
-	}
-
-	/** Open the Discover dialog, focused on one repo; a no-op while Discover is off. */
-	openModelsDiscover(focus?: string): void {
+	/**
+	 * Open the Hub details drawer on one repo; a no-op while Discover is off. The two
+	 * details drawers never stack, so the model details drawer steps aside.
+	 */
+	openHubModelDetails(repo: string): void {
 		if (!this.isDiscoverEnabled) return;
 
-		this.discoverModelFocus = focus ?? null;
-		this.discoverModelsOpen = true;
+		this.modelDetailsFocus = null;
+		this.hubModelFocus = repo;
+	}
+
+	/** Open the model details drawer over the current page, without leaving it. */
+	openModelDetails(focus: string): void {
+		this.hubModelFocus = null;
+		this.modelDetailsFocus = focus;
 	}
 
 	/** Navigate to the models manager. */
@@ -286,6 +301,13 @@ class UiStore {
 		this.composerFocusRequested = true;
 	}
 
+	/** Lay the models page out as a table or a grid of cards. */
+	setModelsViewMode(mode: ModelsViewMode): void {
+		this.modelsViewMode = mode;
+
+		if (browser) localStorage.setItem(MODELS_VIEW_MODE_LOCALSTORAGE_KEY, mode);
+	}
+
 	/**
 	 * Remembers the order the user dragged the sections into.
 	 *
@@ -346,6 +368,14 @@ class UiStore {
 		} else {
 			this.expandedSidebarSections.add(id);
 		}
+	}
+
+	private loadModelsViewMode(): ModelsViewMode {
+		if (!browser) return ModelsViewMode.TABLE;
+
+		const saved = localStorage.getItem(MODELS_VIEW_MODE_LOCALSTORAGE_KEY);
+
+		return saved === ModelsViewMode.GRID ? ModelsViewMode.GRID : ModelsViewMode.TABLE;
 	}
 
 	private loadSidebarExpanded(): boolean {

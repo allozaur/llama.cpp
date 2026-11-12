@@ -99,3 +99,9 @@ export enum ModelsTableServerKind {
 	COMPAT = 'compat',
 	SERVER = 'server'
 }
+
+/** How the models manager lays out the installed models. */
+export enum ModelsViewMode {
+	GRID = 'grid',
+	TABLE = 'table'
+}
