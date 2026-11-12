@@ -1,4 +1,5 @@
 import type { MenuKind, SidebarAction } from '#lib/enums/index.ts';
+import type { NavigationItem } from '#lib/extensions/index.ts';
 import type { ResolvedPathname } from '$app/types';
 import type { Component, Snippet } from 'svelte';
 
@@ -12,6 +13,8 @@ export interface DesktopIconStripItem {
 	route?: ResolvedPathname;
 	/** Custom action handled by the sidebar, e.g. opening a new-chat tab */
 	action?: SidebarAction;
+	/** The item of an extension this one shows; the sidebar opens it in place of an `action` */
+	contributed?: NavigationItem;
 	activeRouteId?: string;
 	activeRoutePrefix?: string;
 	activeUrlIncludes?: string;

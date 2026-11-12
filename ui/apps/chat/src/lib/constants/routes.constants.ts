@@ -18,8 +18,8 @@ export const URL_PARAMS = {
 export const ROUTES = {
 	/** A conversation. */
 	CHAT: '/(chat)/chat/[id]',
-	/** MCP servers - a page on a phone, a dialog elsewhere. */
-	MCP_SERVERS: '/mcp-servers',
+	/** A page an extension contributes, see RouterService.extensionPage(). */
+	EXTENSION_PAGE: '/[extensionPage]',
 	/** Models manager. */
 	MODELS: '/models',
 	/** Search — mobile-only full-page conversation search. */
