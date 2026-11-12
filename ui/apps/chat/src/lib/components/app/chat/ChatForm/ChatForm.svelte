@@ -11,27 +11,22 @@
 		ChatFormCurrentWorkingDirectory,
 		ChatFormInput,
 		ChatFormInputFileInputInvisible,
-		ChatFormMcpResourcesList,
-		ChatFormPickers,
-		DialogMcpResourcesBrowser
+		ChatFormPickers
 	} from '#lib/components/app/index.ts';
 	import {
 		CHAT_FORM_SINGLE_ROW_MAX_TEXT_PX,
 		CLIPBOARD_CONTENT_QUOTE_PREFIX,
 		ICON_CLASS_DEFAULT,
-		INITIAL_FILE_SIZE,
-		PROMPT_CONTENT_SEPARATOR,
 		SETTING_CONFIG_DEFAULT,
 		VOICE_EDITOR_SELECTOR
 	} from '#lib/constants/index.ts';
 	import {
-		ContentPartType,
 		FileExtensionText,
 		KeyboardKey,
 		MimeTypeText,
-		SpecialFileType,
-		ToolSource
+		SpecialFileType
 	} from '#lib/enums/index.ts';
+	import { type ComposerHandle, extensions } from '#lib/extensions/index.ts';
 	import { useChatFormExpansion } from '#lib/hooks/use-chat-form-expansion.svelte.ts';
 	import { useChatFormPickers } from '#lib/hooks/use-chat-form-pickers.svelte.ts';
 	import {
@@ -42,7 +37,6 @@
 		chatStore,
 		conversationsStore,
 		deviceStore,
-		mcpStore,
 		modelsStore,
 		serverStore,
 		settingsStore,
@@ -50,13 +44,7 @@
 		uiStore,
 		voiceTranscriptsStore
 	} from '#lib/stores/index.ts';
-	import type {
-		FileMentionEntry,
-		GetPromptResult,
-		MCPPromptInfo,
-		MCPResourceInfo,
-		PromptMessage
-	} from '#lib/types/index.ts';
+	import type { FileMentionEntry } from '#lib/types/index.ts';
 	import {
 		buildMentionInsertion,
 		findCommandToken,
@@ -158,27 +146,38 @@
 		showWorkingDirectory && (deviceStore.isMobile ? !conversationsStore.activeConversation : !cwd)
 	);
 
+	// what extensions add to the form: slash commands, the pickers they open, and
+	// attachments that wait outside the form's files
+	let contributedCommands = $derived(extensions.contributions('composerCommands'));
+	let contributedPickers = $derived(extensions.contributions('composerPickers'));
+	let contributedAttachments = $derived(extensions.contributions('composerAttachments'));
+
+	const composer: ComposerHandle = {
+		addUploadedFile(file) {
+			uploadedFiles = [...uploadedFiles, file];
+			onUploadedFilesChange?.(uploadedFiles);
+		},
+		closePicker: () => pickers.closePicker(),
+		focusInput: () => inputRef?.focus(),
+		openPicker: (id, query) => pickers.openPicker(id, query),
+		updateUploadedFile(id, update) {
+			uploadedFiles = uploadedFiles.map((f) => (f.id === id ? update(f) : f));
+			onUploadedFilesChange?.(uploadedFiles);
+		}
+	};
+
 	const pickers = useChatFormPickers({
 		canCompact: () => chatStore.canCompact(conversationsStore.activeMessages),
 		focusInput: refocusInput,
 		getCaretOffset: () => inputRef?.getCaretOffset(),
+		getComposer: () => composer,
+		getContributedCommands: () => contributedCommands,
 		getCwd: () => cwd,
 		getPickersRef: () => pickersRef,
 		getServerHome: () => toolsStore.serverHome ?? null,
 		getShowModelSelector: () => showModelSelector,
 		getValue: () => value,
 		hasCwdTools: () => conversationsStore.preferences.hasEnabledCwdTools(),
-		// policy-aware, same rule as the agentic flow: MCP category on and at
-		// least one globally-enabled server whose group key is not disabled
-		hasPrompts: () => {
-			const prefs = conversationsStore.preferences;
-
-			if (!prefs.isCategoryEnabled(ToolSource.MCP)) return false;
-
-			return mcpStore
-				.getServers()
-				.some((s) => s.enabled && prefs.isServerToolsEnabled(s.id) && s.url.trim());
-		},
 		onCompact: () => chatStore.compactConversation(),
 		openModelSelector: () => chatFormActionsRef?.openModelSelector(),
 		// TODO: no typed pickers with an on-screen keyboard for now: each mobile browser moves
@@ -227,12 +226,6 @@
 			await chatStore.recordCwdChange(newDir?.trim() || null);
 		}
 	}
-
-	// Resource Dialog State
-	let isResourceDialogOpen = $state(false);
-	let preSelectedResourceUri = $state<string | undefined>(undefined);
-
-	// MCP Servers Dialog State
 
 	let currentConfig = $derived(settingsStore.config);
 
@@ -295,7 +288,7 @@
 			!isExpanded &&
 			!voice.isActive &&
 			!hasAttachments &&
-			!mcpStore.resources.hasAttachments &&
+			!contributedAttachments.some((source) => source.hasPending()) &&
 			!value.includes('\n')
 	);
 	// starts as it will settle, so a phone never draws a frame of the single row
@@ -324,7 +317,7 @@
 	let isPickerOpen = $derived(
 		pickers.isCommandPickerOpen ||
 			pickers.isMentionPickerOpen ||
-			pickers.isPromptPickerOpen ||
+			pickers.openPickerId !== null ||
 			pickers.isWorkingDirectoryPickerOpen
 	);
 
@@ -519,72 +512,6 @@
 		}
 	}
 
-	function handlePromptLoadStart(
-		placeholderId: string,
-		promptInfo: MCPPromptInfo,
-		args?: Record<string, string>
-	) {
-		pickers.closePromptPicker();
-
-		const promptName = promptInfo.title || promptInfo.name;
-		const placeholder: ChatUploadedFile = {
-			file: new File([], 'loading'),
-			id: placeholderId,
-			isLoading: true,
-			mcpPrompt: {
-				arguments: args ? { ...args } : undefined,
-				promptName: promptInfo.name,
-				serverName: promptInfo.serverName
-			},
-			name: promptName,
-			size: INITIAL_FILE_SIZE,
-			type: SpecialFileType.MCP_PROMPT
-		};
-
-		uploadedFiles = [...uploadedFiles, placeholder];
-		onUploadedFilesChange?.(uploadedFiles);
-		inputRef?.focus();
-	}
-
-	function handlePromptLoadComplete(placeholderId: string, result: GetPromptResult) {
-		const promptText = result.messages
-			?.map((msg: PromptMessage) => {
-				if (typeof msg.content === 'string') {
-					return msg.content;
-				}
-
-				if (msg.content.type === ContentPartType.TEXT) {
-					return msg.content.text;
-				}
-
-				return '';
-			})
-			.filter(Boolean)
-			.join(PROMPT_CONTENT_SEPARATOR);
-
-		uploadedFiles = uploadedFiles.map((f) =>
-			f.id === placeholderId
-				? {
-						...f,
-						file: new File([promptText], `${f.name}${FileExtensionText.TXT}`, {
-							type: MimeTypeText.PLAIN
-						}),
-						isLoading: false,
-						size: promptText.length,
-						textContent: promptText
-					}
-				: f
-		);
-		onUploadedFilesChange?.(uploadedFiles);
-	}
-
-	function handlePromptLoadError(placeholderId: string, error: string) {
-		uploadedFiles = uploadedFiles.map((f) =>
-			f.id === placeholderId ? { ...f, isLoading: false, loadError: error } : f
-		);
-		onUploadedFilesChange?.(uploadedFiles);
-	}
-
 	// Deferred so the closing popover's focus scope tears down first -
 	// bits-ui yanks a synchronous focus() back into the still-mounted popover.
 	function refocusInput() {
@@ -710,20 +637,19 @@
 			anchor={activePickerAnchor}
 			commandQuery={pickers.commandQuery}
 			commands={pickers.availableCommands}
+			{composer}
 			isCommandPickerOpen={pickers.isCommandPickerOpen}
 			isMentionPickerOpen={pickers.isMentionPickerOpen}
-			isPromptPickerOpen={pickers.isPromptPickerOpen}
 			mentionQuery={pickers.mentionQuery}
 			onCommandPickerClose={pickers.handleCommandPickerClose}
 			onCommandSelect={pickers.handleCommandSelect}
 			onMentionOpened={() => inputRef?.focus()}
 			onMentionPickerClose={pickers.handleMentionPickerClose}
 			onMentionSelect={handleMentionSelect}
-			onPromptLoadComplete={handlePromptLoadComplete}
-			onPromptLoadError={handlePromptLoadError}
-			onPromptLoadStart={handlePromptLoadStart}
-			onPromptPickerClose={pickers.handlePromptPickerClose}
-			promptSearchQuery={pickers.promptSearchQuery}
+			onPickerClose={pickers.handlePickerClose}
+			openPickerId={pickers.openPickerId}
+			pickerQuery={pickers.pickerQuery}
+			pickers={contributedPickers}
 			scopePath={pickers.mentionScopePath}
 		/>
 	</div>
@@ -817,15 +743,9 @@
 				placeholder={voicePlaceholder ?? placeholder}
 			/>
 
-			{#if mcpStore.resources.hasAttachments}
-				<ChatFormMcpResourcesList
-					class="mb-3"
-					onResourceClick={(uri) => {
-						preSelectedResourceUri = uri;
-						isResourceDialogOpen = true;
-					}}
-				/>
-			{/if}
+			{#each contributedAttachments as source (source)}
+				<source.component class="mb-3" />
+			{/each}
 
 			<!-- its own box, so the phone sheet can hold it by the bottom edge while it moves -->
 			<div bind:this={actionsEl} class={isSingleRow ? 'contents' : 'relative mt-auto'}>
@@ -914,16 +834,3 @@
 		/>
 	{/if}
 </form>
-
-<DialogMcpResourcesBrowser
-	bind:open={isResourceDialogOpen}
-	onAttach={(resource: MCPResourceInfo) => {
-		mcpStore.attachResource(resource.uri);
-	}}
-	onOpenChange={(newOpen: boolean) => {
-		if (!newOpen) {
-			preSelectedResourceUri = undefined;
-		}
-	}}
-	preSelectedUri={preSelectedResourceUri}
-/>
