@@ -94,13 +94,14 @@ The app imports the library as `@ggml-org/llama-ui/ui/<name>` and compiles its s
 | Layer          | Lives in                  | What it holds                                                                                        |
 | -------------- | ------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Routes         | `src/routes`              | `/`, `/chat/[id]`, `/models`, `/mcp-servers`, `/settings`, `/search`                                 |
-| App components | `src/lib/components/app`  | Chat, navigation, models, MCP, settings and dialogs, grouped by area                                 |
+| App components | `src/lib/components/app`  | Chat, navigation, models, settings and dialogs, grouped by area                                      |
 | UI components  | `ui/lib/ui`               | shadcn-svelte on bits-ui, from Llama UI                                                              |
 | Voice          | `ui/lib/voice`            | Microphone capture, transcription and dictation, from Llama Voice (`@ggml-org/llama-voice`)          |
 | Hooks          | `src/lib/hooks`           | View logic between components and stores: scroll, drag and drop, pickers, keyboard                   |
 | Stores         | `src/lib/stores`          | Application state as Svelte 5 runes: chat, conversations, the agentic loop, tools, models, settings  |
 | Agentic loop   | `ui/lib/harness`          | Llama Harness: streams a turn, runs the tools the model called, repeats until it answers without one |
-| Services       | `src/lib/services`        | Stateless I/O: the llama-server API, IndexedDB, MCP, the Hugging Face Hub, the tool sandbox          |
+| Services       | `src/lib/services`        | Stateless I/O: the llama-server API, IndexedDB, the Hugging Face Hub, the tool sandbox               |
+| Extensions     | `src/lib/extensions`      | Features that can be switched off, MCP first: what they add to the app's extension points            |
 | Storage + API  | the browser, llama-server | IndexedDB and localStorage; llama-server's `/v1`, `/props`, `/models`, `/tools`, `/slots`            |
 
 ```mermaid
@@ -113,6 +114,7 @@ flowchart LR
     Services --> DB[("IndexedDB, localStorage")]
     Services --> API["llama-server"]
     Components -. "imports" .-> UI["Llama UI"]
+    Ext["Extensions, such as MCP"] -. "extension points" .-> Stores
     Stores -. "reactive state" .-> Components
 ```
 
@@ -150,6 +152,23 @@ sequenceDiagram
 - **Server role**: one codebase serves MODEL and ROUTER mode; `serverStore` reads the role from `/props`, and ROUTER-only UI shows only there.
 - **Modalities**: attachments a model cannot read (images for a text-only model, say) are refused before sending, from the model's `/props`.
 - **Storage**: conversations and messages in IndexedDB (Dexie), settings and model preferences in localStorage, server state and Hub details in memory only.
+
+### Extensions (`src/lib/extensions/`)
+
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, sidebar entries, pages, slash commands, pickers, pending attachments, and message and attachment renderers.
+
+The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
+
+MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
+
+| Part                       | Responsibility                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------- |
+| `index.ts` and glue        | The extension: what MCP adds to each extension point (`tools.ts`, `composer.ts`, `pages.ts`, ...) |
+| `stores/` (`mcpStore`)     | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources` |
+| `services/` (`MCPService`) | MCP protocol: transports, connect, list/execute tools, prompts, resources                         |
+| `components/`              | Server cards and forms, resource browser, dialogs, the prompt picker and the chat renderers       |
+
+MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
 
 ### Cross-origin isolation
 

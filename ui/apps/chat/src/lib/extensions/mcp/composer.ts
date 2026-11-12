@@ -4,11 +4,12 @@
  */
 
 import type { ExtensionContext } from '../types';
-import ComposerMcpPrompts from './ComposerMcpPrompts.svelte';
-import ComposerMcpResources from './ComposerMcpResources.svelte';
+import ComposerMcpPrompts from './components/contributions/ComposerMcpPrompts.svelte';
+import ComposerMcpResources from './components/contributions/ComposerMcpResources.svelte';
+import { mcpStore } from './stores/index.svelte';
 import { Sparkles } from '@lucide/svelte';
 import { ToolSource } from '#lib/enums/index.ts';
-import { conversationsStore, mcpStore } from '#lib/stores/index.ts';
+import { conversationsStore } from '#lib/stores/index.ts';
 
 export const MCP_PROMPTS_PICKER_ID = 'mcp-prompts';
 
