@@ -7,6 +7,7 @@
 import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './points/composer';
 import type { NavigationItem } from './points/navigation';
 import type { ExtensionPage } from './points/pages';
+import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
 import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
@@ -51,6 +52,10 @@ export interface ExtensionPoints {
 	navigation: NavigationItem;
 	/** Pages of the extension, each at a path of its own. */
 	pages: ExtensionPage;
+	/** Draws the attachments it claims, in place of the default attachment chip. */
+	attachmentRenderers: AttachmentRenderer;
+	/** Draws the messages it claims, in place of the default message. */
+	messageRenderers: MessageRenderer;
 	/** Tools the model can call, listed and run by the extension. */
 	tools: ToolProvider;
 }
