@@ -7,6 +7,13 @@ export type {
 	ComposerPickerExports,
 	ComposerPickerProps
 } from './points/composer';
+export { findAttachmentRenderer, findMessageRenderer } from './points/renderers';
+export type {
+	AttachmentRenderer,
+	AttachmentRendererProps,
+	MessageRenderer,
+	MessageRendererProps
+} from './points/renderers';
 export type { SettingsAction, SettingsActionDialog } from './points/settings';
 export type {
 	FlowHook,

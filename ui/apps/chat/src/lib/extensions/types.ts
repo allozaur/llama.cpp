@@ -5,6 +5,7 @@
  */
 
 import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './points/composer';
+import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
 import type { SettingsAction } from './points/settings';
 import type { FlowHook, ToolProvider } from './points/tools';
 
@@ -46,6 +47,10 @@ export interface ExtensionPoints {
 	composerPickers: ComposerPicker;
 	/** Runs around every agentic flow. */
 	flow: FlowHook;
+	/** Draws the attachments it claims, in place of the default attachment chip. */
+	attachmentRenderers: AttachmentRenderer;
+	/** Draws the messages it claims, in place of the default message. */
+	messageRenderers: MessageRenderer;
 	/** Actions under the extension's settings, each opening what it manages from Settings. */
 	settingsActions: SettingsAction;
 	/** Tools the model can call, listed and run by the extension. */
