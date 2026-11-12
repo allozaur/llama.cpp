@@ -17,6 +17,8 @@ export const ROUTES = {
 	MCP_SERVERS: '#/mcp-servers',
 	/** Models manager. */
 	MODELS: '#/models',
+	/** Notebook page. */
+	NOTEBOOK: '#/notebook',
 	/** Projects list. */
 	PROJECTS: '#/projects',
 	/** Search — mobile-only full-page conversation search. */

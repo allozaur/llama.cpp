@@ -17,19 +17,30 @@
 		class?: string;
 		/** Draws the dial as the icon of a phone's corner key, matching the menu key's glyph. */
 		corner?: boolean;
+		notebookMode?: boolean;
 	}
 
-	let { class: className = 'h-5 w-5 max-md:h-6 max-md:w-6', corner = false }: Props = $props();
+	let {
+		class: className = 'h-5 w-5 max-md:h-6 max-md:w-6',
+		corner = false,
+		notebookMode = false
+	}: Props = $props();
 
 	const gauge = useContextGauge();
 
 	$effect(() => {
+		if (notebookMode) return;
+
 		const conv = conversationsStore.activeConversation;
 
-		untrack(() => chatStore.processing.setActiveConversation(conv?.id ?? null));
+		if (conv) {
+			untrack(() => chatStore.processing.setActiveConversation(conv.id));
+		}
 	});
 
 	$effect(() => {
+		if (notebookMode) return;
+
 		const conv = conversationsStore.activeConversation;
 		const messages = conversationsStore.activeMessages as DatabaseMessage[];
 
