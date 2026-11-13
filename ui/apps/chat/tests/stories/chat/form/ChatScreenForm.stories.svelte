@@ -1,5 +1,4 @@
 <script lang="ts" module>
-	import { activateBuiltInExtensions } from '../../helpers/extensions';
 	import {
 		cwdServerTools,
 		fileAttachments,
@@ -26,11 +25,7 @@
 	import { expect, screen } from 'storybook/test';
 
 	const { Story } = defineMeta({
-		// the MCP stories show what the MCP extension adds to the form
-		beforeEach: async () => {
-			resetPointerEvents();
-			await activateBuiltInExtensions();
-		},
+		beforeEach: resetPointerEvents,
 		component: ChatScreenForm,
 		parameters: {
 			layout: 'centered'
@@ -117,7 +112,6 @@
 <!-- the loading attachment is an MCP prompt, which the MCP extension draws -->
 <Story
 	args={{ class: FORM_CLASS, uploadedFiles: [fileAttachments[0], loadingAttachment] }}
-	beforeEach={activateBuiltInExtensions}
 	name="WithLoadingAttachment"
 />
 
