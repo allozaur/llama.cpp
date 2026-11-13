@@ -165,6 +165,10 @@ MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
 
 MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
 
+A setting can name the extension it belongs to (`extension` in `SETTINGS_REGISTRY`): its field shows only while that extension is on, and the stored value stays either way.
+
+llama-server embeds the app as a single bundle, so an extension's code ships whether it is on or off; nothing of it runs while it is off.
+
 ### Cross-origin isolation
 
 llama-server serves the UI with `Cross-Origin-Embedder-Policy: require-corp` and `Cross-Origin-Opener-Policy: same-origin`, so every cross-origin asset needs the other origin's consent. Hugging Face Hub avatars and metadata are requested in CORS mode, which the Hub allows. MCP server icons and search-result favicons go through llama-server's `/cors-proxy` when it runs with `--ui-mcp-proxy`, and fall back to a bundled icon otherwise.
