@@ -1,18 +1,12 @@
 <script lang="ts">
 	import {
-		ChatAttachmentsListItemMcpPrompt,
-		ChatAttachmentsListItemMcpResource,
 		ChatAttachmentsListItemThumbnailFile,
 		ChatAttachmentsListItemThumbnailImage
 	} from '$lib/components/app';
 	import { AttachmentType } from '$lib/enums';
-	import type {
-		ChatAttachmentDisplayItem,
-		DatabaseMessageExtraMcpPrompt,
-		DatabaseMessageExtraMcpResource,
-		MCPResourceAttachment
-	} from '$lib/types';
-	import { isMcpPrompt, isMcpResource, isPdfFile } from '$lib/utils';
+	import { extensions, findAttachmentRenderer } from '$lib/extensions';
+	import type { ChatAttachmentDisplayItem } from '$lib/types';
+	import { isPdfFile } from '$lib/utils';
 
 	interface Props {
 		class?: string;
@@ -22,7 +16,6 @@
 		item: ChatAttachmentDisplayItem;
 		limitToSingleRow?: boolean;
 		onFileRemove?: (fileId: string) => void;
-		onMcpResourcePreview?: (extra: DatabaseMessageExtraMcpResource) => void;
 		onPreview?: (item: ChatAttachmentDisplayItem) => void;
 		readonly?: boolean;
 	}
@@ -35,7 +28,6 @@
 		item,
 		limitToSingleRow = false,
 		onFileRemove,
-		onMcpResourcePreview,
 		onPreview,
 		readonly = false
 	}: Props = $props();
@@ -45,53 +37,18 @@
 	// shrink so wide images fit the bubble instead of overflowing it
 	const layoutClasses = $derived(limitToSingleRow ? 'flex-shrink-0' : 'min-w-0');
 
-	function toMcpResourceAttachment(
-		extra: DatabaseMessageExtraMcpResource,
-		id: string
-	): MCPResourceAttachment {
-		return {
-			id,
-			resource: {
-				name: extra.name,
-				serverName: extra.serverName,
-				title: extra.name,
-				uri: extra.uri
-			}
-		};
-	}
+	// an extension can claim an item and draw it in place of the default chip
+	const renderer = $derived(
+		findAttachmentRenderer(extensions.contributions('attachmentRenderers'), item)
+	);
 </script>
 
-{#if isMcpPrompt(item)}
-	{@const mcpPrompt =
-		item.attachment?.type === AttachmentType.MCP_PROMPT
-			? (item.attachment as DatabaseMessageExtraMcpPrompt)
-			: item.uploadedFile?.mcpPrompt
-				? {
-						arguments: item.uploadedFile.mcpPrompt.arguments,
-						content: item.textContent ?? '',
-						name: item.name,
-						promptName: item.uploadedFile.mcpPrompt.promptName,
-						serverName: item.uploadedFile.mcpPrompt.serverName,
-						type: AttachmentType.MCP_PROMPT as const
-					}
-				: null}
-	{#if mcpPrompt}
-		<ChatAttachmentsListItemMcpPrompt
-			class="max-w-[300px] min-w-[200px] flex-shrink-0 {className} {scrollClasses}"
-			isLoading={item.isLoading}
-			loadError={item.loadError}
-			onRemove={onFileRemove ? () => onFileRemove(item.id) : undefined}
-			prompt={mcpPrompt}
-			{readonly}
-		/>
-	{/if}
-{:else if isMcpResource(item)}
-	{@const mcpResource = item.attachment as DatabaseMessageExtraMcpResource}
-
-	<ChatAttachmentsListItemMcpResource
-		attachment={toMcpResourceAttachment(mcpResource, item.id)}
-		class="flex-shrink-0 {className} {scrollClasses}"
-		onclick={() => onMcpResourcePreview?.(mcpResource)}
+{#if renderer}
+	<renderer.component
+		class="{className} {scrollClasses}"
+		{item}
+		onRemove={onFileRemove ? () => onFileRemove(item.id) : undefined}
+		{readonly}
 	/>
 {:else if item.isImage && item.preview}
 	<ChatAttachmentsListItemThumbnailImage

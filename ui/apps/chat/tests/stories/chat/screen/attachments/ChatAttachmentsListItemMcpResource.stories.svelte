@@ -7,7 +7,7 @@
 		toMcpResourceAttachment
 	} from '../fixtures';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import ChatAttachmentsListItemMcpResource from '$lib/components/app/chat/ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItemMcpResource.svelte';
+	import ChatAttachmentsListItemMcpResource from '$lib/extensions/mcp/components/chat/ChatAttachmentsListItemMcpResource.svelte';
 
 	const { Story } = defineMeta({
 		component: ChatAttachmentsListItemMcpResource,

@@ -9,6 +9,7 @@ import type {
 	FileMentionEntryType,
 	MessageRole
 } from '$lib/enums';
+import type { ComposerCommand } from '$lib/extensions/points/composer';
 import type { Component } from 'svelte';
 
 /**
@@ -223,18 +224,12 @@ export interface FileMentionEntry {
 	type: FileMentionEntryType;
 }
 
-/**
- * A slash command surfaced by the `/` command picker. `disabled` marks a
- * command whose backing capability is unavailable (e.g. `/prompt` when no
- * MCP server exposes prompts): visible but greyed out and not selectable.
- */
+/** What gates the built-in slash commands. */
 export interface ChatCommandsOptions {
 	/** Gates `/compact`. */
 	canCompact: () => boolean;
 	/** Gates `/model`. */
 	showModelSelector: boolean;
-	/** Gates `/prompt`. */
-	hasPrompts: () => boolean;
 	/** Gates `/cwd`. */
 	hasCwdTools: () => boolean;
 }
@@ -242,14 +237,31 @@ export interface ChatCommandsOptions {
 /** Protocol-level verbs accepted by the realtime inference control endpoint. Mirrors `CONTROL_ACTION`. */
 export type ControlAction = 'reasoning_end';
 
-export interface ChatFormCommand {
+interface ChatFormCommandBase {
 	name: string;
 	description: string;
 	/** Extra search terms that should match this command in the picker. */
 	keywords?: string[];
-	action: ChatFormCommandAction;
 	disabled: boolean;
 }
+
+/** A built-in slash command: the chat form knows what its `action` does. */
+interface ChatFormBuiltInCommand extends ChatFormCommandBase {
+	action: ChatFormCommandAction;
+}
+
+/** A slash command an extension contributes: it brings its icon and what it does. */
+interface ChatFormContributedCommand extends ChatFormCommandBase {
+	icon: Component;
+	run: ComposerCommand['run'];
+}
+
+/**
+ * A slash command surfaced by the `/` command picker. `disabled` marks a
+ * command whose backing capability is unavailable (e.g. `/cwd` when no
+ * tool uses a working directory): visible but greyed out and not selectable.
+ */
+export type ChatFormCommand = ChatFormBuiltInCommand | ChatFormContributedCommand;
 
 /**
  * Data shown in the message delete confirmation dialog.

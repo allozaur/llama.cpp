@@ -7,22 +7,24 @@
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,
 		ICON_CLASS_XS,
-		SIDEBAR_ACTIONS_ITEMS,
-		SIDEBAR_FOOTER_ITEMS
+		SIDEBAR_ACTIONS_ITEMS
 	} from '$lib/constants';
 	import { KeyboardKey, SidebarAction } from '$lib/enums';
+	import { extensions, type NavigationItem } from '$lib/extensions';
 	import { RouterService } from '$lib/services/router.service';
 	import { conversationsStore, deviceStore } from '$lib/stores';
-	import { formatRelativeTime, isIMEComposing } from '$lib/utils';
+	import { formatRelativeTime, isIMEComposing, sidebarFooterItems } from '$lib/utils';
 	import type { Component } from 'svelte';
 
 	interface Props {
 		open: boolean;
 		/** Runs a sidebar action picked from the actions section. */
 		onAction?: (action: SidebarAction) => void;
+		/** Opens an extension's item picked from the actions section. */
+		onContributed?: (item: NavigationItem) => void;
 	}
 
-	let { onAction, open = $bindable() }: Props = $props();
+	let { onAction, onContributed, open = $bindable() }: Props = $props();
 
 	interface SearchEntry {
 		icon: Component;
@@ -72,20 +74,24 @@
 
 	const actionEntries = $derived.by((): SearchEntry[] =>
 		// every sidebar action but Search itself, which is what opened this dialog, and the models
-		// manager on a phone, which picks its models in the selector
-		[...SIDEBAR_ACTIONS_ITEMS, ...SIDEBAR_FOOTER_ITEMS]
+		// manager on a phone, which picks its models in the selector; extensions' items among them
+		[...SIDEBAR_ACTIONS_ITEMS, ...sidebarFooterItems(extensions.contributions('navigation'))]
 			.filter(
 				(item) =>
-					item.action &&
+					(item.action || item.contributed) &&
 					item.action !== SidebarAction.SEARCH &&
 					(item.action !== SidebarAction.MANAGE_MODELS || !deviceStore.isMobile)
 			)
-			.map((item) => ({
-				icon: item.icon,
-				id: `action-${item.action}`,
-				keys: item.keys,
-				label: item.tooltip,
-				run: () => close(() => onAction?.(item.action!))
+			.map(({ action, contributed, icon, keys, tooltip }) => ({
+				icon,
+				id: `action-${action ?? contributed?.id}`,
+				keys,
+				label: tooltip,
+				run: () =>
+					close(() => {
+						if (action) onAction?.(action);
+						else if (contributed) onContributed?.(contributed);
+					})
 			}))
 			.filter((entry) => matches(entry.label))
 	);

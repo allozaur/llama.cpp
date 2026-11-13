@@ -5,9 +5,8 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MCP_SERVERS_ROUTE_ID, MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
+import { MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
 import { Search, Settings, SquarePen } from '@lucide/svelte';
-import McpLogo from '$lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
 
@@ -166,7 +165,10 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' }
 ];
 
-/** The sidebar's footer: managing the app around the chats. */
+/**
+ * The sidebar's footer: managing the app around the chats. Extensions add their
+ * items right after Models, which opens it (see `sidebarFooterItems`).
+ */
 export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.MANAGE_MODELS,
@@ -174,12 +176,6 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
-	},
-	{
-		action: SidebarAction.MCP,
-		activeRouteId: MCP_SERVERS_ROUTE_ID,
-		icon: McpLogo,
-		tooltip: 'MCP'
 	},
 	{
 		action: SidebarAction.SETTINGS,

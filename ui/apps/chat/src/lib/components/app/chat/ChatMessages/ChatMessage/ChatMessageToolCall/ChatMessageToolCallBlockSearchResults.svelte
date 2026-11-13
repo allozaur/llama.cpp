@@ -4,7 +4,7 @@
 	import { CollapsibleContentBlock } from '$lib/components/app';
 	import { ICON_CLASS_DEFAULT, ICON_CLASS_SPIN } from '$lib/constants';
 	import { AgenticSectionType } from '$lib/enums';
-	import { mcpStore } from '$lib/stores';
+	import { serverStore, toolsStore } from '$lib/stores';
 	import type { AgenticSection, SearchResult } from '$lib/types';
 	import {
 		buildProxiedIconUrl,
@@ -33,7 +33,9 @@
 	// Same icon-resolution chain as ChatMessageToolCallBlockDefault so
 	// MCP-server branding is consistent across both views. Spinner wins
 	// while the call is in flight so the user sees execution status.
-	const iconUrl = $derived(showSpinner ? null : mcpStore.getServerFaviconForTool(section.toolName));
+	const iconUrl = $derived(showSpinner ? null : toolsStore.getToolIcon(section.toolName));
+	// favicons of the results go through the server's CORS proxy when it has one
+	const isProxyAvailable = $derived(serverStore.props?.cors_proxy_enabled ?? false);
 	const icon = $derived(showSpinner ? Loader2 : undefined);
 	const iconClass = $derived(showSpinner ? ICON_CLASS_SPIN : ICON_CLASS_DEFAULT);
 
@@ -83,7 +85,7 @@
 </script>
 
 {#snippet pill(result: SearchResult)}
-	{@const faviconUrl = buildProxiedIconUrl(faviconForUrl(result.url), mcpStore.isProxyAvailable)}
+	{@const faviconUrl = buildProxiedIconUrl(faviconForUrl(result.url), isProxyAvailable)}
 	{@const safeUrl = sanitizeExternalUrl(result.url)}
 	{@const showHoverCard = safeUrl !== null && hasDetails(result)}
 	{#if safeUrl}

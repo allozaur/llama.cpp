@@ -4,7 +4,7 @@
 	//   - the collapsible wrapper (defaults to CollapsibleContentBlock;
 	//     `exec_shell_command` swaps in CollapsibleTerminalBlock via the
 	//     `wrapper` prop);
-	//   - the icon, spinner state, and MCP favicon fallback chain;
+	//   - the icon, spinner state, and tool provider icon fallback chain;
 	//   - the status subtitle pill.
 	// Components supply only their `meta`, a title snippet, and a body
 	// snippet - everything around them is this single source of truth.
@@ -13,7 +13,7 @@
 	import { CollapsibleContentBlock } from '$lib/components/app';
 	import { ICON_CLASS_DEFAULT, ICON_CLASS_SPIN } from '$lib/constants';
 	import { AgenticSectionType } from '$lib/enums';
-	import { mcpStore } from '$lib/stores';
+	import { toolsStore } from '$lib/stores';
 	import type { AgenticSection, ToolUiEntry } from '$lib/types';
 	import { getToolUi } from '$lib/utils';
 	import type { Component, Snippet } from 'svelte';
@@ -104,13 +104,11 @@
 	const toolIconClass = $derived(
 		spinIconWhenActive && showSpinner ? ICON_CLASS_SPIN : ICON_CLASS_DEFAULT
 	);
-	// Drop the MCP favicon while the spinner is on so the title row
+	// Drop the provider's icon while the spinner is on so the title row
 	// signals "in flight" without being overwritten by server branding.
-	const mcpServerFavicon = $derived(
-		showSpinner ? null : mcpStore.getServerFaviconForTool(section.toolName)
-	);
+	const providerIcon = $derived(showSpinner ? null : toolsStore.getToolIcon(section.toolName));
 	const iconUrl = $derived(
-		showSpinner || (toolUi?.icon ?? null) || !mcpServerFavicon ? null : mcpServerFavicon
+		showSpinner || (toolUi?.icon ?? null) || !providerIcon ? null : providerIcon
 	);
 
 	// No subtitle while the call is in flight - the spinner already

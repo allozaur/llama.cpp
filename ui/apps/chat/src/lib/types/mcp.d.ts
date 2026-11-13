@@ -5,12 +5,13 @@ import type {
 	ClientCapabilities as SDKClientCapabilities,
 	GetPromptResult,
 	Implementation as SDKImplementation,
+	McpSubscription,
 	Prompt,
 	PromptMessage,
 	ServerCapabilities as SDKServerCapabilities,
 	Tool,
 	Transport
-} from '@modelcontextprotocol/sdk';
+} from '@modelcontextprotocol/client';
 import type { ColorMode } from '$lib/enums';
 import type { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel } from '$lib/enums/mcp.enums';
 import type { ToolSource } from '$lib/enums/tools.enums';
@@ -137,6 +138,8 @@ export interface MCPConnection {
 	connectionTimeMs: number;
 	/** Configured timeout for individual requests (tool calls, etc.) in milliseconds */
 	requestTimeoutMs: number;
+	/** Open resource update streams by URI, stateless protocol only */
+	resourceSubscriptions?: Map<string, McpSubscription>;
 }
 
 /**
@@ -192,7 +195,6 @@ export type MCPServerConfig = {
 
 export type MCPClientConfig = {
 	servers: Record<string, MCPServerConfig>;
-	protocolVersion?: string;
 	capabilities?: ClientCapabilities;
 	clientInfo?: Implementation;
 	requestTimeoutMs?: number;

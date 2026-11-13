@@ -52,25 +52,11 @@
 export { default as ChatAttachmentsList } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsList.svelte';
 
 /**
- * Renders a single attachment item based on its type (image, file, MCP prompt, or MCP resource).
- * Delegates to specialized sub-components: ChatAttachmentsListItemThumbnailImage, ChatAttachmentsListItemThumbnailFile,
- * ChatAttachmentsListItemMcpPrompt, or ChatAttachmentsListItemMcpResource.
+ * Renders a single attachment item based on its type (image or file).
+ * Delegates to specialized sub-components: ChatAttachmentsListItemThumbnailImage or ChatAttachmentsListItemThumbnailFile.
+ * An item an extension claims (an MCP prompt or resource) is drawn by that extension's attachment renderer.
  */
 export { default as ChatAttachmentsListItem } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItem.svelte';
-
-/**
- * Displays MCP Prompt attachment with expandable content preview.
- * Shows server name, prompt name, and allows expanding to view full prompt arguments
- * and content. Used when user selects a prompt from ChatFormPickerMcpPrompts.
- */
-export { default as ChatAttachmentsListItemMcpPrompt } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItemMcpPrompt.svelte';
-
-/**
- * Displays a single MCP Resource attachment with icon, name, and server info.
- * Shows loading/error states and supports remove action.
- * Used within ChatAttachmentMcpResources for individual resource display.
- */
-export { default as ChatAttachmentsListItemMcpResource } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItemMcpResource.svelte';
 
 /**
  * Thumbnail for non-image file attachments. Displays file type icon based on extension,
@@ -102,10 +88,9 @@ export { default as ChatAttachmentsPreviewCurrentItem } from './ChatAttachments/
  * FORM
  *
  * Components for the chat input area. The form handles user input, file attachments,
- * audio recording, and MCP prompts & resources selection. It integrates with multiple stores:
+ * audio recording, and what extensions add (MCP prompts & resources selection). It integrates with multiple stores:
  * - `chatStore` for message submission and generation control
  * - `modelsStore` for model selection and validation
- * - `mcpStore` for MCP prompt browsing and loading
  *
  * The form exposes a public API for programmatic control from parent components
  * (focus, height reset, model selector, validation).
@@ -116,12 +101,13 @@ export { default as ChatAttachmentsPreviewCurrentItem } from './ChatAttachments/
  * **ChatForm** - Main chat input component with rich features
  *
  * The primary input interface for composing and sending chat messages.
- * Orchestrates text input, file attachments, audio recording, and MCP prompts.
+ * Orchestrates text input, file attachments, audio recording, and what extensions
+ * add to it: slash commands, pickers and pending attachments (see `$lib/extensions/points/composer`).
  * Used by ChatScreenForm and ChatMessageEditForm for both new conversations and message editing.
  *
  * **Architecture:**
  * - Composes ChatFormInput (a live-preview markdown editor), ChatFormActions,
- *   and ChatFormPickerMcpPrompts
+ *   and ChatFormPickers
  * - Manages file upload state via `uploadedFiles` bindable prop
  * - Integrates with ModelsSelectorDropdown for model selection in router mode
  * - Communicates with parent via callbacks (onSubmit, onFilesAdd, onStop, etc.)
@@ -130,14 +116,14 @@ export { default as ChatAttachmentsPreviewCurrentItem } from './ChatAttachments/
  * - IME-safe Enter key handling (waits for composition end)
  * - Shift+Enter for newline, Enter for submit
  * - Paste handler for files and long text (> {pasteLongTextToFileLen} chars → file conversion)
- * - Keyboard shortcut `/` triggers MCP prompt picker
+ * - Typing `/` opens the slash-command picker
  *
  * **Features:**
  * - Auto-growing live-preview markdown editor with placeholder
  * - File upload via button dropdown (images/text/PDF), drag-drop, or paste
  * - Audio recording with WAV conversion (when model supports audio)
- * - MCP prompt picker with search and argument forms
- * - MCP reource picker with component to list attached resources at the bottom of Chat Form
+ * - Slash commands, pickers and pending attachments contributed by extensions: the MCP
+ *   prompt picker and the list of attached MCP resources come from the MCP extension
  * - Model selector integration (router mode)
  * - Loading state with stop button, disabled state for errors
  *
@@ -230,12 +216,6 @@ export { default as ChatFormContextGauge } from './ChatForm/ChatFormContextGauge
 export { default as ChatFormInputFileInputInvisible } from './ChatForm/ChatFormInput/ChatFormInputFileInputInvisible.svelte';
 
 /**
- * Displays MCP Resource attachments as a horizontal carousel.
- * Shows resource name, URI, and allows clicking to view resource content.
- */
-export { default as ChatFormMcpResourcesList } from './ChatForm/ChatFormMcpResourcesList.svelte';
-
-/**
  * The message editor: a live-preview MarkdownEditor. Plain text reads like a
  * textarea; markdown blocks render as in chat messages until the cursor enters
  * them, and `[name](file://...)` mention links show as badges while editing.
@@ -254,65 +234,6 @@ export { default as ChatFormInput } from './ChatForm/ChatFormInput/ChatFormInput
 export { default as ChatFormCurrentWorkingDirectory } from './ChatForm/ChatFormCurrentWorkingDirectory/ChatFormCurrentWorkingDirectory.svelte';
 
 /**
- * **ChatFormPickerMcpPrompts** - MCP prompt selection interface
- *
- * Floating picker for browsing and selecting MCP Server Prompts.
- * Triggered by typing `/` in the chat input or choosing `MCP Prompt` option in ChatFormActionAddDropdown.
- * Loads prompts from connected MCP servers and allows users to select and configure them.
- *
- * **Architecture:**
- * - Fetches available prompts from mcpStore
- * - Manages selection state and keyboard navigation internally
- * - Delegates argument input to ChatFormPromptPickerArgumentForm
- * - Communicates prompt loading lifecycle via callbacks
- *
- * **Prompt Loading Flow:**
- * 1. User selects prompt → `onPromptLoadStart` called with placeholder ID
- * 2. Prompt content fetched from MCP server asynchronously
- * 3. On success → `onPromptLoadComplete` with full prompt data
- * 4. On failure → `onPromptLoadError` with error details
- *
- * **Features:**
- * - Search/filter prompts by name across all connected servers
- * - Keyboard navigation (↑/↓ to navigate, Enter to select, Esc to close)
- * - Argument input forms for prompts with required parameters
- * - Autocomplete suggestions for argument values
- * - Loading states with skeleton placeholders
- * - Server information header per prompt for visual identification
- *
- * **Exported API:**
- * - `handleKeydown(event): boolean` - Process keyboard events, returns true if handled
- *
- * @example
- * ```svelte
- * <ChatFormPickerMcpPrompts
- *   bind:this={pickerRef}
- *   isOpen={showPicker}
- *   searchQuery={promptQuery}
- *   onClose={() => showPicker = false}
- *   onPromptLoadStart={(id, info) => addPlaceholder(id, info)}
- *   onPromptLoadComplete={(id, result) => replacePlaceholder(id, result)}
- *   onPromptLoadError={(id, error) => handleError(id, error)}
- * />
- * ```
- */
-export { default as ChatFormPickerMcpPrompts } from './ChatForm/ChatFormPickers/ChatFormPickerMcpPrompts/ChatFormPickerMcpPrompts.svelte';
-
-/**
- * Form for entering MCP prompt arguments. Displays input fields for each
- * required argument defined by the prompt. Validates input and submits
- * when all required fields are filled. Shows argument descriptions as hints.
- */
-export { default as ChatFormPromptPickerArgumentForm } from './ChatForm/ChatFormPickers/ChatFormPickerMcpPrompts/ChatFormPromptPickerArgumentForm.svelte';
-
-/**
- * Single argument input field with autocomplete suggestions. Fetches suggestions
- * from MCP server based on argument type. Supports keyboard navigation through
- * suggestions list. Used within ChatFormPromptPickerArgumentForm.
- */
-export { default as ChatFormPromptPickerArgumentInput } from './ChatForm/ChatFormPickers/ChatFormPickerMcpPrompts/ChatFormPromptPickerArgumentInput.svelte';
-
-/**
  * Shared popover wrapper for inline picker popovers (prompts, resources).
  * Provides consistent positioning, styling, and open/close behavior.
  */
@@ -322,23 +243,16 @@ export { default as ChatFormPickerPopover } from './ChatForm/ChatFormPickers/Cha
  * Generic scrollable list for picker popovers. Provides search input,
  * scroll-into-view for keyboard navigation, loading skeletons, empty state,
  * and optional footer. Uses Svelte 5 snippets for item/skeleton/footer rendering.
- * Shared by ChatFormPickerMcpPrompts and ChatFormPickerMention.
+ * Shared by ChatFormPickerMention and the MCP extension's prompt picker.
  */
 export { default as ChatFormPickerList } from './ChatForm/ChatFormPickers/ChatFormPicker/ChatFormPickerList.svelte';
 
 /**
  * Generic button wrapper for picker list items. Provides consistent styling,
  * hover/selected states, and data-picker-index attribute for scroll-into-view.
- * Shared by ChatFormPickerMcpPrompts and ChatFormPickerMention.
+ * Shared by ChatFormPickerMention and the MCP extension's prompt picker.
  */
 export { default as ChatFormPickerListItem } from './ChatForm/ChatFormPickers/ChatFormPicker/ChatFormPickerListItem.svelte';
-
-/**
- * Generic header for picker items displaying server favicon, label, item title,
- * and optional description. Accepts `titleExtra` and `subtitle` snippets for
- * custom content like badges or URIs. Shared by both pickers.
- */
-export { default as ChatFormPickerItemHeader } from './ChatForm/ChatFormPickers/ChatFormPicker/ChatFormPickerItemHeader.svelte';
 
 /**
  * Generic skeleton loading placeholder for picker list items. Configurable
@@ -362,8 +276,8 @@ export { default as ChatFormPickerMention } from './ChatForm/ChatFormPickers/Cha
 export { default as ChatFormPickerCommand } from './ChatForm/ChatFormPickers/ChatFormPickerCommand.svelte';
 
 /**
- * Hosts the chat-form pickers (slash-command, MCP prompt, file mention)
- * and delegates keyboard events to the active one.
+ * Hosts the chat-form pickers (slash-command, file mention and the ones
+ * extensions contribute) and delegates keyboard events to the active one.
  */
 export { default as ChatFormPickers } from './ChatForm/ChatFormPickers/ChatFormPickers.svelte';
 
@@ -529,13 +443,6 @@ export { default as ChatMessageStatistics } from './ChatMessages/ChatMessageStat
 export { default as ChatMessageStatisticsBadge } from './ChatMessages/ChatMessageStatistics/ChatMessageStatisticsBadge.svelte';
 
 /**
- * MCP prompt display in user messages. Shows when user selected an MCP prompt
- * via ChatFormPickerMcpPrompts. Displays server name, prompt name, and expandable
- * content preview. Stored in message.extra as DatabaseMessageExtraMcpPrompt.
- */
-export { default as ChatMessageMcpPrompt } from './ChatMessages/ChatMessage/ChatMessageMcpPrompt/ChatMessageMcpPrompt.svelte';
-
-/**
  * Synthetic working-directory-change message. Rendered in place of a user
  * bubble when the message content parses as a cwd message (see
  * parseCwdMessage); shows the new cwd with the same folder-row treatment
@@ -557,13 +464,6 @@ export { default as ChatMessageSynthetic } from './ChatMessages/ChatMessage/Chat
  * later requests slice the branch at this node.
  */
 export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/ChatMessageCompaction.svelte';
-
-/**
- * Formatted content display for MCP prompt messages. Renders the full prompt
- * content with arguments in a readable format. Used within ChatMessageMcpPrompt
- * for the expanded view.
- */
-export { default as ChatMessageMcpPromptContent } from './ChatMessages/ChatMessage/ChatMessageMcpPrompt/ChatMessageMcpPromptContent.svelte';
 
 /**
  * Assistant message display component. Renders assistant responses with left-aligned styling.

@@ -4,7 +4,7 @@
 // the components fall back when it fails. Inline data: icons load under any
 // policy and are never proxied.
 
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import { buildProxiedIconUrl } from '$lib/utils/cors-proxy';

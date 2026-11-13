@@ -1,13 +1,15 @@
 import { CLI_FLAGS } from '$lib/constants';
-import { ToolSource } from '$lib/enums';
-import { conversationsStore, mcpStore, toolsStore } from '$lib/stores';
+import type { ToolProviderEmptyHint } from '$lib/extensions';
+import { conversationsStore, toolsStore } from '$lib/stores';
 import type { ToolEntry, ToolGroup } from '$lib/types';
 import { SvelteSet } from 'svelte/reactivity';
 
 export interface UseToolsPanelReturn {
 	readonly expandedGroups: SvelteSet<string>;
 	readonly categoryGroups: ToolGroup[];
-	readonly mcpGroups: ToolGroup[];
+	readonly providerGroups: ToolGroup[];
+	/** What each tool provider says while there is no tool to list. */
+	readonly providerHints: ToolProviderEmptyHint[];
 	readonly totalToolCount: number;
 	readonly noToolsInfoMessage: string | null;
 	isGroupChecked(group: ToolGroup): boolean;
@@ -38,24 +40,30 @@ export interface UseToolsPanelReturn {
 export function useToolsPanel(): UseToolsPanelReturn {
 	const expandedGroups = new SvelteSet<string>();
 	const groups = $derived(toolsStore.toolGroups);
-	// non-MCP groups are 1:1 with tool categories; MCP tools group per server
-	const categoryGroups = $derived(groups.filter((g) => g.source !== ToolSource.MCP));
-	const mcpGroups = $derived(groups.filter((g) => g.source === ToolSource.MCP));
+	// groups without an id are 1:1 with tool categories; a provider's tools group by id
+	const categoryGroups = $derived(groups.filter((g) => !g.serverId));
+	const providerGroups = $derived(groups.filter((g) => !!g.serverId));
+	const providerHints = $derived(
+		toolsStore.providers.flatMap((provider) => provider.emptyHint?.() ?? [])
+	);
 	const totalToolCount = $derived(groups.reduce((n, g) => n + g.tools.length, 0));
 	const noToolsInfoMessage = $derived.by(() => {
 		if (toolsStore.loading) return null;
 
 		if (toolsStore.toolGroups.length > 0) return null;
 
+		const message = [
+			`To enable Server Tools you need to run llama-server with ${CLI_FLAGS.TOOLS} all or ${CLI_FLAGS.TOOLS} <name> flag.`,
+			...providerHints.map((hint) => hint.sentence)
+		].join(' ');
+
 		// Tools endpoint unreachable (403) — server started without tools
-		if (toolsStore.isToolsEndpointUnreachable) {
-			return `To enable Server Tools you need to run llama-server with ${CLI_FLAGS.TOOLS} all or ${CLI_FLAGS.TOOLS} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).`;
-		}
+		if (toolsStore.isToolsEndpointUnreachable) return message;
 
 		// Other errors — return null so UI shows "Failed to load tools"
 		if (toolsStore.error) return null;
 
-		return `To enable Server Tools you need to run llama-server with ${CLI_FLAGS.TOOLS} all or ${CLI_FLAGS.TOOLS} <name> flag. To see MCP Tools you need to add / enable MCP Server(s).`;
+		return message;
 	});
 
 	function isGroupChecked(group: ToolGroup): boolean {
@@ -68,7 +76,7 @@ export function useToolsPanel(): UseToolsPanelReturn {
 
 	/**
 	 * Group checkbox state: checked is the parent flag (category on, or the
-	 * server key on for MCP groups); indeterminate marks the mixed case where
+	 * group key on for a group with an id); indeterminate marks the mixed case where
 	 * the parent is on but nothing or only part of the group is enabled.
 	 * isToolActive folds the parent gates into the count, so a disabled parent
 	 * always yields plain unchecked.
@@ -83,17 +91,12 @@ export function useToolsPanel(): UseToolsPanelReturn {
 	}
 
 	function getFavicon(group: ToolGroup): string | null {
-		if (group.source !== ToolSource.MCP || !group.serverId) return null;
-
-		return mcpStore.getServerFavicon(group.serverId);
+		return toolsStore.getGroupIcon(group);
 	}
 
 	function isGroupDisabled(group: ToolGroup): boolean {
-		// MCP server groups gray out while the whole MCP category is off
-		return (
-			group.source === ToolSource.MCP &&
-			!conversationsStore.preferences.isCategoryEnabled(ToolSource.MCP)
-		);
+		// a group with an id grays out while its whole category is off
+		return !!group.serverId && !conversationsStore.preferences.isCategoryEnabled(group.source);
 	}
 
 	function isToolEnabled(entry: ToolEntry): boolean {
@@ -130,7 +133,7 @@ export function useToolsPanel(): UseToolsPanelReturn {
 			toolsStore.fetchServerTools();
 		}
 
-		mcpStore.runHealthChecksForServers(mcpStore.getServers().filter((s) => s.enabled));
+		for (const provider of toolsStore.providers) void provider.refresh?.();
 	}
 
 	return {
@@ -146,11 +149,14 @@ export function useToolsPanel(): UseToolsPanelReturn {
 		isGroupDisabled,
 		isToolEnabled,
 		isToolParentDisabled,
-		get mcpGroups() {
-			return mcpGroups;
-		},
 		get noToolsInfoMessage() {
 			return noToolsInfoMessage;
+		},
+		get providerGroups() {
+			return providerGroups;
+		},
+		get providerHints() {
+			return providerHints;
 		},
 		toggleGroupByKey,
 		toggleGroupExpanded,

@@ -1,5 +1,5 @@
 import { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel, MCPTransportType } from '$lib/enums';
-import { mcpStore } from '$lib/stores';
+import { mcpStore } from '$lib/extensions/mcp/stores/index.svelte';
 import type {
 	HealthCheckState,
 	MCPCapabilitiesInfo,
@@ -23,8 +23,12 @@ const log = (
 export const connectionLogs: MCPConnectionLog[] = [
 	log(0, MCPConnectionPhase.TRANSPORT_CREATING, 'Creating streamable HTTP transport'),
 	log(42, MCPConnectionPhase.TRANSPORT_READY, 'Transport ready'),
-	log(118, MCPConnectionPhase.INITIALIZING, 'Sending initialize request'),
-	log(204, MCPConnectionPhase.CAPABILITIES_EXCHANGED, 'Negotiated protocol 2025-06-18'),
+	log(118, MCPConnectionPhase.INITIALIZING, 'Negotiating protocol version...'),
+	log(
+		204,
+		MCPConnectionPhase.CAPABILITIES_EXCHANGED,
+		'Capabilities exchanged successfully (protocol 2026-07-28, stateless)'
+	),
 	log(266, MCPConnectionPhase.LISTING_TOOLS, 'Listing tools'),
 	log(301, MCPConnectionPhase.CONNECTED, 'Connected with 3 tools')
 ];
@@ -64,7 +68,7 @@ const states: Record<string, HealthCheckState> = {
 		capabilities,
 		connectionTimeMs: 301,
 		logs: connectionLogs,
-		protocolVersion: '2025-06-18',
+		protocolVersion: '2026-07-28',
 		serverInfo: { name: 'docs-search', version: '1.4.0' },
 		status: HealthCheckStatus.SUCCESS,
 		tools: [

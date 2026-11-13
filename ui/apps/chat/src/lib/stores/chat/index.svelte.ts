@@ -23,6 +23,7 @@ import {
 	ReasoningEffort,
 	StreamConnectionState
 } from '$lib/enums';
+import { extensions } from '$lib/extensions/registry.svelte';
 import { ChatService } from '$lib/services/chat.service';
 import { DatabaseService } from '$lib/services/database.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
@@ -32,7 +33,6 @@ import { type ChatFlowsHost, ChatMessageFlows } from '$lib/stores/chat/flows.sve
 import { chatProcessingStore } from '$lib/stores/chat/processing.svelte';
 import { type ChatStreamHost, ChatStreamManager } from '$lib/stores/chat/streams.svelte';
 import { conversationsStore } from '$lib/stores/conversations/index.svelte';
-import { mcpStore } from '$lib/stores/mcp/index.svelte';
 import { modelsStore } from '$lib/stores/models/index.svelte';
 import { serverStore } from '$lib/stores/server.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
@@ -756,9 +756,11 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 		// Cancel any in-flight pre-encode request
 		this.cancelPreEncode();
 
-		// Consume MCP resource attachments - converts them to extras and clears the live store
-		const resourceExtras = mcpStore.consumeResourceAttachmentsAsExtras();
-		const allExtras = resourceExtras.length > 0 ? [...(extras || []), ...resourceExtras] : extras;
+		// Attachments an extension holds outside the form go with this message, and are cleared at their source
+		const pendingExtras = extensions
+			.contributions('composerAttachments')
+			.flatMap((source) => source.consume());
+		const allExtras = pendingExtras.length > 0 ? [...(extras || []), ...pendingExtras] : extras;
 
 		let isNewConversation = false;
 

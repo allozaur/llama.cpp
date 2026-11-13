@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/sveltekit';
 import '../src/app.css';
 import './docs.css';
+import { activateBuiltInExtensions } from '../tests/stories/helpers/extensions';
 import { applyColorScheme } from './color-scheme';
 import ModeWatcherDecorator from './decorators/ModeWatcherDecorator.svelte';
 import TooltipProviderDecorator from './decorators/TooltipProviderDecorator.svelte';
@@ -9,6 +10,8 @@ applyColorScheme();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyColorScheme);
 
 const preview: Preview = {
+	// the app switches its extensions on at startup; the stories get them the same way, once
+	beforeAll: activateBuiltInExtensions,
 	parameters: {
 		controls: {
 			matchers: {
@@ -32,7 +35,7 @@ const preview: Preview = {
 					'Philosophy',
 					['Ideology', 'Product', 'Design'],
 					'Architecture',
-					['Stack', 'Chat', 'Channels'],
+					['Stack', 'Chat', 'Extensions', 'Channels'],
 					'Brand',
 					[
 						'Logo',

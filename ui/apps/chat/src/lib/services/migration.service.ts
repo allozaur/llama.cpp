@@ -810,7 +810,7 @@ const mcpServerOverridesToToolPolicyMigration: Migration = {
 			if (conv.disabledTools !== undefined) continue;
 
 			// A legacy per-conversation server disable becomes a server-scoped tool
-			// key (same format as toolsStore.getMcpServerToolsKey). Per-conversation
+			// key (same format as toolsStore.getGroupKey). Per-conversation
 			// enables are dropped: the global server flag governs now.
 			const serverGroupKeys = (conv.mcpServerOverrides ?? [])
 				.filter((o: McpServerOverride) => !o.enabled)

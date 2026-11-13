@@ -1,6 +1,6 @@
 <!--
 	The frame of the Architecture pages: the Philosophy pages' Editorial, with the pages' own variables pointed at
-	Llama UI (architecture.css), and their links between pages (/stack/, /chat/) opening the matching story.
+	Llama UI (architecture.css), and their links between pages (/stack/, /chat/, /extensions/) opening the matching story.
 -->
 <script lang="ts">
 	import './architecture.css';
@@ -15,6 +15,7 @@
 	const STORIES: Record<string, string> = {
 		'/channels/': 'architecture-channels--channels',
 		'/chat/': 'architecture-chat--chat',
+		'/extensions/': 'architecture-extensions--extensions',
 		'/stack/': 'architecture-stack--stack'
 	};
 

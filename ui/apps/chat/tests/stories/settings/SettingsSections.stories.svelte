@@ -21,6 +21,8 @@
 
 <Story args={{ initialSection: SETTINGS_SECTIONS.AGENTIC.slug, open: true }} name="Agentic" />
 
+<Story args={{ initialSection: SETTINGS_SECTIONS.EXTENSIONS.slug, open: true }} name="Extensions" />
+
 <Story
 	args={{ initialSection: SETTINGS_SECTIONS.IMPORT_EXPORT.slug, open: true }}
 	name="Import/Export"

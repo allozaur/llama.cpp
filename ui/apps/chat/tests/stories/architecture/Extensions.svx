@@ -1,0 +1,122 @@
+<!--
+	Architecture › Extensions: Llama Chat's core and the features that plug into it, the rule between them, the extension
+	points, MCP as the first extension and what Models, Projects and the Library still need. Set in the Philosophy pages'
+	Editorial, through Frame.svelte.
+-->
+
+<script>
+	import Cards from './lib/components/ui/Cards.svelte';
+	import Card from './lib/components/ui/Card.svelte';
+	import Callout from './lib/components/ui/Callout.svelte';
+	import Layers from './lib/components/chat/Layers.svelte';
+	import Layer from './lib/components/chat/Layer.svelte';
+</script>
+
+<p class="kicker">Architecture · ui/apps/chat/src/lib/extensions · <a href="/chat/">inside Llama Chat</a></p>
+
+# Extensions
+
+<p class="lead">Llama Chat is a small core and the features that plug into it. A feature that plugs in is an extension: it adds its parts through extension points, it can be switched off in Settings, and the core never imports its code. MCP is the first one.</p>
+
+## The rule
+
+<Cards cols={2}>
+<Card title="The core never imports an extension">
+
+Conversations, the thread and composer, attachments, settings, the server connection, the agentic flow and the permission gate make up the core. It reads what extensions contribute from the registry and knows nothing else about them. ESLint enforces it: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
+
+</Card>
+<Card title="An extension may import the core">
+
+An extension is trusted code with the same access as the core: its stores, services and components, and Llama UI. All of its own code sits in one folder, `src/lib/extensions/<id>/`.
+
+</Card>
+</Cards>
+
+## What an extension is
+
+A manifest the app knows before any of the extension's code runs, and one function that adds its contributions.
+
+```ts
+// builtin.ts: the extensions this app is composed with
+{ id: 'mcp', name: 'MCP', description: '…', load: () => import('./mcp') }
+
+// mcp/index.ts
+const mcp: Extension = {
+	activate(ctx) {
+		ctx.contribute('tools', provider);        // an extension point and what goes into it
+		ctx.onDeactivate(() => mcpStore.shutdown()); // whatever contribute does not cover
+	}
+};
+```
+
+At startup the registry activates the extensions that are switched on. Switching one off removes its contributions at once and runs its cleanups; the choice is kept in localStorage. Nothing of an extension runs while it is off. llama-server embeds the app as a single bundle, so there its code ships either way; a build that splits chunks fetches it only on activation.
+
+## Extension points
+
+Each is a typed slot in `points/`. The core decides where a contribution shows and when it runs; the extension decides what it is.
+
+<Layers>
+<Layer name="tools" tag="MCP" kind="reuse">Tools the model can call: the extension lists them in groups, runs the calls and names the groups. Keys for switching a tool or a group off keep their stored shape.</Layer>
+<Layer name="flow" tag="MCP" kind="reuse">A hook around every agentic flow: called when it starts, and what it returns runs when it ends.</Layer>
+<Layer name="navigation" tag="MCP" kind="reuse">An entry in the sidebar: a page on a phone, a dialog on a desktop or tablet.</Layer>
+<Layer name="pages" tag="MCP" kind="reuse">A page at a path of its own, shown by one generic route. A path nothing contributes is a 404.</Layer>
+<Layer name="composerCommands" tag="MCP" kind="reuse">A slash command in the chat form's <code>/</code> picker.</Layer>
+<Layer name="composerPickers" tag="MCP" kind="reuse">A popover picker the form mounts and a command opens, with a handle to add files to the message.</Layer>
+<Layer name="composerAttachments" tag="MCP" kind="reuse">Attachments kept outside the form's files, drawn under the input and added to the message when it is sent.</Layer>
+<Layer name="messageRenderers" tag="MCP" kind="reuse">Claims a message and draws it in place of the default.</Layer>
+<Layer name="attachmentRenderers" tag="MCP" kind="reuse">Claims an attachment and draws its chip; it stays out of the built-in preview.</Layer>
+</Layers>
+
+A setting can also name the extension it belongs to: its field shows only while that extension is on, and the stored value stays either way.
+
+## MCP, the first extension
+
+`src/lib/extensions/mcp/` holds all of it: the client on MCP SDK v2 (`services/`), the host that keeps the connections (`stores/`), every component, and the glue that contributes to each point above. With MCP switched off the sidebar entry, the `/prompt` command, MCP's tools and its page are gone and its connections are closed. Old messages keep their MCP attachments, drawn as plain text attachments.
+
+<Callout title="What stays in the core">
+
+Shared data, so conversations and settings read the same with MCP on or off: the attachment and tool-source kinds, the stored message formats, MCP's types, constants and settings keys, and the export that strips server headers.
+
+</Callout>
+
+## Next: Models, Projects, Library
+
+The same contract is meant for the other features. None of this is built: the cards say which points each one can use today and what it still needs.
+
+<Cards>
+<Card planned kicker="In the core today" title="Models manager">
+
+Uses `navigation` and `pages` for its sidebar entry, dialog and `/models`. The model list and selection stay in the core.
+
+Needs: a keyboard shortcut for its entry, and a way to add its actions to the model selector.
+
+</Card>
+<Card planned kicker="Stacked above" title="Projects">
+
+Uses `tools` for the project tools, `flow` and `navigation`.
+
+Needs: pages with paths below their own (`/projects/[id]/chat/[id]`), a sidebar section, its own tables in storage, and a say in what a conversation sends.
+
+</Card>
+<Card planned kicker="Stacked above" title="Library">
+
+Uses `pages`, `navigation` and the renderers.
+
+Needs: its own tables in storage, and entries in the composer's + menu for the system message submenu.
+
+</Card>
+</Cards>
+
+<Cards cols={2}>
+<Card planned title="Points still to add">
+
+`sidebarSections`, `storage`, `composerMenu`, `shortcuts`, nested pages, settings sections and panels. Each arrives with the first feature that needs it.
+
+</Card>
+<Card planned title="Plugins">
+
+Extensions that are not built in: installed at runtime, by people or by their agents, trusted after the user approves them. They use the same contract and the same points.
+
+</Card>
+</Cards>

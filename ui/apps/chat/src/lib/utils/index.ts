@@ -223,6 +223,8 @@ export {
 
 export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
 
+export { sidebarFooterItems } from './sidebar-items';
+
 // Shared `file_glob_search` runner with a short-lived result cache
 export { runGlobSearch, runGlobSearchWithChildren } from './glob-search';
 

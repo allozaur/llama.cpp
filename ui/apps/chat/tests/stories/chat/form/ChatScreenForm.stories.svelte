@@ -109,6 +109,7 @@
 	}}
 />
 
+<!-- the loading attachment is an MCP prompt, which the MCP extension draws -->
 <Story
 	args={{ class: FORM_CLASS, uploadedFiles: [fileAttachments[0], loadingAttachment] }}
 	name="WithLoadingAttachment"
