@@ -3,6 +3,7 @@
 	import { RefreshCw } from '@lucide/svelte';
 	import {
 		SettingsChatDesktopSidebar,
+		SettingsChatExtensionsTab,
 		SettingsChatFields,
 		SettingsChatImportExportTab,
 		SettingsChatMobileHeader,
@@ -183,6 +184,8 @@
 				<div class="grid">
 					{#if currentSection.slug === SETTINGS_SECTION_SLUGS.TOOLS}
 						<SettingsChatToolsTab />
+					{:else if currentSection.slug === SETTINGS_SECTION_SLUGS.EXTENSIONS}
+						<SettingsChatExtensionsTab />
 					{:else if currentSection.slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
 						<SettingsChatImportExportTab />
 					{:else if currentSection.fields}

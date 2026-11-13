@@ -53,6 +53,15 @@ export { default as SettingsResetButton } from './SettingsResetButton.svelte';
 export { default as SettingsChatImportExportTab } from './SettingsChat/SettingsChatImportExportTab.svelte';
 
 /**
+ * **SettingsChatExtensionsTab** - Extensions section of the settings
+ *
+ * Lists the extensions the app knows (name, description) with a switch for
+ * each. A switch takes effect at once and the choice is remembered. An
+ * extension that failed to load or activate shows why.
+ */
+export { default as SettingsChatExtensionsTab } from './SettingsChat/SettingsChatExtensionsTab.svelte';
+
+/**
  * Section wrapper for import/export sections. Displays a title, description,
  * icon button, and optional summary of recent actions.
  */
