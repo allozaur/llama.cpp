@@ -29,7 +29,18 @@ export function isTextFile(
 	uploadedFile?: ChatUploadedFile
 ): boolean {
 	if (uploadedFile) {
-		return getUploadedFileCategory(uploadedFile) === FileTypeCategory.TEXT;
+		const category = getUploadedFileCategory(uploadedFile);
+
+		if (category === FileTypeCategory.TEXT) return true;
+
+		// the same rule as for a stored attachment below, for one not sent yet: a kind of
+		// the app's own (not a MIME type) that only an extension draws, carrying text
+		return (
+			category === null &&
+			uploadedFile.type !== '' &&
+			!uploadedFile.type.includes('/') &&
+			typeof uploadedFile.textContent === 'string'
+		);
 	}
 
 	if (attachment) {
