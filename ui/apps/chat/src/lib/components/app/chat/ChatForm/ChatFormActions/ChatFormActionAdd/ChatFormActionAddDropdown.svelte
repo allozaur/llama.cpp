@@ -4,7 +4,7 @@
 	import * as Tooltip from '@ggml/llama-ui/ui/tooltip';
 	import { cn } from '@ggml/llama-ui/utils';
 	import { File, Folder, Image, MessageSquare, Mic, Plus, Video } from '@lucide/svelte';
-	import { ChatFormActionAddToolsSubmenu } from '$lib/components/app';
+	import { ChatFormActionAddToolsSubmenu, ProjectSubmenu } from '$lib/components/app';
 	import {
 		ATTACHMENT_FILE_ITEMS,
 		ATTACHMENT_MENU_TEXT,
@@ -15,6 +15,7 @@
 	import { getChatFormActionsContext } from '$lib/contexts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '$lib/enums';
 	import { useAttachmentMenu } from '$lib/hooks/use-attachment-menu.svelte';
+	import { conversationsStore, projectsStore } from '$lib/stores';
 
 	interface Props {
 		class?: string;
@@ -130,6 +131,17 @@
 					{/if}
 				</span>
 			</DropdownMenu.Item>
+
+			<ProjectSubmenu
+				currentProjectId={conversationsStore.activeConversation?.projectId ??
+					conversationsStore.preferences.pendingProjectId}
+				label={ATTACHMENT_MENU_TEXT.ADD_TO_PROJECT}
+				onClose={() => (dropdownOpen = false)}
+				onSelect={(projectId) =>
+					void conversationsStore.assignActiveConversationProject(
+						projectsStore.get(projectId) ?? null
+					)}
+			/>
 
 			<DropdownMenu.Item
 				class="flex cursor-pointer items-center gap-2"

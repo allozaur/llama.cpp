@@ -234,6 +234,14 @@ export { default as ChatFormInput } from './ChatForm/ChatFormInput/ChatFormInput
 export { default as ChatFormCurrentWorkingDirectory } from './ChatForm/ChatFormCurrentWorkingDirectory/ChatFormCurrentWorkingDirectory.svelte';
 
 /**
+ * **ChatFormProjectChip** - The chat's project under the chat form
+ *
+ * Shown beside the working directory. A click changes the project and the
+ * hover × takes the chat out of it.
+ */
+export { default as ChatFormProjectChip } from './ChatForm/ChatFormProjectChip/ChatFormProjectChip.svelte';
+
+/**
  * Shared popover wrapper for inline picker popovers (prompts, resources).
  * Provides consistent positioning, styling, and open/close behavior.
  */
@@ -451,6 +459,12 @@ export { default as ChatMessageStatisticsBadge } from './ChatMessages/ChatMessag
 export { default as ChatMessageCwdChange } from './ChatMessages/ChatMessage/ChatMessageCwdChange.svelte';
 
 /**
+ * The `Set working directory to <path>` row itself, shared by the synthetic
+ * cwd message and by the project folder row.
+ */
+export { default as ChatMessageCwdChangeRow } from './ChatMessages/ChatMessage/ChatMessageCwdChangeRow.svelte';
+
+/**
  * Generic wrapper for UI-generated (synthetic) messages. Routes the
  * working-directory change to ChatMessageCwdChange and renders a muted
  * fallback for any other synthetic text, so no synthetic message ever
@@ -569,11 +583,13 @@ export { default as ChatScreen } from './ChatScreen/ChatScreen.svelte';
  * **ChatTabs** - Browser-style tab bar for open conversations
  *
  * Horizontal strip of tabs rendered above ChatScreen in the chat layout,
- * one per conversation tracked by tabsStore. The active tab follows the
- * route's conversation id; clicking a tab navigates to it, middle-click or
- * the close button closes it (switching to the left neighbor when closing
- * the active tab), and a trailing "+" button starts a new chat. Shows a
- * spinner on tabs with a running generation. Desktop-only.
+ * showing the tabs of the route's view (see `resolveTabView`): every open
+ * tab in the regular view, or the chats of the open project in a project
+ * view, led by the project breadcrumb. The active tab follows the route;
+ * clicking a tab navigates to it, middle-click or the close button closes
+ * it (switching to the left neighbor when closing the active tab), and a
+ * trailing "+" button starts a new chat, inside the project in a project
+ * view. Shows a spinner on tabs with a running generation. Desktop-only.
  */
 export { default as ChatTabs } from './ChatTabs/ChatTabs.svelte';
 

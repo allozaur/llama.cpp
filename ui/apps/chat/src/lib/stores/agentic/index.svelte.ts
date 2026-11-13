@@ -21,7 +21,7 @@ import {
 	type ToolContext,
 	type ToolResult
 } from '@ggml/llama-harness';
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE } from '$lib/constants';
+import { DEFAULT_AGENTIC_CONFIG, NEWLINE, PROJECT_TOOL_NAMES } from '$lib/constants';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -43,6 +43,7 @@ import {
 } from '$lib/enums';
 import { extensions } from '$lib/extensions';
 import { ChatService } from '$lib/services';
+import { ProjectToolsService } from '$lib/services/project-tools.service';
 import { ReadMediaService } from '$lib/services/read-media.service';
 import { SandboxService } from '$lib/services/sandbox.service';
 import { ToolsService } from '$lib/services/tools.service';
@@ -505,6 +506,14 @@ class AgenticStore {
 			const args = this.parseToolArguments(toolCall.function.arguments);
 
 			if (toolName === BuiltInTool.BROWSER_GET_DATETIME) return executeGetDatetimeTool();
+
+			if (PROJECT_TOOL_NAMES.includes(toolName)) {
+				return ProjectToolsService.executeTool(
+					toolName,
+					args,
+					conversationsStore.activeConversation?.projectId
+				);
+			}
 
 			if (toolName === BuiltInTool.SERVER_GET_INFO) return executeBrowserInfoTool();
 

@@ -19,6 +19,11 @@
 	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
 	/* where the phone's corner controls (menu toggle, context gauge, sidebar logo) sit */
 	--corner-control-top: calc(1rem + var(--safe-area-top));
+	/* where the phone's bottom corner actions (a page's floating key) sit: as far in from
+	   the side as up from the bottom, which keeps a 56px key about concentric with an
+	   iPhone's rounded screen corner */
+	--corner-control-side: 1.75rem;
+	--corner-control-bottom: calc(var(--corner-control-side) + var(--safe-area-bottom));
 	/* where a phone page's title starts: a row below the corner controls */
 	--page-top: calc(var(--corner-control-top) + 3.75rem);
 	/* expanded desktop sidebar width, overridden once the user drags its edge */
@@ -71,6 +76,9 @@
 	/* the installed app's status bar already sets them apart from the screen's edge */
 	:root {
 		--corner-control-top: calc(0.25rem + var(--safe-area-top));
+		/* the home indicator is a short bar in the middle, so the corners beside it are
+		   free: a corner action ignores its inset and keeps the same gap as from the side */
+		--corner-control-bottom: var(--corner-control-side);
 	}
 
 	html {
@@ -291,9 +299,13 @@
 	}
 
 	/* While something is dragged, what it passes over takes no hover: only the
-	   sections themselves stay targets, for the drop */
+	   sections themselves, and the projects in them, stay targets, for the drop */
 	body[data-sidebar-dragging] [data-sidebar-section] * {
 		pointer-events: none;
+	}
+
+	body[data-sidebar-dragging] [data-sidebar-section] [data-sidebar-section] {
+		pointer-events: auto;
 	}
 
 	.sidebar-drag-overlay {
