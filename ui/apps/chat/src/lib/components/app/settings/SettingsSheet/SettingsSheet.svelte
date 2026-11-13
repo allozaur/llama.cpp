@@ -17,6 +17,7 @@
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
 	import { RefreshCw, RotateCcw } from '@lucide/svelte';
 	import {
+		SettingsChatExtensionsTab,
 		SettingsChatFieldsInset,
 		SettingsChatImportExportTab,
 		SettingsChatVoiceTab,
@@ -347,7 +348,12 @@
 {/snippet}
 
 {#snippet sectionPage(slug: string)}
-	{#if slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
+	{#if slug === SETTINGS_SECTION_SLUGS.EXTENSIONS}
+		<!-- the list comes from the extension registry, not from settings fields -->
+		<InsetList class="px-4 py-4">
+			<SettingsChatExtensionsTab />
+		</InsetList>
+	{:else if slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
 		<SettingsChatImportExportTab inset />
 	{:else if slug === SETTINGS_SECTION_SLUGS.VOICE}
 		<SettingsChatVoiceTab

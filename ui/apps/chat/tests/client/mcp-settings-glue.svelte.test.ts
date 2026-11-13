@@ -1,6 +1,7 @@
 // What the MCP extension gives Settings and startup: Manage MCP servers under
 // the Enable MCP setting, and the background health checks, which stop when
-// the extension goes off and while Enable MCP is off.
+// the extension goes off, when the live connections close too, and while
+// Enable MCP is off.
 
 import { MANAGE_MCP_SERVERS_LABEL, SETTINGS_KEYS } from '#lib/constants/index.ts';
 import type { ExtensionContext, SettingsAction } from '#lib/extensions/index.ts';
@@ -54,6 +55,7 @@ describe('MCP settings glue', () => {
 		const runHealthChecks = vi
 			.spyOn(mcpStore, 'runHealthChecksForServers')
 			.mockResolvedValue(undefined);
+		const shutdown = vi.spyOn(mcpStore, 'shutdown').mockResolvedValue();
 		const { cleanups, ctx } = makeContext();
 
 		try {
@@ -83,14 +85,20 @@ describe('MCP settings glue', () => {
 
 			expect(runHealthChecks).toHaveBeenCalledTimes(2);
 
-			expect(cleanups).toHaveLength(1);
-			await cleanups[0]();
+			// the registry runs the cleanups last-in first-out: the checks stop, then the connections close
+			expect(cleanups).toHaveLength(2);
+			expect(shutdown).not.toHaveBeenCalled();
+
+			for (const cleanup of [...cleanups].reverse()) await cleanup();
+
+			expect(shutdown).toHaveBeenCalledOnce();
 
 			setServers([{ enabled: true, id: 'late', url: 'http://localhost:9004/mcp' }]);
 
 			expect(runHealthChecks).toHaveBeenCalledTimes(2);
 		} finally {
 			runHealthChecks.mockRestore();
+			shutdown.mockRestore();
 			settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, original);
 			settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, wasEnabled);
 		}

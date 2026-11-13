@@ -18,6 +18,7 @@ import Mic from '@lucide/svelte/icons/mic';
 import Monitor from '@lucide/svelte/icons/monitor';
 import Moon from '@lucide/svelte/icons/moon';
 import PencilRuler from '@lucide/svelte/icons/pencil-ruler';
+import Puzzle from '@lucide/svelte/icons/puzzle';
 import SlidersVertical from '@lucide/svelte/icons/sliders-vertical';
 import Sun from '@lucide/svelte/icons/sun';
 import TextCursorInput from '@lucide/svelte/icons/text-cursor-input';
@@ -37,6 +38,7 @@ export const SETTINGS_SECTIONS = {
 	AGENTIC: { slug: 'agentic', title: 'Agentic' },
 	DEVELOPER: { slug: 'developer', title: 'Developer' },
 	DISPLAY: { slug: 'display', title: 'Display' },
+	EXTENSIONS: { slug: 'extensions', title: 'Extensions' },
 	GENERAL: { slug: 'general', title: 'General' },
 	IMPORT_EXPORT: { slug: 'import-export', title: 'Import/Export' },
 	SAMPLING_PENALTIES: { slug: 'sampling-penalties', title: 'Sampling & Penalties' },
@@ -48,6 +50,7 @@ export const SETTINGS_SECTION_SLUGS = {
 	AGENTIC: SETTINGS_SECTIONS.AGENTIC.slug,
 	DEVELOPER: SETTINGS_SECTIONS.DEVELOPER.slug,
 	DISPLAY: SETTINGS_SECTIONS.DISPLAY.slug,
+	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.slug,
 	GENERAL: SETTINGS_SECTIONS.GENERAL.slug,
 	IMPORT_EXPORT: SETTINGS_SECTIONS.IMPORT_EXPORT.slug,
 	SAMPLING_PENALTIES: SETTINGS_SECTIONS.SAMPLING_PENALTIES.slug,
@@ -59,6 +62,7 @@ export const SETTINGS_SECTION_TITLES = {
 	AGENTIC: SETTINGS_SECTIONS.AGENTIC.title,
 	DEVELOPER: SETTINGS_SECTIONS.DEVELOPER.title,
 	DISPLAY: SETTINGS_SECTIONS.DISPLAY.title,
+	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.title,
 	GENERAL: SETTINGS_SECTIONS.GENERAL.title,
 	IMPORT_EXPORT: SETTINGS_SECTIONS.IMPORT_EXPORT.title,
 	SAMPLING_PENALTIES: SETTINGS_SECTIONS.SAMPLING_PENALTIES.title,
@@ -563,6 +567,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 			},
 			{
 				defaultValue: DEFAULT_MCP_CONFIG.requestTimeoutSeconds,
+				extension: 'mcp',
 				help: 'Timeout for individual MCP tool calls.',
 				isPositiveInteger: true,
 				key: SETTINGS_KEYS.MCP_REQUEST_TIMEOUT_SECONDS,
@@ -583,6 +588,13 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 		],
 		slug: SETTINGS_SECTION_SLUGS.AGENTIC,
 		title: SETTINGS_SECTION_TITLES.AGENTIC
+	},
+	// Extensions: the list comes from the extension registry, not from settings
+	{
+		icon: Puzzle,
+		settings: [],
+		slug: SETTINGS_SECTION_SLUGS.EXTENSIONS,
+		title: SETTINGS_SECTION_TITLES.EXTENSIONS
 	},
 	// Import/Export
 	{
@@ -883,6 +895,7 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 			.filter((s) => s.standaloneField !== false)
 			.map((s) => ({
 				dependsOn: s.dependsOn,
+				extension: s.extension,
 				help: s.help,
 				isExperimental: s.isExperimental,
 				isPositiveInteger: s.isPositiveInteger,

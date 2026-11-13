@@ -48,4 +48,7 @@ export function contributeComposer(ctx: ExtensionContext): void {
 		consume: () => mcpStore.consumeResourceAttachmentsAsExtras(),
 		hasPending: () => mcpStore.resources.hasAttachments
 	});
+
+	// resources still attached would come back, unseen until then, when MCP is switched on again
+	ctx.onDeactivate(() => mcpStore.clearResourceAttachments());
 }
