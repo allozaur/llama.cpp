@@ -216,6 +216,9 @@ class MCPStore implements McpHealthHost {
 			while (true) {
 				await new Promise((resolve) => setTimeout(resolve, backoff));
 
+				// the server was removed or the store shut down while this waited
+				if (this.serverConfigs.get(serverName) !== serverConfig) break;
+
 				console.log(`[MCPStore][${serverName}] Auto-reconnecting...`);
 
 				try {
@@ -256,6 +259,13 @@ class MCPStore implements McpHealthHost {
 						listChangedHandlers
 					);
 					const connection = await Promise.race([connectPromise, timeoutPromise]);
+
+					// same check after the connect: a connection nobody asked for any more is closed
+					if (this.serverConfigs.get(serverName) !== serverConfig) {
+						await MCPService.disconnect(connection).catch(() => {});
+
+						break;
+					}
 
 					this.connections.set(serverName, connection);
 
@@ -991,6 +1001,10 @@ class MCPStore implements McpHealthHost {
 		}
 
 		if (this.connections.size === 0) {
+			// nothing to close, but a reconnect loop may still be waiting on these
+			this.serverConfigs.clear();
+			this.configSignature = null;
+
 			return;
 		}
 
