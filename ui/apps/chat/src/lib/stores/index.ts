@@ -38,6 +38,13 @@ export { conversationsStore } from './conversations/index.svelte';
 // GROUPS (named sidebar sections for chats)
 export { groupsStore } from './groups.svelte';
 
+// SERVERS
+export { serversStore } from './servers.svelte';
+export { serversModelsStore } from './serversModels.svelte';
+
+// REMOTE ACCESS (WebRTC tunnels to remote servers)
+export { remoteAccessStore } from './remote-access.svelte';
+
 // MODELS
 export { modelsStore } from './models/index.svelte';
 

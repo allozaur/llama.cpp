@@ -1,12 +1,16 @@
 <script lang="ts">
+	import * as DropdownMenu from '@ggml/llama-ui/ui/dropdown-menu';
 	import * as Select from '@ggml/llama-ui/ui/select';
 	import * as ToggleGroup from '@ggml/llama-ui/ui/toggle-group';
-	import { ScrollCarousel } from '$lib/components/app';
+	import { ChevronDown, Server as ServerGlyph } from '@lucide/svelte';
+	import { Logo, ScrollCarousel } from '$lib/components/app';
+	import { ServerIcon } from '$lib/components/app/servers';
 	import {
 		CAPABILITY_ICONS,
 		CAPABILITY_LABELS,
 		FILTER_TOGGLE_ITEM_CLASS,
 		FILTER_TRIGGER_CLASS,
+		LOCAL_BACKEND_ID,
 		MODALITY_FLAG_KEYS,
 		MODALITY_ICONS,
 		MODALITY_KEYS,
@@ -16,21 +20,31 @@
 	} from '$lib/constants';
 	import { ModelCapability } from '$lib/enums';
 	import { modelsStore } from '$lib/stores';
+	import type { Server } from '$lib/types/server';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	interface Props {
+		/** Servers the filter can offer: the enabled ones. */
+		availableServers: Server[];
 		/** Capabilities a model must have every one of. */
 		capabilities?: ModelCapability[];
 		/** Smallest context a model must support; 0 keeps every model. */
 		contextLimit?: number;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
+		/** Repos each server contributes to the current search, shown in the menu. */
+		serverCounts?: Record<string, number>;
 	}
 
 	let {
+		availableServers,
 		capabilities = $bindable<ModelCapability[]>([]),
 		contextLimit = $bindable(0),
-		modalities = $bindable<ModalityKey[]>([])
+		modalities = $bindable<ModalityKey[]>([]),
+		serverCounts = {},
+		servers = $bindable<string[]>([])
 	}: Props = $props();
 
 	const CONTEXT_STEPS: { label: string; value: number }[] = [
@@ -83,10 +97,34 @@
 		modalities = values.filter((value): value is ModalityKey => MODALITY_VALUES.has(value));
 	}
 
+	// none selected means every server, so the label names the selection
+	let serverLabel = $derived(
+		servers.length === 0
+			? 'All servers'
+			: servers.length === 1
+				? (availableServers.find((server) => server.id === servers[0])?.name ?? '1 server')
+				: `${servers.length} servers`
+	);
 	let contextLabel = $derived(
 		CONTEXT_STEPS.find((step) => step.value === contextLimit)?.label ?? CONTEXT_STEPS[0].label
 	);
+
+	function toggleServer(id: string, checked: boolean | 'indeterminate'): void {
+		servers = checked === true ? [...servers, id] : servers.filter((entry) => entry !== id);
+	}
 </script>
+
+{#snippet serverMark(server: Server)}
+	{#if server.id === LOCAL_BACKEND_ID}
+		<ServerIcon class="h-3.5 w-3.5" {server}>
+			{#snippet fallback()}
+				<Logo class="shrink-0" style="--size: 0.875rem" />
+			{/snippet}
+		</ServerIcon>
+	{:else}
+		<ServerIcon class="h-3.5 w-3.5" {server} />
+	{/if}
+{/snippet}
 
 <!-- below md the carousel keeps a row of its own: a toolbar that also holds a call to
      action would otherwise squeeze the filters out of sight. The scroll box clips on
@@ -98,6 +136,51 @@
 	gapSize="2"
 	innerClass="items-center"
 >
+	{#if availableServers.length > 1}
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<button
+						{...props}
+						class="inline-flex items-center whitespace-nowrap {FILTER_TRIGGER_CLASS}"
+						type="button"
+					>
+						<ServerGlyph class="h-3.5 w-3.5" />
+
+						{serverLabel}
+
+						<ChevronDown class="h-3.5 w-3.5 opacity-60" />
+					</button>
+				{/snippet}
+			</DropdownMenu.Trigger>
+
+			<DropdownMenu.Content align="start" class="min-w-48">
+				<DropdownMenu.Group>
+					<DropdownMenu.GroupHeading>Servers</DropdownMenu.GroupHeading>
+
+					{#each availableServers as server (server.id)}
+						<DropdownMenu.CheckboxItem
+							checked={servers.includes(server.id)}
+							onCheckedChange={(checked) => toggleServer(server.id, checked)}
+						>
+							{@render serverMark(server)}
+
+							{server.name}
+
+							<DropdownMenu.Shortcut>{serverCounts[server.id] ?? 0}</DropdownMenu.Shortcut>
+						</DropdownMenu.CheckboxItem>
+					{/each}
+				</DropdownMenu.Group>
+
+				{#if servers.length > 0}
+					<DropdownMenu.Separator />
+
+					<DropdownMenu.Item onSelect={() => (servers = [])}>Show every server</DropdownMenu.Item>
+				{/if}
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	{/if}
+
 	<Select.Root
 		onValueChange={(value) => (contextLimit = Number(value))}
 		type="single"

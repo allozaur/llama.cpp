@@ -16,6 +16,10 @@ export const DB_APP_NAME_DEPRECATED = 'LlamacppWebui';
 
 export const ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.alwaysAllowedTools`;
 
+/** Id of the server the selector and new requests target, restored on page load. */
+/* Kept under the name it was first stored under; only the constant was renamed. */
+export const ACTIVE_SERVER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.activeBackend`;
+
 export const CONFIG_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.config`;
 export const DISABLED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabledTools`;
 
@@ -32,10 +36,16 @@ export const FAVORITE_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.favoriteMod
 /** Open state the user set for a model list section or one of its families, by id. */
 export const MODEL_GROUP_OPEN_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.modelGroupOpen`;
 
-/** Recently used model ids, most recent first, backend-qualified. */
+/** Per-model load and inference overrides, keyed by server-qualified model id. */
+export const MODEL_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.modelOverrides`;
+
+/** Model the user picked last, kept across reloads. Stores `{ id, model }`. */
+export const SELECTED_MODEL_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.selectedModel`;
+
+/** Recently used model ids, most recent first, server-qualified. */
 export const RECENT_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.recentModels`;
 
-/** Model ids kept out of the selector, backend-qualified. */
+/** Model ids kept out of the selector, server-qualified. */
 export const HIDDEN_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.hiddenModels`;
 export const REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.reasoningEffortDefault`;
 /** Sidebar conversation sections the user folded. */
@@ -47,11 +57,15 @@ export const SIDEBAR_EXPANDED_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.sidebarExp
 export const SIDEBAR_WIDTH_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.sidebarWidth`;
 export const USER_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.userOverrides`;
 export const DISMISSED_RECOMMENDED_MCP_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.dismissedRecommendedMcpServers`;
+/* Likewise: the value is the key already written, the name is the one the list now has. */
+export const DISMISSED_RECOMMENDED_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.dismissedRecommendedBackends`;
 
 /** Key prefix for per-conversation resumable stream state, conversationId is appended */
 export const STREAM_RESUME_LOCALSTORAGE_KEY_PREFIX = `${STORAGE_APP_NAME}.streamResume.`;
 
 // Deprecated old key names (kept for backward compat while users migrate)
+/** @deprecated Remote servers are settings-backed now; the demo build kept them here */
+export const LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY = 'llama_servers';
 /** @deprecated Use {@link ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY} instead */
 export const DEPRECATED_ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.alwaysAllowedTools`;
 /** @deprecated Use {@link CONFIG_LOCALSTORAGE_KEY} instead */

@@ -3,7 +3,7 @@
 	import ModelsManager from '$lib/components/app/models/ModelsManager/ModelsManager.svelte';
 </script>
 
-<!-- The rows mount tooltips, which need the provider +layout.svelte supplies. -->
+<!-- The rows mount tooltips, which need the server +layout.svelte supplies. -->
 <Tooltip.Provider>
 	<ModelsManager />
 </Tooltip.Provider>

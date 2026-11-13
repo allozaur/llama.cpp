@@ -22,9 +22,11 @@ import {
 import { BuiltInTool, GlobSearchType, ToolSource } from '$lib/enums';
 import { extensions, type ToolGroupIdentityProps, type ToolProvider } from '$lib/extensions';
 import { ToolsService } from '$lib/services/tools.service';
-// direct imports between stores, not via the barrel, to avoid circular deps
 import { modelsStore } from '$lib/stores/models/index.svelte';
 import { projectsStore } from '$lib/stores/projects.svelte';
+import { serverStore } from '$lib/stores/server.svelte';
+// direct imports between stores, not via the barrel, to avoid circular deps
+import { serversStore } from '$lib/stores/servers.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { OpenAIToolDefinition, ToolEntry, ToolGroup } from '$lib/types';
 import { ApiError, buildSandboxToolDefinition } from '$lib/utils';
@@ -224,6 +226,15 @@ class ToolsStore {
 	}
 
 	async fetchServerTools(): Promise<void> {
+		// the /tools endpoint only exists on the local llama.cpp server, so the
+		// list follows the built-in server rather than the selected model
+		if (!serverStore.hasLocalServer || !serversStore.local.enabled) {
+			this._serverTools = [];
+			this.cwdAwareTools = new SvelteSet();
+
+			return;
+		}
+
 		if (this._loading) return;
 
 		this._loading = true;

@@ -120,6 +120,8 @@ class UiStore {
 	projectDialog = $state<ProjectDialogOptions | null>(null);
 	/** Open state of the project picker, a phone's stand-in for the project submenus. */
 	projectPicker = $state<ProjectPickerOptions | null>(null);
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
@@ -232,6 +234,17 @@ class UiStore {
 		this.projectPicker = options;
 	}
 
+	/** Open the servers, where a server is paired or pointed at: a page on a phone, a dialog elsewhere. */
+	openServers(): void {
+		if (deviceStore.isMobile) {
+			void goto(ROUTES.SERVERS);
+
+			return;
+		}
+
+		this.serversOpen = true;
+	}
+
 	/**
 	 * Puts sections in the order the user gave them. One never moved, such as a
 	 * new group or project, keeps its default place: right before the next section in
@@ -267,6 +280,7 @@ class UiStore {
 
 		this.modelsReturnRoute = page.url.hash || ROUTES.START;
 	}
+
 	/** Ask the composer to take focus, e.g. after a dialog closes onto the chat. */
 	requestComposerFocus(): void {
 		this.composerFocusRequested = true;

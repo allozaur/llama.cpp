@@ -10,6 +10,7 @@
 	import { MODEL_ROW_GRID_CLASS, MODEL_ROW_TRAILING_CELL_CLASS } from '$lib/constants';
 	import { modelsStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
+	import { getServer } from '$lib/utils/api-base';
 
 	interface Props {
 		isFavorite: (option: ModelOption) => boolean;
@@ -17,18 +18,28 @@
 		onDelete: (option: ModelOption) => void;
 		onSelect: (option: ModelOption) => void;
 		selected: boolean;
+		/** Badge the server name instead of the quant, for a server group. */
+		showServer?: boolean;
 		/** Left padding in px, from the nesting depth. */
 		indent?: number;
 	}
 
-	let { indent = 0, isFavorite, onDelete, onSelect, option, selected }: Props = $props();
+	let {
+		indent = 0,
+		isFavorite,
+		onDelete,
+		onSelect,
+		option,
+		selected,
+		showServer = false
+	}: Props = $props();
 
 	let favorite = $derived(isFavorite(option));
 	let isHidden = $derived(modelsStore.isHidden(option.id));
 	let quant = $derived(option.parsedId?.quantization ?? option.model);
 
 	// the "more actions" dropdown and the right-click menu offer the same actions
-	let actions = $derived(modelRowActions(option, favorite, isHidden, onDelete));
+	let actions = $derived(modelRowActions(option, { favorite, isHidden }, { onDelete }));
 	let contextMenuOpen = $state(false);
 </script>
 
@@ -58,7 +69,9 @@
 			style="padding-left: {indent}px"
 			type="button"
 		>
-			<Badge class="h-5 shrink-0 px-1.5 text-[10px]" variant="secondary">{quant}</Badge>
+			<Badge class="h-5 shrink-0 px-1.5 text-[10px]" variant="secondary">
+				{showServer ? (getServer(option.serverId)?.name ?? quant) : quant}
+			</Badge>
 
 			<ModelDraftSidecars draftSidecars={option.draftSidecars} />
 

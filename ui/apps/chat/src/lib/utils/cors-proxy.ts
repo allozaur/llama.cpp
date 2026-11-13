@@ -2,8 +2,8 @@
  * CORS Proxy utility for routing requests through llama-server's CORS proxy.
  */
 
-import { base } from '$app/paths';
-import { CORS_PROXY, CORS_PROXY_ENDPOINT } from '$lib/constants';
+import { apiUrl } from './api-base';
+import { CORS_PROXY, CORS_PROXY_ENDPOINT, LOCAL_BACKEND_ID } from '$lib/constants';
 import { UrlProtocol } from '$lib/enums';
 
 /**
@@ -12,7 +12,9 @@ import { UrlProtocol } from '$lib/enums';
  * @returns URL pointing to the CORS proxy with target encoded
  */
 export function buildProxiedUrl(targetUrl: string): URL {
-	const proxyPath = `${base}${CORS_PROXY_ENDPOINT}`;
+	// the proxy is the llama-server serving this UI, never the active remote server:
+	// proxied MCP traffic and its headers must not pass through someone else's machine
+	const proxyPath = apiUrl(CORS_PROXY_ENDPOINT, LOCAL_BACKEND_ID);
 	const proxyUrl = new URL(proxyPath, window.location.origin);
 
 	proxyUrl.searchParams.set(CORS_PROXY.URL_PARAM, targetUrl);

@@ -6,7 +6,7 @@
 	import { SearchInput } from '$lib/components/app/forms';
 	import { type ModalityKey } from '$lib/constants';
 	import { ModelCapability } from '$lib/enums';
-	import { deviceStore } from '$lib/stores';
+	import { deviceStore, serversStore } from '$lib/stores';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -17,6 +17,10 @@
 		filter?: string;
 		/** Modalities a model must support at least one of. */
 		modalities?: ModalityKey[];
+		/** Repos each server contributes to the current search, for the filter menu. */
+		serverCounts?: Record<string, number>;
+		/** Server ids to keep; empty keeps every server. */
+		servers?: string[];
 		/** Rendered at the toolbar's right end, past the filters. */
 		toolbarEnd?: Snippet;
 	}
@@ -26,10 +30,14 @@
 		contextLimit = $bindable(0),
 		filter = $bindable(''),
 		modalities = $bindable<ModalityKey[]>([]),
+		serverCounts = {},
+		servers = $bindable<string[]>([]),
 		toolbarEnd
 	}: Props = $props();
 
-	let hasFilters = $derived(hasActiveFilters(contextLimit, modalities, capabilities));
+	let hasFilters = $derived(
+		hasActiveFilters(contextLimit, modalities, capabilities) || servers.length > 0
+	);
 	let filterInput = $state<HTMLInputElement | null>(null);
 
 	// The search takes the focus when the models page opens: the input mounts a frame
@@ -61,12 +69,20 @@
 		size={deviceStore.isMobile ? 'default' : 'sm'}
 	/>
 
-	<ModelsManagerFilters bind:capabilities bind:contextLimit bind:modalities />
+	<ModelsManagerFilters
+		bind:capabilities
+		bind:contextLimit
+		bind:modalities
+		bind:servers
+		availableServers={serversStore.enabled}
+		{serverCounts}
+	/>
 
 	{#if hasFilters}
 		<Button
 			class="gap-1.5 text-muted-foreground"
 			onclick={() => {
+				servers = [];
 				contextLimit = 0;
 				modalities = [];
 				capabilities = [];
