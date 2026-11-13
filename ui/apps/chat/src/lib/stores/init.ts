@@ -17,10 +17,15 @@ import { browser } from '$app/environment';
 import { BUILT_IN_EXTENSIONS } from '$lib/extensions/builtin';
 import { extensions } from '$lib/extensions/registry.svelte';
 import { MigrationService } from '$lib/services/migration.service';
+import { StorageModeService } from '$lib/services/storage-mode.service';
+import type { StorageAdapterDefinition } from '$lib/types';
 import { validateApiKey } from '$lib/utils/api-key-validation';
 import { isRemoteServer } from '$lib/utils/server';
+import { toast } from 'svelte-sonner';
 
 let activeTunnel: Promise<void> | null = null;
+/** Storage adapter chosen in this browser that could not be reached at startup */
+let storageFallback: StorageAdapterDefinition | null = null;
 let hydration: Promise<void> | null = null;
 let extensionsStarted: Promise<void> | null = null;
 let startup: Promise<void> | null = null;
@@ -78,6 +83,18 @@ export function hydrateStores(): Promise<void> {
 	hydration ??= (async () => {
 		await MigrationService.runAllMigrations();
 
+		// before anything reads conversations or settings, which may live in a storage adapter
+		const chosen = StorageModeService.chosenAdapter;
+		const active = await StorageModeService.activate(() => toast.error('Failed to save settings'));
+
+		if (active) {
+			// these read user data while being constructed, before the mode was known
+			modelsStore.reloadPersisted();
+			conversationsStore.preferences.resetPending();
+		} else {
+			storageFallback = chosen;
+		}
+
 		settingsStore.initialize();
 
 		// the tunnel transport goes in before anything can ask for a model list: a
@@ -124,6 +141,10 @@ export function initStores(): Promise<void> {
 		// prefetch every server's model list in the background; failures are
 		// per-server and never block startup
 		void serversModelsStore.loadAll().then(() => modelsStore.warmHubDetails());
+
+		if (storageFallback) {
+			toast.warning(`${storageFallback.name} storage is unavailable, using this browser's storage`);
+		}
 
 		permissionsStore.initialize();
 		toolsStore.initialize();

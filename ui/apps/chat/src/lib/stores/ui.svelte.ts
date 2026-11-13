@@ -20,6 +20,7 @@ import {
 	SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY,
 	SIDEBAR_WIDTH_LOCALSTORAGE_KEY
 } from '$lib/constants';
+import { PreferencesService } from '$lib/services/preferences.service';
 import { deviceStore } from '$lib/stores/device.svelte';
 import { settingsStore } from '$lib/stores/settings/index.svelte';
 import type { Group } from '$lib/types/groups';
@@ -52,7 +53,7 @@ function loadCollapsedSidebarSections(): SvelteSet<string> {
 	if (!browser) return new SvelteSet<string>();
 
 	try {
-		const raw = localStorage.getItem(SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY);
+		const raw = PreferencesService.getItem(SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY);
 		const parsed = raw ? (JSON.parse(raw) as unknown) : null;
 
 		return new SvelteSet(
@@ -74,7 +75,9 @@ function loadSidebarSectionOrder(): string[] {
 	if (!browser) return [];
 
 	try {
-		const parsed = JSON.parse(localStorage.getItem(SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY) ?? '[]');
+		const parsed = JSON.parse(
+			PreferencesService.getItem(SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY) ?? '[]'
+		);
 
 		return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
 	} catch {
@@ -155,7 +158,7 @@ class UiStore {
 		// a phone opens the sidebar as an overlay, which is no layout to restore
 		if (!browser || deviceStore.isMobile) return;
 
-		localStorage.setItem(SIDEBAR_EXPANDED_LOCALSTORAGE_KEY, String(expanded));
+		PreferencesService.setItem(SIDEBAR_EXPANDED_LOCALSTORAGE_KEY, String(expanded));
 	}
 
 	/** Close the model details drawer. */
@@ -299,7 +302,7 @@ class UiStore {
 		];
 
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY,
 				JSON.stringify(this.sidebarSectionOrder)
 			);
@@ -315,9 +318,9 @@ class UiStore {
 		if (!browser) return;
 
 		if (width === null) {
-			localStorage.removeItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY);
+			PreferencesService.removeItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY);
 		} else {
-			localStorage.setItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY, String(width));
+			PreferencesService.setItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY, String(width));
 		}
 	}
 
@@ -330,7 +333,7 @@ class UiStore {
 		}
 
 		try {
-			localStorage.setItem(
+			PreferencesService.setItem(
 				SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY,
 				JSON.stringify([...this.collapsedSidebarSections])
 			);
@@ -351,13 +354,13 @@ class UiStore {
 	private loadSidebarExpanded(): boolean {
 		if (!browser || deviceStore.isMobile) return false;
 
-		return localStorage.getItem(SIDEBAR_EXPANDED_LOCALSTORAGE_KEY) === 'true';
+		return PreferencesService.getItem(SIDEBAR_EXPANDED_LOCALSTORAGE_KEY) === 'true';
 	}
 
 	private loadSidebarWidth(): number | null {
 		if (!browser) return null;
 
-		const width = Number(localStorage.getItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY));
+		const width = Number(PreferencesService.getItem(SIDEBAR_WIDTH_LOCALSTORAGE_KEY));
 
 		if (!Number.isFinite(width) || width <= 0) return null;
 
