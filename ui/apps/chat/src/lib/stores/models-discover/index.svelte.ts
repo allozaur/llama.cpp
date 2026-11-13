@@ -1,12 +1,13 @@
 /**
  * modelsDiscoverStore - Models Discover browse state
  *
- * Owns the HuggingFace GGUF list shown in the discover sidebar. The default list is
- * the curated catalog set; a search replaces it with matches across all of HuggingFace.
- * Both paths fetch the same fields, so a row renders the same either way.
+ * Owns the HuggingFace GGUF lists shown on the models page: the curated catalog set the
+ * suggestions carousel shows, and the matches a search finds across all of HuggingFace.
+ * The two are kept apart so a search never hides the suggestions. Both paths fetch the
+ * same fields, so a card or row renders the same either way.
  */
 
-import { MODELS_DISCOVER_CATALOG_BATCH } from '$lib/constants';
+import { MODELS_DISCOVER_CATALOG_BATCH, MODELS_DISCOVER_SEARCH_LIMIT } from '$lib/constants';
 import { HuggingFaceService } from '$lib/services';
 import type {
 	HfCatalogBuild,
@@ -24,19 +25,24 @@ export interface ModelsDiscoverSizeRange {
 }
 
 class ModelsDiscoverStore {
+	/** Error of the catalog fetch. */
 	error = $state<string | null>(null);
-	models = $state<HfModelInfo[]>([]);
-	/** First model in the list - discover auto-opens this one. */
-	firstModel = $derived(this.models[0] ?? null);
-
 	loading = $state(false);
+	/** Trimmed query the search results answer; empty while no search runs. */
+	query = $state('');
+	/** Error of the newest search. */
+	searchError = $state<string | null>(null);
 	/** True while a search is in flight; only the newest request owns this flag. */
 	searching = $state(false);
+
+	/** Matches of the newest search. */
+	searchResults = $state<HfModelInfo[]>([]);
+	/** Curated catalog repos, filled batch by batch as they land. */
+	suggested = $state<HfModelInfo[]>([]);
 
 	private catalog: HfCatalogEntry[] = [];
 	/** Repo id -> size range, for catalog rows and lazily measured search rows. */
 	private catalogSizeRanges = new SvelteMap<string, ModelsDiscoverSizeRange>();
-	private defaultModels: HfModelInfo[] = [];
 	private fetched = false;
 	private searchRequestId = 0;
 	/** In-flight `sizeRange()` lookups, keyed by repo id. */
@@ -50,15 +56,16 @@ class ModelsDiscoverStore {
 		return this.catalogSizeRanges.get(modelId);
 	}
 
-	/** Catalog family description; undefined for a repo outside the curated catalog. */
+	/**
+	 * Catalog family description, emphasis markers dropped since every surface renders it
+	 * as plain text; undefined for a repo outside the curated catalog.
+	 */
 	descriptionFor(modelId: string): string | undefined {
-		return this.catalog.find((entry) =>
-			entry.sizes.some((size) => size.builds.some((build) => build.repo === modelId))
-		)?.description;
+		return this.catalogEntryFor(modelId)?.description?.replace(/(\*\*|__)(.+?)\1/g, '$2');
 	}
 
 	/**
-	 * Fill the list from the llama.app catalog, one repo per catalog size. Every repo
+	 * Fill the suggestions from the llama.app catalog, one repo per catalog size. Every repo
 	 * is fetched with its file tree, so a catalog row carries the same data a search
 	 * result does. No-op when already loaded or in flight.
 	 */
@@ -75,8 +82,7 @@ class ModelsDiscoverStore {
 
 			const builds = this.catalogBuilds();
 			const failedBuilds: HfCatalogBuild[] = [];
-
-			this.defaultModels = [];
+			const suggested: HfModelInfo[] = [];
 
 			// fetch in small batches: not every repo hits the HF API at once,
 			// and the rows land as they arrive instead of all at the end
@@ -102,13 +108,11 @@ class ModelsDiscoverStore {
 					this.catalogSizeRanges.set(build.repo, this.sizeRangeFor(build, tree));
 
 					// the catalog repo id, not the HF response `id`, drives selection
-					this.defaultModels.push({ ...info, id: build.repo, modelId: build.repo });
+					suggested.push({ ...info, id: build.repo, modelId: build.repo });
 				}
 
-				// show what has landed, unless a search owns the list right now
-				if (!this.searching) {
-					this.models = [...this.defaultModels];
-				}
+				// show what has landed
+				this.suggested = [...suggested];
 			}
 
 			// stay incomplete when some repos failed, so the next mount retries
@@ -121,15 +125,30 @@ class ModelsDiscoverStore {
 		}
 	}
 
-	/** Replace the list with search results; an empty query restores the default list. */
+	/** Release month of a catalog family, e.g. `Aug 2025`; undefined outside the catalog. */
+	releasedFor(modelId: string): string | undefined {
+		const [year, month] = (this.catalogEntryFor(modelId)?.released ?? '').split('-').map(Number);
+
+		if (!year || !month) return undefined;
+
+		return new Date(Date.UTC(year, month - 1)).toLocaleDateString('en-US', {
+			month: 'short',
+			timeZone: 'UTC',
+			year: 'numeric'
+		});
+	}
+
+	/** Search all of HuggingFace; an empty query clears the results. */
 	async search(query: string): Promise<void> {
 		const trimmed = query.trim();
 		const requestId = ++this.searchRequestId;
 
+		this.query = trimmed;
+
 		if (!trimmed) {
 			this.searching = false;
-			this.models = this.defaultModels;
-			this.error = null;
+			this.searchResults = [];
+			this.searchError = null;
 
 			return;
 		}
@@ -137,19 +156,30 @@ class ModelsDiscoverStore {
 		this.searching = true;
 
 		try {
-			const results = await HuggingFaceService.searchByQuery(trimmed, { limit: 50 });
+			const results = await this.searchHub(trimmed);
 
 			if (requestId !== this.searchRequestId) return;
 
-			this.models = this.baseOrgFirst(results);
-			this.error = null;
+			this.searchResults = results;
+			this.searchError = null;
 		} catch (err) {
 			if (requestId !== this.searchRequestId) return;
 
-			this.error = err instanceof Error ? err.message : 'Search failed';
+			this.searchResults = [];
+			this.searchError = err instanceof Error ? err.message : 'Search failed';
 		} finally {
 			if (requestId === this.searchRequestId) this.searching = false;
 		}
+	}
+
+	/**
+	 * One Hub search in the order every search surface lists it. Keeps no state, so a
+	 * second surface (the search dialog) never disturbs the models page's results.
+	 */
+	async searchHub(query: string): Promise<HfModelInfo[]> {
+		return this.baseOrgFirst(
+			await HuggingFaceService.searchByQuery(query.trim(), { limit: MODELS_DISCOVER_SEARCH_LIMIT })
+		);
 	}
 
 	/**
@@ -226,6 +256,12 @@ class ModelsDiscoverStore {
 					return build ? [build] : [];
 				})
 			);
+	}
+
+	private catalogEntryFor(modelId: string): HfCatalogEntry | undefined {
+		return this.catalog.find((entry) =>
+			entry.sizes.some((size) => size.builds.some((build) => build.repo === modelId))
+		);
 	}
 
 	/** Byte sizes of every non-sidecar quant file in a tree, shards collapsed. */

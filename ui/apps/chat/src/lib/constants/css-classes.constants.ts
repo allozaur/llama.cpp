@@ -81,6 +81,12 @@ export const FILTER_TOGGLE_ITEM_CLASS = 'w-8';
 /** Column grid shared by every row of the models manager table. Below md the context,
  *  status and actions columns are dropped, so a phone gives the whole width to the
  *  model id and floats the row's last cell at the row's end. */
+/** Responsive grid of model cards; the minimum matches a carousel card's width. */
+export const MODEL_CARD_GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(18rem,1fr))] gap-3';
+
+/** Width of a model card in a horizontal carousel. */
+export const MODEL_CARD_CAROUSEL_CLASS = 'w-72 shrink-0 snap-start';
+
 export const MODEL_ROW_GRID_CLASS =
 	'grid grid-cols-[minmax(0,1fr)] items-center gap-3 md:grid-cols-[minmax(0,1fr)_11rem_3rem_4.5rem] md:gap-4';
 

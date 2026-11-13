@@ -93,11 +93,11 @@ export { default as DialogExportSettings } from './DialogExportSettings.svelte';
 export { default as DialogConfirmation } from './DialogConfirmation.svelte';
 
 /**
- * **DialogSearch** - Spotlight-style search over chats and sidebar actions
+ * **DialogSearch** - Spotlight-style search over chats, projects, sidebar actions and Hub models
  *
  * Opens over the app with a focused input and a keyboard-driven result list:
- * arrow keys move the highlight, Enter opens, Escape closes. A phone shows it full screen, like
- * every dialog.
+ * arrow keys move the highlight, Enter opens, Escape closes. With Discover on, the typed
+ * term also searches Hugging Face. A phone shows it full screen, like every dialog.
  */
 export { default as DialogSearch } from './DialogSearch.svelte';
 
@@ -479,6 +479,3 @@ export { default as DialogConversationSelection } from './DialogConversationSele
  * ```
  */
 export { default as DialogMermaidPreview } from './DialogMermaidPreview.svelte';
-
-/** **DialogDiscoverModels** - shell for the Hugging Face model discovery view. */
-export { default as DialogDiscoverModels } from './DialogDiscoverModels.svelte';

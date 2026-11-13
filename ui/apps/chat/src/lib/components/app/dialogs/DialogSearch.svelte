@@ -4,16 +4,26 @@
 	import { goto } from '$app/navigation';
 	import { ActionIcon, KeyboardShortcutInfo } from '$lib/components/app';
 	import {
+		DISCOVER_ICON,
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,
 		ICON_CLASS_XS,
+		MODELS_DISCOVER_SEARCH_DEBOUNCE_MS,
 		PROJECT_ICON,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '$lib/constants';
 	import { KeyboardKey, SidebarAction } from '$lib/enums';
 	import { extensions, type NavigationItem } from '$lib/extensions';
+	import { HuggingFaceService } from '$lib/services';
 	import { RouterService } from '$lib/services/router.service';
-	import { conversationsStore, deviceStore, projectsStore, uiStore } from '$lib/stores';
+	import {
+		conversationsStore,
+		deviceStore,
+		modelsDiscoverStore,
+		projectsStore,
+		uiStore
+	} from '$lib/stores';
+	import type { HfModelInfo } from '$lib/types/huggingface';
 	import { formatRelativeTime, isIMEComposing, sidebarFooterItems } from '$lib/utils';
 	import type { Component } from 'svelte';
 
@@ -39,6 +49,8 @@
 
 	interface SearchSection {
 		entries: SearchEntry[];
+		/** Shown in place of the entries a section is still waiting for, or failed to get. */
+		note?: string;
 		title: string;
 	}
 
@@ -46,6 +58,8 @@
 	const RECENT_LIMIT = 5;
 	/** Matches kept while typing; the rest stays reachable by typing more. */
 	const MATCH_LIMIT = 50;
+	/** Hub models listed; the models page shows the whole search. */
+	const HUB_LIMIT = 6;
 
 	let query = $state('');
 	let highlighted = $state(0);
@@ -117,18 +131,79 @@
 			.filter((entry) => matches(entry.label))
 	);
 
+	// Hub models answer the typed term wherever the models page searches the Hub
+	const searchesHub = $derived(open && uiStore.isDiscoverEnabled && needle.length > 0);
+
+	let hubModels = $state<HfModelInfo[]>([]);
+	let hubNote = $state<string | undefined>();
+
+	$effect(() => {
+		hubModels = [];
+		hubNote = undefined;
+
+		if (!searchesHub) return;
+
+		const term = needle;
+
+		let cancelled = false;
+
+		hubNote = 'Searching Hugging Face...';
+
+		// the same debounce the models page waits for after the last keystroke
+		const timer = setTimeout(async () => {
+			try {
+				// the models page's own search, so the first matches here lead its list too
+				const models = await modelsDiscoverStore.searchHub(term);
+
+				if (cancelled) return;
+
+				hubModels = models.slice(0, HUB_LIMIT);
+				hubNote = undefined;
+			} catch {
+				if (!cancelled) hubNote = 'Could not search Hugging Face';
+			}
+		}, MODELS_DISCOVER_SEARCH_DEBOUNCE_MS);
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timer);
+		};
+	});
+
+	const hubEntries = $derived.by((): SearchEntry[] =>
+		hubModels.map((model) => ({
+			icon: DISCOVER_ICON,
+			id: `hub-${model.id}`,
+			label: model.id,
+			meta: `${HuggingFaceService.formatDownloads(model.downloads)} downloads`,
+			run: () => close(() => openHubModel(model.id))
+		}))
+	);
+
+	// last, so matches arriving from the Hub never move the rows above them
 	const sections = $derived<SearchSection[]>(
 		[
 			{ entries: chatEntries, title: needle ? 'Chats' : 'Recents' },
 			{ entries: projectEntries, title: 'Projects' },
-			{ entries: actionEntries, title: 'Actions' }
-		].filter((section) => section.entries.length > 0)
+			{ entries: actionEntries, title: 'Actions' },
+			{ entries: hubEntries, note: hubNote, title: 'Models on Hugging Face' }
+		].filter((section) => section.entries.length > 0 || section.note)
 	);
 
 	const entries = $derived(sections.flatMap((section) => section.entries));
 	const activeIndex = $derived(Math.min(highlighted, entries.length - 1));
 
 	const emptyMessage = $derived(needle ? 'No results found' : 'No chats yet');
+
+	/**
+	 * Shows a Hub model's details over the models page; a phone, which has no models
+	 * page in its navigation, opens them over the page it is on.
+	 */
+	function openHubModel(repo: string) {
+		if (!deviceStore.isMobile) uiStore.openModelsManager();
+
+		uiStore.openHubModelDetails(repo);
+	}
 
 	/** Closes the search first, so a dialog opened by `next` takes the focus. */
 	function close(next: () => void) {
@@ -269,6 +344,10 @@
 								: 'opacity-0'}"
 						/>
 					</button>
+				{:else}
+					<p class="px-2.5 py-2 text-sm text-muted-foreground max-md:py-3 max-md:text-base">
+						{section.note}
+					</p>
 				{/each}
 			</div>
 		{:else}

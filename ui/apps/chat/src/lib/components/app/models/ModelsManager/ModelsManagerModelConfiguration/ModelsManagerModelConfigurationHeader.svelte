@@ -3,10 +3,10 @@
 	import { Badge } from '@ggml/llama-ui/ui/badge';
 	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Server, X } from '@lucide/svelte';
-	import { Logo, ModelAvatar, ModelId } from '$lib/components/app';
+	import { Logo, ModelAvatar, ModelCapabilities, ModelId } from '$lib/components/app';
 	import { ServerIcon } from '$lib/components/app/servers';
 	import { LOCAL_BACKEND_ID } from '$lib/constants';
-	import { ModelCapability, ServerModelStatus } from '$lib/enums';
+	import { ServerModelStatus } from '$lib/enums';
 	import { deviceStore } from '$lib/stores';
 	import type { ModelOption } from '$lib/types/models';
 	import { getServer } from '$lib/utils/api-base';
@@ -17,8 +17,8 @@
 		isCustomized: boolean;
 		isLoaded: boolean;
 		onClose: () => void;
-		/** Opens the manager dialog on the Discover view, focused on this model's repo. */
-		onSeeInDiscover?: () => void;
+		/** Opens the Hub details drawer on this model's repo. */
+		onViewOnHub?: () => void;
 		onRequestCancelDownload?: () => void;
 		onToggleDownload?: () => void;
 		onToggleLoad: () => void;
@@ -36,16 +36,14 @@
 		isLoaded,
 		onClose,
 		onRequestCancelDownload,
-		onSeeInDiscover,
 		onToggleDownload,
 		onToggleLoad,
 		onUseInChat,
 		onUseInNewChat,
+		onViewOnHub,
 		option,
 		status
 	}: Props = $props();
-	let supportsToolUse = $derived(option.capabilities.includes(ModelCapability.TOOL_USE));
-	let supportsThinking = $derived(option.capabilities.includes(ModelCapability.REASONING));
 	let server = $derived(getServer(option.serverId));
 	let serverName = $derived(server?.name ?? null);
 
@@ -100,14 +98,15 @@
 			<div class="min-w-0">
 				<!-- a phone gives the id a row of its own, with its badges and icons under it -->
 				<div class="flex items-center gap-2">
+					<!-- capabilities get a badge row of their own under the header -->
 					<ModelId
 						aliases={option.aliases}
 						class="min-w-0"
+						hideCapabilities
+						hideModalities
 						modalities={option.modalities}
 						modelId={option.model}
 						stackId={deviceStore.isMobile}
-						{supportsThinking}
-						{supportsToolUse}
 						tags={option.tags}
 						title={option.model}
 					/>
@@ -159,6 +158,9 @@
 		{/if}
 	</div>
 
+	<!-- capabilities named in badges, the way the model cards and MCP servers show them -->
+	<ModelCapabilities asBadges {option} />
+
 	<!-- a phone floats the actions at the bottom of the pane, where the thumb is -->
 	{#if !isMobile}
 		<ModelsManagerModelConfigurationActions
@@ -167,11 +169,11 @@
 			{isLoaded}
 			{isLoading}
 			{onRequestCancelDownload}
-			{onSeeInDiscover}
 			{onToggleDownload}
 			{onToggleLoad}
 			{onUseInChat}
 			{onUseInNewChat}
+			{onViewOnHub}
 			size="default"
 		/>
 	{/if}

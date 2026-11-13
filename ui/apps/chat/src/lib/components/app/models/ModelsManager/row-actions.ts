@@ -24,14 +24,14 @@ export function modelRowActions(
 	handlers: RowHandlers
 ): MenuAction[] {
 	const { download, favorite, isHidden } = state;
-	// the details pane is keyed by repo, not by `<repo>:<quant>`; the entry exists only
+	// the Hub drawer is keyed by repo, not by `<repo>:<quant>`; the entry exists only
 	// while Discover is on
-	const viewInDiscover = uiStore.isDiscoverEnabled
+	const viewOnHub = uiStore.isDiscoverEnabled
 		? [
 				{
 					icon: Compass,
-					label: 'See in Discover',
-					onclick: () => uiStore.openModelsDiscover(repoOf(option.model)),
+					label: 'View on Hugging Face',
+					onclick: () => uiStore.openHubModelDetails(repoOf(option.model)),
 					separator: true
 				}
 			]
@@ -56,7 +56,7 @@ export function modelRowActions(
 				separator: true,
 				variant: 'destructive' as const
 			},
-			...viewInDiscover
+			...viewOnHub
 		];
 	}
 
@@ -84,6 +84,6 @@ export function modelRowActions(
 			onclick: () => modelsStore.toggleHidden(option.id),
 			separator: true
 		},
-		...viewInDiscover
+		...viewOnHub
 	];
 }
