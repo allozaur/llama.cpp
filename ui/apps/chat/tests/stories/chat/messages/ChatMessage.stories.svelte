@@ -1,5 +1,4 @@
 <script lang="ts" module>
-	import { activateBuiltInExtensions } from '../../helpers/extensions';
 	import {
 		agenticToolMessages,
 		assistantAgenticWithStatsMessage,
@@ -258,12 +257,7 @@
 
 <Story
 	args={{ message: mcpPromptMessage }}
-	beforeEach={async () => {
-		// the MCP extension draws this message
-		await activateBuiltInExtensions();
-
-		return seedChatStory();
-	}}
+	beforeEach={() => seedChatStory()}
 	name="McpPrompt"
 	play={async ({ canvas }) => {
 		await expect(
