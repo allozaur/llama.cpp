@@ -38,6 +38,8 @@ export interface SettingsEntry {
 	min?: number;
 	max?: number;
 	dependsOn?: string;
+	/** The extension the setting belongs to: its field shows only while that extension is on. The value and its default are kept either way. */
+	extension?: string;
 	sync?: {
 		serverKey: string;
 		paramType: SyncableParameterType;
@@ -63,6 +65,8 @@ export interface SettingsFieldConfig {
 	min?: number;
 	max?: number;
 	dependsOn?: string;
+	/** The extension the field belongs to; hidden while that extension is off. */
+	extension?: string;
 	help?: string;
 	options?: Array<{ value: string; label: string; icon?: typeof Icon }>;
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
