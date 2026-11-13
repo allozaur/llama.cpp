@@ -1,5 +1,4 @@
 <script lang="ts" module>
-	import { activateBuiltInExtensions } from '../../../helpers/extensions';
 	import StateGallery from '../../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../../helpers/StateGalleryItem.svelte';
 	import {
@@ -45,7 +44,6 @@
 <!-- the MCP extension draws the MCP items -->
 <Story
 	asChild
-	beforeEach={activateBuiltInExtensions}
 	name="States"
 	play={async ({ canvas }) => {
 		// the stored MCP resource is MCP's own chip, not the default text chip
