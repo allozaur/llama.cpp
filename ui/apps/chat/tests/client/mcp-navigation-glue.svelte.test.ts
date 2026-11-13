@@ -1,6 +1,7 @@
 // What the MCP extension gives the sidebar, the page route and startup: its
 // entry right after Models, the MCP servers page that entry leads to,
-// and the background health checks, which stop when the extension goes off.
+// and the background health checks, which stop when the extension goes off,
+// when the live connections close too.
 
 import { ROUTES, SETTINGS_KEYS, SIDEBAR_FOOTER_ITEMS } from '$lib/constants';
 import type { ExtensionContext, ExtensionPage, NavigationItem } from '$lib/extensions';
@@ -77,6 +78,7 @@ describe('MCP navigation glue', () => {
 		const runHealthChecks = vi
 			.spyOn(mcpStore, 'runHealthChecksForServers')
 			.mockResolvedValue(undefined);
+		const shutdown = vi.spyOn(mcpStore, 'shutdown').mockResolvedValue();
 		const { cleanups, ctx } = makeContext();
 
 		try {
@@ -105,14 +107,20 @@ describe('MCP navigation glue', () => {
 
 			expect(runHealthChecks).toHaveBeenCalledTimes(2);
 
-			expect(cleanups).toHaveLength(1);
-			await cleanups[0]();
+			// the registry runs the cleanups last-in first-out: the checks stop, then the connections close
+			expect(cleanups).toHaveLength(2);
+			expect(shutdown).not.toHaveBeenCalled();
+
+			for (const cleanup of [...cleanups].reverse()) await cleanup();
+
+			expect(shutdown).toHaveBeenCalledOnce();
 
 			setServers([{ enabled: true, id: 'late', url: 'http://localhost:9004/mcp' }]);
 
 			expect(runHealthChecks).toHaveBeenCalledTimes(2);
 		} finally {
 			runHealthChecks.mockRestore();
+			shutdown.mockRestore();
 			settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, original);
 		}
 	});

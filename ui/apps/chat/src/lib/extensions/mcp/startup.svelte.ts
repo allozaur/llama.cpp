@@ -12,8 +12,13 @@ import { untrack } from 'svelte';
  * Only IDLE servers are checked; already-resolved (SUCCESS / ERROR) servers
  * keep their existing state, so adding or removing a server does not flash
  * every other card back through skeleton state.
+ * When the extension is switched off the checks stop and the live
+ * connections are closed.
  */
 export function contributeStartup(ctx: ExtensionContext): void {
+	// cleanups run last-in first-out: the checks stop first, then the connections close
+	ctx.onDeactivate(() => mcpStore.shutdown());
+
 	// outside any component, so the effect needs a root of its own; it runs again when the server list changes
 	const dispose = $effect.root(() => {
 		$effect(() => {

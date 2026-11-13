@@ -459,6 +459,8 @@ An extension is a feature the app is composed with and that can be switched off.
 
 The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
 
+Extensions are switched on and off in Settings, in the Extensions section. A switch takes effect at once: the extension's contributions go away and its cleanups run (MCP closes its connections). The choice is kept in localStorage and read at startup.
+
 MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
 
 | Part                       | Responsibility                                                                                    |
