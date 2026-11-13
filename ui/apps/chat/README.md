@@ -455,7 +455,7 @@ Services are a stateless protocol layer: static methods, pure I/O, no reactive s
 
 #### Extensions (`src/lib/extensions/`)
 
-An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, sidebar entries, pages, slash commands, pickers, pending attachments, and message and attachment renderers.
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, sidebar entries, pages, slash commands, pickers, pending attachments, message and attachment renderers, and prompts offered as system messages.
 
 The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
 

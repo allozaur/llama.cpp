@@ -1,13 +1,23 @@
 <script lang="ts">
 	import { Button } from '@ggml/llama-ui/ui/button';
 	import { Card } from '@ggml/llama-ui/ui/card';
-	import { Check, X } from '@lucide/svelte';
-	import { ChatMessageActionIcons, MarkdownContent } from '$lib/components/app';
-	import { INPUT_CLASSES } from '$lib/constants';
+	import { Check, ScanText, X } from '@lucide/svelte';
+	import {
+		ChatMessageActionIcons,
+		ChatMessagePromptContent,
+		DialogPrompt,
+		DialogPromptUpdate,
+		MarkdownContent
+	} from '$lib/components/app';
+	import { INPUT_CLASSES, SYSTEM_MESSAGE_PLACEHOLDER } from '$lib/constants';
 	import { getChatMessageEditContext } from '$lib/contexts';
-	import { KeyboardKey } from '$lib/enums';
-	import { settingsStore } from '$lib/stores';
-	import { autoResizeTextarea, isIMEComposing } from '$lib/utils';
+	import { AttachmentType, KeyboardKey, PromptDrift } from '$lib/enums';
+	import { extensions } from '$lib/extensions';
+	import { DatabaseService } from '$lib/services/database.service';
+	import { conversationsStore, promptsStore, settingsStore } from '$lib/stores';
+	import type { PromptDraft } from '$lib/stores/prompts.svelte';
+	import type { DatabaseMessageExtra, DatabaseMessageExtraPrompt } from '$lib/types';
+	import { autoResizeTextarea, getPromptDrift, isIMEComposing, isMcpPromptId } from '$lib/utils';
 
 	interface Props {
 		class?: string;
@@ -40,6 +50,97 @@
 	const currentConfig = settingsStore.config;
 
 	let showExpandButton = $derived(contentHeight > MAX_HEIGHT);
+
+	// The prompt this message was made from. MCP prompts are linked by name only,
+	// so they never resolve against the library.
+	let messageExtras = $derived<DatabaseMessageExtra[]>(message.extra ?? []);
+	let promptLink = $derived(
+		messageExtras.find(
+			(extra): extra is DatabaseMessageExtraPrompt => extra.type === AttachmentType.PROMPT
+		)
+	);
+	let libraryPromptId = $derived(
+		promptLink && !isMcpPromptId(promptLink.promptId) ? promptLink.promptId : undefined
+	);
+	let linkedPrompt = $derived(libraryPromptId ? promptsStore.get(libraryPromptId) : undefined);
+	let drift = $derived(libraryPromptId ? getPromptDrift(message, linkedPrompt) : PromptDrift.NONE);
+	// a message made from an extension's prompt is drawn by that extension: an MCP
+	// prompt shows the MCP prompt card, with its server and name
+	let promptSource = $derived(
+		promptLink
+			? extensions
+					.contributions('systemPromptSources')
+					.find((source) => source.owns(promptLink.promptId))
+			: undefined
+	);
+
+	let showUpdateDialog = $state(false);
+	let showAddDialog = $state(false);
+
+	// a system message written in the chat, not yet a prompt, can be saved as one
+	let canAddToLibrary = $derived(
+		!promptLink && !!message.content.trim() && message.content !== SYSTEM_MESSAGE_PLACEHOLDER
+	);
+
+	/** Sets the message text and links it to a prompt, keeping its other extras. */
+	async function linkMessageToPrompt(content: string, link: { promptId: string; title: string }) {
+		const extra = $state.snapshot([
+			...messageExtras.filter((extra) => extra.type !== AttachmentType.PROMPT),
+			{ type: AttachmentType.PROMPT, ...link }
+		]) as DatabaseMessageExtra[];
+
+		await DatabaseService.updateMessage(message.id, { content, extra });
+
+		const index = conversationsStore.findMessageIndex(message.id);
+
+		if (index !== -1) conversationsStore.updateMessageAtIndex(index, { content, extra });
+	}
+
+	async function handleUpdateLibrary(name: string) {
+		if (!linkedPrompt) return;
+
+		const content = message.content.trim();
+
+		await promptsStore.update(linkedPrompt.id, { content, name });
+		await linkMessageToPrompt(content, {
+			promptId: linkedPrompt.id,
+			title: promptsStore.get(linkedPrompt.id)?.name ?? name
+		});
+
+		showUpdateDialog = false;
+	}
+
+	async function handleSyncFromLibrary() {
+		if (!linkedPrompt) return;
+
+		await linkMessageToPrompt(linkedPrompt.content, {
+			promptId: linkedPrompt.id,
+			title: linkedPrompt.name
+		});
+
+		showUpdateDialog = false;
+	}
+
+	async function handleSaveAsNew() {
+		if (!promptLink) return;
+
+		const created = await promptsStore.add({
+			content: message.content,
+			name: promptLink.title
+		});
+
+		if (!created) return;
+
+		await linkMessageToPrompt(message.content, { promptId: created.id, title: created.name });
+	}
+
+	async function handleAddToLibrary(draft: PromptDraft) {
+		const created = await promptsStore.add({ ...draft, content: message.content });
+
+		if (!created) return;
+
+		await linkMessageToPrompt(created.content, { promptId: created.id, title: created.name });
+	}
 
 	$effect(() => {
 		if (!messageElement || !message.content.trim()) return;
@@ -115,78 +216,129 @@
 			</div>
 		</div>
 	{:else}
-		{#if message.content.trim()}
-			<div class="relative max-w-[80%]">
-				<button
-					class="group/expand block w-full text-left {!isExpanded && showExpandButton
-						? 'cursor-pointer'
-						: 'cursor-auto'}"
-					onclick={showExpandButton && !isExpanded ? toggleExpand : undefined}
-					type="button"
-				>
-					<Card
-						class="overflow-y-auto rounded-[1.125rem] !border-2 !border-dashed !border-border/50 bg-muted px-3.75 py-1.5 data-[multiline]:py-2.5"
-						data-multiline={isMultiline ? '' : undefined}
-						style="border: 2px dashed hsl(var(--border)); max-height: var(--max-message-height); overflow-wrap: anywhere; word-break: break-word;"
-					>
-						<div
-							class="relative transition-all duration-300 {isExpanded
-								? 'cursor-text select-text'
-								: 'select-none'}"
-							style={!isExpanded && showExpandButton
-								? `max-height: ${MAX_HEIGHT}px;`
-								: 'max-height: none;'}
+		{#if promptLink && promptSource?.card}
+			<promptSource.card
+				class="w-full max-w-[80%]"
+				content={message.content}
+				promptId={promptLink.promptId}
+				title={promptLink.title}
+			/>
+		{:else if promptLink}
+			<!-- made from a library prompt: shown like the MCP prompt card, as in the prompt library -->
+			<ChatMessagePromptContent
+				class="w-full max-w-[80%]"
+				content={message.content}
+				name={linkedPrompt?.name ?? promptLink.title}
+			>
+				{#snippet status()}
+					{#if drift === PromptDrift.LIBRARY || drift === PromptDrift.MESSAGE}
+						<button
+							class="shrink-0 text-xs font-medium text-amber-600 hover:text-amber-700 hover:underline dark:text-amber-400 dark:hover:text-amber-300"
+							onclick={() => (showUpdateDialog = true)}
+							title="This system message differs from its prompt. Click to update the prompt or sync from it."
+							type="button"
 						>
-							{#if currentConfig.renderUserContentAsMarkdown}
-								<div bind:this={messageElement} class={isExpanded ? 'cursor-text' : ''}>
-									<MarkdownContent class="markdown-system-content" content={message.content} />
-								</div>
-							{:else}
-								<span
-									bind:this={messageElement}
-									class="text-md whitespace-pre-wrap {isExpanded ? 'cursor-text' : ''}"
-								>
-									{message.content}
-								</span>
-							{/if}
+							Modified
+						</button>
+					{:else if drift === PromptDrift.MISSING}
+						<button
+							class="shrink-0 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+							onclick={handleSaveAsNew}
+							title="The prompt no longer exists. Save this system message as a new prompt."
+							type="button"
+						>
+							Save as new
+						</button>
+					{/if}
+				{/snippet}
+			</ChatMessagePromptContent>
+		{:else}
+			{#if message.content.trim()}
+				<div class="relative max-w-[80%]">
+					<button
+						class="group/expand block w-full text-left {!isExpanded && showExpandButton
+							? 'cursor-pointer'
+							: 'cursor-auto'}"
+						onclick={showExpandButton && !isExpanded ? toggleExpand : undefined}
+						type="button"
+					>
+						<Card
+							class="overflow-y-auto rounded-[1.125rem] !border-2 !border-dashed !border-border/50 bg-muted px-3.75 py-1.5 data-[multiline]:py-2.5"
+							data-multiline={isMultiline ? '' : undefined}
+							style="border: 2px dashed hsl(var(--border)); max-height: var(--max-message-height); overflow-wrap: anywhere; word-break: break-word;"
+						>
+							<div
+								class="relative transition-all duration-300 {isExpanded
+									? 'cursor-text select-text'
+									: 'select-none'}"
+								style={!isExpanded && showExpandButton
+									? `max-height: ${MAX_HEIGHT}px;`
+									: 'max-height: none;'}
+							>
+								{#if currentConfig.renderUserContentAsMarkdown}
+									<div bind:this={messageElement} class={isExpanded ? 'cursor-text' : ''}>
+										<MarkdownContent class="markdown-system-content" content={message.content} />
+									</div>
+								{:else}
+									<span
+										bind:this={messageElement}
+										class="text-md whitespace-pre-wrap {isExpanded ? 'cursor-text' : ''}"
+									>
+										{message.content}
+									</span>
+								{/if}
 
-							{#if !isExpanded && showExpandButton}
-								<div
-									class="pointer-events-none absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t from-muted to-transparent"
-								></div>
+								{#if !isExpanded && showExpandButton}
+									<div
+										class="pointer-events-none absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t from-muted to-transparent"
+									></div>
 
-								<div
-									class="pointer-events-none absolute right-0 bottom-4 left-0 flex justify-center opacity-0 transition-opacity group-hover/expand:opacity-100"
-								>
+									<div
+										class="pointer-events-none absolute right-0 bottom-4 left-0 flex justify-center opacity-0 transition-opacity group-hover/expand:opacity-100"
+									>
+										<Button
+											class="rounded-full px-4 py-1.5 text-xs shadow-md"
+											size="sm"
+											variant="outline"
+										>
+											Show full system message
+										</Button>
+									</div>
+								{/if}
+							</div>
+
+							{#if isExpanded && showExpandButton}
+								<div class="mb-2 flex justify-center">
 									<Button
 										class="rounded-full px-4 py-1.5 text-xs shadow-(--elevation-surface)"
+										onclick={(e) => {
+											e.stopPropagation();
+											toggleExpand();
+										}}
 										size="sm"
 										variant="outline"
 									>
-										Show full system message
+										Collapse System Message
 									</Button>
 								</div>
 							{/if}
-						</div>
+						</Card>
+					</button>
+				</div>
+			{/if}
 
-						{#if isExpanded && showExpandButton}
-							<div class="mb-2 flex justify-center">
-								<Button
-									class="rounded-full px-4 py-1.5 text-xs"
-									onclick={(e) => {
-										e.stopPropagation();
-										toggleExpand();
-									}}
-									size="sm"
-									variant="outline"
-								>
-									Collapse System Message
-								</Button>
-							</div>
-						{/if}
-					</Card>
+			{#if canAddToLibrary}
+				<button
+					class="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:underline"
+					onclick={() => (showAddDialog = true)}
+					title="Save this system message as a prompt, to start other chats from it."
+					type="button"
+				>
+					<ScanText class="h-3.5 w-3.5" />
+
+					Add to library
 				</button>
-			</div>
+			{/if}
 		{/if}
 
 		{#if message.timestamp}
@@ -194,5 +346,24 @@
 				<ChatMessageActionIcons actionsPosition="right" justify="end" />
 			</div>
 		{/if}
+	{/if}
+
+	<DialogPrompt
+		bind:open={showAddDialog}
+		contentEditable={false}
+		initialContent={message.content}
+		onSave={handleAddToLibrary}
+	/>
+
+	{#if linkedPrompt}
+		<DialogPromptUpdate
+			bind:open={showUpdateDialog}
+			content={message.content}
+			{drift}
+			onCancel={() => (showUpdateDialog = false)}
+			onConfirm={handleUpdateLibrary}
+			onSync={handleSyncFromLibrary}
+			prompt={linkedPrompt}
+		/>
 	{/if}
 </div>

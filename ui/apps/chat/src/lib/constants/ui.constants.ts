@@ -8,10 +8,11 @@ import {
 import {
 	MODELS_ROUTE_ID,
 	PROJECTS_ROUTE_ID,
+	ROUTES,
 	SERVERS_ROUTE_ID,
 	SETTINGS_ROUTE_ID
 } from './routes.constants';
-import { Search, Server, Settings, SquarePen } from '@lucide/svelte';
+import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import { SidebarAction, ToolSource } from '$lib/enums';
 import type { DesktopIconStripItem } from '$lib/types';
 
@@ -175,6 +176,12 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		activeRouteId: PROJECTS_ROUTE_ID,
 		icon: PROJECT_ICON,
 		tooltip: 'Projects'
+	},
+	{
+		activeRoutePrefix: '/library',
+		icon: Library,
+		route: ROUTES.LIBRARY,
+		tooltip: 'Library'
 	}
 ];
 

@@ -66,6 +66,7 @@ Each is a typed slot in `points/`. The core decides where a contribution shows a
 <Layer name="composerAttachments" tag="MCP" kind="reuse">Attachments kept outside the form's files, drawn under the input and added to the message when it is sent.</Layer>
 <Layer name="messageRenderers" tag="MCP" kind="reuse">Claims a message and draws it in place of the default.</Layer>
 <Layer name="attachmentRenderers" tag="MCP" kind="reuse">Claims an attachment and draws its chip; it stays out of the built-in preview.</Layer>
+<Layer name="systemPromptSources" tag="MCP" kind="reuse">Prompts offered as system messages in the chat form's System message list, beside the prompt library, and the card of a system message made from one.</Layer>
 </Layers>
 
 A setting can also name the extension it belongs to: its field shows only while that extension is on, and the stored value stays either way.

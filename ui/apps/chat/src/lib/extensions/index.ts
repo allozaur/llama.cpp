@@ -25,6 +25,11 @@ export type {
 	ToolProviderEmptyHint,
 	ToolProviderEntry
 } from './points/tools';
+export type {
+	SystemPromptCardProps,
+	SystemPromptEntry,
+	SystemPromptSource
+} from './points/system-prompts';
 export { ExtensionRegistry, extensions } from './registry.svelte';
 export type {
 	Extension,
