@@ -2,7 +2,7 @@
 // renderer claims it. These pin how a renderer is picked, and what the core
 // falls back to for the MCP attachment kinds when no renderer claims them.
 
-import { AttachmentType, MessageRole, MessageType } from '$lib/enums';
+import { AttachmentType, MessageRole, MessageType, SpecialFileType } from '$lib/enums';
 import type {
 	AttachmentRenderer,
 	AttachmentRendererProps,
@@ -168,6 +168,24 @@ describe('attachments no renderer claims', () => {
 	it('read as text files when they carry text, so the default chip and preview show them', () => {
 		expect(isTextFile(MCP_PROMPT)).toBe(true);
 		expect(isTextFile(MCP_RESOURCE)).toBe(true);
+	});
+
+	it('read as text files before they are sent too, once their text has loaded', () => {
+		const pending = {
+			file: new File([], 'loading'),
+			id: 'pending',
+			name: 'code_review',
+			size: 17,
+			type: SpecialFileType.MCP_PROMPT
+		};
+
+		expect(isTextFile(undefined, { ...pending, textContent: 'Review this file.' })).toBe(true);
+		expect(isTextFile(undefined, pending)).toBe(false);
+		// an upload of a kind the browser could not name is not one of the app's own kinds
+		expect(isTextFile(undefined, { ...pending, textContent: 'text', type: '' })).toBe(false);
+		expect(
+			isTextFile(undefined, { ...pending, textContent: 'text', type: 'application/x-unknown' })
+		).toBe(false);
 	});
 
 	it('keep their name and text as display items', () => {
