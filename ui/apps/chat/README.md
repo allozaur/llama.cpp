@@ -472,6 +472,10 @@ MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
 
 MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
 
+A setting can name the extension it belongs to (`extension` in `SETTINGS_REGISTRY`): its field shows only while that extension is on, and the stored value stays either way.
+
+llama-server embeds the app as a single bundle, so an extension's code ships whether it is on or off; nothing of it runs while it is off. Storybook's Architecture › Extensions page lists the extension points and what Models, Projects and the Library still need before they can plug in the same way.
+
 ---
 
 ## Data Flows

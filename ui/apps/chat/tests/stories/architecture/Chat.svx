@@ -89,7 +89,7 @@ The agentic loop runs in the browser, through [Llama Harness](/stack/) (`@ggml/l
 ## What Chat keeps, what it hands off
 
 <Cards>
-<Card title="Keeps">All business logic: conversations, tabs, groups, search, tools, MCP and permission gates, projects, the models manager, Discover, downloads, model configuration and Servers.</Card>
+<Card title="Keeps">All business logic: conversations, tabs, groups, search, tools and permission gates, projects, the models manager, Discover, downloads, model configuration and Servers. MCP is the first feature that plugs in as an [extension](/extensions/).</Card>
 <Card title="Gives the harness">The agentic loop, as `@ggml/llama-harness`: headless, no UI. Chat keeps the tools and the approval gate above it.</Card>
 <Card title="Gives the library">Presentation only: thread, composer, tool-call blocks, permission prompt, model selector, model card, capability badges. They take data in and report what the user did out.</Card>
 </Cards>
