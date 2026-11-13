@@ -35,9 +35,14 @@
 
 	// what extensions manage from Settings, each under the setting that switches it on
 	let settingsActions = $derived(extensions.contributions('settingsActions'));
+
+	// a field that belongs to an extension shows only while that extension is on
+	let visibleFields = $derived(
+		fields.filter((field) => !field.extension || extensions.isActive(field.extension))
+	);
 </script>
 
-{#each fields as field (field.key)}
+{#each visibleFields as field (field.key)}
 	{#if !field.dependsOn || Boolean(localConfig[field.dependsOn])}
 		<div class={field.dependsOn ? 'space-y-2 pl-6' : 'space-y-2'}>
 			{#if field.type === SettingsFieldType.INPUT}

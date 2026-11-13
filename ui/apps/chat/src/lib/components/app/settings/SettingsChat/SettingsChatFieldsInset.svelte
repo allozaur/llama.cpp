@@ -46,8 +46,13 @@
 
 	const fieldDefaults = useSettingsFieldDefaults(() => localConfig);
 
+	// a field that belongs to an extension shows only while that extension is on
 	let visibleFields = $derived(
-		fields.filter((field) => !field.dependsOn || Boolean(localConfig[field.dependsOn]))
+		fields.filter(
+			(field) =>
+				(!field.extension || extensions.isActive(field.extension)) &&
+				(!field.dependsOn || Boolean(localConfig[field.dependsOn]))
+		)
 	);
 
 	let blocks = $derived.by(() => {
