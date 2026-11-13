@@ -427,6 +427,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 			},
 			{
 				defaultValue: DEFAULT_MCP_CONFIG.requestTimeoutSeconds,
+				extension: 'mcp',
 				help: 'Timeout for individual MCP tool calls.',
 				isPositiveInteger: true,
 				key: SETTINGS_KEYS.MCP_REQUEST_TIMEOUT_SECONDS,
@@ -754,6 +755,7 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 			.filter((s) => s.standaloneField !== false)
 			.map((s) => ({
 				dependsOn: s.dependsOn,
+				extension: s.extension,
 				help: s.help,
 				isExperimental: s.isExperimental,
 				isPositiveInteger: s.isPositiveInteger,

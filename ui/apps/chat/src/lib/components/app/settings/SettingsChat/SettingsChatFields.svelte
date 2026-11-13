@@ -14,6 +14,7 @@
 		SETTINGS_KEYS
 	} from '$lib/constants';
 	import { SettingsFieldType } from '$lib/enums/settings.enums';
+	import { extensions } from '$lib/extensions';
 	import { modelsStore, serverStore, settingsStore } from '$lib/stores';
 	import { normalizeFloatingPoint } from '$lib/utils/precision';
 	import type { Component } from 'svelte';
@@ -29,6 +30,11 @@
 
 	// discover needs the hub metadata reads, so its checkbox is read-only while discover is on
 	let hubLocked = $derived(Boolean(localConfig[SETTINGS_KEYS.ENABLE_DISCOVER_MODELS]));
+
+	// a field that belongs to an extension shows only while that extension is on
+	let visibleFields = $derived(
+		fields.filter((field) => !field.extension || extensions.isActive(field.extension))
+	);
 
 	function isLockedField(key: string): boolean {
 		return hubLocked && key === SETTINGS_KEYS.USE_HUGGING_FACE_HUB;
@@ -54,7 +60,7 @@
 	});
 </script>
 
-{#each fields as field (field.key)}
+{#each visibleFields as field (field.key)}
 	{#if !field.dependsOn || Boolean(localConfig[field.dependsOn])}
 		<div class={field.dependsOn ? 'space-y-2 pl-6' : 'space-y-2'}>
 			{#if field.type === SettingsFieldType.INPUT}

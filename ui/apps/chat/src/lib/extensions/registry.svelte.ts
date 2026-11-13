@@ -85,6 +85,11 @@ class ExtensionRegistry {
 		return result;
 	}
 
+	/** True while the extension is running: switched on and activated without failing. */
+	isActive(id: string): boolean {
+		return this._states.get(id) === 'active';
+	}
+
 	isEnabled(id: string): boolean {
 		const manifest = this._manifests.find((m) => m.id === id);
 

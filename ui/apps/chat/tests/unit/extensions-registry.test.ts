@@ -72,6 +72,7 @@ describe('ExtensionRegistry', () => {
 		expect(registry.contributions('tools')).toEqual([provider]);
 		expect(registry.contributions('flow')).toEqual([hook]);
 		expect(registry.extensions[0]).toMatchObject({ enabled: true, error: null, state: 'active' });
+		expect(registry.isActive('test')).toBe(true);
 	});
 
 	it('does not load the code of an extension that is off', async () => {
@@ -110,6 +111,7 @@ describe('ExtensionRegistry', () => {
 		// last registered, first undone
 		expect(order).toEqual(['second', 'first']);
 		expect(registry.extensions[0]).toMatchObject({ enabled: false, state: 'inactive' });
+		expect(registry.isActive('test')).toBe(false);
 	});
 
 	it('keeps only the contributions of the extensions that stay on', async () => {
