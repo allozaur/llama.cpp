@@ -107,7 +107,8 @@ export default defineConfig(({ mode }) => {
 				'/props': toServer(),
 				'/slots': toServer(),
 				'/tools': toServer(),
-				'/v1': toServer()
+				// ws: realtime transcription (/v1/realtime) is a WebSocket
+				'/v1': toServer(true)
 			}
 		},
 
