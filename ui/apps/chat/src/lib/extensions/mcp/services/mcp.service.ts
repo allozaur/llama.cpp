@@ -6,6 +6,12 @@
  * formatting. No reactive state; consumed by mcpStore and its managers.
  */
 
+import { mcpOAuthFlow } from '../oauth/flow.svelte';
+import {
+	McpCredentialsRequiredError,
+	McpOAuthProvider,
+	McpSignInRequiredError
+} from '../oauth/provider';
 import type {
 	Client,
 	GetPromptResult,
@@ -228,8 +234,18 @@ export class MCPService {
 		}
 
 		const { Client } = await this.loadSdk();
-		const createdTransport = this.createTransport(serverName, serverConfig, (log) =>
-			onPhase?.(log.phase, log)
+		// a server reached without an Authorization header of the user's own may ask for a sign-in
+		const authProvider = this.createOAuthProvider(serverName, serverConfig, (message) =>
+			onPhase?.(
+				MCPConnectionPhase.INITIALIZING,
+				this.createLog(MCPConnectionPhase.INITIALIZING, `OAuth: ${message}`)
+			)
+		);
+		const createdTransport = this.createTransport(
+			serverName,
+			serverConfig,
+			(log) => onPhase?.(log.phase, log),
+			authProvider
 		);
 		const transportType = createdTransport.type;
 
@@ -361,8 +377,11 @@ export class MCPService {
 
 				// the SDK closed the probed transport
 				stopPhaseLogging();
-				({ stopPhaseLogging, transport } = this.createTransport(serverName, serverConfig, (log) =>
-					onPhase?.(log.phase, log)
+				({ stopPhaseLogging, transport } = this.createTransport(
+					serverName,
+					serverConfig,
+					(log) => onPhase?.(log.phase, log),
+					authProvider
 				));
 
 				await Promise.race([
@@ -378,6 +397,22 @@ export class MCPService {
 			client.onerror = runtimeErrorHandler;
 		} catch (error) {
 			client.onerror = runtimeErrorHandler;
+
+			if (authProvider?.signInRequired) {
+				stopPhaseLogging();
+				mcpOAuthFlow.markSignInRequired(serverName);
+				onPhase?.(
+					MCPConnectionPhase.ERROR,
+					this.createLog(MCPConnectionPhase.ERROR, 'Sign in to use this server', MCPLogLevel.WARN)
+				);
+
+				throw new McpSignInRequiredError(serverName);
+			}
+
+			// a 401 with no sign-in on offer: say what to do rather than how the SDK failed
+			const failure = authProvider?.credentialsRequired
+				? new McpCredentialsRequiredError(serverName)
+				: error;
 			const url =
 				(serverConfig.useProxy ?? false)
 					? buildProxiedUrl(serverConfig.url)
@@ -388,7 +423,7 @@ export class MCPService {
 				this.createLog(
 					MCPConnectionPhase.ERROR,
 					`Connection failed during handshake: ${
-						error instanceof Error ? error.message : String(error)
+						failure instanceof Error ? failure.message : String(failure)
 					}`,
 					MCPLogLevel.ERROR,
 					{
@@ -406,14 +441,16 @@ export class MCPService {
 							transportType,
 							useProxy: serverConfig.useProxy ?? false
 						},
-						error: this.summarizeError(error),
-						hints: this.getConnectionHints(url, serverConfig, error)
+						error: this.summarizeError(failure),
+						hints: this.getConnectionHints(url, serverConfig, failure)
 					}
 				)
 			);
 
-			throw error;
+			throw failure;
 		}
+
+		mcpOAuthFlow.clearSignInRequired(serverName);
 
 		const serverVersion = client.getServerVersion();
 		const serverCapabilities = client.getServerCapabilities();
@@ -506,6 +543,35 @@ export class MCPService {
 	}
 
 	/**
+	 * The OAuth client of a server, for a server that may ask the user to sign
+	 * in: an HTTP server whose Authorization header the user did not set. A
+	 * header of the user's own wins over a sign-in, so a token pasted in the
+	 * server's settings keeps working as before.
+	 */
+	static createOAuthProvider(
+		serverName: string,
+		config: MCPServerConfig,
+		onStep?: (message: string) => void
+	): McpOAuthProvider | undefined {
+		if (config.transport === MCPTransportType.WEBSOCKET || typeof window === 'undefined') {
+			return undefined;
+		}
+
+		const hasOwnAuthorization = Object.keys(config.headers ?? {}).some(
+			(key) => key.trim().toLowerCase() === HEADERS.AUTHORIZATION.toLowerCase()
+		);
+
+		if (hasOwnAuthorization) return undefined;
+
+		return new McpOAuthProvider({
+			onStep,
+			serverId: serverName,
+			serverUrl: config.url,
+			useProxy: config.useProxy ?? false
+		});
+	}
+
+	/**
 	 * Create transport based on server configuration.
 	 * Supports WebSocket, StreamableHTTP (modern), and SSE (legacy) transports.
 	 * When `useProxy` is enabled, routes HTTP requests through llama-server's CORS proxy.
@@ -522,7 +588,8 @@ export class MCPService {
 	static createTransport(
 		serverName: string,
 		config: MCPServerConfig,
-		onLog?: (log: MCPConnectionLog) => void
+		onLog?: (log: MCPConnectionLog) => void,
+		authProvider?: McpOAuthProvider
 	): {
 		transport: Transport;
 		type: MCPTransportType;
@@ -573,7 +640,8 @@ export class MCPService {
 		}
 
 		if (config.transport === MCPTransportType.SSE) {
-			const url = useProxy ? buildProxiedUrl(config.url) : new URL(config.url);
+			// the real URL even through the proxy: the diagnostic fetch sends it there
+			const url = new URL(config.url);
 			const { disable: stopPhaseLogging, fetch: diagnosticFetch } = this.createDiagnosticFetch(
 				serverName,
 				config,
@@ -590,6 +658,7 @@ export class MCPService {
 			return {
 				stopPhaseLogging,
 				transport: new SSEClientTransport(url, {
+					authProvider,
 					eventSourceInit: { fetch: diagnosticFetch },
 					fetch: diagnosticFetch,
 					requestInit
@@ -598,7 +667,8 @@ export class MCPService {
 			};
 		}
 
-		const url = useProxy ? buildProxiedUrl(config.url) : new URL(config.url);
+		// the real URL even through the proxy: the diagnostic fetch sends it there
+		const url = new URL(config.url);
 		const { disable: stopPhaseLogging, fetch: diagnosticFetch } = this.createDiagnosticFetch(
 			serverName,
 			config,
@@ -609,7 +679,7 @@ export class MCPService {
 		);
 
 		if (useProxy && import.meta.env.DEV && import.meta.env.VITE_DEBUG) {
-			console.log(`[MCPService] Using CORS proxy for ${config.url} -> ${url.href}`);
+			console.log(`[MCPService] Using CORS proxy for ${config.url}`);
 		}
 
 		try {
@@ -620,6 +690,7 @@ export class MCPService {
 			return {
 				stopPhaseLogging,
 				transport: new StreamableHTTPClientTransport(url, {
+					authProvider,
 					fetch: diagnosticFetch,
 					requestInit
 				}),
@@ -632,6 +703,7 @@ export class MCPService {
 				return {
 					stopPhaseLogging,
 					transport: new SSEClientTransport(url, {
+						authProvider,
 						eventSourceInit: { fetch: diagnosticFetch },
 						fetch: diagnosticFetch,
 						requestInit
@@ -889,6 +961,35 @@ export class MCPService {
 	}
 
 	/**
+	 * The CORS proxy URL a request through the proxy goes to, or null when it is
+	 * already addressed to the proxy (or is not an absolute http(s) request).
+	 */
+	static proxiedRequestUrl(input: RequestInfo | URL): string | URL | null {
+		let requestUrl: URL;
+
+		try {
+			if (typeof input === 'string') requestUrl = new URL(input, window.location.origin);
+			else if (input instanceof URL) requestUrl = input;
+			else return null;
+		} catch {
+			return null;
+		}
+
+		if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') return null;
+
+		if (
+			requestUrl.origin === window.location.origin &&
+			requestUrl.pathname.includes(CORS_PROXY_ENDPOINT)
+		) {
+			return null;
+		}
+
+		const proxied = buildProxiedUrl(requestUrl.href);
+
+		return typeof input === 'string' ? proxied.href : proxied;
+	}
+
+	/**
 	 * Read the contents of a resource.
 	 * @param connection - The MCP connection to use
 	 * @param uri - The URI of the resource to read
@@ -1026,36 +1127,15 @@ export class MCPService {
 				enabled = false;
 			},
 			fetch: async (input, init) => {
+				// Through the proxy every request goes to llama-server's /cors-proxy: the MCP
+				// endpoint and, for a server that needs a sign-in, its OAuth discovery,
+				// registration and token endpoints. The transport and the OAuth flow keep the
+				// real URLs, so the resource they ask a token for and the discovery URLs they
+				// derive are the server's own.
 				if (useProxy && typeof window !== 'undefined') {
-					let requestUrlStr = '';
+					const proxied = this.proxiedRequestUrl(input);
 
-					if (typeof input === 'string') {
-						requestUrlStr = input;
-					} else if (input instanceof URL) {
-						requestUrlStr = input.href;
-					}
-
-					if (requestUrlStr) {
-						const parsedRequestUrl = new URL(requestUrlStr, window.location.origin);
-
-						if (
-							parsedRequestUrl.origin === window.location.origin &&
-							!parsedRequestUrl.pathname.includes(CORS_PROXY_ENDPOINT)
-						) {
-							const originalConfigUrl = new URL(config.url);
-							const realTargetUrl = new URL(
-								parsedRequestUrl.pathname + parsedRequestUrl.search,
-								originalConfigUrl.origin
-							);
-							const proxiedUrl = buildProxiedUrl(realTargetUrl.href);
-
-							if (typeof input === 'string') {
-								input = proxiedUrl.href;
-							} else if (input instanceof URL) {
-								input = proxiedUrl;
-							}
-						}
-					}
+					if (proxied) input = proxied;
 				}
 
 				const startedAt = performance.now();
