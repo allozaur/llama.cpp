@@ -9,6 +9,8 @@
  * MCPService for the protocol layer.
  */
 
+import { mcpOAuthFlow } from '../oauth/flow.svelte';
+import { mcpOAuthStorage } from '../oauth/storage.svelte';
 import { MCPService } from '../services/mcp.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { MCPHealthCheckManager, type McpHealthHost } from './health.svelte';
@@ -329,6 +331,28 @@ class MCPStore implements McpHealthHost {
 	}
 
 	/**
+	 * Close a server's live connection and take its tools out, e.g. once its
+	 * tokens are revoked: its next health check connects afresh.
+	 */
+	async disconnectServer(serverId: string): Promise<void> {
+		const connection = this.connections.get(serverId);
+
+		if (!connection) return;
+
+		this.connections.delete(serverId);
+
+		for (const [toolName, ownerServer] of this.toolsIndex.entries()) {
+			if (ownerServer === serverId) this.toolsIndex.delete(toolName);
+		}
+
+		this.updateState({ toolCount: this.toolsIndex.size });
+
+		await MCPService.disconnect(connection).catch((error) =>
+			console.warn(`[MCPStore] Error disconnecting ${serverId}:`, error)
+		);
+	}
+
+	/**
 	 * Initialize every settings-enabled server. Policy filtering happens at tool
 	 * collection time, so switching conversation policies never re-initializes.
 	 */
@@ -477,7 +501,6 @@ class MCPStore implements McpHealthHost {
 			console.error(`[MCPStore][${serverName}] Failed to fetch resources:`, error);
 		}
 	}
-
 	/**
 	 * Resolve which configured MCP server owns a given tool name. Looks at
 	 * active connections first (fast path), then falls back to per-server
@@ -502,6 +525,7 @@ class MCPStore implements McpHealthHost {
 
 		return undefined;
 	}
+
 	getActiveFlowCount(): number {
 		return this.activeFlowCount;
 	}
@@ -976,6 +1000,14 @@ class MCPStore implements McpHealthHost {
 
 	removeServer(id: string): void {
 		const servers = this.getServers();
+		const removed = servers.find((s) => s.id === id);
+
+		// its tokens go too: revoked where the authorization server allows it, then forgotten
+		if (removed) {
+			void mcpOAuthFlow
+				.signOut({ id, url: removed.url, useProxy: removed.useProxy })
+				.finally(() => mcpOAuthStorage.remove(id));
+		}
 
 		settingsStore.updateConfig(
 			SETTINGS_KEYS.MCP_SERVERS,

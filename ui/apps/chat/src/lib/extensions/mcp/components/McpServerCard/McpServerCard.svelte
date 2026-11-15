@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { mcpOAuthFlow } from '../../oauth/flow.svelte';
 	import { mcpStore } from '../../stores/index.svelte';
 	import McpConnectionLogs from '../McpConnectionLogs.svelte';
 	import McpServerInfo from '../McpServerInfo.svelte';
@@ -6,6 +7,7 @@
 	import McpServerCardDeleteDialog from './McpServerCardDeleteDialog.svelte';
 	import McpServerCardEditForm from './McpServerCardEditForm.svelte';
 	import McpServerCardHeader from './McpServerCardHeader.svelte';
+	import McpServerCardSignIn from './McpServerCardSignIn.svelte';
 	import McpServerCardToolsList from './McpServerCardToolsList.svelte';
 	import * as Card from '@ggml-org/llama-ui/ui/card';
 	import { Skeleton } from '@ggml-org/llama-ui/ui/skeleton';
@@ -38,6 +40,8 @@
 	let errorMessage = $derived(
 		healthState.status === HealthCheckStatus.ERROR ? healthState.message : undefined
 	);
+	// a connection that stopped at a sign-in shows the sign-in, not the error it ended with
+	let needsSignIn = $derived(mcpOAuthFlow.needsSignIn(server.id));
 	let tools = $derived(healthState.status === HealthCheckStatus.SUCCESS ? healthState.tools : []);
 
 	let connectionLogs = $derived(
@@ -130,9 +134,11 @@
 			{transportType}
 		/>
 
-		{#if isError && errorMessage}
+		{#if isError && errorMessage && !needsSignIn}
 			<p class="text-caption text-destructive">{errorMessage}</p>
 		{/if}
+
+		<McpServerCardSignIn connected={isConnected} {server} />
 
 		{#if isConnected && serverInfo?.description}
 			<p class="line-clamp-2 text-caption text-muted-foreground">
