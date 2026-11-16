@@ -324,7 +324,7 @@ export { SearchChatsService } from './search-chats.service';
  * - **All components/stores**: Call RouterService for dynamic route URLs
  *
  * **Key Responsibilities:**
- * - Build chat URLs for specific conversations: `RouterService.chat(id)` → `#/chat/:id`
+ * - Build chat URLs for specific conversations: `RouterService.chat(id)` → `#/chat/<id>`, via `resolve()`
  *
  * @see ROUTES in constants/routes.ts — static route base paths
  */

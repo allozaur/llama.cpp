@@ -4,6 +4,7 @@
 	import { chatStore, conversationsStore, modelsStore } from '#lib/stores/index.ts';
 	import { goto } from '$app/navigation';
 	import { afterNavigate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
 	let chatId = $derived(page.params.id);
@@ -29,6 +30,7 @@
 
 		url.searchParams.delete(URL_PARAMS.QUERY);
 		url.searchParams.delete(URL_PARAMS.MODEL);
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- the current page's own URL with its query changed, not a link to resolve
 		goto(url.toString(), { replace: true, shallow: true });
 	}
 
@@ -98,7 +100,7 @@
 				const success = await conversationsStore.loadConversation(chatId);
 
 				if (!success) {
-					await goto(ROUTES.START);
+					await goto(resolve(ROUTES.START));
 
 					return;
 				}

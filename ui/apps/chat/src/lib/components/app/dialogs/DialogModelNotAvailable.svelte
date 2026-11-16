@@ -26,6 +26,7 @@
 		url.searchParams.set(URL_PARAMS.MODEL, model);
 
 		handleOpenChange(false);
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- the current page's own URL with its query changed, not a link to resolve
 		goto(url.toString());
 	}
 </script>

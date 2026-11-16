@@ -1,5 +1,7 @@
 import { NEW_CHAT_TAB_ID, ROUTES } from '#lib/constants/index.ts';
 import { RouterService } from '#lib/services/router.service.ts';
+import { resolve } from '$app/paths';
+import type { ResolvedPathname } from '$app/types';
 
 interface TabRoute {
 	params: Partial<Record<string, string>>;
@@ -11,8 +13,8 @@ export interface TabView {
 	/** Tab of the current route; null on a page without one. */
 	activeId: string | null;
 	/** Where to go when the last visible tab closes. */
-	fallbackHref: string;
-	hrefFor: (id: string) => string;
+	fallbackHref: ResolvedPathname;
+	hrefFor: (id: string) => ResolvedPathname;
 	/** Visible tab ids, in strip order. */
 	ids: string[];
 }
@@ -31,8 +33,8 @@ export function resolveTabTarget(page: TabRoute): string | null {
 export function resolveTabView(page: TabRoute, openTabs: string[]): TabView {
 	return {
 		activeId: resolveTabTarget(page),
-		fallbackHref: ROUTES.START,
-		hrefFor: (id) => (id === NEW_CHAT_TAB_ID ? ROUTES.START : RouterService.chat(id)),
+		fallbackHref: resolve(ROUTES.START),
+		hrefFor: (id) => (id === NEW_CHAT_TAB_ID ? resolve(ROUTES.START) : RouterService.chat(id)),
 		ids: openTabs
 	};
 }
