@@ -218,7 +218,7 @@ class AgenticStore {
 		const maxTurns = Number(settings.agenticMaxTurns) || DEFAULT_AGENTIC_CONFIG.maxTurns;
 		const hasTools =
 			toolsStore.providers.some((provider) => provider.isConfigured()) ||
-			toolsStore.serverTools.length > 0 ||
+			toolsStore.hasServerTools ||
 			toolsStore.browserTools.length > 0 ||
 			toolsStore.customTools.length > 0;
 
@@ -984,7 +984,7 @@ class AgenticStore {
 	 */
 	private async toolsFor(toolPolicy?: AgenticToolPolicy): Promise<OpenAIToolDefinition[]> {
 		if (
-			toolsStore.serverTools.length === 0 &&
+			!toolsStore.hasServerTools &&
 			!toolsStore.loading &&
 			!toolsStore.isToolsEndpointUnreachable
 		) {

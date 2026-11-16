@@ -1,8 +1,11 @@
 <script lang="ts">
+	import { llamaServerMcpServers } from '../../llama-server';
 	import { mcpStore } from '../../stores/index.svelte';
 	import { enableAllToolsForServer } from '../../tools';
 	import DialogMcpResourcesBrowser from '../dialogs/DialogMcpResourcesBrowser.svelte';
 	import DialogMcpServerAddNew from '../dialogs/DialogMcpServerAddNew.svelte';
+	import McpLlamaServerCard from '../McpLlamaServerCard.svelte';
+	import McpLlamaServerHowTo from '../McpLlamaServerHowTo.svelte';
 	import McpServerCard from '../McpServerCard/McpServerCard.svelte';
 	import McpServerCardSkeleton from '../McpServerCardSkeleton.svelte';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
@@ -21,6 +24,8 @@
 	let { class: className }: Props = $props();
 
 	let servers = $derived(mcpStore.getServers());
+	// the servers llama-server runs from its config file, read-only here
+	let llamaServers = $derived(llamaServerMcpServers());
 
 	let isAddingServer = $state(false);
 	let isResourcesDialogOpen = $state(false);
@@ -58,7 +63,7 @@
 
 	<DialogMcpResourcesBrowser bind:open={isResourcesDialogOpen} />
 
-	{#if servers.length === 0}
+	{#if servers.length === 0 && llamaServers.length === 0}
 		<div class="flex flex-1 items-center justify-center pb-20 pt-10 my-auto">
 			<Empty.Root class="max-w-md">
 				<Empty.Header>
@@ -80,6 +85,8 @@
 				</Empty.Content>
 			</Empty.Root>
 		</div>
+
+		<McpLlamaServerHowTo />
 	{:else}
 		<div
 			class="grid gap-4 {className}"
@@ -111,6 +118,10 @@
 				{/if}
 			{/each}
 
+			{#each llamaServers as server (server.groupId)}
+				<McpLlamaServerCard {server} />
+			{/each}
+
 			{#if !isAddingServer}
 				<Empty.Root class="border">
 					<Empty.Header>
@@ -133,5 +144,7 @@
 				</Empty.Root>
 			{/if}
 		</div>
+
+		<McpLlamaServerHowTo class="mt-4" />
 	{/if}
 </div>
