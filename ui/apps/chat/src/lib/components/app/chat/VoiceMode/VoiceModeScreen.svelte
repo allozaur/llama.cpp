@@ -2,7 +2,8 @@
 	Voice mode: a full-screen spoken conversation with the chat model. A greeting until the first words, what is said
 	shown as it is transcribed, then each exchange: the message, and the reply lit word by word as it is read aloud.
 	The big microphone mutes and unmutes listening (and, while a reply plays, interrupts it); below it the model, the
-	speaker and the way out.
+	speaker and the way out. A tool the reply wants to use, or an agentic loop that asks to go on, waits on a card that
+	rises above the microphone and sinks away once answered.
 -->
 <script lang="ts">
 	import { Logo } from '@ggml-org/llama-ui/app/misc';
@@ -10,16 +11,65 @@
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { VoiceSpokenText } from '@ggml-org/llama-ui/voice';
 	import { LoaderCircle, Mic, MicOff, Volume2, VolumeX, X } from '@lucide/svelte';
-	import { ModelsSelector } from '#lib/components/app/index.ts';
+	import {
+		ChatMessageActionCardContinueRequest,
+		ChatMessageActionCardPermissionRequest,
+		ModelsSelector
+	} from '#lib/components/app/index.ts';
 	import { ICON_CLASS_DEFAULT, VOICE_CONVERSATION_MESSAGE } from '#lib/constants/index.ts';
-	import { KeyboardKey } from '#lib/enums/index.ts';
+	import { KeyboardKey, type ToolPermissionDecision } from '#lib/enums/index.ts';
 	import { useVoiceConversation } from '#lib/hooks/use-voice-conversation.svelte.ts';
-	import { uiStore } from '#lib/stores/index.ts';
+	import { agenticStore, conversationsStore, uiStore } from '#lib/stores/index.ts';
 	import { onMount, tick } from 'svelte';
+	import { cubicIn, cubicOut } from 'svelte/easing';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { fly } from 'svelte/transition';
 
 	const conversation = useVoiceConversation();
 
 	let scroller = $state<HTMLDivElement>();
+
+	// the questions the reply waits on: a tool to allow, or an agentic loop to go on
+	const convId = $derived(conversationsStore.activeConversation?.id ?? null);
+	const permission = $derived(convId ? agenticStore.getPendingPermissionRequest(convId) : null);
+	// answered requests leave at once, before the store moves on; a new request is a new object
+	let answeredPermission: typeof permission = $state(null);
+	const askPermission = $derived(
+		permission && permission !== answeredPermission ? permission : null
+	);
+	const pendingContinue = $derived(convId ? agenticStore.getPendingContinueRequest(convId) : false);
+	let continueAnswered = $state(false);
+	const askContinue = $derived(pendingContinue && !continueAnswered && !askPermission);
+
+	$effect(() => {
+		if (!pendingContinue) continueAnswered = false;
+	});
+
+	// rises a little from below as it fades in, sinks back as it fades out
+	const cardIn = $derived({
+		duration: prefersReducedMotion.current ? 0 : 280,
+		easing: cubicOut,
+		y: 24
+	});
+	const cardOut = $derived({
+		duration: prefersReducedMotion.current ? 0 : 200,
+		easing: cubicIn,
+		y: 24
+	});
+
+	function answerPermission(decision: ToolPermissionDecision) {
+		if (!convId || !permission) return;
+
+		answeredPermission = permission;
+		agenticStore.resolvePermission(convId, decision);
+	}
+
+	function answerContinue(shouldContinue: boolean) {
+		if (!convId) return;
+
+		continueAnswered = true;
+		agenticStore.resolveContinue(convId, shouldContinue);
+	}
 
 	let level = $derived(conversation.levels.at(-1) ?? 0);
 	let listening = $derived(conversation.state === 'listening');
@@ -102,7 +152,8 @@
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === KeyboardKey.ESCAPE) close();
+		// a menu that took the key (the card's allow options) closes first
+		if (event.key === KeyboardKey.ESCAPE && !event.defaultPrevented) close();
 	}
 </script>
 
@@ -157,6 +208,32 @@
 	</div>
 
 	<div class="flex flex-col items-center gap-4 px-4">
+		{#if askPermission}
+			{#key askPermission}
+				<div
+					in:fly={cardIn}
+					out:fly={cardOut}
+					class="w-full max-w-xl"
+					data-slot="voice-mode-permission"
+				>
+					<ChatMessageActionCardPermissionRequest
+						onDecision={answerPermission}
+						serverLabel={askPermission.serverLabel}
+						toolName={askPermission.toolName}
+					/>
+				</div>
+			{/key}
+		{:else if askContinue}
+			<div
+				in:fly={cardIn}
+				out:fly={cardOut}
+				class="w-full max-w-xl"
+				data-slot="voice-mode-continue"
+			>
+				<ChatMessageActionCardContinueRequest onDecision={answerContinue} />
+			</div>
+		{/if}
+
 		<p
 			aria-live="polite"
 			class="min-h-12 max-w-xl text-center text-lg text-balance italic text-fg-muted"
