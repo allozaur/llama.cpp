@@ -6,7 +6,6 @@
  * overrides, reasoning effort, cwd) live in ConversationPreferences,
  * composed as {@link ConversationsStore.preferences}.
  */
-
 import { NEW_CHAT_TAB_ID, ROUTES } from '#lib/constants/index.ts';
 import { MessageRole } from '#lib/enums/index.ts';
 import { ConversationTransferService } from '#lib/services/conversation-transfer.service.ts';
@@ -30,6 +29,7 @@ import {
 import { withSearchChatsDisabled } from '#lib/utils/search-chats.ts';
 import { browser } from '$app/env';
 import { goto } from '$app/navigation';
+import { resolve } from '$app/paths';
 import { SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
 
@@ -342,7 +342,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 
 			toast.success('All conversations deleted');
 
-			await goto(ROUTES.START);
+			await goto(resolve(ROUTES.START));
 		} catch (error) {
 			console.error('Failed to delete all conversations:', error);
 			toast.error('Failed to delete conversations');
@@ -668,7 +668,7 @@ class ConversationsStore implements ConversationsPreferencesHost {
 
 		this.clearActiveConversation();
 		this.preferences.pendingGroupId = null;
-		await goto(ROUTES.START);
+		await goto(resolve(ROUTES.START));
 	}
 
 	/**

@@ -2,7 +2,9 @@
 	import { SquarePen } from '@lucide/svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import ChatTabsItem from '#lib/components/app/chat/ChatTabs/ChatTabsItem.svelte';
-	import { NEW_CHAT_LABEL, NEW_CHAT_TAB_ID } from '#lib/constants/index.ts';
+	import { NEW_CHAT_LABEL, NEW_CHAT_TAB_ID, ROUTES } from '#lib/constants/index.ts';
+	import { RouterService } from '#lib/services/router.service.ts';
+	import { resolve } from '$app/paths';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';
 	import StateGalleryItem from '$llama-ui-stories/helpers/StateGalleryItem.svelte';
 
@@ -14,7 +16,7 @@
 		title: 'Llama Chat/Chat/ChatTabs/ChatTabsItem'
 	});
 
-	const tab = { href: '#/chat/conv-1', id: 'conv-1', name: 'Rust borrow checker' };
+	const tab = { href: RouterService.chat('conv-1'), id: 'conv-1', name: 'Rust borrow checker' };
 
 	const handlers = {
 		onActivate: (id: string) => console.log('activate', id),
@@ -37,7 +39,12 @@
 			<ChatTabsItem
 				{...handlers}
 				isActive
-				tab={{ href: '#/', icon: SquarePen, id: NEW_CHAT_TAB_ID, name: NEW_CHAT_LABEL }}
+				tab={{
+					href: resolve(ROUTES.START),
+					icon: SquarePen,
+					id: NEW_CHAT_TAB_ID,
+					name: NEW_CHAT_LABEL
+				}}
 			/>
 		</StateGalleryItem>
 

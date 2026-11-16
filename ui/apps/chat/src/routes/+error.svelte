@@ -2,6 +2,7 @@
 	import { ServerErrorSplash } from '#lib/components/app/index.ts';
 	import { APP_NAME, ROUTES } from '#lib/constants/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
 	let error = $derived(page.error);
@@ -18,7 +19,7 @@
 
 	function handleRetry() {
 		// Navigate back to home page after successful API key validation
-		goto(ROUTES.START);
+		goto(resolve(ROUTES.START));
 	}
 </script>
 
@@ -65,7 +66,7 @@
 
 			<button
 				class="rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90"
-				onclick={() => goto(ROUTES.START)}
+				onclick={() => goto(resolve(ROUTES.START))}
 			>
 				Go Home
 			</button>

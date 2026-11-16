@@ -2,7 +2,6 @@
 // group inset in the sidebar and a row in the group. This holds the rule app.css states for
 // them, on what the browser actually renders: a row's corners are concentric with its
 // group's, so its radius is the group's less the padding between their edges.
-
 import '../../src/app.css';
 import SidebarNavigationActions from '#lib/components/app/navigation/SidebarNavigation/SidebarNavigationActions.svelte';
 import SidebarNavigationFooter from '#lib/components/app/navigation/SidebarNavigation/SidebarNavigationFooter.svelte';
