@@ -54,7 +54,7 @@
 			class="shrink-0 text-muted-foreground hover:text-foreground"
 			href={safeWebsiteUrl}
 			onclick={(e) => e.stopPropagation()}
-			rel="noopener noreferrer"
+			rel="external noopener noreferrer"
 			target="_blank"
 		>
 			<ExternalLink class="size-icon-xs" />
