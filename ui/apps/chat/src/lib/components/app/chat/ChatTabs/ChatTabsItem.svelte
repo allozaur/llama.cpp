@@ -10,10 +10,11 @@
 		TAB_SURFACE_IDLE_CLASS,
 		UI_DATA_ATTRS
 	} from '#lib/constants/index.ts';
+	import type { ResolvedPathname } from '$app/types';
 	import type { Component } from 'svelte';
 
 	interface Tab {
-		href: string;
+		href: ResolvedPathname;
 		/** Marks the new-chat tab. */
 		icon?: Component;
 		id: string;
