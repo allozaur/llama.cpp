@@ -5,7 +5,7 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
+import { ROUTES } from './routes.constants';
 import Search from '@lucide/svelte/icons/search';
 import Settings from '@lucide/svelte/icons/settings';
 import SquarePen from '@lucide/svelte/icons/square-pen';
@@ -182,14 +182,14 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.MANAGE_MODELS,
-		activeRouteId: MODELS_ROUTE_ID,
+		activeRouteId: ROUTES.MODELS,
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
 	},
 	{
 		action: SidebarAction.SETTINGS,
-		activeRouteId: SETTINGS_ROUTE_ID,
+		activeRouteId: ROUTES.SETTINGS,
 		icon: Settings,
 		keys: SHORTCUT_SETTINGS,
 		tooltip: 'Settings'

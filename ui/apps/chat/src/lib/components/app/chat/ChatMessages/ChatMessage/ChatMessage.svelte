@@ -31,6 +31,7 @@
 	import { parseFilesToMessageExtras } from '#lib/utils/browser-only.ts';
 	import { deriveAgenticSections } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		class?: string;
@@ -243,7 +244,7 @@
 			const conversationDeleted = await chatStore.removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
-				goto(ROUTES.START);
+				goto(resolve(ROUTES.START));
 			}
 
 			return;
@@ -284,7 +285,7 @@
 			const conversationDeleted = await chatStore.removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
-				goto(ROUTES.START);
+				goto(resolve(ROUTES.START));
 			}
 		} else {
 			chatActions.delete(message);
@@ -372,7 +373,7 @@
 				isEditing = false;
 
 				if (conversationDeleted) {
-					goto(ROUTES.START);
+					goto(resolve(ROUTES.START));
 				} else {
 					focusMainChatForm();
 				}

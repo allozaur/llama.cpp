@@ -45,6 +45,7 @@
 	} from '#lib/stores/index.ts';
 	import { buildConversationTree, hapticTap, remToPx } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -157,7 +158,7 @@
 	});
 
 	$effect(() => {
-		if (deviceStore.isMobile && page.url.hash.includes(ROUTES.SEARCH)) {
+		if (deviceStore.isMobile && page.route.id === ROUTES.SEARCH) {
 			uiStore.isSidebarExpanded = false;
 		}
 	});
@@ -548,7 +549,7 @@
 
 <svelte:window bind:innerWidth onkeydown={handleKeydown} />
 
-{#if innerWidth > 768 || !page.url.hash.includes(ROUTES.SEARCH)}
+{#if innerWidth > 768 || page.route.id !== ROUTES.SEARCH}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<aside
 		bind:this={asideEl}
@@ -611,7 +612,7 @@
 						class="pointer-events-auto size-10 rounded-full! md:size-9 {isStripHidden
 							? 'bg-transparent! hover:bg-transparent!'
 							: 'matte-key bg-card! hover:bg-card! dark:bg-muted-foreground/15! dark:hover:bg-muted-foreground/15!'}"
-						href={uiStore.isSidebarExpanded && !isLogoToggle ? ROUTES.START : undefined}
+						href={uiStore.isSidebarExpanded && !isLogoToggle ? resolve(ROUTES.START) : undefined}
 						icon={isLogoToggle && logoHovered
 							? uiStore.isSidebarExpanded
 								? PanelLeftClose
