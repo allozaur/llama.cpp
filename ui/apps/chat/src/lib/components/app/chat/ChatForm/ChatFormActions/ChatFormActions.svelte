@@ -2,7 +2,6 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { LoaderCircle, SkipForward, Square } from '@lucide/svelte';
 	import {
-		ChatFormActionReasoning,
 		ChatFormActionRecord,
 		ChatFormActionsAdd,
 		ChatFormActionSubmit,
@@ -178,12 +177,12 @@
 		{/if}
 
 		{#if showModelSelector}
-			<ChatFormActionReasoning />
-
+			<!-- the reasoning effort sits in the model picker, under the models -->
 			<ModelsSelector
 				bind:this={selectorModelRef}
 				{disabled}
 				forceForegroundText
+				showReasoning
 				useGlobalSelection
 			/>
 		{/if}
