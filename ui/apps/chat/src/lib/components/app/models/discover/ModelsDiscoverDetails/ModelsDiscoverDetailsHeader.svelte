@@ -73,7 +73,7 @@
 							aria-label="View base model on HuggingFace"
 							class="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
 							href={HuggingFaceService.getModelUrl(baseModels[0])}
-							rel="noopener noreferrer"
+							rel="external noopener noreferrer"
 							target="_blank"
 						>
 							<ExternalLink class="size-icon-xs" />
@@ -86,7 +86,7 @@
 		<Button
 			class="h-auto gap-1.5 px-2.5 py-1.5 text-caption"
 			href={HuggingFaceService.getModelUrl(modelId)}
-			rel="noopener noreferrer"
+			rel="external noopener noreferrer"
 			size="sm"
 			target="_blank"
 			variant="secondary"
