@@ -153,6 +153,9 @@ struct task_result_state {
     const std::string oai_resp_message_id;
     std::string oai_resp_fc_id; // function call ID for current args delta
 
+    // for the transcriptions API: the spoken words without the model's markup
+    server_asr_transcript asr_transcript;
+
     task_result_state(common_chat_session session = {});
 
     // parse partial tool calls and update the internal state
@@ -453,6 +456,9 @@ struct server_task_result_cmpl_final : server_task_result {
     virtual void update(task_result_state & state) override {
         is_updated = true;
         oaicompat_msg = state.update_chat_msg(content, false, oaicompat_msg_diffs);
+        if (res_type == TASK_RESPONSE_TYPE_OAI_ASR) {
+            oaicompat_msg.content = server_asr_strip_markup(oaicompat_msg.content, false);
+        }
 
         oai_resp_id = state.oai_resp_id;
         oai_resp_reasoning_id = state.oai_resp_reasoning_id;
@@ -518,6 +524,9 @@ struct server_task_result_cmpl_partial : server_task_result {
 
     // for Anthropic API: track if any reasoning content has been generated
     bool anthropic_has_reasoning = false;
+
+    // for the transcriptions API: the new spoken words of this chunk
+    std::string asr_delta;
 
     virtual bool is_stop() override {
         return false; // in stream mode, partial responses are not considered stop

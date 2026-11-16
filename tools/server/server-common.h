@@ -118,6 +118,24 @@ const char * get_media_marker();
 // float samples to signed 16-bit PCM bytes, clamped to [-1, 1]
 std::string pcm_f32_to_s16(const float * samples, size_t n);
 
+// the spoken words of an ASR output, without the markup some models wrap them in, e.g. Qwen3-ASR:
+// "language English<asr_text>Hello there.</asr_text>" -> "Hello there."
+// text without the markup is returned unchanged
+// is_partial: the text may still grow, so a beginning or an end that may become markup is held back
+std::string server_asr_strip_markup(const std::string & text, bool is_partial);
+
+// streams the spoken words of an ASR output, see server_asr_strip_markup()
+struct server_asr_transcript {
+    // add generated text, return the newly available spoken words
+    std::string feed(const std::string & added);
+    // all spoken words, once the generation ended
+    std::string text() const;
+
+private:
+    std::string raw;
+    size_t      n_sent = 0;
+};
+
 //
 // model output modalities
 //

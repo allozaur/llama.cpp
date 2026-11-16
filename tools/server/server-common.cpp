@@ -13,6 +13,7 @@
 #include <cpp-httplib/httplib.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <filesystem>
 #include <random>
@@ -216,6 +217,67 @@ std::string pcm_f32_to_s16(const float * samples, size_t n) {
         memcpy(&bytes[2 * i], &v, sizeof(v));
     }
     return bytes;
+}
+
+// true if s[pos..] is a proper prefix of tag, so it may still become the tag
+static bool asr_is_tag_start(const std::string & s, size_t pos, const std::string & tag) {
+    const size_t n = s.size() - pos;
+    return n < tag.size() && tag.compare(0, n, s, pos, n) == 0;
+}
+
+std::string server_asr_strip_markup(const std::string & text, bool is_partial) {
+    static const std::string lang_prefix = "language ";
+    static const std::string open_tag    = "<asr_text>";
+    static const std::string close_tag   = "</asr_text>";
+
+    // optional "language <Name>" before the opening tag
+    size_t pos = 0;
+    if (text.compare(0, lang_prefix.size(), lang_prefix) == 0) {
+        pos = lang_prefix.size();
+        while (pos < text.size() && std::isalpha((unsigned char) text[pos])) {
+            pos++;
+        }
+    } else if (is_partial && asr_is_tag_start(text, 0, lang_prefix)) {
+        return "";
+    }
+
+    if (text.compare(pos, open_tag.size(), open_tag) != 0) {
+        if (is_partial && asr_is_tag_start(text, pos, open_tag)) {
+            return "";
+        }
+        return text;
+    }
+
+    std::string words = text.substr(pos + open_tag.size());
+    const size_t end = words.find(close_tag);
+    if (end != std::string::npos) {
+        words.resize(end);
+    } else if (is_partial) {
+        // hold back the end if it may become the closing tag
+        for (size_t n = std::min(words.size(), close_tag.size() - 1); n > 0; n--) {
+            if (words.compare(words.size() - n, n, close_tag, 0, n) == 0) {
+                words.resize(words.size() - n);
+                break;
+            }
+        }
+    }
+    return words;
+}
+
+std::string server_asr_transcript::feed(const std::string & added) {
+    raw += added;
+    // only grows while the generation goes on
+    const std::string words = server_asr_strip_markup(raw, true);
+    if (words.size() <= n_sent) {
+        return "";
+    }
+    std::string delta = words.substr(n_sent);
+    n_sent = words.size();
+    return delta;
+}
+
+std::string server_asr_transcript::text() const {
+    return server_asr_strip_markup(raw, false);
 }
 
 //

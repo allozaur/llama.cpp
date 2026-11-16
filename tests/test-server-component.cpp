@@ -936,6 +936,62 @@ static void test_pcm_f32_to_s16(testing & t) {
     t.assert_true ("empty",          pcm_f32_to_s16(nullptr, 0).empty());
 }
 
+static void test_asr_strip_markup(testing & t) {
+    auto strip = [](const std::string & text) { return server_asr_strip_markup(text, false); };
+
+    // Qwen3-ASR wraps the spoken words in a language header and tags
+    t.assert_equal("qwen3-asr",       std::string("Hello there."), strip("language English<asr_text>Hello there.</asr_text>"));
+    t.assert_equal("no close tag",    std::string("Hello there."), strip("language English<asr_text>Hello there."));
+    t.assert_equal("no language",     std::string("Hello there."), strip("<asr_text>Hello there.</asr_text>"));
+    t.assert_equal("silence",         std::string(""),             strip("language None<asr_text></asr_text>"));
+
+    // other text is left as is
+    t.assert_equal("plain",           std::string("Hello there."), strip("Hello there."));
+    t.assert_equal("starts language", std::string("language English is spoken here"), strip("language English is spoken here"));
+    t.assert_equal("tag mid text",    std::string("Hi <asr_text>x</asr_text>"), strip("Hi <asr_text>x</asr_text>"));
+    t.assert_equal("header only",     std::string("language English"), strip("language English"));
+    t.assert_equal("empty",           std::string(""), strip(""));
+}
+
+static void test_asr_transcript(testing & t) {
+    // feeds the chunks, checks the deltas and that they add up to the final text
+    auto stream = [&t](const std::string & name, const std::vector<std::string> & chunks,
+                       const std::vector<std::string> & expected_deltas, const std::string & expected) {
+        server_asr_transcript tr;
+        std::vector<std::string> deltas;
+        std::string joined;
+        for (const auto & c : chunks) {
+            deltas.push_back(tr.feed(c));
+            joined += deltas.back();
+        }
+        t.assert_true (name + ": deltas", deltas == expected_deltas);
+        t.assert_equal(name + ": text",   expected, tr.text());
+        t.assert_equal(name + ": joined", expected, joined);
+    };
+
+    stream("qwen3-asr",
+           {"language", " Eng", "lish", "<asr", "_text>", "Hello", " there", ".</", "asr_text>"},
+           {"",         "",     "",     "",     "",       "Hello", " there", ".",   ""},
+           "Hello there.");
+    stream("qwen3-asr special tokens",
+           {"language", " English", "<asr_text>", "Hi", "</asr_text>"},
+           {"",         "",         "",           "Hi", ""},
+           "Hi");
+    stream("plain",
+           {"Hello", " there", "."},
+           {"Hello", " there", "."},
+           "Hello there.");
+    // held back while it may be the header, released as soon as it cannot be
+    stream("starts like a header",
+           {"lang", "uage", " English", " is",                 " spoken"},
+           {"",     "",     "",         "language English is", " spoken"},
+           "language English is spoken");
+    stream("starts with <",
+           {"<", "3 you"},
+           {"",  "<3 you"},
+           "<3 you");
+}
+
 int main(int argc, char ** argv) {
     testing t;
 
@@ -965,6 +1021,8 @@ int main(int argc, char ** argv) {
     t.test("stop_strings",    test_stop_strings);
     t.test("speech_convert",  test_speech_convert);
     t.test("pcm_f32_to_s16",  test_pcm_f32_to_s16);
+    t.test("asr_strip_markup", test_asr_strip_markup);
+    t.test("asr_transcript",  test_asr_transcript);
 
     return t.summary();
 }

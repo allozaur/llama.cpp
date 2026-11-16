@@ -994,6 +994,9 @@ void server_task_result_cmpl_partial::update(task_result_state & state) {
         return; // begin marker only flushes headers, skip parsing
     }
     state.update_chat_msg(content, true, oaicompat_msg_diffs);
+    if (res_type == TASK_RESPONSE_TYPE_OAI_ASR) {
+        asr_delta = state.asr_transcript.feed(content.text);
+    }
 
     // Copy current state for use in to_json_*() (reflects state BEFORE this chunk)
     thinking_block_started = state.thinking_block_started;
@@ -1327,11 +1330,13 @@ json server_task_result_cmpl_partial::to_json_oaicompat_resp() {
 }
 
 json server_task_result_cmpl_partial::to_json_oaicompat_asr() {
-    json event = json {
+    if (asr_delta.empty()) {
+        return json::array(); // nothing to send, e.g. the model's markup is held back
+    }
+    return json {
         {"type", "transcript.text.delta"},
-        {"delta", content.text},
+        {"delta", asr_delta},
     };
-    return event;
 }
 
 json server_task_result_cmpl_partial::to_json_anthropic() {
