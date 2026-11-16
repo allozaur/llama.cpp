@@ -13,7 +13,7 @@ import { playwright } from '@vitest/browser-playwright';
 import { mdsvex } from 'mdsvex';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite';
+import { defineConfig, loadEnv, type ProxyOptions, searchForWorkspaceRoot } from 'vite';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const LLAMA_VOICE_SOURCE = resolve(__dirname, '../../lib/voice/src');
@@ -38,6 +38,18 @@ const outDir = process.env.LLAMA_UI_OUT_DIR ?? './dist';
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), 'VITE_PUBLIC_');
 	const SERVER_ORIGIN = env.VITE_PUBLIC_SERVER_ORIGIN || 'http://localhost:9931';
+	// llama-server takes cross-origin browser requests only from --cors-origins, so the proxy
+	// calls it as its own page: the Host of the server and no Origin. Sec-Fetch-Site still
+	// passes through, so the server keeps refusing requests from other sites.
+	const toServer = (ws = false): ProxyOptions => ({
+		changeOrigin: true,
+		configure: (proxy) => {
+			proxy.on('proxyReq', (req) => req.removeHeader('origin'));
+			proxy.on('proxyReqWs', (req) => req.removeHeader('origin'));
+		},
+		target: SERVER_ORIGIN,
+		ws
+	});
 
 	return {
 		build: {
@@ -106,13 +118,13 @@ export default defineConfig(({ mode }) => {
 				'Cross-Origin-Opener-Policy': 'same-origin'
 			},
 			proxy: {
-				'/cors-proxy': SERVER_ORIGIN,
-				'/models': SERVER_ORIGIN,
-				'/props': SERVER_ORIGIN,
-				'/slots': SERVER_ORIGIN,
-				'/tools': SERVER_ORIGIN,
+				'/cors-proxy': toServer(),
+				'/models': toServer(),
+				'/props': toServer(),
+				'/slots': toServer(),
+				'/tools': toServer(),
 				// ws: realtime transcription (/v1/realtime) is a WebSocket
-				'/v1': { target: SERVER_ORIGIN, ws: true }
+				'/v1': toServer(true)
 			}
 		},
 
