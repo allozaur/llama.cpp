@@ -12,7 +12,7 @@ import {
 	VOICE_MODE_MESSAGE
 } from '#lib/constants/index.ts';
 import { ServerRole, VoiceInputMode } from '#lib/enums/index.ts';
-import { voiceTranscriptsStore } from '#lib/stores/index.ts';
+import { modelsStore, voiceTranscriptsStore } from '#lib/stores/index.ts';
 import { parseFilesToMessageExtras } from '#lib/utils/browser-only.ts';
 import { tick } from 'svelte';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -46,8 +46,7 @@ function seed(
 /** A router whose chat model (Qwen3) can't hear while another (Gemma) can, none of them loaded. */
 function seedRouter(transcriptionModel = '') {
 	const [chat, hearing] = routerModels;
-
-	restore = seedStores({
+	const restoreStores = seedStores({
 		config: {
 			autoMicOnEmpty: true,
 			[SETTINGS_KEYS.VOICE_INPUT_MODE]: VoiceInputMode.AUTO,
@@ -63,6 +62,14 @@ function seedRouter(transcriptionModel = '') {
 		selectedModelId: chat.id,
 		serverRole: ServerRole.ROUTER
 	});
+	// the microphone looks among the active server's models for one that hears
+	const activeModels = modelsStore.activeModels;
+
+	modelsStore.activeModels = routerModels;
+	restore = () => {
+		modelsStore.activeModels = activeModels;
+		restoreStores();
+	};
 }
 
 async function renderForm(options: { isLoading?: boolean; voiceMode?: boolean } = {}) {

@@ -24,11 +24,11 @@ import {
 	voiceTranscriptsStore
 } from '#lib/stores/index.ts';
 import type { ChatUploadedFile } from '#lib/types/index.ts';
+import { apiUrl } from '#lib/utils/api-base.ts';
 import { getAuthHeaders } from '#lib/utils/api-headers.ts';
 import { describeMicrophoneError } from '#lib/utils/audio-recording.ts';
-import { withBase } from '#lib/utils/base-path.ts';
 import { DictationSpan } from '#lib/utils/dictation-span.ts';
-import { uuid } from '#lib/utils/index.ts';
+import { getServer, isRemoteServer, uuid } from '#lib/utils/index.ts';
 import { resolveVoiceMode, voiceModeLabel } from '#lib/utils/voice-mode.ts';
 import {
 	resolveMicrophone,
@@ -97,18 +97,15 @@ function readAsDataUrl(blob: Blob): Promise<string> {
 	});
 }
 
-/** The microphone's server: its routes, its auth, and whether a websocket reaches it. */
+/** The microphone's server: the active one, its auth, and whether a websocket reaches it. */
 function serverContext(): { context: VoiceServerContext; realtime: boolean } {
 	const headers = getAuthHeaders();
-	// a browser websocket can not send the API key
+	// a browser websocket can send neither the API key nor a tunnel's transport
 	const hasAuth = Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
 
 	return {
-		context: {
-			getHeaders: () => getAuthHeaders(),
-			resolveUrl: (path) => withBase(path.replace(/^\./, ''))
-		},
-		realtime: !hasAuth
+		context: { getHeaders: () => getAuthHeaders(), resolveUrl: (path) => apiUrl(path) },
+		realtime: !isRemoteServer(getServer()) && !hasAuth
 	};
 }
 
@@ -131,7 +128,7 @@ export function useChatFormVoice(options: UseChatFormVoiceOptions) {
 		if (!isRouter) return null;
 
 		return (
-			modelsStore.models.find(
+			modelsStore.activeModels.find(
 				(option) => hasAudio(option.model) && modelsStore.isModelLoaded(option.model)
 			)?.model ?? null
 		);
@@ -151,7 +148,7 @@ export function useChatFormVoice(options: UseChatFormVoiceOptions) {
 	const anyAudioModel = $derived.by(() => {
 		void modelsStore.props.cacheVersion;
 
-		return isRouter && modelsStore.models.some((option) => hasAudio(option.model));
+		return isRouter && modelsStore.activeModels.some((option) => hasAudio(option.model));
 	});
 
 	let hintSeen = $state(readHintSeen());
