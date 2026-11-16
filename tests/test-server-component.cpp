@@ -943,6 +943,7 @@ static void test_asr_prompt(testing & t) {
     t.assert_true ("generic: never answers",      generic.system.find("never answer") != std::string::npos);
     t.assert_true ("generic: audio first",        generic.media_first);
     t.assert_true ("generic: transcript only",    generic.user.find("Output only the transcript") != std::string::npos);
+    t.assert_true ("generic: pauses are no ends", generic.user.find("a pause inside a sentence does not end it") != std::string::npos);
     t.assert_true ("generic: names the language", generic.has_language);
 
     const common_chat_prompt_preset german = common_chat_get_asr_prompt(nullptr, "de");
