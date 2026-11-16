@@ -196,6 +196,9 @@
 							{#if turn.reply}
 								<p class="text-md leading-relaxed break-words" data-slot="voice-mode-reply">
 									<VoiceSpokenText
+										onWordSelect={turn.id === lastTurnId && conversation.reading
+											? conversation.readFrom
+											: undefined}
 										spoken={turn.id === lastTurnId &&
 										conversation.canSpeak &&
 										!conversation.speakerMuted

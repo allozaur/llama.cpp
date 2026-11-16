@@ -38,7 +38,8 @@ export interface ReplyReaderOptions {
  * Reads a reply aloud while it streams: give it the reply as it grows with update(),
  * and it speaks each complete sentence in order, fetching the next one while the
  * current one plays. `spoken` follows the voice through the reply as written, for
- * VoiceSpokenText. Muted, it reads nothing and `spoken` keeps up with the text.
+ * VoiceSpokenText, and seek() moves the voice to another place in it. Muted, it reads
+ * nothing and `spoken` keeps up with the text.
  */
 export class ReplyReader {
 	/** Whether a piece is being fetched or played */
@@ -47,20 +48,25 @@ export class ReplyReader {
 	spoken = $state(0);
 
 	private audio: HTMLAudioElement | null = null;
-	private controller = new AbortController();
 	private done = false;
+	// the reply's pieces and their audio, kept so seek() can go back; bookkeeping the UI never reads
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	private fetched = new Map<ReadAloudPiece, Promise<Blob>>();
+	// the reply's speech requests, and the reading under way, which seek() starts anew
+	private fetches = new AbortController();
 	private frame: number | null = null;
 	private idle = true;
 	private isMuted = false;
 	private isPaused = false;
 	private readonly options: ReplyReaderOptions;
+	private pieces: ReadAloudPiece[] = [];
 	private playing = false;
-	// bookkeeping the UI never reads
-	// eslint-disable-next-line svelte/prefer-svelte-reactivity
-	private prefetched = new Map<ReadAloudPiece, Promise<Blob>>();
 	private queue: ReadAloudPiece[] = [];
 	private queuedTo = 0;
 	private resumeWaiters: (() => void)[] = [];
+	private run = new AbortController();
+	// where in its piece the next one to play starts, after seek()
+	private startAt: { piece: ReadAloudPiece; share: number } | null = null;
 	private text = '';
 
 	get muted(): boolean {
@@ -94,7 +100,9 @@ export class ReplyReader {
 	/** Starts a new reply. */
 	reset(): void {
 		this.stop();
-		this.controller = new AbortController();
+		this.fetches = new AbortController();
+		this.run = new AbortController();
+		this.pieces = [];
 		this.text = '';
 		this.done = false;
 		this.queuedTo = 0;
@@ -115,15 +123,52 @@ export class ReplyReader {
 		for (const wake of this.resumeWaiters.splice(0)) wake();
 	}
 
+	/**
+	 * Reads on from `offset` in the reply as written, e.g. a word tapped on screen, before
+	 * or after where the voice is; a piece already fetched plays at once, from about where
+	 * the word falls in it. False when there is nothing to read there: the reply was read
+	 * to its end, the voice is muted, or that sentence is not complete yet.
+	 */
+	seek(offset: number): boolean {
+		if (this.idle || this.isMuted) return false;
+
+		const index = this.pieces.findIndex((piece) => offset < piece.end);
+
+		if (index === -1) return false;
+
+		const piece = this.pieces[index];
+		const from = Math.max(offset, piece.start);
+
+		this.run.abort();
+		this.run = new AbortController();
+
+		// a reading that waited on a pause or a fetch sees it was aborted and lets go
+		for (const wake of this.resumeWaiters.splice(0)) wake();
+
+		this.stopAudio();
+		this.queue = this.pieces.slice(index);
+		// a piece opens with the space after the one before: a word right after it starts the piece
+		this.startAt = this.text.slice(piece.start, from).trim()
+			? { piece, share: (from - piece.start) / Math.max(piece.end - piece.start, 1) }
+			: null;
+		this.spoken = from;
+		this.playing = false;
+		void this.pump();
+
+		return true;
+	}
+
 	/** Stops reading: the current piece, and what was still to come. */
 	stop(): void {
 		this.isPaused = false;
 
 		for (const wake of this.resumeWaiters.splice(0)) wake();
 
-		this.controller.abort();
+		this.fetches.abort();
+		this.run.abort();
 		this.queue = [];
-		this.prefetched.clear();
+		this.startAt = null;
+		this.fetched.clear();
 		this.stopAudio();
 		this.playing = false;
 		this.speaking = false;
@@ -137,6 +182,7 @@ export class ReplyReader {
 
 		// the first piece may end at a clause, so the voice starts sooner
 		for (const piece of readAloudPieces(text, this.queuedTo, done, this.queuedTo === 0)) {
+			this.pieces.push(piece);
 			this.queue.push(piece);
 			this.queuedTo = piece.end;
 		}
@@ -151,16 +197,16 @@ export class ReplyReader {
 	}
 
 	private fetchPiece(piece: ReadAloudPiece): Promise<Blob> {
-		let pending = this.prefetched.get(piece);
+		let pending = this.fetched.get(piece);
 
 		if (!pending) {
 			// the model's silence around each piece is cut short, so the voice runs on
 			pending = this.options
-				.synthesize(piece.speech, this.controller.signal)
+				.synthesize(piece.speech, this.fetches.signal)
 				.then((blob) => trimSilence(blob));
-			// a failed fetch is handled where it is played
-			pending.catch(() => {});
-			this.prefetched.set(piece, pending);
+			// a failed fetch is handled where it is played, and fetched again next time
+			pending.catch(() => this.fetched.delete(piece));
+			this.fetched.set(piece, pending);
 		}
 
 		return pending;
@@ -180,13 +226,21 @@ export class ReplyReader {
 		}
 	}
 
-	private async play(piece: ReadAloudPiece, blob: Blob, signal: AbortSignal): Promise<void> {
+	private async play(
+		piece: ReadAloudPiece,
+		blob: Blob,
+		signal: AbortSignal,
+		startShare = 0
+	): Promise<void> {
 		const audio = this.element();
 		const url = URL.createObjectURL(blob);
 
 		try {
 			await new Promise<void>((resolve) => {
 				const follow = () => {
+					// a piece left behind by seek() or stop() no longer moves the text
+					if (signal.aborted) return;
+
 					if (audio.duration > 0 && Number.isFinite(audio.duration)) {
 						const share = Math.min(audio.currentTime / audio.duration, 1);
 
@@ -198,7 +252,23 @@ export class ReplyReader {
 
 					this.frame = requestAnimationFrame(follow);
 				};
+				const start = () => {
+					if (signal.aborted) return;
+
+					// after seek(): from about where the word falls in the piece
+					if (startShare > 0 && Number.isFinite(audio.duration)) {
+						audio.currentTime = audio.duration * startShare;
+					}
+
+					audio.play().then(
+						() => {
+							if (!signal.aborted) this.frame = requestAnimationFrame(follow);
+						},
+						() => end()
+					);
+				};
 				const end = () => {
+					audio.removeEventListener('loadedmetadata', start);
 					audio.onended = null;
 					audio.onerror = null;
 					signal.removeEventListener('abort', end);
@@ -213,10 +283,12 @@ export class ReplyReader {
 				audio.preservesPitch = true;
 				audio.playbackRate = this.options.playbackRate?.() ?? 1;
 				audio.defaultPlaybackRate = audio.playbackRate;
-				audio.play().then(
-					() => (this.frame = requestAnimationFrame(follow)),
-					() => end()
-				);
+
+				if (startShare > 0) {
+					audio.addEventListener('loadedmetadata', start, { once: true });
+				} else {
+					start();
+				}
 			});
 		} finally {
 			if (this.frame !== null) cancelAnimationFrame(this.frame);
@@ -237,8 +309,10 @@ export class ReplyReader {
 			return;
 		}
 
-		const { signal } = this.controller;
+		const { signal } = this.run;
+		const startShare = this.startAt?.piece === piece ? this.startAt.share : 0;
 
+		this.startAt = null;
 		this.playing = true;
 		this.speaking = true;
 
@@ -256,13 +330,11 @@ export class ReplyReader {
 					await new Promise<void>((resolve) => this.resumeWaiters.push(resolve));
 				}
 
-				if (!signal.aborted && !this.isMuted) await this.play(piece, blob, signal);
+				if (!signal.aborted && !this.isMuted) await this.play(piece, blob, signal, startShare);
 			} catch (error) {
 				if (!signal.aborted) console.warn('Reading the reply aloud failed:', error);
 			}
 		}
-
-		this.prefetched.delete(piece);
 
 		if (signal.aborted) return;
 

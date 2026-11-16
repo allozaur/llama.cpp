@@ -140,7 +140,7 @@ export function useVoiceConversation() {
 	let tentativeTimer: ReturnType<typeof setTimeout> | undefined;
 	// a reply paused by an interruption: it goes on if the microphone is muted or nothing is
 	// said, and is dropped once the user's turn is sent
-	let heldReply = false;
+	let heldReply = $state(false);
 
 	const reader = new ReplyReader({
 		onIdle: () => {
@@ -463,6 +463,18 @@ export function useVoiceConversation() {
 		void listen();
 	}
 
+	/**
+	 * Reads the reply on from `offset`, e.g. a word tapped while it is read; a reply held for
+	 * an interruption goes on from there too, as the tap says the user wants to hear it.
+	 */
+	function readFrom(offset: number) {
+		if (!reader.speaking && !heldReply) return;
+
+		if (heldReply) resumeReading();
+
+		reader.seek(offset);
+	}
+
 	/** Starts the conversation; the click that opened voice mode unlocked playback (unlockVoicePlayback). */
 	function open() {
 		error = null;
@@ -538,6 +550,11 @@ export function useVoiceConversation() {
 		open,
 		get reader() {
 			return reader;
+		},
+		readFrom,
+		/** Whether the reply is being read, or held for an interruption: readFrom() can move it. */
+		get reading() {
+			return reader.speaking || heldReply;
 		},
 		get speakerMuted() {
 			return speakerMuted;
