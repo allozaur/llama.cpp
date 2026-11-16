@@ -8,6 +8,7 @@
 	import { serverStore, settingsStore } from '#lib/stores/index.ts';
 	import { serverUrl } from '#lib/utils/server-config.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { fade, fly, scale } from 'svelte/transition';
 
 	interface Props {
@@ -80,7 +81,7 @@
 
 				// Show success state briefly, then navigate to home
 				setTimeout(() => {
-					goto(ROUTES.START);
+					goto(resolve(ROUTES.START));
 				}, 1000);
 			} else {
 				// API key is invalid - User Story A
