@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ContextGaugePopup from './ChatFormContextGauge/ContextGaugePopup.svelte';
 	import { microphoneUnavailableReason, warmUpVoiceCapture } from '@ggml-org/llama-voice';
-	import { VoiceRecorder } from '@ggml-org/llama-voice/svelte';
+	import { unlockVoicePlayback, VoiceRecorder } from '@ggml-org/llama-voice/svelte';
 	import { Maximize, Minimize } from '@lucide/svelte';
 	import {
 		ActionIcon,
@@ -100,6 +100,8 @@
 
 		/** Records voice input; tests and stories pass a fake, the app a VoiceRecorder. */
 		voiceRecorder?: VoiceRecorderLike;
+		/** Offers voice mode, a spoken conversation, as the main button of an empty message. */
+		voiceMode?: boolean;
 	}
 
 	let {
@@ -122,6 +124,7 @@
 		singleRow = false,
 		uploadedFiles = $bindable([]),
 		value = $bindable(''),
+		voiceMode = false,
 		voiceRecorder
 	}: Props = $props();
 
@@ -669,6 +672,16 @@
 		await submit();
 	}
 
+	// voice mode leads only when what is said can be transcribed: the chat model hears, or a
+	// transcription model is set or loaded; else the microphone leads, saying why it cannot
+	let voiceModeAvailable = $derived(voiceMode && !voice.unavailableReason);
+
+	// inside the click: a browser that plays sound only after a gesture lets the replies play later
+	function handleVoiceModeClick() {
+		unlockVoicePlayback();
+		uiStore.voiceModeOpen = true;
+	}
+
 	// Escape drops a recording, wherever the focus is
 	function handleWindowKeydown(event: KeyboardEvent) {
 		if (event.key !== KeyboardKey.ESCAPE || !voice.isActive || event.defaultPrevented) return;
@@ -862,6 +875,7 @@
 						{onStop}
 						onSystemPromptClick={() =>
 							onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+						onVoiceModeClick={voiceModeAvailable ? handleVoiceModeClick : undefined}
 						onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 							? pickers.handleWorkingDirectoryOpen
 							: undefined}

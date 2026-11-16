@@ -121,6 +121,8 @@ export interface ApiModelDataEntry {
 export interface ApiModelArchitecture {
 	/** Accepted input modalities, always contains "text" */
 	input_modalities: string[];
+	/** Generated output modalities: "audio" when the model can speak */
+	output_modalities?: string[];
 }
 
 /**

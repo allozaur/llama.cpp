@@ -690,6 +690,7 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 						model: modelId,
 						name: this.toDisplayName(displayNameSource),
 						parsedId: ModelsService.parseModelId(modelId),
+						speaks: item.architecture?.output_modalities?.includes('audio') ?? false,
 						tags: item.tags ?? []
 					};
 				})

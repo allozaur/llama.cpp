@@ -26,6 +26,25 @@ export const VOICE_MODE_MESSAGE = {
 /** The status of a server that has no such route for the model, e.g. a live-only model asked over HTTP. */
 export const VOICE_NOT_SUPPORTED_STATUS = 501;
 
+/** What voice mode says: its states, buttons and the reason it cannot read replies aloud. */
+export const VOICE_CONVERSATION_MESSAGE = {
+	close: 'Leave voice mode',
+	greeting: "Let's talk",
+	interrupt: 'Interrupt the reply',
+	listening: 'Listening...',
+	micOff: 'Microphone off',
+	mute: 'Turn the microphone off',
+	noSpeechModel:
+		'No model that speaks is available, so replies are shown, not read aloud. Load a model that generates audio to hear them.',
+	open: 'Voice mode',
+	speakerOff: 'Stop reading replies aloud',
+	speakerOn: 'Read replies aloud',
+	starting: 'Starting...',
+	thinking: 'Thinking...',
+	transcribing: 'Transcribing...',
+	unmute: 'Turn the microphone on'
+} as const;
+
 /** Where the chat form remembers that it showed the hint about a separate transcription model. */
 export const VOICE_SEPARATE_MODEL_HINT_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.voiceSeparateModelHintSeen`;
 
