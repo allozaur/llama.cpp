@@ -95,6 +95,7 @@ export const SETTINGS_KEYS = {
 	VOICE_INPUT_MODE: 'voiceInputMode',
 	VOICE_MICROPHONE: 'voiceMicrophone',
 	VOICE_NOISE_SUPPRESSION: 'voiceNoiseSuppression',
+	VOICE_READING_SPEED: 'voiceReadingSpeed',
 	VOICE_TRANSCRIBE_MESSAGES: 'voiceTranscribeMessages',
 	VOICE_TRANSCRIPTION_LANGUAGE: 'voiceTranscriptionLanguage',
 	VOICE_TRANSCRIPTION_MODEL: 'voiceTranscriptionModel',

@@ -16,12 +16,22 @@ export interface ReadAloudPiece {
 // a sentence ends at . ! ? (with closing quotes or brackets) before whitespace, or a line ends;
 // a list number such as "1." does not end one
 const PIECE_END = /(?<!(?:^|\s)\d{1,3})[.!?…]+["')\]*_]*(?=\s)|\n+/g;
+// a clause ends at , ; : or a dash before whitespace
+const CLAUSE_END = /[,;:\u2013\u2014]+(?=\s)/g;
+/** A first clause shorter than this waits for the sentence: a voice that stops so soon sounds choppy. */
+const MIN_FIRST_CLAUSE = 24;
 
 /**
  * The pieces of `text` after `from` that are complete: the reply may still grow unless
- * `done`, in which case what remains is the last piece.
+ * `done`, in which case what remains is the last piece. With `firstClause`, the reply's
+ * first piece may end at a clause, so reading starts before its first sentence is done.
  */
-export function readAloudPieces(text: string, from: number, done: boolean): ReadAloudPiece[] {
+export function readAloudPieces(
+	text: string,
+	from: number,
+	done: boolean,
+	firstClause = false
+): ReadAloudPiece[] {
 	const pieces: ReadAloudPiece[] = [];
 
 	let start = from;
@@ -36,6 +46,14 @@ export function readAloudPieces(text: string, from: number, done: boolean): Read
 	}
 
 	if (done && start < text.length) push(pieces, text, start, text.length);
+
+	if (firstClause && pieces.length === 0 && !done) {
+		CLAUSE_END.lastIndex = from + MIN_FIRST_CLAUSE;
+
+		const clause = CLAUSE_END.exec(text);
+
+		if (clause) push(pieces, text, from, clause.index + clause[0].length);
+	}
 
 	return pieces;
 }

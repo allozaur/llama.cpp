@@ -138,6 +138,7 @@ export function useVoiceConversation() {
 		onIdle: () => {
 			if (state === 'speaking' || state === 'thinking') void listen();
 		},
+		playbackRate: () => Number(config[SETTINGS_KEYS.VOICE_READING_SPEED]) || 1.25,
 		synthesize: (text, signal) => {
 			const { context } = serverContext();
 
