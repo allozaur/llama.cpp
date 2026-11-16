@@ -3,7 +3,7 @@
  * extension lists and runs, and hooks that run around every agentic flow.
  */
 
-import type { ToolSource } from '#lib/enums/index.ts';
+import type { ServerToolType, ToolSource } from '#lib/enums/index.ts';
 import type { OpenAIToolDefinition, ToolExecutionResult } from '#lib/types/index.ts';
 import type { Component } from 'svelte';
 
@@ -61,6 +61,13 @@ export interface ToolProvider {
 	groupIdentity?: Component<ToolGroupIdentityProps>;
 	/** Whether the provider could offer tools under the current settings, connected or not. */
 	isConfigured(): boolean;
+	/**
+	 * llama-server's tools of this `/tools` type are the provider's to list and
+	 * run, in place of the core's server tools: the provider reads them with
+	 * `toolsStore.serverToolsOfType()`. While the provider is off, the core
+	 * lists them as server tools again.
+	 */
+	serverToolType?: ServerToolType;
 	/** Get the tools ready to list and call, before a flow asks for them. */
 	prepare?(): Promise<void>;
 	/** Look for the tools again. Called when the tools panel opens. */

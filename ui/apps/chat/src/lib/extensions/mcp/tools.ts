@@ -1,14 +1,26 @@
 /**
  * MCP's side of the `tools` and `flow` extension points: the tools of the MCP
- * servers, listed and run through mcpStore, and the hold an agentic flow
- * takes on the connections.
+ * servers the browser connects to, listed and run through mcpStore, the tools
+ * of the MCP servers llama-server runs (see `llama-server.ts`), and the hold
+ * an agentic flow takes on the connections.
  */
 
 import type { FlowHook, ToolProvider, ToolProviderEntry } from '../points/tools';
 import type { ExtensionContext } from '../types';
 import McpToolGroupIdentity from './components/contributions/McpToolGroupIdentity.svelte';
+import {
+	executeLlamaServerMcpTool,
+	isLlamaServerMcpTool,
+	llamaServerMcpServers
+} from './llama-server';
 import { mcpStore } from './stores/index.svelte';
-import { HealthCheckStatus, JsonSchemaType, ToolCallType, ToolSource } from '#lib/enums/index.ts';
+import {
+	HealthCheckStatus,
+	JsonSchemaType,
+	ServerToolType,
+	ToolCallType,
+	ToolSource
+} from '#lib/enums/index.ts';
 // direct imports of the stores, not via the barrel, to avoid circular deps
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
@@ -97,7 +109,11 @@ function getToolsFromHealthChecks(): {
 	return result;
 }
 
-/** Normalize MCP tools from live connections when available, fall back to health check data */
+/**
+ * The tools of the servers the browser connects to, normalized, from live
+ * connections when there are some and from health check data until then,
+ * then the tools of the MCP servers llama-server runs.
+ */
 function listTools(): ToolProviderEntry[] {
 	const out: ToolProviderEntry[] = [];
 	const connections = mcpStore.getConnections();
@@ -146,6 +162,12 @@ function listTools(): ToolProviderEntry[] {
 		}
 	}
 
+	for (const server of llamaServerMcpServers()) {
+		for (const tool of server.tools) {
+			out.push({ definition: tool.definition, groupId: server.groupId, groupLabel: server.name });
+		}
+	}
+
 	return out;
 }
 
@@ -191,6 +213,10 @@ const toolProvider: ToolProvider = {
 			: undefined,
 	entries: listTools,
 	async execute(call, signal) {
+		if (isLlamaServerMcpTool(call.name)) {
+			return executeLlamaServerMcpTool(call.name, call.arguments, signal);
+		}
+
 		const result = await mcpStore.executeTool(
 			{ function: { arguments: call.arguments, name: call.name }, id: call.id },
 			signal
@@ -201,7 +227,7 @@ const toolProvider: ToolProvider = {
 	},
 	groupIcon: (serverId) => mcpStore.getServerFavicon(serverId),
 	groupIdentity: McpToolGroupIdentity,
-	isConfigured: () => mcpStore.hasEnabledServers(),
+	isConfigured: () => mcpStore.hasEnabledServers() || llamaServerMcpServers().length > 0,
 	/**
 	 * Initialize every settings-enabled server. The tools store filters by the
 	 * policy afterwards, so switching policies never re-initializes connections.
@@ -214,6 +240,7 @@ const toolProvider: ToolProvider = {
 		if (!initialized) console.log('[MCP] Not initialized');
 	},
 	refresh: () => mcpStore.runHealthChecksForServers(mcpStore.getServers().filter((s) => s.enabled)),
+	serverToolType: ServerToolType.MCP,
 	source: ToolSource.MCP,
 	toolIcon: (toolName) => mcpStore.getServerFaviconForTool(toolName)
 };

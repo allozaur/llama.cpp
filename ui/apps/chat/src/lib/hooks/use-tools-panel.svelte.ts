@@ -129,7 +129,7 @@ export function useToolsPanel(): UseToolsPanelReturn {
 	}
 
 	function handleOpen(): void {
-		if (toolsStore.serverTools.length === 0 && !toolsStore.loading) {
+		if (!toolsStore.hasServerTools && !toolsStore.loading) {
 			toolsStore.fetchServerTools();
 		}
 

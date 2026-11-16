@@ -14,7 +14,7 @@ import type {
 } from '@modelcontextprotocol/client';
 import type { ColorMode } from '#lib/enums/index.ts';
 import type { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel } from '#lib/enums/mcp.enums.ts';
-import type { ToolSource } from '#lib/enums/tools.enums.ts';
+import type { ServerToolType } from '#lib/enums/tools.enums.ts';
 
 export type { Tool, CallToolResult, Prompt, GetPromptResult, PromptMessage };
 export type ClientCapabilities = SDKClientCapabilities;
@@ -289,8 +289,10 @@ export interface ToolExecutionResult {
 
 export interface ServerToolInfo {
 	display_name: string;
+	/** The MCP server llama-server runs the tool from, for a tool of type `mcp`; missing on older servers. */
+	mcp_server?: string;
 	tool: string;
-	type: ToolSource.SERVER;
+	type: ServerToolType;
 	permissions: {
 		write: boolean;
 	};

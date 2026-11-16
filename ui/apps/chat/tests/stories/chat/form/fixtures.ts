@@ -10,8 +10,8 @@ import {
 	MimeTypeText,
 	ReasoningEffort,
 	ServerRole,
-	SpecialFileType,
-	ToolSource
+	ServerToolType,
+	SpecialFileType
 } from '#lib/enums/index.ts';
 import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
@@ -210,7 +210,7 @@ export const cwdServerTools: ServerToolInfo[] = [
 	display_name: tool,
 	permissions: { write: false },
 	tool,
-	type: ToolSource.SERVER,
+	type: ServerToolType.SERVER,
 	uses_cwd: true
 }));
 

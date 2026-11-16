@@ -5,6 +5,13 @@ export enum ToolSource {
 	SERVER = 'server'
 }
 
+/** The `type` of a tool in llama-server's `/tools` listing. */
+export enum ServerToolType {
+	/** A tool of one of the MCP servers llama-server runs, from `--mcp-servers-config` */
+	MCP = 'mcp',
+	SERVER = 'server'
+}
+
 export enum ToolPermissionDecision {
 	ALWAYS = 'always',
 	ALWAYS_SERVER = 'always_server',

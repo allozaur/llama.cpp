@@ -19,7 +19,7 @@ import {
 	TOOL_GROUP_LABELS,
 	TOOL_SERVER_LABELS
 } from '#lib/constants/index.ts';
-import { BuiltInTool, GlobSearchType, ToolSource } from '#lib/enums/index.ts';
+import { BuiltInTool, GlobSearchType, type ServerToolType, ToolSource } from '#lib/enums/index.ts';
 import {
 	extensions,
 	type ToolGroupIdentityProps,
@@ -30,7 +30,12 @@ import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
-import type { OpenAIToolDefinition, ToolEntry, ToolGroup } from '#lib/types/index.ts';
+import type {
+	OpenAIToolDefinition,
+	ServerToolInfo,
+	ToolEntry,
+	ToolGroup
+} from '#lib/types/index.ts';
 import { ApiError, buildSandboxToolDefinition } from '#lib/utils/index.ts';
 import { browser } from '$app/env';
 import type { Component } from 'svelte';
@@ -47,6 +52,8 @@ class ToolsStore {
 	private _loading = $state(false);
 	private _serverHome = $state<string | null | undefined>(undefined);
 	private _serverHomeRequest: Promise<string | null> | null = null;
+	// every tool of the `/tools` listing, the ones an extension lists in place of the core included
+	private _serverToolInfos = $state<ServerToolInfo[]>([]);
 	private _serverTools = $state<OpenAIToolDefinition[]>([]);
 	private _toolsEndpointUnreachable = $state(false);
 	// server tools that resolve their paths against the working directory,
@@ -70,7 +77,7 @@ class ToolsStore {
 			entries.push(entry);
 		};
 
-		for (const def of this._serverTools) {
+		for (const def of this.serverTools) {
 			const name = def.function.name;
 
 			push({
@@ -172,6 +179,11 @@ class ToolsStore {
 		return this._error;
 	}
 
+	/** Whether llama-server lists any tool, also one an extension lists in place of the core */
+	get hasServerTools(): boolean {
+		return this._serverTools.length > 0;
+	}
+
 	get isToolsEndpointUnreachable(): boolean {
 		return this._toolsEndpointUnreachable;
 	}
@@ -189,8 +201,16 @@ class ToolsStore {
 		return this._serverHome ?? null;
 	}
 
+	/**
+	 * The server tools the core lists and runs itself: every tool of the
+	 * `/tools` listing but those of a type an active provider takes over.
+	 */
 	get serverTools(): OpenAIToolDefinition[] {
-		return this._serverTools;
+		const claimed = this.claimedServerToolNames();
+
+		if (claimed.size === 0) return this._serverTools;
+
+		return this._serverTools.filter((def) => !claimed.has(def.function.name));
 	}
 
 	/** Tools grouped by category for tree display, derived from the canonical entries */
@@ -240,6 +260,7 @@ class ToolsStore {
 		try {
 			const toolInfos = await ToolsService.list();
 
+			this._serverToolInfos = toolInfos;
 			this._serverTools = toolInfos.map((info) => info.definition);
 			agenticMode.serverHasTools = toolInfos.length > 0;
 			this.cwdAwareTools = new SvelteSet(
@@ -291,7 +312,7 @@ class ToolsStore {
 			result.push(def);
 		};
 
-		for (const def of this._serverTools) take(def);
+		for (const def of this.serverTools) take(def);
 		for (const def of this.browserTools) take(def);
 
 		for (const provider of this.providers) {
@@ -385,7 +406,7 @@ class ToolsStore {
 	): boolean {
 		if (disabledCategories.has(ToolSource.SERVER)) return false;
 
-		return this._serverTools.some((def) => {
+		return this.serverTools.some((def) => {
 			const name = def.function.name;
 
 			return (
@@ -483,6 +504,11 @@ class ToolsStore {
 		return this._serverHomeRequest;
 	}
 
+	/** llama-server's tools of one `/tools` type, for the provider that takes them over */
+	serverToolsOfType(type: ServerToolType): ServerToolInfo[] {
+		return this._serverToolInfos.filter((info) => info.type === type);
+	}
+
 	setCategoryEnabled(source: ToolSource, enabled: boolean): void {
 		if (enabled) {
 			this._disabledToolCategories.delete(source);
@@ -511,6 +537,25 @@ class ToolsStore {
 		this.setToolEnabled(key, !this.isToolEnabled(key));
 	}
 
+	/** Names of the server tools an active provider lists and runs in place of the core */
+	private claimedServerToolNames(): ReadonlySet<string> {
+		const types = new SvelteSet<ServerToolType>();
+
+		for (const provider of this.providers) {
+			if (provider.serverToolType) types.add(provider.serverToolType);
+		}
+
+		const names = new SvelteSet<string>();
+
+		if (types.size === 0) return names;
+
+		for (const info of this._serverToolInfos) {
+			if (types.has(info.type)) names.add(info.tool);
+		}
+
+		return names;
+	}
+
 	/** First canonical entry matching a tool name, runtime tool calls resolve by name */
 	private findEntryByName(toolName: string): ToolEntry | null {
 		for (const entry of this.allTools) {
@@ -534,7 +579,7 @@ class ToolsStore {
 	}
 
 	private hasServerTool(name: BuiltInTool): boolean {
-		return this._serverTools.some((def) => def.function.name === name);
+		return this.serverTools.some((def) => def.function.name === name);
 	}
 
 	private persistDisabledToolCategories(): void {
