@@ -117,6 +117,7 @@ export {
 	GlobSearchType,
 	SearchChatsMessageSelection,
 	SearchChatsOrder,
+	ServerToolType,
 	ToolSource,
 	ToolPermissionDecision,
 	ToolResponseField
