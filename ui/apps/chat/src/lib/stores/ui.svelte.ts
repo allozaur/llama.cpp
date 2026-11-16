@@ -5,9 +5,7 @@
  * (e.g. the desktop sidebar's expanded/collapsed state, which the sidebar
  * controls and the chat tab bar reacts to).
  */
-
 import {
-	MODELS_ROUTE_ID,
 	ROUTES,
 	SETTINGS_KEYS,
 	SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY,
@@ -24,7 +22,9 @@ import type { Group } from '#lib/types/groups.js';
 import { remToPx } from '#lib/utils/css.ts';
 import { browser } from '$app/env';
 import { goto } from '$app/navigation';
+import { resolve } from '$app/paths';
 import { page } from '$app/state';
+import type { ResolvedPathname } from '$app/types';
 import { SvelteSet } from 'svelte/reactivity';
 
 interface GroupDialogOptions {
@@ -100,7 +100,7 @@ class UiStore {
 	modelDetailsFocus = $state<string | null>(null);
 
 	/** Route the models page returns to: the last page visited before it. */
-	modelsReturnRoute: string = ROUTES.START;
+	modelsReturnRoute: ResolvedPathname = resolve(ROUTES.START);
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
@@ -140,7 +140,7 @@ class UiStore {
 
 	/** Whether the models manager route is the current page. */
 	get isModelsPageOpen(): boolean {
-		return page.route.id === MODELS_ROUTE_ID;
+		return page.route.id === ROUTES.MODELS;
 	}
 
 	/** Whether the desktop sidebar is expanded (open); remembered across reloads on desktop. */
@@ -229,7 +229,7 @@ class UiStore {
 	openModelsManager(): void {
 		if (!this.isModelsManagerShown || this.isModelsPageOpen) return;
 
-		void goto(ROUTES.MODELS);
+		void goto(resolve(ROUTES.MODELS));
 	}
 
 	/**
@@ -265,7 +265,8 @@ class UiStore {
 	rememberModelsReturnRoute(): void {
 		if (this.isModelsPageOpen) return;
 
-		this.modelsReturnRoute = page.url.hash || ROUTES.START;
+		// with the hash router, the page's hash is its resolved URL
+		this.modelsReturnRoute = (page.url.hash as ResolvedPathname) || resolve(ROUTES.START);
 	}
 	/** Ask the composer to take focus, e.g. after a dialog closes onto the chat. */
 	requestComposerFocus(): void {

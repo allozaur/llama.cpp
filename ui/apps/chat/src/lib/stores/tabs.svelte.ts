@@ -16,7 +16,6 @@
  * - Tab order persists to localStorage and is pruned against the loaded
  *   conversation list on init. The new-chat tab is kept across reloads.
  */
-
 import {
 	CONVERSATION_TABS_LOCALSTORAGE_KEY,
 	NEW_CHAT_TAB_ID,
@@ -26,6 +25,8 @@ import { RouterService } from '#lib/services/router.service.ts';
 import type { TabView } from '#lib/utils/chat-tabs.ts';
 import { browser } from '$app/env';
 import { goto } from '$app/navigation';
+import { resolve } from '$app/paths';
+import type { ResolvedPathname } from '$app/types';
 import { untrack } from 'svelte';
 
 export class TabsStore {
@@ -65,7 +66,7 @@ export class TabsStore {
 		id: string,
 		isActive: boolean,
 		view: Pick<TabView, 'fallbackHref' | 'hrefFor' | 'ids'> = {
-			fallbackHref: ROUTES.START,
+			fallbackHref: resolve(ROUTES.START),
 			hrefFor: (tabId) => this.hrefFor(tabId),
 			ids: this.openTabs
 		}
@@ -116,8 +117,8 @@ export class TabsStore {
 		if (activeId && ids.includes(activeId)) await goto(view.hrefFor(keepId));
 	}
 
-	hrefFor(id: string): string {
-		return id === NEW_CHAT_TAB_ID ? ROUTES.START : RouterService.chat(id);
+	hrefFor(id: string): ResolvedPathname {
+		return id === NEW_CHAT_TAB_ID ? resolve(ROUTES.START) : RouterService.chat(id);
 	}
 
 	/**
