@@ -4,6 +4,13 @@
 		type UseChatFormPickersReturn
 	} from '$lib/hooks/use-chat-form-pickers.svelte';
 
+	interface Props {
+		/** As on a phone: the mention picker has its own search field and `/` opens nothing. */
+		phone?: boolean;
+	}
+
+	let { phone = false }: Props = $props();
+
 	let value = $state('');
 	let caretOffset = $state(0);
 	const calls: string[] = [];
@@ -19,13 +26,15 @@
 		getValue: () => value,
 		hasCwdTools: () => true,
 		hasPrompts: () => true,
+		mentionHasOwnSearch: () => phone,
 		onCompact: () => {
 			calls.push('onCompact');
 		},
 		openModelSelector: () => {
 			calls.push('openModelSelector');
 		},
-		opensOnInput: () => true,
+		opensCommandsOnInput: () => !phone,
+		opensMentionsOnInput: () => true,
 		setCaretOffset: (o) => {
 			caretOffset = o;
 		},
