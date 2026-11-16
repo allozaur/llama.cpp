@@ -6,6 +6,7 @@
 	rises above the microphone and sinks away once answered.
 -->
 <script lang="ts">
+	import { Logo } from '@ggml-org/llama-ui/app/misc';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { VoiceSpokenText } from '@ggml-org/llama-ui/voice';
@@ -15,7 +16,6 @@
 		ChatMessageActionCardPermissionRequest,
 		ModelsSelector
 	} from '#lib/components/app/index.ts';
-	import { Logo } from '@ggml-org/llama-ui/app/misc';
 	import { ICON_CLASS_DEFAULT, VOICE_CONVERSATION_MESSAGE } from '#lib/constants/index.ts';
 	import { KeyboardKey, type ToolPermissionDecision } from '#lib/enums/index.ts';
 	import { useVoiceConversation } from '#lib/hooks/use-voice-conversation.svelte.ts';
