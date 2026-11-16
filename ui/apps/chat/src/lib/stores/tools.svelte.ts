@@ -256,6 +256,7 @@ class ToolsStore {
 		// the /tools endpoint only exists on the local llama.cpp server, so the
 		// list follows the built-in server rather than the selected model
 		if (!serverStore.hasLocalServer || !serversStore.local.enabled) {
+			this._serverToolInfos = [];
 			this._serverTools = [];
 			this.cwdAwareTools = new SvelteSet();
 
