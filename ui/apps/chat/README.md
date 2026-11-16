@@ -165,6 +165,8 @@ MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
 
 MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
 
+MCP servers come two ways. A remote server (Streamable HTTP, SSE or WebSocket) is one the browser connects to by URL, added on the MCP servers page. A local server that runs as a command (stdio) is one llama-server starts from `--mcp-servers-config`, since a page cannot start a process: llama-server lists its tools in `/tools` with the type `mcp` and the server's name in `mcp_server`, and runs them on `POST /tools`. The MCP extension takes those tools over from the core's server tools (`serverToolType` on its tool provider, see `llama-server.ts`), so both kinds show up the same way, one group per server, on the MCP servers page and in the tools menu. With the extension off, the core lists them as server tools again.
+
 A setting can name the extension it belongs to (`extension` in `SETTINGS_REGISTRY`): its field shows only while that extension is on, and the stored value stays either way.
 
 llama-server embeds the app as a single bundle, so an extension's code ships whether it is on or off; nothing of it runs while it is off.
