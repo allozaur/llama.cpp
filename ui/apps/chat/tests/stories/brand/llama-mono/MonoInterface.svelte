@@ -170,7 +170,7 @@
 				</Card.Content>
 			</Card.Root>
 
-			<!-- an API response, as the web UI's developer view shows it -->
+			<!-- an API response, as Llama Chat's developer view shows it -->
 			<Card.Root class="md:col-span-2">
 				<Card.Header>
 					<Card.Title>Response</Card.Title>

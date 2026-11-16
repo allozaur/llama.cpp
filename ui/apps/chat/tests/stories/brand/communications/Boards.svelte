@@ -64,7 +64,7 @@
 		<p class="name">Llama Sans</p>
 
 		<div class="bottom">
-			<p>Designed for the<br />llama.cpp web UI</p>
+			<p>Designed for<br />Llama Chat</p>
 
 			<p>Published by ggml<br />in 2026</p>
 		</div>

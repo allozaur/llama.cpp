@@ -5,7 +5,7 @@
 	llama.cpp in Mono), in a download badge and in running text, then as the web app's favicon, PWA, maskable and Apple
 	touch icons and its splash screens, with their proportions and placement drawn in, the native apps' icons as they
 	ship (from ggml-org/Llama-macOS and Llama-Windows), and in the social avatars, with how it is optically centred in
-	a circle. The app icons follow the web UI's own pwa-assets.config.ts (PWA_ASSET_GENERATOR) and
+	a circle. The app icons follow Llama Chat's own pwa-assets.config.ts (PWA_ASSET_GENERATOR) and
 	make-icons-circular.js, but are drawn with the L: the files it ships still carry the old llama.cpp mark. It sits
 	in the logo showcase's frame (ShowcaseFrame), on its colours.
 -->
@@ -473,7 +473,7 @@
 		of them start from the favicon, the icon with a {percent(
 			PWA_ASSET_GENERATOR.FAVICON_PADDING / 2
 		)} margin; the square icons add the generator's 30% padding, and the PWA icon is the maskable one
-		at 85%, cut round. The files the web UI ships still carry the old llama.cpp mark; these are drawn
+		at 85%, cut round. The files Llama Chat ships still carry the old llama.cpp mark; these are drawn
 		with the L.
 	</p>
 

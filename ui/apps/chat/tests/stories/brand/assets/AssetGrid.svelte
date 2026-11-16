@@ -203,7 +203,7 @@
 	// the 80% safe circle, and every one is lifted 1/150 of its height
 	const appGroups: Group[] = [
 		{
-			note: 'The web UI’s own five, in its colours, #111111 on white: the favicon for light tabs and the one for dark tabs, transparent with the icon at 96% · the round PWA icon, the maskable icon at 512 × 512 and the Apple touch icon at 180 × 180',
+			note: 'Llama Chat’s own five, in its colours, #111111 on white: the favicon for light tabs and the one for dark tabs, transparent with the icon at 96% · the round PWA icon, the maskable icon at 512 × 512 and the Apple touch icon at 180 × 180',
 			rows: [
 				{
 					assets: (
