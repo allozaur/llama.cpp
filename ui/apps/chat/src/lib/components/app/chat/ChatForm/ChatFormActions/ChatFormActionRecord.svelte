@@ -17,7 +17,7 @@
 		micWarning?: string | null;
 		/** Why no model can take the recording; disables the button. */
 		unavailableReason?: string | null;
-		/** A quieter button, beside the main one (stop or send). */
+		/** A quieter button, beside the main one: stop, send or voice mode. */
 		secondary?: boolean;
 		/** With `secondary`: filled like the stop button it stands beside, not bare. */
 		filled?: boolean;

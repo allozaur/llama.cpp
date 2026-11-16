@@ -10,7 +10,8 @@
 		ChatScreenForm,
 		ChatScreenServerError,
 		ChatScreenStreamResumeStatus,
-		ServerLoadingSplash
+		ServerLoadingSplash,
+		VoiceModeScreen
 	} from '#lib/components/app/index.ts';
 	import {
 		CHAT_FORM_BOTTOM_OFFSET,
@@ -390,6 +391,10 @@
 			/>
 		</div>
 	</div>
+{/if}
+
+{#if uiStore.voiceModeOpen}
+	<VoiceModeScreen />
 {/if}
 
 <ChatScreenDialogsAndAlerts

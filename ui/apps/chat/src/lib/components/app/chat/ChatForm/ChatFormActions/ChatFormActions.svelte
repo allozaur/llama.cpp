@@ -6,6 +6,7 @@
 		ChatFormActionRecord,
 		ChatFormActionsAdd,
 		ChatFormActionSubmit,
+		ChatFormActionVoiceMode,
 		ChatFormContextGauge,
 		ModelsSelector
 	} from '#lib/components/app/index.ts';
@@ -50,6 +51,10 @@
 		workingDirectory?: string | null;
 		onFileUpload?: () => void;
 		onMicClick?: () => void;
+		/** Opens voice mode; left out, the microphone is the main button. */
+		onVoiceModeClick?: () => void;
+		/** Why voice mode cannot listen. */
+		voiceModeUnavailableReason?: string | null;
 		onStop?: () => void;
 		onSystemPromptClick?: () => void;
 		onWorkingDirectoryClick?: () => void;
@@ -69,11 +74,13 @@
 		onMicClick,
 		onStop,
 		onSystemPromptClick,
+		onVoiceModeClick,
 		onWorkingDirectoryClick,
 		showAddButton = true,
 		showModelSelector = true,
 		uploadedFiles = [],
 		voice,
+		voiceModeUnavailableReason = null,
 		workingDirectory = null
 	}: Props = $props();
 
@@ -236,6 +243,7 @@
 			/>
 		</Button>
 	{:else if shouldShowRecordButton}
+		<!-- with voice mode, the microphone steps back beside it: voice mode is the main button -->
 		<ChatFormActionRecord
 			action={voice?.action}
 			{disabled}
@@ -243,8 +251,17 @@
 			{isLoading}
 			{micWarning}
 			{onMicClick}
+			secondary={!!onVoiceModeClick}
 			unavailableReason={voice?.unavailableReason}
 		/>
+
+		{#if onVoiceModeClick}
+			<ChatFormActionVoiceMode
+				{disabled}
+				onClick={onVoiceModeClick}
+				unavailableReason={voiceModeUnavailableReason ?? voice?.unavailableReason ?? null}
+			/>
+		{/if}
 	{:else}
 		<ChatFormActionSubmit
 			canSend={canSend && (showModelSelector ? hasModelSelected && isSelectedModelInCache : true)}

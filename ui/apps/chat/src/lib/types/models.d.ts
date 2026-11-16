@@ -23,6 +23,8 @@ export interface ModelOption {
 	/** Draft sidecars downloaded alongside the model, e.g. `mtp` or `dflash`. */
 	draftSidecars?: ModelSidecarBadge[];
 	modalities?: ModelModalities;
+	/** The model can generate speech, e.g. to read replies aloud. */
+	speaks?: boolean;
 	details?: ApiModelDetails['details'];
 	meta?: ApiModelDataEntry['meta'];
 	parsedId?: ParsedModelId;

@@ -33,7 +33,11 @@ export {
 	VOICE_MICROPHONE_DEFAULT
 } from './microphone';
 export { computePeaks, computePeaksFromAudio, decodeAudio, mixToMono } from './peaks';
+export { PauseDetector, type PauseDetectorOptions } from './pauses';
+export { type ReadAloudPiece, readAloudPieces, toSpeech } from './read-aloud';
 export { RealtimeTranscriber, realtimeUrl } from './realtime';
+export { ReplyReader, type ReplyReaderOptions, unlockVoicePlayback } from './reply-reader.svelte';
+export { synthesizeSpeech, type SynthesizeSpeechOptions } from './speech';
 export { startVoiceSession } from './session';
 export { transcribeClip } from './transcribe';
 export type * from './types';

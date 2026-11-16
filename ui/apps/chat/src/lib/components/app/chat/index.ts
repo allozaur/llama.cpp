@@ -186,6 +186,16 @@ export { default as ChatFormActionsAdd } from './ChatForm/ChatFormActions/ChatFo
 export { default as ChatFormActionRecord } from './ChatForm/ChatFormActions/ChatFormActionRecord.svelte';
 
 /**
+ * **ChatFormActionVoiceMode** - Opens voice mode, the chat form's main button while the message is empty
+ */
+export { default as ChatFormActionVoiceMode } from './ChatForm/ChatFormActions/ChatFormActionVoiceMode.svelte';
+
+/**
+ * **VoiceModeScreen** - Full-screen spoken conversation with the chat model
+ */
+export { default as VoiceModeScreen } from './VoiceMode/VoiceModeScreen.svelte';
+
+/**
  * The actions row while the chat form records: cancel, the live waveform and the
  * elapsed time, and stop, with a voice message's streaming text under the waveform
  * and a waiting state while dictated text is transcribed after recording.

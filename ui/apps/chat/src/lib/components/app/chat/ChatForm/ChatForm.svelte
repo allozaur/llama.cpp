@@ -64,7 +64,7 @@
 		parseClipboardContent,
 		uuid
 	} from '#lib/utils/index.ts';
-	import { VoiceRecorder, warmUpVoiceCapture } from '#lib/voice/index.ts';
+	import { unlockVoicePlayback, VoiceRecorder, warmUpVoiceCapture } from '#lib/voice/index.ts';
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ClassValue } from 'svelte/elements';
 	import { toast } from 'svelte-sonner';
@@ -99,6 +99,8 @@
 
 		/** Records voice input; tests and stories pass a fake, the app a VoiceRecorder. */
 		voiceRecorder?: VoiceRecorderLike;
+		/** Offers voice mode, a spoken conversation, as the main button of an empty message. */
+		voiceMode?: boolean;
 	}
 
 	let {
@@ -121,6 +123,7 @@
 		singleRow = false,
 		uploadedFiles = $bindable([]),
 		value = $bindable(''),
+		voiceMode = false,
 		voiceRecorder
 	}: Props = $props();
 
@@ -668,6 +671,16 @@
 		onSubmit?.();
 	}
 
+	// voice mode leads only when what is said can be transcribed: the chat model hears, or a
+	// transcription model is set or loaded; else the microphone leads, saying why it cannot
+	let voiceModeAvailable = $derived(voiceMode && !voice.unavailableReason);
+
+	// inside the click: a browser that plays sound only after a gesture lets the replies play later
+	function handleVoiceModeClick() {
+		unlockVoicePlayback();
+		uiStore.voiceModeOpen = true;
+	}
+
 	// Escape drops a recording, wherever the focus is
 	function handleWindowKeydown(event: KeyboardEvent) {
 		if (event.key !== KeyboardKey.ESCAPE || !voice.isActive || event.defaultPrevented) return;
@@ -862,6 +875,7 @@
 						{onStop}
 						onSystemPromptClick={() =>
 							onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+						onVoiceModeClick={voiceModeAvailable ? handleVoiceModeClick : undefined}
 						onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 							? pickers.handleWorkingDirectoryOpen
 							: undefined}
