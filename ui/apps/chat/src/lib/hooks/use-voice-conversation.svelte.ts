@@ -62,8 +62,10 @@ const CONVERSATION_CONSTRAINTS: MediaTrackConstraints = {
 };
 /** Silence after speech that ends a turn. */
 const TURN_PAUSE_MS = 900;
-/** Speech over the reply that interrupts it. */
+/** Sound over the reply that pauses it, to hear whether it is speech. */
 const BARGE_IN_MS = 300;
+/** How long a paused reply waits for speech before it goes on: no speech, it was a noise or its own echo. */
+const BARGE_IN_CONFIRM_MS = 1000;
 
 function serverContext(): { context: VoiceServerContext; realtime: boolean } {
 	const headers = getAuthHeaders();
@@ -133,6 +135,9 @@ export function useVoiceConversation() {
 	let turnId = 0;
 	// the current reply was seen loading: until then, not loading does not mean done
 	let replyStarted = false;
+	// the reply is paused over a sound, until speech confirms the interruption or a second passes
+	let tentative = false;
+	let tentativeTimer: ReturnType<typeof setTimeout> | undefined;
 
 	const reader = new ReplyReader({
 		onIdle: () => {
@@ -215,8 +220,12 @@ export function useVoiceConversation() {
 		monitor = null;
 	}
 
-	/** Starts a turn: listens until the speaker pauses, then sends what was said. */
-	async function listen() {
+	/**
+	 * Starts a turn: listens until the speaker pauses, then sends what was said. `floor` is
+	 * the room's noise level when known; `tentative` listens over a paused reply, which
+	 * goes on unless speech is heard within a second.
+	 */
+	async function listen(options: { floor?: number; tentative?: boolean } = {}) {
 		stopMonitor();
 		stopRecorder();
 		liveText = '';
@@ -240,6 +249,7 @@ export function useVoiceConversation() {
 		const { context, realtime } = serverContext();
 		const language = String(config[SETTINGS_KEYS.VOICE_TRANSCRIPTION_LANGUAGE] ?? '').trim();
 		const pauses = new PauseDetector({
+			floor: options.floor,
 			intervalMs: VOICE_LEVELS_INTERVAL_MS,
 			maxSegmentMs: Number.POSITIVE_INFINITY,
 			pauseMs: TURN_PAUSE_MS
@@ -257,9 +267,14 @@ export function useVoiceConversation() {
 				onLevels: (next) => {
 					levels = next as number[];
 
-					if (run === generation && state === 'listening' && pauses.push(next.at(-1) ?? 0)) {
-						void endTurn(run);
-					}
+					if (run !== generation) return;
+
+					const cut = pauses.push(next.at(-1) ?? 0);
+
+					// speech over the paused reply: the interruption was meant
+					if (tentative && pauses.heardSpeech) confirmInterrupt();
+
+					if (state === 'listening' && cut) void endTurn(run);
 				},
 				onText: (text) => {
 					if (run === generation) liveText = text;
@@ -288,6 +303,13 @@ export function useVoiceConversation() {
 
 		error = null;
 		state = 'listening';
+
+		if (options.tentative && tentative) {
+			clearTimeout(tentativeTimer);
+			tentativeTimer = setTimeout(() => {
+				if (run === generation && tentative && !pauses.heardSpeech) resumeReading();
+			}, BARGE_IN_CONFIRM_MS);
+		}
 	}
 
 	/** The speaker paused: what they said goes to the chat. */
@@ -363,7 +385,9 @@ export function useVoiceConversation() {
 			floor = Math.min(level, floor + 0.002);
 			speechMs = level > floor + 0.2 ? speechMs + VOICE_LEVELS_INTERVAL_MS : 0;
 
-			if (speechMs >= BARGE_IN_MS && run === generation && reader.speaking) interrupt();
+			if (speechMs >= BARGE_IN_MS && run === generation && reader.speaking && !reader.paused) {
+				bargeIn(floor);
+			}
 		});
 
 		try {
@@ -379,8 +403,45 @@ export function useVoiceConversation() {
 		}
 	}
 
+	/** A sound over the reply: it pauses, and the next second tells whether it was speech. */
+	function bargeIn(floor: number) {
+		reader.pause();
+		tentative = true;
+		void listen({ floor, tentative: true });
+	}
+
+	/** No speech came: the reply goes on from where it paused. */
+	function resumeReading() {
+		tentative = false;
+		clearTimeout(tentativeTimer);
+		generation++;
+		stopRecorder();
+		liveText = '';
+		levels = [];
+		state = 'speaking';
+		reader.resume();
+		void watchForBargeIn(generation);
+	}
+
+	/** Speech came: the reply stops for good, and the turn that started goes on. */
+	function confirmInterrupt() {
+		tentative = false;
+		clearTimeout(tentativeTimer);
+		reader.stop();
+
+		const convId = conversationsStore.activeConversation?.id;
+
+		if (convId && chatStore.isChatLoading(convId)) void chatStore.stopGeneration();
+
+		const turn = currentTurn;
+
+		if (turn) turn.done = true;
+	}
+
 	/** Stops the reply where it is, and listens. */
 	function interrupt() {
+		tentative = false;
+		clearTimeout(tentativeTimer);
 		reader.stop();
 
 		const convId = conversationsStore.activeConversation?.id;
@@ -402,6 +463,8 @@ export function useVoiceConversation() {
 	}
 
 	function close() {
+		tentative = false;
+		clearTimeout(tentativeTimer);
 		generation++;
 		stopRecorder();
 		stopMonitor();

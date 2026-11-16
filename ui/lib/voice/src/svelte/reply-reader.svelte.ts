@@ -1,4 +1,5 @@
 import { type ReadAloudPiece, readAloudPieces } from '../read-aloud.js';
+import { trimSilence } from '../trim-silence.js';
 
 // one element plays every reply: unlocked once inside a click, it may play later (iOS asks for that)
 let sharedAudio: HTMLAudioElement | null = null;
@@ -51,6 +52,7 @@ export class ReplyReader {
 	private frame: number | null = null;
 	private idle = true;
 	private isMuted = false;
+	private isPaused = false;
 	private readonly options: ReplyReaderOptions;
 	private playing = false;
 	// bookkeeping the UI never reads
@@ -58,10 +60,16 @@ export class ReplyReader {
 	private prefetched = new Map<ReadAloudPiece, Promise<Blob>>();
 	private queue: ReadAloudPiece[] = [];
 	private queuedTo = 0;
+	private resumeWaiters: (() => void)[] = [];
 	private text = '';
 
 	get muted(): boolean {
 		return this.isMuted;
+	}
+
+	/** Whether reading is paused, see pause(). */
+	get paused(): boolean {
+		return this.isPaused;
 	}
 
 	set muted(value: boolean) {
@@ -72,6 +80,15 @@ export class ReplyReader {
 
 	constructor(options: ReplyReaderOptions) {
 		this.options = options;
+	}
+
+	/** Holds the voice where it is, e.g. to hear whether the user speaks; resume() goes on from there. */
+	pause(): void {
+		if (this.isPaused) return;
+
+		this.isPaused = true;
+
+		if (this.audio && !this.audio.paused) this.audio.pause();
 	}
 
 	/** Starts a new reply. */
@@ -85,8 +102,25 @@ export class ReplyReader {
 		this.idle = false;
 	}
 
+	/** Goes on reading from where pause() held it. */
+	resume(): void {
+		if (!this.isPaused) return;
+
+		this.isPaused = false;
+
+		const audio = this.audio;
+
+		if (this.playing && audio?.src && !audio.ended && audio.paused) audio.play().catch(() => {});
+
+		for (const wake of this.resumeWaiters.splice(0)) wake();
+	}
+
 	/** Stops reading: the current piece, and what was still to come. */
 	stop(): void {
+		this.isPaused = false;
+
+		for (const wake of this.resumeWaiters.splice(0)) wake();
+
 		this.controller.abort();
 		this.queue = [];
 		this.prefetched.clear();
@@ -120,7 +154,10 @@ export class ReplyReader {
 		let pending = this.prefetched.get(piece);
 
 		if (!pending) {
-			pending = this.options.synthesize(piece.speech, this.controller.signal);
+			// the model's silence around each piece is cut short, so the voice runs on
+			pending = this.options
+				.synthesize(piece.speech, this.controller.signal)
+				.then((blob) => trimSilence(blob));
 			// a failed fetch is handled where it is played
 			pending.catch(() => {});
 			this.prefetched.set(piece, pending);
@@ -213,6 +250,11 @@ export class ReplyReader {
 
 			try {
 				const blob = await this.fetchPiece(piece);
+
+				// paused while fetching: the piece waits to be played
+				while (this.isPaused && !signal.aborted) {
+					await new Promise<void>((resolve) => this.resumeWaiters.push(resolve));
+				}
 
 				if (!signal.aborted && !this.isMuted) await this.play(piece, blob, signal);
 			} catch (error) {

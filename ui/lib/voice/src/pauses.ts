@@ -21,10 +21,12 @@ export interface PauseDetectorOptions {
 	 * is ever quiet
 	 */
 	maxSegmentMs?: number;
+	/** The room's noise level in dBFS when it is known already, so speech from the first level counts */
+	floorDb?: number;
 }
 
 export class PauseDetector {
-	private readonly detector = new SpeechDetector();
+	private readonly detector: SpeechDetector;
 	private readonly intervalMs: number;
 	private readonly maxSegmentMs: number;
 	private readonly minSpeechMs: number;
@@ -43,6 +45,7 @@ export class PauseDetector {
 		this.pauseMs = options.pauseMs ?? VOICE_PAUSE_DEFAULTS.PAUSE_MS;
 		this.minSpeechMs = options.minSpeechMs ?? VOICE_PAUSE_DEFAULTS.MIN_SPEECH_MS;
 		this.maxSegmentMs = options.maxSegmentMs ?? VOICE_PAUSE_DEFAULTS.MAX_SEGMENT_MS;
+		this.detector = new SpeechDetector({ floorDb: options.floorDb });
 	}
 
 	/** Takes the newest level; true when this is a place to cut the recording. */
