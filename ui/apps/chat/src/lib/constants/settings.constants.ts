@@ -12,6 +12,7 @@ import {
 	Database,
 	File,
 	Funnel,
+	Gauge,
 	GlassWater,
 	ListRestart,
 	Mic,
@@ -480,6 +481,20 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				key: SETTINGS_KEYS.VOICE_AUTO_GAIN,
 				label: 'Automatic gain',
 				type: SettingsFieldType.CHECKBOX
+			},
+			{
+				defaultValue: '1.25',
+				help: 'How fast voice mode reads replies aloud. The voice keeps its pitch.',
+				key: SETTINGS_KEYS.VOICE_READING_SPEED,
+				label: 'Reading speed',
+				options: [
+					{ icon: Gauge, label: '1×', value: '1' },
+					{ icon: Gauge, label: '1.25×', value: '1.25' },
+					{ icon: Gauge, label: '1.5×', value: '1.5' },
+					{ icon: Gauge, label: '1.75×', value: '1.75' },
+					{ icon: Gauge, label: '2×', value: '2' }
+				],
+				type: SettingsFieldType.SELECT
 			},
 			{
 				defaultValue: '',

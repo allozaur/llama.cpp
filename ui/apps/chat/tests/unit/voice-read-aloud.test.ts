@@ -34,6 +34,21 @@ describe('readAloudPieces', () => {
 	});
 });
 
+describe('the first piece', () => {
+	it('may end at a clause, so the voice starts before the sentence is done', () => {
+		const text = 'Quantum physics describes how very small things, like electrons and photons';
+		const [first] = readAloudPieces(text, 0, false, true);
+
+		expect(first.speech).toBe('Quantum physics describes how very small things,');
+		// later pieces wait for whole sentences
+		expect(readAloudPieces(text, first.end, false)).toEqual([]);
+	});
+
+	it('waits for the sentence when its first clause is short', () => {
+		expect(readAloudPieces('Sure, here are ten jokes about', 0, false, true)).toEqual([]);
+	});
+});
+
 describe('toSpeech', () => {
 	it('leaves out markdown marks', () => {
 		expect(toSpeech('## **Quantization.** Some `values`, see [the docs](https://x.y).')).toBe(

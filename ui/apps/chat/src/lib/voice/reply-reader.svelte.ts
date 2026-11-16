@@ -29,6 +29,8 @@ export interface ReplyReaderOptions {
 	synthesize: (text: string, signal: AbortSignal) => Promise<Blob>;
 	/** Called once the reply is done and all of it has been read (or skipped while muted) */
 	onIdle?: () => void;
+	/** Speed of the voice, e.g. 1.25; the pitch is kept. Read before each piece. */
+	playbackRate?: () => number;
 }
 
 /**
@@ -99,7 +101,8 @@ export class ReplyReader {
 		this.text = text;
 		this.done = done;
 
-		for (const piece of readAloudPieces(text, this.queuedTo, done)) {
+		// the first piece may end at a clause, so the voice starts sooner
+		for (const piece of readAloudPieces(text, this.queuedTo, done, this.queuedTo === 0)) {
 			this.queue.push(piece);
 			this.queuedTo = piece.end;
 		}
@@ -169,6 +172,10 @@ export class ReplyReader {
 				audio.onerror = end;
 				signal.addEventListener('abort', end);
 				audio.src = url;
+				// set after src: loading a source resets the rate
+				audio.preservesPitch = true;
+				audio.playbackRate = this.options.playbackRate?.() ?? 1;
+				audio.defaultPlaybackRate = audio.playbackRate;
 				audio.play().then(
 					() => (this.frame = requestAnimationFrame(follow)),
 					() => end()
@@ -199,8 +206,10 @@ export class ReplyReader {
 		this.speaking = true;
 
 		if (piece.speech && !this.isMuted) {
-			// the next piece is fetched while this one plays
-			if (this.queue[0]) this.fetchPiece(this.queue[0]);
+			// the next pieces are fetched while this one plays
+			for (const next of this.queue.slice(0, 2)) {
+				if (next.speech) this.fetchPiece(next);
+			}
 
 			try {
 				const blob = await this.fetchPiece(piece);
