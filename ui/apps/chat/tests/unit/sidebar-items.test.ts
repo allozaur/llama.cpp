@@ -1,10 +1,10 @@
 // The sidebar's footer is the app's own items plus what extensions contribute:
 // without a contribution it must be whole, and a contribution must land
 // right after Models, ahead of the footer's other items.
-
 import { SIDEBAR_FOOTER_ITEMS } from '#lib/constants/index.ts';
 import { SidebarAction } from '#lib/enums/index.ts';
 import type { NavigationItem } from '#lib/extensions/index.ts';
+import { RouterService } from '#lib/services/router.service.ts';
 import { sidebarFooterItems } from '#lib/utils/sidebar-items.ts';
 import type { Component } from 'svelte';
 import { describe, expect, it } from 'vitest';
@@ -18,7 +18,7 @@ function makeItem(overrides: Partial<NavigationItem> = {}): NavigationItem {
 		icon: Icon,
 		id: 'fake',
 		placement: 'footer',
-		route: '#/fake',
+		route: RouterService.extensionPage('fake'),
 		tooltip: 'Fake',
 		...overrides
 	};

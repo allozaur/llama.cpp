@@ -1,7 +1,8 @@
 import type { ExtensionContext } from '../types';
 import DialogMcpServers from './components/dialogs/DialogMcpServers.svelte';
 import McpLogo from './components/McpLogo.svelte';
-import { ROUTES } from '#lib/constants/index.ts';
+import { MCP_SERVERS_PAGE_PATH } from './pages';
+import { RouterService } from '#lib/services/router.service.ts';
 // direct import of the store, not via the barrel, to avoid circular deps
 import { uiStore } from '#lib/stores/ui.svelte.ts';
 
@@ -12,7 +13,7 @@ export function contributeNavigation(ctx: ExtensionContext): void {
 		icon: McpLogo,
 		id: 'mcp',
 		placement: 'footer',
-		route: ROUTES.MCP_SERVERS,
+		route: RouterService.extensionPage(MCP_SERVERS_PAGE_PATH),
 		// MCP waits behind its setting; servers already added keep working while it hides
 		shown: () => uiStore.isMcpShown,
 		tooltip: 'MCP'

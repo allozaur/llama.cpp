@@ -45,6 +45,7 @@
 	} from '#lib/stores/index.ts';
 	import { buildConversationTree, remToPx, sidebarFooterItems } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -157,7 +158,7 @@
 	});
 
 	$effect(() => {
-		if (deviceStore.isMobile && page.url.hash.includes(ROUTES.SEARCH)) {
+		if (deviceStore.isMobile && page.route.id === ROUTES.SEARCH) {
 			uiStore.isSidebarExpanded = false;
 		}
 	});
@@ -544,7 +545,7 @@
 
 				break;
 			case SidebarAction.PROJECTS:
-				navigateBehind(() => goto(ROUTES.PROJECTS));
+				navigateBehind(() => goto(resolve(ROUTES.PROJECTS)));
 
 				break;
 			case SidebarAction.MANAGE_MODELS:
@@ -552,13 +553,13 @@
 
 				break;
 			case SidebarAction.SERVERS:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.SERVERS));
+				if (isOnMobile) navigateBehind(() => goto(resolve(ROUTES.SERVERS)));
 				else openDialog(() => uiStore.openServers());
 
 				break;
 			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
+				if (isOnMobile) navigateBehind(() => goto(resolve(ROUTES.SETTINGS)));
 				else openDialog(() => (settingsDialogOpen = true));
 
 				break;
@@ -583,7 +584,7 @@
 
 <svelte:window bind:innerWidth onkeydown={handleKeydown} />
 
-{#if innerWidth > 768 || !page.url.hash.includes(ROUTES.SEARCH)}
+{#if innerWidth > 768 || page.route.id !== ROUTES.SEARCH}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<aside
 		bind:this={asideEl}
@@ -646,7 +647,7 @@
 						class="pointer-events-auto size-10 rounded-full! md:size-9 {isStripHidden
 							? 'bg-transparent! hover:bg-transparent!'
 							: 'matte-key bg-surface-raised! hover:bg-surface-raised! dark:bg-muted-foreground/15! dark:hover:bg-muted-foreground/15!'}"
-						href={uiStore.isSidebarExpanded && !isLogoToggle ? ROUTES.START : undefined}
+						href={uiStore.isSidebarExpanded && !isLogoToggle ? resolve(ROUTES.START) : undefined}
 						icon={isLogoToggle && logoHovered
 							? uiStore.isSidebarExpanded
 								? PanelLeftClose

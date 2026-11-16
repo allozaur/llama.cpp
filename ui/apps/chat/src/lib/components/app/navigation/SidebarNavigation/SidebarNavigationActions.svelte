@@ -2,10 +2,10 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { KeyboardShortcutInfo } from '#lib/components/app/index.ts';
 	import {
-		EXTENSION_PAGE_ROUTE_ID,
 		ICON_CLASS_DEFAULT,
 		ICON_STRIP_TRANSITION_DELAY_MULTIPLIER,
 		ICON_STRIP_TRANSITION_DURATION,
+		ROUTES,
 		SIDEBAR_ACTIONS_ITEMS
 	} from '#lib/constants/index.ts';
 	import { SidebarAction } from '#lib/enums/index.ts';
@@ -86,7 +86,7 @@
 		// an extension's item is lit while the page it opens is the one shown
 		if (item.contributed) {
 			return (
-				page.route.id === EXTENSION_PAGE_ROUTE_ID &&
+				page.route.id === ROUTES.EXTENSION_PAGE &&
 				RouterService.extensionPage(page.params.extensionPage ?? '') === item.contributed.route
 			);
 		}

@@ -1,6 +1,8 @@
 import { NEW_CHAT_TAB_ID, PROJECT_HOME_TAB_ID, ROUTES } from '#lib/constants/index.ts';
 import { RouterService } from '#lib/services/router.service.ts';
 import type { DatabaseConversation } from '#lib/types/index.ts';
+import { resolve } from '$app/paths';
+import type { ResolvedPathname } from '$app/types';
 
 interface TabRoute {
 	params: Partial<Record<string, string>>;
@@ -12,8 +14,8 @@ export interface TabView {
 	/** Tab of the current route; null on a page without one (e.g. a project home). */
 	activeId: string | null;
 	/** Where to go when the last visible tab closes. */
-	fallbackHref: string;
-	hrefFor: (id: string) => string;
+	fallbackHref: ResolvedPathname;
+	hrefFor: (id: string) => ResolvedPathname;
 	/** Visible tab ids, in strip order. */
 	ids: string[];
 	/** The project of a project view; undefined in the regular view. */
@@ -84,8 +86,8 @@ export function resolveTabView(
 
 	return {
 		activeId,
-		fallbackHref: ROUTES.START,
-		hrefFor: (id) => (id === NEW_CHAT_TAB_ID ? ROUTES.START : RouterService.chat(id)),
+		fallbackHref: resolve(ROUTES.START),
+		hrefFor: (id) => (id === NEW_CHAT_TAB_ID ? resolve(ROUTES.START) : RouterService.chat(id)),
 		// project chats and new-chat tabs live in their project's view only
 		ids: openTabs.filter((id) => !projectOf(id))
 	};

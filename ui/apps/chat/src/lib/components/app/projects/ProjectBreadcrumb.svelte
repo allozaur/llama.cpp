@@ -2,6 +2,8 @@
 	import { ROUTES, TAB_SURFACE_CLASS, TAB_SURFACE_IDLE_CLASS } from '#lib/constants/index.ts';
 	import { RouterService } from '#lib/services/router.service.ts';
 	import type { Project } from '#lib/types/index.ts';
+	import { resolve } from '$app/paths';
+	import type { ResolvedPathname } from '$app/types';
 
 	interface Props {
 		/** The project page is the current page. */
@@ -18,7 +20,7 @@
 	let projectHref = $derived(RouterService.project(project.id));
 </script>
 
-{#snippet crumb(href: string, label: string, current: boolean)}
+{#snippet crumb(href: ResolvedPathname, label: string, current: boolean)}
 	<a
 		aria-current={current ? 'page' : undefined}
 		class={[
@@ -35,7 +37,7 @@
 
 <nav aria-label="Breadcrumb" class="flex min-w-0 shrink-0 items-center gap-0.5 text-sm">
 	{#if root}
-		{@render crumb(ROUTES.PROJECTS, 'Projects', false)}
+		{@render crumb(resolve(ROUTES.PROJECTS), 'Projects', false)}
 
 		<span class="text-muted-foreground">/</span>
 	{/if}

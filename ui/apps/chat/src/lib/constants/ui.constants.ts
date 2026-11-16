@@ -5,16 +5,11 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import {
-	MODELS_ROUTE_ID,
-	PROJECTS_ROUTE_ID,
-	ROUTES,
-	SERVERS_ROUTE_ID,
-	SETTINGS_ROUTE_ID
-} from './routes.constants';
+import { ROUTES } from './routes.constants';
 import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
+import { resolve } from '$app/paths';
 
 /** Delay before a copied affordance resets from its check to the copy icon. */
 export const COPY_FEEDBACK_RESET_MS = 1500;
@@ -170,14 +165,14 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
 	{
 		action: SidebarAction.PROJECTS,
-		activeRouteId: PROJECTS_ROUTE_ID,
+		activeRouteId: ROUTES.PROJECTS,
 		icon: PROJECT_ICON,
 		tooltip: 'Projects'
 	},
 	{
 		activeRoutePrefix: '/library',
 		icon: Library,
-		route: ROUTES.LIBRARY,
+		route: resolve(ROUTES.LIBRARY),
 		tooltip: 'Library'
 	}
 ];
@@ -189,20 +184,20 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.MANAGE_MODELS,
-		activeRouteId: MODELS_ROUTE_ID,
+		activeRouteId: ROUTES.MODELS,
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
 	},
 	{
 		action: SidebarAction.SERVERS,
-		activeRouteId: SERVERS_ROUTE_ID,
+		activeRouteId: ROUTES.SERVERS,
 		icon: Server,
 		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,
-		activeRouteId: SETTINGS_ROUTE_ID,
+		activeRouteId: ROUTES.SETTINGS,
 		icon: Settings,
 		keys: SHORTCUT_SETTINGS,
 		tooltip: 'Settings'

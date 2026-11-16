@@ -1,3 +1,5 @@
+import type { RouteId } from '$app/types';
+
 /** Query params the chat routes read from the URL. */
 export const URL_PARAMS = {
 	/** Load the selected model instead of waiting for the first message. */
@@ -8,38 +10,34 @@ export const URL_PARAMS = {
 	QUERY: 'q'
 } as const;
 
+/**
+ * Route ids of the app's pages, as `page.route.id` reports them. Navigate with
+ * `resolve(ROUTES.MODELS)` from `$app/paths`, which checks the route exists and returns its URL
+ * (`#/models` with the hash router); URLs with ids come from RouterService.
+ */
 export const ROUTES = {
-	/** Chat base — for dynamic chat URLs use RouterService. */
-	CHAT: '#/chat',
+	/** A conversation outside any project. */
+	CHAT: '/(chat)/chat/[id]',
+	/** A page an extension contributes, see RouterService.extensionPage(). */
+	EXTENSION_PAGE: '/[extensionPage]',
 	/** Library. */
-	LIBRARY: '#/library',
-	/** MCP servers - a page on a phone, a dialog elsewhere. */
-	MCP_SERVERS: '#/mcp-servers',
+	LIBRARY: '/library',
 	/** Models manager. */
-	MODELS: '#/models',
+	MODELS: '/models',
+	/** A project's overview. */
+	PROJECT: '/(chat)/projects/[projectId]',
+	/** A chat opened inside its project. */
+	PROJECT_CHAT: '/(chat)/projects/[projectId]/chat/[id]',
+	/** The new-chat screen of a project. */
+	PROJECT_NEW_CHAT: '/(chat)/projects/[projectId]/chat/new',
 	/** Projects list. */
-	PROJECTS: '#/projects',
+	PROJECTS: '/projects',
 	/** Search — mobile-only full-page conversation search. */
-	SEARCH: '#/search',
+	SEARCH: '/search',
 	/** Servers - a page on a phone, a dialog elsewhere. */
-	SERVERS: '#/servers',
+	SERVERS: '/servers',
 	/** Settings - a page on a phone, a dialog elsewhere. */
-	SETTINGS: '#/settings',
+	SETTINGS: '/settings',
 	/** Root — start of the app. */
-	START: '#/'
-} as const;
-
-/** SvelteKit route id of the models manager, as `page.route.id` reports it. */
-export const MODELS_ROUTE_ID = '/models';
-
-/** SvelteKit route id of every page an extension contributes, as `page.route.id` reports it. */
-export const EXTENSION_PAGE_ROUTE_ID = '/[extensionPage]';
-
-/** SvelteKit route id of the servers page, as `page.route.id` reports it. */
-export const SERVERS_ROUTE_ID = '/servers';
-
-/** SvelteKit route id of the settings page, as `page.route.id` reports it. */
-export const SETTINGS_ROUTE_ID = '/settings';
-
-/** SvelteKit route id of the projects list, as `page.route.id` reports it. */
-export const PROJECTS_ROUTE_ID = '/projects';
+	START: '/(chat)'
+} as const satisfies Record<string, RouteId>;

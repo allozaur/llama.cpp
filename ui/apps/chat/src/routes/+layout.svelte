@@ -9,7 +9,6 @@
 		FAVICON_PATHS,
 		FAVICON_SELECTORS,
 		HEADERS,
-		MODELS_ROUTE_ID,
 		ROUTES,
 		SETTINGS_KEYS,
 		TOOLTIP_DELAY_DURATION
@@ -199,7 +198,7 @@
 
 		untrack(() => {
 			if (
-				(page.route.id === '/(chat)' || !!page.params.id || page.route.id === MODELS_ROUTE_ID) &&
+				(page.route.id === ROUTES.START || !!page.params.id || page.route.id === ROUTES.MODELS) &&
 				page.status !== 401 &&
 				page.status !== 403
 			) {
@@ -389,7 +388,7 @@
 
 			<!-- the phone sidebar sits under the page, so its toggle rides on the page; it steps
 			     aside while the expanded chat form covers the screen -->
-			{#if deviceStore.isMobile && !page.url.hash.includes(ROUTES.SEARCH) && !uiStore.isComposerExpanded}
+			{#if deviceStore.isMobile && page.route.id !== ROUTES.SEARCH && !uiStore.isComposerExpanded}
 				<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
 					<GlassKey
 						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-30"

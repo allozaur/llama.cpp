@@ -2,7 +2,6 @@
 // group inset in the sidebar and a row in the group. This holds the rule app.css states for
 // them, on what the browser actually renders: a row's corners are concentric with its
 // group's, so its radius is the group's less the padding between their edges.
-
 import '../../src/app.css';
 import { Puzzle } from '@lucide/svelte';
 import SidebarNavigationActions from '#lib/components/app/navigation/SidebarNavigation/SidebarNavigationActions.svelte';
@@ -13,6 +12,7 @@ import {
 	SIDEBAR_FOOTER_ITEMS
 } from '#lib/constants/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
+import { RouterService } from '#lib/services/router.service.ts';
 import { settingsStore } from '#lib/stores/index.ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -29,7 +29,7 @@ extensions.register({
 					icon: Puzzle,
 					id: 'fixture',
 					placement: 'footer',
-					route: '#/fixture',
+					route: RouterService.extensionPage('fixture'),
 					tooltip: 'Fixture'
 				});
 			}

@@ -93,7 +93,7 @@
 			<HoverCard.Trigger
 				class="hover:bg-muted/80 focus-visible:ring-ring inline-flex max-w-full items-center gap-1.5 rounded-full border bg-muted px-2.5 py-1 text-xs transition-colors outline-none focus-visible:ring-2"
 				href={safeUrl}
-				rel="noopener noreferrer"
+				rel="external noopener noreferrer"
 				target="_blank"
 			>
 				{#if faviconUrl}
@@ -118,7 +118,7 @@
 						<a
 							class="line-clamp-3 text-sm font-medium leading-snug hover:underline"
 							href={safeUrl}
-							rel="noopener noreferrer"
+							rel="external noopener noreferrer"
 							target="_blank">{result.title}</a
 						>
 

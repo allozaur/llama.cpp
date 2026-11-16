@@ -5,6 +5,7 @@
 	import { projectsStore } from '#lib/stores/index.ts';
 	import type { MenuAction, Project } from '#lib/types/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		project: Project;
@@ -18,7 +19,7 @@
 		if (!confirmed) return;
 
 		await projectsStore.remove(project.id);
-		await goto(ROUTES.PROJECTS);
+		await goto(resolve(ROUTES.PROJECTS));
 	}
 
 	const actions = $derived<MenuAction[]>([
