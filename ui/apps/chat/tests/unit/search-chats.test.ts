@@ -2,10 +2,15 @@ import {
 	SEARCH_CHATS_OUTPUT_MAX_CHARS,
 	SEARCH_CHATS_PATTERN_MAX_CHARS
 } from '#lib/constants/index.ts';
-import { MessageRole, MessageType } from '#lib/enums/index.ts';
+import { AttachmentType, MessageRole, MessageType } from '#lib/enums/index.ts';
 import type { DatabaseConversation, DatabaseMessage } from '#lib/types/database.js';
 import { formatLocalIso } from '#lib/utils/formatters.ts';
-import { parseSearchChatsParams, searchChats, SearchChatsError } from '#lib/utils/search-chats.ts';
+import {
+	attachmentName,
+	parseSearchChatsParams,
+	searchChats,
+	SearchChatsError
+} from '#lib/utils/search-chats.ts';
 import { describe, expect, it } from 'vitest';
 
 type Turn = [role: 'user' | 'assistant' | 'tool', content: string];
@@ -382,5 +387,16 @@ describe('search_chats: parameters', () => {
 
 	it('accepts numbers sent as strings', () => {
 		expect(parseSearchChatsParams({ limit_chats: '3' }).limitChats).toBe(3);
+	});
+});
+
+describe('search_chats: attachment names', () => {
+	it('names files by their file name and saved prompts by their title', () => {
+		expect(attachmentName({ base64Url: '', name: 'map.png', type: AttachmentType.IMAGE })).toBe(
+			'map.png'
+		);
+		expect(
+			attachmentName({ promptId: 'p1', title: 'Trip planner', type: AttachmentType.PROMPT })
+		).toBe('Trip planner');
 	});
 });

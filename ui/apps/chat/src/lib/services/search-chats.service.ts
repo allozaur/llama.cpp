@@ -8,6 +8,7 @@ import { DatabaseService } from './database.service';
 import type { DatabaseConversation, DatabaseMessage } from '#lib/types/database.js';
 import type { ToolExecutionResult } from '#lib/types/index.ts';
 import {
+	attachmentName,
 	parseSearchChatsParams,
 	searchChats,
 	SearchChatsError,
@@ -28,7 +29,10 @@ function loadConversations(ids?: string[]): Promise<DatabaseConversation[]> {
 function withoutPayloads({ extra, ...message }: DatabaseMessage): DatabaseMessage {
 	return {
 		...message,
-		extra: extra?.map(({ name, type }) => ({ name, type })) as DatabaseMessage['extra']
+		extra: extra?.map((e) => ({
+			name: attachmentName(e),
+			type: e.type
+		})) as DatabaseMessage['extra']
 	};
 }
 
