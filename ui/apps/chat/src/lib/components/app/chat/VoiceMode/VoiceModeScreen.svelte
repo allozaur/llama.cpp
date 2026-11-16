@@ -95,8 +95,10 @@
 
 	onMount(() => conversation.open());
 
-	/** Room kept under the word being read, so the next line shows before it is reached. */
-	const READ_MARGIN_PX = 96;
+	/** Room kept between the word being read and the fade at the bottom. */
+	const READ_MARGIN_PX = 24;
+
+	let fade = $state<HTMLDivElement>();
 
 	// a new exchange comes into view as it starts
 	$effect(() => {
@@ -129,8 +131,10 @@
 
 		const view = scroller.getBoundingClientRect();
 		const box = word.getBoundingClientRect();
+		// the word stays above the fade, where text is still clear
+		const clear = view.bottom - (fade?.offsetHeight ?? 0) - READ_MARGIN_PX;
 
-		if (box.bottom > view.bottom - READ_MARGIN_PX || box.top < view.top) {
+		if (box.bottom > clear || box.top < view.top) {
 			scroller.scrollBy({ behavior: 'smooth', top: box.top - view.top - view.height / 3 });
 		}
 	});
@@ -166,45 +170,57 @@
 	data-slot="voice-mode"
 	role="dialog"
 >
-	<div bind:this={scroller} class="min-h-0 flex-1 overflow-y-auto px-4">
-		<div class="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-6 py-6">
-			{#if conversation.turns.length === 0}
-				<div class="m-auto flex flex-col items-center gap-4 text-center">
-					<Logo class="text-primary" style="--size: 2.5rem" />
+	<div class="relative min-h-0 flex-1">
+		<div bind:this={scroller} class="absolute inset-0 overflow-y-auto px-4">
+			<!-- the bottom padding lets the last words scroll above the fade -->
+			<div
+				class="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-14 pt-6 pb-[20dvh] md:gap-12"
+			>
+				{#if conversation.turns.length === 0}
+					<div class="m-auto flex flex-col items-center gap-4 text-center">
+						<Logo class="text-primary" style="--size: 2.5rem" />
 
-					<h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
-						{VOICE_CONVERSATION_MESSAGE.greeting}
-					</h1>
-				</div>
-			{:else}
-				{#each conversation.turns as turn (turn.id)}
-					<div class="flex flex-col gap-4" data-slot="voice-mode-turn">
-						<p
-							class="max-w-[80%] self-end rounded-[1.125rem] bg-(--user-bubble-background) px-3.75 py-2 break-words whitespace-pre-wrap dark:bg-primary/15"
-						>
-							{turn.user}
-						</p>
-
-						{#if turn.reply}
-							<p class="text-md leading-relaxed break-words" data-slot="voice-mode-reply">
-								<VoiceSpokenText
-									spoken={turn.id === lastTurnId &&
-									conversation.canSpeak &&
-									!conversation.speakerMuted
-										? conversation.reader.spoken
-										: null}
-									text={turn.reply}
-								/>
-							</p>
-						{:else if turn.id === lastTurnId && !turn.done}
-							<LoaderCircle
-								class="size-icon-md animate-spin text-fg-muted motion-reduce:animate-none"
-							/>
-						{/if}
+						<h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
+							{VOICE_CONVERSATION_MESSAGE.greeting}
+						</h1>
 					</div>
-				{/each}
-			{/if}
+				{:else}
+					{#each conversation.turns as turn (turn.id)}
+						<div class="flex flex-col gap-10 md:gap-8" data-slot="voice-mode-turn">
+							<p
+								class="max-w-[80%] self-end rounded-[1.125rem] bg-(--user-bubble-background) px-3.75 py-2 break-words whitespace-pre-wrap dark:bg-primary/15"
+							>
+								{turn.user}
+							</p>
+
+							{#if turn.reply}
+								<p class="text-md leading-relaxed break-words" data-slot="voice-mode-reply">
+									<VoiceSpokenText
+										spoken={turn.id === lastTurnId &&
+										conversation.canSpeak &&
+										!conversation.speakerMuted
+											? conversation.reader.spoken
+											: null}
+										text={turn.reply}
+									/>
+								</p>
+							{:else if turn.id === lastTurnId && !turn.done}
+								<LoaderCircle
+									class="size-icon-md animate-spin text-fg-muted motion-reduce:animate-none"
+								/>
+							{/if}
+						</div>
+					{/each}
+				{/if}
+			</div>
 		</div>
+
+		<!-- what is still to be read fades into the background, over the bottom fifth of the screen -->
+		<div
+			bind:this={fade}
+			aria-hidden="true"
+			class="pointer-events-none absolute inset-x-0 bottom-0 h-[20dvh] bg-gradient-to-t from-background to-transparent"
+		></div>
 	</div>
 
 	<div class="flex flex-col items-center gap-4 px-4">
