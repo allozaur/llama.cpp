@@ -49,10 +49,7 @@
 			</div>
 		{/if}
 
-		<DropdownMenu.Item
-			class="mt-2.5 mb-2 flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-left transition-colors hover:bg-accent"
-			onclick={() => onWriteNew?.()}
-		>
+		<DropdownMenu.Item onclick={() => onWriteNew?.()}>
 			<Plus class="h-4 w-4" />
 
 			<span>Write new</span>
@@ -65,7 +62,7 @@
 
 			{#each prompts.libraryPrompts as prompt (prompt.id)}
 				<DropdownMenu.Item
-					class="flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-sm px-2 py-2 text-left transition-colors hover:bg-accent"
+					class="flex-col items-start gap-0.5"
 					onclick={() => prompts.selectLibraryPrompt(prompt.id)}
 				>
 					<span class="line-clamp-1 text-sm font-medium">{prompt.name}</span>
@@ -90,7 +87,7 @@
 
 			{#each group.entries as entry (entry.id)}
 				<DropdownMenu.Item
-					class="flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-sm px-2 py-2 text-left transition-colors hover:bg-accent"
+					class="flex-col items-start gap-0.5"
 					onclick={() => prompts.selectSourcePrompt(group.source, entry)}
 				>
 					<div class="flex w-full items-center gap-1.5">
