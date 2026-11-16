@@ -27,8 +27,17 @@ import {
 	SEARCH_CHATS_PATTERN_MAX_CHARS,
 	SEARCH_CHATS_TOOL_KEY
 } from '#lib/constants/index.ts';
-import { MessageRole, SearchChatsMessageSelection, SearchChatsOrder } from '#lib/enums/index.ts';
-import type { DatabaseConversation, DatabaseMessage } from '#lib/types/database.js';
+import {
+	AttachmentType,
+	MessageRole,
+	SearchChatsMessageSelection,
+	SearchChatsOrder
+} from '#lib/enums/index.ts';
+import type {
+	DatabaseConversation,
+	DatabaseMessage,
+	DatabaseMessageExtra
+} from '#lib/types/database.js';
 
 export class SearchChatsError extends Error {
 	constructor(message: string) {
@@ -61,6 +70,13 @@ export interface SearchChatsTimeRange {
 export interface SearchChatsLoader {
 	/** Messages of the given conversations (all for `null`); with `range`, only of conversations with a message in [from, to) */
 	messages(convIds: string[] | null, range?: SearchChatsTimeRange): Promise<DatabaseMessage[]>;
+}
+
+/** The name an attachment shows under: its file name, or a saved prompt's title */
+export function attachmentName(extra: DatabaseMessageExtra): string | undefined {
+	if ('name' in extra) return extra.name;
+
+	return extra.type === AttachmentType.PROMPT ? extra.title : undefined;
 }
 
 /** Tool policy with search_chats disabled, for rows that predate the tool */
@@ -386,7 +402,7 @@ function formatMessage(
 	const text = message.content.trim();
 	const matchAt = matcher ? matcher.locate(text) : -1;
 	const body = excerpt(text, params.maxMessageChars, matchAt).replace(/\n+/g, '\n  ');
-	const files = (message.extra ?? []).map((e) => e.name).filter(Boolean);
+	const files = (message.extra ?? []).map(attachmentName).filter(Boolean);
 	// names are user data, quote them so they cannot pass as result structure
 	const attachments =
 		files.length > 0 ? ` [attachments: ${files.map((f) => JSON.stringify(f)).join(', ')}]` : '';
