@@ -17,6 +17,8 @@ export interface PauseDetectorOptions {
 	 * is ever quiet
 	 */
 	maxSegmentMs?: number;
+	/** The room's noise level when it is known already, so speech from the first level counts */
+	floor?: number;
 }
 
 /** How far above the noise floor a level is speech, and below which it is quiet. */
@@ -47,6 +49,7 @@ export class PauseDetector {
 		this.pauseMs = options.pauseMs ?? 500;
 		this.minSpeechMs = options.minSpeechMs ?? 300;
 		this.maxSegmentMs = options.maxSegmentMs ?? 10_000;
+		this.floor = options.floor ?? 1;
 	}
 
 	/** Takes the newest level; true when this is a place to cut the recording. */

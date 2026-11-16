@@ -42,6 +42,19 @@ describe('PauseDetector', () => {
 		expect(hold(detector, 0.45, 600)).toBe(true);
 	});
 
+	it('hears speech from the first level when the room is known', () => {
+		// without a known floor, the first level is taken as the room's noise
+		const unknown = new PauseDetector({ intervalMs: INTERVAL });
+
+		unknown.push(0.6);
+		expect(unknown.heardSpeech).toBe(false);
+
+		const known = new PauseDetector({ floor: 0.1, intervalMs: INTERVAL });
+
+		known.push(0.6);
+		expect(known.heardSpeech).toBe(true);
+	});
+
 	it('cuts a long stretch of speech at its next quiet moment', () => {
 		const detector = new PauseDetector({ intervalMs: INTERVAL, maxSegmentMs: 2000 });
 
