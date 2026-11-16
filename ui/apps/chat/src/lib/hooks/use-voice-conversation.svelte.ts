@@ -138,6 +138,9 @@ export function useVoiceConversation() {
 	// the reply is paused over a sound, until speech confirms the interruption or a second passes
 	let tentative = false;
 	let tentativeTimer: ReturnType<typeof setTimeout> | undefined;
+	// a reply paused by an interruption: it goes on if the microphone is muted or nothing is
+	// said, and is dropped once the user's turn is sent
+	let heldReply = false;
 
 	const reader = new ReplyReader({
 		onIdle: () => {
@@ -335,12 +338,16 @@ export function useVoiceConversation() {
 
 		text = text.trim();
 
-		// nothing understood: listen again
+		// nothing understood: a reply held for this turn goes on, else listen again
 		if (!text) {
-			void listen();
+			if (heldReply) resumeReading();
+			else void listen();
 
 			return;
 		}
+
+		// the user had something to say: the reply they interrupted gives way
+		dropHeldReply();
 
 		const turn: VoiceTurn = { done: false, id: ++turnId, reply: '', sent: false, user: text };
 
@@ -406,12 +413,14 @@ export function useVoiceConversation() {
 	/** A sound over the reply: it pauses, and the next second tells whether it was speech. */
 	function bargeIn(floor: number) {
 		reader.pause();
+		heldReply = true;
 		tentative = true;
 		void listen({ floor, tentative: true });
 	}
 
-	/** No speech came: the reply goes on from where it paused. */
+	/** No speech came, or the microphone was muted: the reply goes on from where it paused. */
 	function resumeReading() {
+		heldReply = false;
 		tentative = false;
 		clearTimeout(tentativeTimer);
 		generation++;
@@ -423,10 +432,17 @@ export function useVoiceConversation() {
 		void watchForBargeIn(generation);
 	}
 
-	/** Speech came: the reply stops for good, and the turn that started goes on. */
+	/** Speech came: the turn that started goes on, over the reply held where it paused. */
 	function confirmInterrupt() {
 		tentative = false;
 		clearTimeout(tentativeTimer);
+	}
+
+	/** The interrupted reply is given up: its reading and its generation stop. */
+	function dropHeldReply() {
+		if (!heldReply) return;
+
+		heldReply = false;
 		reader.stop();
 
 		const convId = conversationsStore.activeConversation?.id;
@@ -438,20 +454,12 @@ export function useVoiceConversation() {
 		if (turn) turn.done = true;
 	}
 
-	/** Stops the reply where it is, and listens. */
+	/** Holds the reply where it is, and listens; muting the microphone lets it go on. */
 	function interrupt() {
 		tentative = false;
 		clearTimeout(tentativeTimer);
-		reader.stop();
-
-		const convId = conversationsStore.activeConversation?.id;
-
-		if (convId && chatStore.isChatLoading(convId)) void chatStore.stopGeneration();
-
-		const turn = currentTurn;
-
-		if (turn) turn.done = true;
-
+		reader.pause();
+		heldReply = true;
 		void listen();
 	}
 
@@ -463,6 +471,7 @@ export function useVoiceConversation() {
 	}
 
 	function close() {
+		heldReply = false;
 		tentative = false;
 		clearTimeout(tentativeTimer);
 		generation++;
@@ -477,6 +486,13 @@ export function useVoiceConversation() {
 		micMuted = !micMuted;
 
 		if (micMuted) {
+			// an interrupted reply goes on from where it paused
+			if (heldReply) {
+				resumeReading();
+
+				return;
+			}
+
 			if (state === 'listening' || state === 'starting') {
 				generation++;
 				stopRecorder();
