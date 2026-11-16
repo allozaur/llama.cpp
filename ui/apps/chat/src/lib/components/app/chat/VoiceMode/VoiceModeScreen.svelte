@@ -45,12 +45,44 @@
 
 	onMount(() => conversation.open());
 
-	// the newest exchange stays in view as it grows
+	/** Room kept under the word being read, so the next line shows before it is reached. */
+	const READ_MARGIN_PX = 96;
+
+	// a new exchange comes into view as it starts
 	$effect(() => {
-		void conversation.turns.at(-1)?.reply;
 		void conversation.turns.length;
 
-		tick().then(() => scroller?.scrollTo({ behavior: 'smooth', top: scroller.scrollHeight }));
+		tick().then(() => {
+			const turn = scroller?.querySelector<HTMLElement>(
+				'[data-slot="voice-mode-turn"]:last-of-type'
+			);
+
+			turn?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+	});
+
+	// then the page follows the voice, not the text: a reply growing below does not scroll it,
+	// the word being read stays in view
+	$effect(() => {
+		void conversation.reader.spoken;
+
+		// nothing read aloud (speaker off, or no model that speaks): nothing to follow
+		if (!scroller || !conversation.canSpeak || conversation.speakerMuted) return;
+
+		const reply = scroller.querySelector(
+			'[data-slot="voice-mode-turn"]:last-of-type [data-slot="voice-mode-reply"]'
+		);
+		const words = reply?.querySelectorAll<HTMLElement>('[data-spoken]');
+		const word = words?.[words.length - 1];
+
+		if (!word) return;
+
+		const view = scroller.getBoundingClientRect();
+		const box = word.getBoundingClientRect();
+
+		if (box.bottom > view.bottom - READ_MARGIN_PX || box.top < view.top) {
+			scroller.scrollBy({ behavior: 'smooth', top: box.top - view.top - view.height / 3 });
+		}
 	});
 
 	function close() {
@@ -95,7 +127,7 @@
 				</div>
 			{:else}
 				{#each conversation.turns as turn (turn.id)}
-					<div class="flex flex-col gap-4">
+					<div class="flex flex-col gap-4" data-slot="voice-mode-turn">
 						<p
 							class="max-w-[80%] self-end rounded-[1.125rem] bg-(--user-bubble-background) px-3.75 py-2 break-words whitespace-pre-wrap dark:bg-primary/15"
 						>
