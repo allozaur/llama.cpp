@@ -77,6 +77,9 @@ def test_mcp_tools_listed_in_tools_endpoint():
         # Verify tool structure
         echo_tool = next(t for t in mcp_tools if get_tool_name(t) == "echo_echo")
         assert "description" in echo_tool or "definition" in echo_tool
+        assert echo_tool["type"] == "mcp"
+        assert echo_tool["mcp_server"] == "echo"
+        assert all("mcp_server" not in t for t in tools if t["type"] != "mcp")
     finally:
         server.stop()
 
