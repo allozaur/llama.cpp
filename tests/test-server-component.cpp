@@ -936,6 +936,31 @@ static void test_pcm_f32_to_s16(testing & t) {
     t.assert_true ("empty",          pcm_f32_to_s16(nullptr, 0).empty());
 }
 
+static void test_asr_prompt(testing & t) {
+    // a general model is told, after the audio, to only write down what is said
+    const common_chat_prompt_preset generic = common_chat_get_asr_prompt(nullptr);
+    t.assert_true ("generic: system prompt",      !generic.system.empty());
+    t.assert_true ("generic: never answers",      generic.system.find("never answer") != std::string::npos);
+    t.assert_true ("generic: audio first",        generic.media_first);
+    t.assert_true ("generic: transcript only",    generic.user.find("Output only the transcript") != std::string::npos);
+    t.assert_true ("generic: names the language", generic.has_language);
+
+    const common_chat_prompt_preset german = common_chat_get_asr_prompt(nullptr, "de");
+    t.assert_true ("language by name", german.user.find("in German") != std::string::npos);
+
+    // the transcriptions request becomes a system message and the audio before the instruction
+    std::map<std::string, uploaded_file> files;
+    files["file"] = uploaded_file{raw_buffer{1, 2, 3}, "a.wav", "audio/wav"};
+    std::vector<raw_buffer> out_files;
+    const json body = convert_transcriptions_to_chatcmpl(json{{"model", "m"}}, nullptr, files, out_files);
+    const json & messages = body.at("messages");
+    t.assert_equal("two messages",  (size_t) 2, messages.size());
+    t.assert_equal("system first",  std::string("system"), messages[0].at("role").get<std::string>());
+    const std::string user = messages[1].at("content").get<std::string>();
+    t.assert_true ("audio first",   user.rfind(get_media_marker(), 0) == 0);
+    t.assert_equal("one file",      (size_t) 1, out_files.size());
+}
+
 static void test_asr_strip_markup(testing & t) {
     auto strip = [](const std::string & text) { return server_asr_strip_markup(text, false); };
 
@@ -1021,6 +1046,7 @@ int main(int argc, char ** argv) {
     t.test("stop_strings",    test_stop_strings);
     t.test("speech_convert",  test_speech_convert);
     t.test("pcm_f32_to_s16",  test_pcm_f32_to_s16);
+    t.test("asr_prompt",      test_asr_prompt);
     t.test("asr_strip_markup", test_asr_strip_markup);
     t.test("asr_transcript",  test_asr_transcript);
 
