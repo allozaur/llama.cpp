@@ -1,6 +1,6 @@
 # Instructions for ui/apps/chat
 
-These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/apps/chat`: **Llama Chat**, the chat client that llama-server bundles. **Llama UI**, the library, is `ui/lib/ui` (`@ggml-org/llama-ui`): Chat imports its tokens, fonts and base components from there (`@ggml-org/llama-ui/ui/<name>`) and keeps no copy of them. `DESIGN.md`, `BRAND.md` and the full Storybook still live here.
+These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/apps/chat`: **Llama Chat**, the chat client that llama-server bundles. **Llama UI**, the library, is `ui/lib/ui` (`@ggml-org/llama-ui`): Chat imports its tokens, fonts and base components from there (`@ggml-org/llama-ui/ui/<name>`) and keeps no copy of them. `DESIGN.md` and the Storybook live here; the brand book, `BRAND.md`, and the brand and communications pages are in [ggml-org/llama-brand](https://github.com/ggml-org/llama-brand), with their own Storybook.
 
 - **Design:** [DESIGN.md](DESIGN.md) holds the tokens, roles and rules, written for agents. Follow it for anything visual; when it and the CSS disagree, the CSS wins and DESIGN.md is updated.
 - **Why:** Storybook's **Philosophy** section explains the reasons, for people: **Ideology** ([Ideology.svx](tests/stories/philosophy/Ideology.svx)), **Product** ([Product.svx](tests/stories/philosophy/Product.svx)) and **Design** ([Design.svx](tests/stories/philosophy/Design.svx)).

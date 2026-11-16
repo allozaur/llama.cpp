@@ -23,7 +23,7 @@
 		},
 		{
 			icon: Send,
-			line: 'The rules export as the design system for Claude Design',
+			line: 'The rules are written for agents in DESIGN.md, from the tokens',
 			name: 'Handing over'
 		}
 	];

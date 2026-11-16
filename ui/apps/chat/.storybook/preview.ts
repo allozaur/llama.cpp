@@ -22,63 +22,17 @@ const preview: Preview = {
 		},
 
 		options: {
-			// sidebar sections: the introduction, the philosophy, the brand (logo, type, colour), communications, then the UI: its foundations
-			// first, the full chat screen leading its folder
+			// sidebar sections: the introduction, the guidelines for agents, the philosophy, the architecture, then the UI: its
+			// foundations first, the full chat screen leading its folder. The brand and communications are in llama-brand's Storybook
 			storySort: {
 				order: [
 					'Introduction',
 					'Agents',
-					['Design guidelines', 'Brand guidelines'],
+					['Design guidelines'],
 					'Philosophy',
 					['Ideology', 'Product', 'Design'],
 					'Architecture',
 					['Stack', 'Chat', 'Channels'],
-					'Brand',
-					[
-						'Logo',
-						[
-							'Overview',
-							'Icon',
-							'Lockup',
-							'Usage',
-							'Assets',
-							['Logo', 'Social profiles', 'App icons']
-						],
-						'Typography',
-						[
-							'Tester',
-							'Llama Sans',
-							['Overview', 'User Interface', 'Running text', 'Display', 'Glyphs'],
-							'Llama Mono',
-							['Overview', 'Terminal', 'User Interface', 'Logs', 'Diff', 'Key visuals', 'Glyphs']
-						],
-						'Colors',
-						['Palette']
-					],
-					'Communications',
-					[
-						'Direction',
-						['Principles', 'Mood board', 'Specimen boards'],
-						'Foundations',
-						['Formats and grid', 'Grounds', 'Type'],
-						'Elements',
-						['Header and footer', 'Chips and labels', 'Figures and commands', 'Motifs', 'The app'],
-						'Modules',
-						['Headline blocks', 'Model cards', 'Stat cards', 'Product shot'],
-						'Key visuals',
-						['Statement', 'Product', 'Roster', 'Bulletin', 'Numeral', 'Receipt'],
-						'Applications',
-						[
-							'Model drop',
-							"What's new",
-							'Link previews',
-							'Open models poster',
-							'Microsoft Store',
-							'Mac App Store',
-							'Store scenes',
-							'Swag'
-						]
-					],
 					'UI',
 					[
 						'Foundations',
@@ -103,7 +57,7 @@ const preview: Preview = {
 						]
 					],
 					'Scrapbook',
-					['About', 'UI', 'Communications', 'Brand']
+					['About', 'UI']
 				]
 			}
 		},

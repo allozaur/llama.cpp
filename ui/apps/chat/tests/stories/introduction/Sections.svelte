@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
-	import { BookOpen, Bot, LayoutGrid, Lightbulb, Megaphone, Shapes } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid, Lightbulb, Shapes } from '@lucide/svelte';
 
 	const sections = [
 		{
@@ -19,25 +19,13 @@
 			holds: 'The rules, for agents',
 			icon: Bot,
 			name: 'Agents',
-			pages: ['Design guidelines', 'Brand guidelines']
+			pages: ['Design guidelines']
 		},
 		{
 			holds: 'The reasons, for people',
 			icon: Lightbulb,
 			name: 'Philosophy',
 			pages: ['Ideology', 'Product', 'Design']
-		},
-		{
-			holds: 'The logo, its files, the type and the colours',
-			icon: null,
-			name: 'Brand',
-			pages: ['Logo', 'Typography', 'Colors']
-		},
-		{
-			holds: 'Posts, store screenshots, link previews, swag',
-			icon: Megaphone,
-			name: 'Communications',
-			pages: ['Direction', 'Foundations', 'Elements', 'Modules', 'Key visuals', 'Applications']
 		},
 		{
 			holds: 'Foundations, components, patterns, Llama Chat’s screens',
@@ -58,7 +46,7 @@
 			holds: 'Variations side by side, before one is chosen',
 			icon: Shapes,
 			name: 'Scrapbook',
-			pages: ['UI', 'Communications', 'Brand']
+			pages: ['UI']
 		}
 	];
 </script>
