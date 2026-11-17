@@ -1,33 +1,23 @@
 <script lang="ts">
 	import { ModeWatcher } from 'mode-watcher';
 	import { onMount } from 'svelte';
+	import { applyColorScheme } from '../color-scheme';
 
 	interface Props {
 		children?: any;
+		/** a mode the story is always shown in, rather than the viewer's */
+		forced?: 'dark' | 'light';
 	}
 
-	let { children }: Props = $props();
+	let { children, forced }: Props = $props();
 
 	onMount(() => {
-		const root = document.documentElement;
-		const theme = localStorage.getItem('mode-watcher-mode') || 'system';
-
-		if (theme === 'dark') {
-			root.classList.add('dark');
-		} else if (theme === 'light') {
-			root.classList.remove('dark');
-		} else {
-			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-			if (prefersDark) {
-				root.classList.add('dark');
-			} else {
-				root.classList.remove('dark');
-			}
-		}
+		if (forced) document.documentElement.classList.toggle('dark', forced === 'dark');
+		else applyColorScheme();
 	});
 </script>
 
-<ModeWatcher />
+{#if !forced}<ModeWatcher />{/if}
 
 {#if children}
 	{@const Component = children}

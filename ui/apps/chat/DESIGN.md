@@ -743,7 +743,10 @@ conversations and traces, so the UI never assumes a cloud account or hides which
 The service need not be on the same machine: a server can be run by one person and shared by
 many (a family, a team, a community), so the UI should make clear which server a model runs on.
 
-This file is the how, written for agents first. Its principles, as rules to apply here:
+This file is the how, written for agents first. The why, written for people, is
+**Philosophy › Design** in Storybook (`tests/stories/philosophy/Design.svx`), next to
+**Philosophy › Ideology** (what we stand for) and **Philosophy › Product** (how the products fit together).
+Its principles, as rules to apply here:
 
 - **Function first.** Every element has a job and takes its measurements from a shared role
   (control heights, corners, icon sizes, type roles); never give one component its own.
@@ -758,7 +761,8 @@ This file is the how, written for agents first. Its principles, as rules to appl
 - **Recognisable, easy to change.** Keep the character in the icon, the type and one
   accent, so an app built on Llama UI can restyle it through component tokens alone.
 - **Design lives in code.** The CSS is the source of truth; prefer what is generated or
-  derived over hand-tuned values, and record the reason next to the value.
+  derived over hand-tuned values, and record the reason next to the value. Content pages are
+  Markdown with Svelte components in them, as `.svx` (see `AGENTS.md`).
 - **Reuse before adding.** An existing role before a new token, an existing component before
   a new one.
 
@@ -778,7 +782,8 @@ Design tokens come in three tiers, each in its own file under `ui/lib/ui/src/lib
    them as `bg-(--button-primary-background)` and similar.
 
 The front matter of this file mirrors those three files. When they disagree, the CSS wins
-and this file should be updated to match.
+and this file should be updated to match. Storybook shows every tier under **Design
+system > Foundations > Colors**.
 
 Light mode is the base. A semantic token whose dark value differs has a `-dark` twin here,
 and components list a `-dark` entry wherever their colours change. Translucent component
@@ -808,7 +813,8 @@ cinder, the accent orange; never from the status colours, and never red.
 Light mode has two surface themes, which share everything else (the palette, buttons, fields,
 badges, shadows and dark mode): **Paper**, the default, sets white panels, fields and keys on a
 faint grey page (`neutral-25`); **Matte** sets grey glass on a white page. Matte is the
-`theme-matte` class on `<html>`, chosen with the Light surfaces setting (Settings → General), and only its surface tokens differ: `surface-page`,
+`theme-matte` class on `<html>`, chosen with the Light surfaces setting (Settings → General) or
+the Surface switch in Storybook's toolbar, and only its surface tokens differ: `surface-page`,
 `surface-glass`, `surface-code`, `field-background` and `float-panel-background-modal`.
 
 - **Surfaces:** `surface-page` for the page, `surface-muted` for quiet panels,
@@ -916,7 +922,8 @@ layout: solid behind the status bar and the row of corner controls under it, fad
 instead of colliding with the clock or the chat's header. A route needs no fade of its own;
 what covers the whole screen, like the expanded chat form, hides it, and it fades out as the
 page slides aside for the sidebar. Check
-pinned content with the insets simulated, since they are 0 in a desktop browser.
+pinned content with the insets simulated (the Safe areas page in
+Storybook does this), since they are 0 in a desktop browser.
 
 ## Elevation & Depth
 
@@ -1148,3 +1155,22 @@ icon buttons in the chat form are fully round.
   or give it a different gap from the bottom than from the side: the corners beside the
   indicator are free, and `--corner-control-bottom` and `--corner-control-side` keep the two
   gaps equal.
+
+## Proposing changes
+
+Visual changes are decided in Storybook before they reach the components.
+
+1. **Prototype first.** Add a temporary story at `tests/stories/design-system/proposals/`
+   titled `UI/Proposals/<topic>` (or under its Brand section, e.g. `Brand/Colors/...`, for brand
+   work), with one story per question.
+2. **Show current and proposed side by side.** Use `StateGallery` with two columns: each row
+   is a pair of `StateGalleryItem`s labelled `Current` and `Proposed`, with a short note
+   saying what differs. Render the current state with the real component, and the proposal
+   in context next to the variants it sits among, not on its own.
+3. **Leave the components alone.** Prototype with classes or a small global style in the
+   story; the real components, tokens and app code change only once a proposal is chosen.
+4. **Check both themes.** Review every proposal in light and dark mode before asking for a
+   decision.
+5. **Apply, then delete the proposal.** Once chosen, move the change into tokens and
+   components, update the regular stories and this file, and remove the proposal story so
+   it never ships.
