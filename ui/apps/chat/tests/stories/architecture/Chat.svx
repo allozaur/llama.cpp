@@ -1,6 +1,6 @@
 <!--
 	Architecture › Chat: Llama Chat as the reference app on Llama UI, its areas, how a message travels, its layers and
-	where each lands, and what it hands to the library. Set in the Philosophy pages' Editorial, through Frame.svelte.
+	where each lands, and what it hands to the library. Set in the Editorial, through Frame.svelte.
 -->
 
 <script>

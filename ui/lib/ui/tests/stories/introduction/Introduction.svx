@@ -1,6 +1,6 @@
 <!--
 	The Storybook's front page (Introduction): what this package is, what's in it so far and how it keeps in step with
-	Llama UI in llama.cpp. Set in the Philosophy pages' Editorial, like the Storybook it is taken from.
+	Llama UI in llama.cpp. Set in the Editorial, like the Storybook it is taken from.
 -->
 
 <p class="kicker">Llama UI · package</p>

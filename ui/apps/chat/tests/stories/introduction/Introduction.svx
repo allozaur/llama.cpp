@@ -1,13 +1,13 @@
 <!--
 	The Storybook's front page (Introduction): in short, what this Storybook is for, how we think, how the products fit
 	together and how the sections are laid out. Written for people first and readable as plain Markdown by agents too.
-	Set in the Philosophy pages' Editorial; the figure is Product's own.
+	Set in the Editorial.
 -->
 
 <script>
-	import Figure from '../philosophy/Figure.svelte';
+	import Figure from '../editorial/Figure.svelte';
 	import Principles from './Principles.svelte';
-	import Products from '../philosophy/figures/Products.svelte';
+	import Products from './Products.svelte';
 	import Sections from './Sections.svelte';
 	import Stack from './Stack.svelte';
 	import Uses from './Uses.svelte';
@@ -34,8 +34,6 @@ The component library **Llama UI**, built on the **Llama Brand** (the icon, Llam
 </Figure>
 
 ## How we think
-
-The short version of **Philosophy**; the reasons are in **Ideology**, **Product** and **Design**.
 
 <Figure n={3} caption="Five ideas, each drawn with the real system: the devices a model runs on, the first run's recommendation, the three places the character lives, a control on its grid and one token chain.">
 	<Principles />

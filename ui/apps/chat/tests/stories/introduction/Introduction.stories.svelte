@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import Editorial from '../philosophy/Editorial.svelte';
+	import Editorial from '../editorial/Editorial.svelte';
 	import Introduction from './Introduction.svx';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 

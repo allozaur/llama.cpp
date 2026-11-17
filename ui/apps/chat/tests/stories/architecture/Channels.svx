@@ -1,6 +1,6 @@
 <!--
 	Architecture › Channels: how one build of Llama Chat ships bundled in llama-server, as npx llama-chat and at
-	chat.llama.app, how the three differ, and the release flow. Set in the Philosophy pages' Editorial, through Frame.svelte.
+	chat.llama.app, how the three differ, and the release flow. Set in the Editorial, through Frame.svelte.
 -->
 
 <script>

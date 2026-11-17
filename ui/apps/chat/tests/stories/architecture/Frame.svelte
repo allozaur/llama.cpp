@@ -1,10 +1,10 @@
 <!--
-	The frame of the Architecture pages: the Philosophy pages' Editorial, with the pages' own variables pointed at
+	The frame of the Architecture pages: the Editorial, with the pages' own variables pointed at
 	Llama UI (architecture.css), and their links between pages (/stack/, /chat/) opening the matching story.
 -->
 <script lang="ts">
 	import './architecture.css';
-	import Editorial from '../philosophy/Editorial.svelte';
+	import Editorial from '../editorial/Editorial.svelte';
 	import type { Snippet } from 'svelte';
 
 	let { children }: { children: Snippet } = $props();

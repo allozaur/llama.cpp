@@ -1,6 +1,6 @@
 <!--
 	Architecture › Stack: the architecture drawing, the line between Llama UI and the apps, the repo layout and what an
-	app built on the library looks like. Set in the Philosophy pages' Editorial, through Frame.svelte.
+	app built on the library looks like. Set in the Editorial, through Frame.svelte.
 -->
 
 <script>

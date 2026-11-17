@@ -25,15 +25,13 @@ const preview: Preview = {
 		},
 
 		options: {
-			// sidebar sections: the introduction, the guidelines for agents, the philosophy, the architecture, then the UI: its
+			// sidebar sections: the introduction, the guidelines for agents, the architecture, then the UI: its
 			// foundations first, the full chat screen leading its folder. The brand and communications are in llama-brand's Storybook
 			storySort: {
 				order: [
 					'Introduction',
 					'Agents',
 					['Design guidelines'],
-					'Philosophy',
-					['Ideology', 'Product', 'Design'],
 					'Architecture',
 					['Stack', 'Chat', 'Channels'],
 					'UI',
