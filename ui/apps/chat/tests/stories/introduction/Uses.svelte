@@ -1,5 +1,5 @@
 <!--
-	What this Storybook is for, as four tiles: designing in the Scrapbook, building from the components, checking with
+	What this Storybook is for, as four tiles: designing with the real system, building from the components, checking with
 	the accessibility addon and handing over to agents. Each has its icon, its name and one line.
 -->
 <script lang="ts">
@@ -8,7 +8,7 @@
 	const uses = [
 		{
 			icon: PenTool,
-			line: 'Render variations in the Scrapbook, from the real system',
+			line: 'Try a change on the real components and tokens, in both themes',
 			name: 'Designing'
 		},
 		{

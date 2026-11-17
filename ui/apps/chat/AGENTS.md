@@ -6,22 +6,13 @@ These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/ap
 - **Why:** Storybook's **Philosophy** section explains the reasons, for people: **Ideology** ([Ideology.svx](tests/stories/philosophy/Ideology.svx)), **Product** ([Product.svx](tests/stories/philosophy/Product.svx)) and **Design** ([Design.svx](tests/stories/philosophy/Design.svx)).
 - **Components:** the `SKILL.md` next to a component folder (such as [src/lib/components/app/SKILL.md](src/lib/components/app/SKILL.md)) holds that folder's conventions.
 
-## Designing: render the options in the Scrapbook
-
-Whenever a UI or UX design is being worked out, offer to render the proposed iterations or variations in Storybook rather than only describing them, so they can be compared on screen. Proposals for the brand and communications go in llama-brand's Storybook, in its own Scrapbook.
-
-- Put them in the **Scrapbook** section, beside Agents, Philosophy, Architecture and UI: `Scrapbook/UI/<topic>`.
-- One story per variation, named so they compare: `A · Compact`, `B · Spacious`.
-- Build them from the real components, tokens, fonts and files, in both themes, and at a phone width where it matters.
-- Once one is chosen, build it in its own section; the others stay in the Scrapbook as a record. [Scrapbook › About](tests/stories/scrapbook/About.svx) says the same for people.
-
 ## Content is Markdown, custom pieces are Svelte: .svx
 
 Anything that is mostly content (a doc, an overview, a showcase or a Storybook page with prose) is written in Markdown, and whatever Markdown cannot express (a live example, a diagram, a real component) is a Svelte component placed in it. Together that is a `.svx` page, compiled by [mdsvex](https://mdsvex.pngwk.com).
 
 - Write the prose as plain Markdown, so it reads well as source, for people and for agents alike.
 - Put each custom piece in its own `.svelte` file and import it in the page's `<script>`. Keep logic and styles out of the `.svx` file.
-- Frame the page with a Svelte component that sets its typography, and show it in Storybook as a fullscreen story, as `philosophy/Design.stories.svelte` and `scrapbook/About.stories.svelte` do. Storybook's MDX is rendered with React and cannot hold Svelte components, so use MDX only for pages that are Markdown alone, such as Design guidelines.
+- Frame the page with a Svelte component that sets its typography, and show it in Storybook as a fullscreen story, as `philosophy/Design.stories.svelte` and `architecture/Stack.stories.svelte` do. Storybook's MDX is rendered with React and cannot hold Svelte components, so use MDX only for pages that are Markdown alone, such as Design guidelines.
 - Do not add another Markdown-to-HTML pipeline. Content goes through mdsvex; user and assistant messages go through `MarkdownContent`.
 
 ### mdsvex versions

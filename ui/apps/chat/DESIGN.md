@@ -1155,23 +1155,3 @@ icon buttons in the chat form are fully round.
   or give it a different gap from the bottom than from the side: the corners beside the
   indicator are free, and `--corner-control-bottom` and `--corner-control-side` keep the two
   gaps equal.
-
-## Proposing changes
-
-Visual changes are decided in Storybook before they reach the components, in the Scrapbook
-(see `AGENTS.md` and Scrapbook › About).
-
-1. **Prototype first.** Add a story under `tests/stories/scrapbook/` titled
-   `Scrapbook/UI/<topic>`, with one story per variation or question. Brand and communications
-   proposals go in llama-brand's Storybook instead.
-2. **Show current and proposed side by side.** Use `StateGallery` with two columns: each row
-   is a pair of `StateGalleryItem`s labelled `Current` and `Proposed`, with a short note
-   saying what differs. Render the current state with the real component, and the proposal
-   in context next to the variants it sits among, not on its own.
-3. **Leave the components alone.** Prototype with classes or a small global style in the
-   story; the real components, tokens and app code change only once a proposal is chosen.
-4. **Check both themes.** Review every proposal in light and dark mode before asking for a
-   decision.
-5. **Apply, and keep the record.** Once chosen, move the change into tokens and components
-   and update the regular stories and this file. The proposal stays in the Scrapbook as a
-   record, noting which option was chosen, until it is no longer useful.

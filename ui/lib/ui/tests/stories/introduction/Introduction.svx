@@ -20,7 +20,6 @@ The tokens, the fonts and the base components are changed here, and Llama Chat t
 - **Foundations:** the primitive, semantic and component tokens, the type, corner, icon and control-height roles, the matte surfaces and elevations, and Llama Sans and Llama Mono.
 - **Components:** the 29 base components Llama Chat is built from, Alert to Tooltip. A few have stories here so far; all of them are drawn under **UI** in Llama Chat's Storybook.
 - **Model UI:** how a model is shown in Llama Chat and on llama.app: its name and badges, capability icons, maker's avatar and quant chips, under **UI › Blocks › Models**. They take model data in and report what the user did out.
-- **Scrapbook:** proposals and variations, rendered before anything is decided.
 
 ## Using it
 

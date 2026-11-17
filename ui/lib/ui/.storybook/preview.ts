@@ -23,7 +23,7 @@ const preview: Preview = {
 
 		options: {
 			// the same sections as Llama Chat's Storybook (ui/apps/chat), with only what this package has so far:
-			// the introduction, the UI with its foundations first and its blocks last, then the Scrapbook
+			// the introduction, then the UI with its foundations first and its blocks last
 			storySort: {
 				order: [
 					'Introduction',
@@ -37,9 +37,7 @@ const preview: Preview = {
 						'Overlays',
 						'Blocks',
 						['Models']
-					],
-					'Scrapbook',
-					['About', 'UI', 'Communications', 'Brand']
+					]
 				]
 			}
 		},

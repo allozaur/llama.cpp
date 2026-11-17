@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
-	import { BookOpen, Bot, LayoutGrid, Lightbulb, Shapes } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid, Lightbulb } from '@lucide/svelte';
 
 	const sections = [
 		{
@@ -41,12 +41,6 @@
 				'Patterns',
 				'Blocks'
 			]
-		},
-		{
-			holds: 'Variations side by side, before one is chosen',
-			icon: Shapes,
-			name: 'Scrapbook',
-			pages: ['UI']
 		}
 	];
 </script>

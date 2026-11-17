@@ -45,7 +45,7 @@ beside the apps built on it in `ui/apps`.
   `minMemoryTierGb` and `summarizeSizes`, at `@ggml-org/llama-ui/models`. They take model data in and report what the user did out;
   fetching and downloading stay in the app.
 
-Next: llama.app's model page from its proposal (Scrapbook › UI › llama.app).
+Next: llama.app's model page.
 
 The constants, enums and code helpers the components use are entry points too, for an app that shows the same things:
 `@ggml-org/llama-ui/constants` (the shared classes and code-block constants), `@ggml-org/llama-ui/enums` (`ColorMode`,
@@ -68,7 +68,7 @@ shows in the app at once and the app keeps no copy of a component or a token. Fo
 ## Development
 
 - `npm run storybook`: the package's own Storybook, Llama Chat's (in `ui/apps/chat`) cut down to what the package
-  holds, with the Scrapbook for proposals
+  holds
 - `npm run dev`: Storybook and a small SvelteKit check page (`src/routes`)
 - `npm run check`: svelte-check
 - `npm run prepack`: build the library into `dist/` and run publint
