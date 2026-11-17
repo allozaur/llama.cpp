@@ -1,13 +1,13 @@
 // The swag prints, fabrics and placements, as the Swag Creator (ggml-org/swag-creator, src/lib/prints.ts and
 // garments.ts) defines them: every print but the quantized L comes from llama-brand, and placements are measured as a
 // print shop does, in centimetres from the centre front of the neckline.
-import iconDark from '../../assets/files/logo/svg/icon/icon-dark.svg?url';
-import iconLight from '../../assets/files/logo/svg/icon/icon-light.svg?url';
-import llamaDark from '../../assets/files/logo/svg/lockup/llama/logo-llama-dark.svg?url';
-import llamaLight from '../../assets/files/logo/svg/lockup/llama/logo-llama-light.svg?url';
-import llamaCppDark from '../../assets/files/logo/svg/lockup/llama-cpp/logo-llama-cpp-dark.svg?url';
-import llamaCppLight from '../../assets/files/logo/svg/lockup/llama-cpp/logo-llama-cpp-light.svg?url';
 import type { Tone } from './quantized';
+import iconDark from '@ggml-org/llama-brand/logo/svg/icon/icon-dark.svg?url';
+import iconLight from '@ggml-org/llama-brand/logo/svg/icon/icon-light.svg?url';
+import llamaDark from '@ggml-org/llama-brand/logo/svg/lockup/llama/logo-llama-dark.svg?url';
+import llamaLight from '@ggml-org/llama-brand/logo/svg/lockup/llama/logo-llama-light.svg?url';
+import llamaCppDark from '@ggml-org/llama-brand/logo/svg/lockup/llama-cpp/logo-llama-cpp-dark.svg?url';
+import llamaCppLight from '@ggml-org/llama-brand/logo/svg/lockup/llama-cpp/logo-llama-cpp-light.svg?url';
 
 export interface Artwork {
 	id: string;

@@ -3,13 +3,13 @@
 	real files from Brand › Assets: a lockup, app icons, a profile picture and a header
 -->
 <script lang="ts">
-	import macos from '../../brand/assets/files/logo/svg/app/apple/macos-1024x1024-dark.svg?url';
-	import pwa from '../../brand/assets/files/logo/svg/app/pwa/pwa-512x512-dark.svg?url';
-	import windows from '../../brand/assets/files/logo/svg/app/windows/windows-app-icon-256x256-light.svg?url';
-	import icon from '../../brand/assets/files/logo/svg/icon/icon-light.svg?url';
-	import lockup from '../../brand/assets/files/logo/svg/lockup/llama-cpp/logo-llama-cpp-light.svg?url';
-	import avatar from '../../brand/assets/files/logo/svg/social/x/x-avatar-dark.svg?url';
-	import header from '../../brand/assets/files/logo/svg/social/x/x-header-llama-dark.svg?url';
+	import macos from '@ggml-org/llama-brand/logo/svg/app/apple/macos-1024x1024-dark.svg?url';
+	import pwa from '@ggml-org/llama-brand/logo/svg/app/pwa/pwa-512x512-dark.svg?url';
+	import windows from '@ggml-org/llama-brand/logo/svg/app/windows/windows-app-icon-256x256-light.svg?url';
+	import icon from '@ggml-org/llama-brand/logo/svg/icon/icon-light.svg?url';
+	import lockup from '@ggml-org/llama-brand/logo/svg/lockup/llama-cpp/logo-llama-cpp-light.svg?url';
+	import avatar from '@ggml-org/llama-brand/logo/svg/social/x/x-avatar-dark.svg?url';
+	import header from '@ggml-org/llama-brand/logo/svg/social/x/x-header-llama-dark.svg?url';
 </script>
 
 <div class="assets">
