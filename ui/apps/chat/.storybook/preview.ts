@@ -1,4 +1,7 @@
 import '../src/app.css';
+import { MEDIA_QUERIES } from '#lib/constants/pwa.constants.ts';
+import { SurfaceTheme } from '#lib/enums/ui.enums.ts';
+import { applySurfaceTheme } from '#lib/utils/css.ts';
 import './docs.css';
 import { applyColorScheme } from './color-scheme';
 import ModeWatcherDecorator from './decorators/ModeWatcherDecorator.svelte';
@@ -6,7 +9,7 @@ import TooltipProviderDecorator from './decorators/TooltipProviderDecorator.svel
 import type { Preview } from '@storybook/sveltekit';
 
 applyColorScheme();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyColorScheme);
+window.matchMedia(MEDIA_QUERIES.PREFERS_DARK).addEventListener('change', applyColorScheme);
 
 const preview: Preview = {
 	parameters: {
@@ -90,8 +93,8 @@ const preview: Preview = {
 				dynamicTitle: true,
 				icon: 'paintbrush',
 				items: [
-					{ title: 'Paper', value: 'paper' },
-					{ title: 'Matte', value: 'matte' }
+					{ title: 'Paper', value: SurfaceTheme.PAPER },
+					{ title: 'Matte', value: SurfaceTheme.MATTE }
 				],
 				title: 'Surface'
 			}
@@ -99,11 +102,11 @@ const preview: Preview = {
 	},
 	initialGlobals: {
 		interactionPace: 'human',
-		surface: 'paper'
+		surface: SurfaceTheme.PAPER
 	},
 	decorators: [
 		(story, context) => {
-			document.documentElement.classList.toggle('theme-matte', context.globals.surface === 'matte');
+			applySurfaceTheme(context.globals.surface);
 
 			return story();
 		},
