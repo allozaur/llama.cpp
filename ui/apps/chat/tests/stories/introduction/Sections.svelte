@@ -6,10 +6,11 @@
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
 	import { STORYBOOK_SECTIONS } from './sections';
-	import { BookOpen, Bot, LayoutGrid, Lightbulb, MessageSquare } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid, Lightbulb, MessageSquare, Network } from '@lucide/svelte';
 
 	const ICONS: Record<string, typeof BookOpen> = {
 		Agents: Bot,
+		Architecture: Network,
 		Introduction: BookOpen,
 		'Llama Chat': MessageSquare,
 		'Llama UI': LayoutGrid,

@@ -28,6 +28,11 @@ export const STORYBOOK_SECTIONS: StorybookSection[] = [
 		pages: ['Ideology', 'Product', 'Design']
 	},
 	{
+		holds: 'How the products are built and released',
+		name: 'Architecture',
+		pages: ['Stack', 'Chat', 'Extensions', 'Channels']
+	},
+	{
 		holds: 'The library: its foundations, components and Model UI',
 		name: 'Llama UI',
 		pages: ['Foundations', 'Components', 'App components', 'Models', 'Mockups']
