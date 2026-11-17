@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
-	import { BookOpen, Bot, LayoutGrid, Network } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid } from '@lucide/svelte';
 
 	const sections = [
 		{
@@ -19,12 +19,6 @@
 			icon: Bot,
 			name: 'Agents',
 			pages: ['Design guidelines']
-		},
-		{
-			holds: 'How the products are built and released',
-			icon: Network,
-			name: 'Architecture',
-			pages: ['Stack', 'Chat', 'Channels']
 		},
 		{
 			holds: 'Foundations, components, patterns, Llama Chat’s screens',
