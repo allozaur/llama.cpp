@@ -23,6 +23,11 @@ export const STORYBOOK_SECTIONS: StorybookSection[] = [
 		pages: ['Design guidelines']
 	},
 	{
+		holds: 'The reasons, for people',
+		name: 'Philosophy',
+		pages: ['Ideology', 'Product', 'Design']
+	},
+	{
 		holds: 'The library: its foundations, components and Model UI',
 		name: 'Llama UI',
 		pages: ['Foundations', 'Components', 'App components', 'Models', 'Mockups']
