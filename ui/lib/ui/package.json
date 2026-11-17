@@ -79,11 +79,11 @@
 		"watch:package": "svelte-kit sync && svelte-package -w"
 	},
 	"devDependencies": {
-		"@chromatic-com/storybook": "latest",
+		"@chromatic-com/storybook": "^5.5.1",
 		"@storybook/addon-a11y": "^10.6.2",
 		"@storybook/addon-docs": "^10.6.2",
 		"@storybook/addon-mcp": "10.6.2",
-		"@storybook/addon-svelte-csf": "latest",
+		"@storybook/addon-svelte-csf": "^5.1.5",
 		"@storybook/addon-vitest": "^10.6.2",
 		"@storybook/sveltekit": "^10.6.2",
 		"@sveltejs/adapter-auto": "^8.0.0",
