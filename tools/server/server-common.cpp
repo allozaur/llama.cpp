@@ -225,41 +225,65 @@ static bool asr_is_tag_start(const std::string & s, size_t pos, const std::strin
     return n < tag.size() && tag.compare(0, n, s, pos, n) == 0;
 }
 
-std::string server_asr_strip_markup(const std::string & text, bool is_partial) {
-    static const std::string lang_prefix = "language ";
-    static const std::string open_tag    = "<asr_text>";
-    static const std::string close_tag   = "</asr_text>";
+static const std::string asr_lang_prefix = "language ";
+static const std::string asr_open_tag    = "<asr_text>";
+static const std::string asr_close_tag   = "</asr_text>";
 
-    // optional "language <Name>" before the opening tag
-    size_t pos = 0;
-    if (text.compare(0, lang_prefix.size(), lang_prefix) == 0) {
-        pos = lang_prefix.size();
-        while (pos < text.size() && std::isalpha((unsigned char) text[pos])) {
-            pos++;
+// length of the segment header at s[pos..]: "language <Name><asr_text>" or "<asr_text>"
+// 0 if there is none; with is_partial, -1 if the text ends inside what may still become one
+static int asr_header_at(const std::string & s, size_t pos, bool is_partial) {
+    if (s.compare(pos, asr_open_tag.size(), asr_open_tag) == 0) {
+        return (int) asr_open_tag.size();
+    }
+    if (s.compare(pos, asr_lang_prefix.size(), asr_lang_prefix) == 0) {
+        size_t p = pos + asr_lang_prefix.size();
+        while (p < s.size() && std::isalpha((unsigned char) s[p])) {
+            p++;
         }
-    } else if (is_partial && asr_is_tag_start(text, 0, lang_prefix)) {
+        if (s.compare(p, asr_open_tag.size(), asr_open_tag) == 0) {
+            return (int) (p + asr_open_tag.size() - pos);
+        }
+        return is_partial && (p == s.size() || asr_is_tag_start(s, p, asr_open_tag)) ? -1 : 0;
+    }
+    return is_partial && (asr_is_tag_start(s, pos, asr_lang_prefix) || asr_is_tag_start(s, pos, asr_open_tag)) ? -1 : 0;
+}
+
+std::string server_asr_strip_markup(const std::string & text, bool is_partial) {
+    const int first = asr_header_at(text, 0, is_partial);
+    if (first < 0) {
         return "";
     }
-
-    if (text.compare(pos, open_tag.size(), open_tag) != 0) {
-        if (is_partial && asr_is_tag_start(text, pos, open_tag)) {
-            return "";
-        }
+    if (first == 0) {
         return text;
     }
 
-    std::string words = text.substr(pos + open_tag.size());
-    const size_t end = words.find(close_tag);
-    if (end != std::string::npos) {
-        words.resize(end);
-    } else if (is_partial) {
-        // hold back the end if it may become the closing tag
-        for (size_t n = std::min(words.size(), close_tag.size() - 1); n > 0; n--) {
-            if (words.compare(words.size() - n, n, close_tag, 0, n) == 0) {
-                words.resize(words.size() - n);
+    // a speaker who changes language starts a new segment, with its own header:
+    // "language Polish<asr_text>Cześć!language English<asr_text>Hi." -> "Cześć! Hi."
+    std::string words;
+    size_t pos = first;
+    while (pos < text.size()) {
+        if (text.compare(pos, asr_close_tag.size(), asr_close_tag) == 0) {
+            pos += asr_close_tag.size();
+            continue;
+        }
+        if (is_partial && asr_is_tag_start(text, pos, asr_close_tag)) {
+            break;
+        }
+        // a header starts a word, so "Islanguage" is not one
+        if (pos == 0 || !std::isalnum((unsigned char) text[pos - 1]) || text[pos] == '<') {
+            const int header = asr_header_at(text, pos, is_partial);
+            if (header < 0) {
                 break;
             }
+            if (header > 0) {
+                if (!words.empty() && !std::isspace((unsigned char) words.back())) {
+                    words += ' ';
+                }
+                pos += header;
+                continue;
+            }
         }
+        words += text[pos++];
     }
     return words;
 }

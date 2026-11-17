@@ -120,6 +120,7 @@ std::string pcm_f32_to_s16(const float * samples, size_t n);
 
 // the spoken words of an ASR output, without the markup some models wrap them in, e.g. Qwen3-ASR:
 // "language English<asr_text>Hello there.</asr_text>" -> "Hello there."
+// a change of language starts a new segment with its own header, joined to the last with a space
 // text without the markup is returned unchanged
 // is_partial: the text may still grow, so a beginning or an end that may become markup is held back
 std::string server_asr_strip_markup(const std::string & text, bool is_partial);

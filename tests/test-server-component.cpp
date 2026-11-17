@@ -971,6 +971,15 @@ static void test_asr_strip_markup(testing & t) {
     t.assert_equal("no language",     std::string("Hello there."), strip("<asr_text>Hello there.</asr_text>"));
     t.assert_equal("silence",         std::string(""),             strip("language None<asr_text></asr_text>"));
 
+    // a change of language starts a new segment with its own header
+    t.assert_equal("languages",       std::string("Cześć, czy ty nie rozumiesz? I speak English now. Amo parlare italiano."),
+                   strip("language Polish<asr_text>Cześć, czy ty nie rozumiesz?language English<asr_text>I speak English now."
+                         "language Italian<asr_text>Amo parlare italiano."));
+    t.assert_equal("closed segments", std::string("Cześć.\nHi."),
+                   strip("language Polish<asr_text>Cześć.</asr_text>\nlanguage English<asr_text>Hi.</asr_text>"));
+    t.assert_equal("spoken language", std::string("The language English is hard, Islanguage too."),
+                   strip("language English<asr_text>The language English is hard, Islanguage too."));
+
     // other text is left as is
     t.assert_equal("plain",           std::string("Hello there."), strip("Hello there."));
     t.assert_equal("starts language", std::string("language English is spoken here"), strip("language English is spoken here"));
@@ -1016,6 +1025,15 @@ static void test_asr_transcript(testing & t) {
            {"<", "3 you"},
            {"",  "<3 you"},
            "<3 you");
+    // a header in the middle is held back the same way
+    stream("next language",
+           {"language Polish<asr_text>Cześć.", "lang", "uage Eng", "lish<asr", "_text>Hi."},
+           {"Cześć.",                          "",     "",         "",         " Hi."},
+           "Cześć. Hi.");
+    stream("a word like language",
+           {"language English<asr_text>I like", " lang", "uages."},
+           {"I like",                           " ",     "languages."},
+           "I like languages.");
 }
 
 int main(int argc, char ** argv) {
