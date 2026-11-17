@@ -782,8 +782,8 @@ Design tokens come in three tiers, each in its own file under `ui/lib/ui/src/lib
    them as `bg-(--button-primary-background)` and similar.
 
 The front matter of this file mirrors those three files. When they disagree, the CSS wins
-and this file should be updated to match. Storybook shows every tier under **Design
-system > Foundations > Colors**.
+and this file should be updated to match. Storybook shows every tier under **UI ›
+Foundations › Colors**.
 
 Light mode is the base. A semantic token whose dark value differs has a `-dark` twin here,
 and components list a `-dark` entry wherever their colours change. Translucent component
@@ -1158,11 +1158,12 @@ icon buttons in the chat form are fully round.
 
 ## Proposing changes
 
-Visual changes are decided in Storybook before they reach the components.
+Visual changes are decided in Storybook before they reach the components, in the Scrapbook
+(see `AGENTS.md` and Scrapbook › About).
 
-1. **Prototype first.** Add a temporary story at `tests/stories/design-system/proposals/`
-   titled `UI/Proposals/<topic>` (or under its Brand section, e.g. `Brand/Colors/...`, for brand
-   work), with one story per question.
+1. **Prototype first.** Add a story under `tests/stories/scrapbook/` titled
+   `Scrapbook/UI/<topic>`, with one story per variation or question. Brand and communications
+   proposals go in llama-brand's Storybook instead.
 2. **Show current and proposed side by side.** Use `StateGallery` with two columns: each row
    is a pair of `StateGalleryItem`s labelled `Current` and `Proposed`, with a short note
    saying what differs. Render the current state with the real component, and the proposal
@@ -1171,6 +1172,6 @@ Visual changes are decided in Storybook before they reach the components.
    story; the real components, tokens and app code change only once a proposal is chosen.
 4. **Check both themes.** Review every proposal in light and dark mode before asking for a
    decision.
-5. **Apply, then delete the proposal.** Once chosen, move the change into tokens and
-   components, update the regular stories and this file, and remove the proposal story so
-   it never ships.
+5. **Apply, and keep the record.** Once chosen, move the change into tokens and components
+   and update the regular stories and this file. The proposal stays in the Scrapbook as a
+   record, noting which option was chosen, until it is no longer useful.

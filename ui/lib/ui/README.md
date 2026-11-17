@@ -67,8 +67,8 @@ shows in the app at once and the app keeps no copy of a component or a token. Fo
 
 ## Development
 
-- `npm run storybook`: a copy of Llama UI's Storybook in llama.cpp, cut down to what the package holds, with the
-  Scrapbook for proposals
+- `npm run storybook`: the package's own Storybook, Llama Chat's (in `ui/apps/chat`) cut down to what the package
+  holds, with the Scrapbook for proposals
 - `npm run dev`: Storybook and a small SvelteKit check page (`src/routes`)
 - `npm run check`: svelte-check
 - `npm run prepack`: build the library into `dist/` and run publint
