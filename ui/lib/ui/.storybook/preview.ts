@@ -22,21 +22,20 @@ const preview: Preview = {
 		},
 
 		options: {
-			// the same sections as Llama Chat's Storybook (ui/apps/chat), with only what this package has so far:
-			// the introduction, then the UI with its foundations first and its blocks last
+			// the package's own sections, in the order Llama Chat's Storybook (ui/apps/chat) shows them under Llama UI:
+			// the foundations, the base components, the app components, then the Model UI and the mockups
 			storySort: {
 				order: [
 					'Introduction',
-					'UI',
+					'Llama UI',
 					[
 						'Foundations',
 						['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces'],
-						'Actions',
-						'Forms',
-						'Display',
-						'Overlays',
-						'Blocks',
-						['Models']
+						'Components',
+						['Actions', 'Forms', 'Display', 'Overlays', 'Navigation'],
+						'App components',
+						'Models',
+						'Mockups'
 					]
 				]
 			}

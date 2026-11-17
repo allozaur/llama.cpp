@@ -18,7 +18,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormPickerMcpPrompts'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormPickerMcpPrompts'
 	});
 
 	// keeps the picker in its loading state

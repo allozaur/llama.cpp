@@ -28,7 +28,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormCurrentWorkingDirectory'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormCurrentWorkingDirectory'
 	});
 
 	const directoryEntries = toGlobEntries(

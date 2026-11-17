@@ -7,7 +7,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatScreenActionScrollDown'
+		title: 'Llama Chat/Chat/ChatScreen/ChatScreenActionScrollDown'
 	});
 </script>
 

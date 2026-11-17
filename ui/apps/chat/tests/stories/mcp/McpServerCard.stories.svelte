@@ -10,7 +10,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/MCP/McpServerCard'
+		title: 'Llama Chat/MCP/McpServerCard'
 	});
 
 	const handlers = {

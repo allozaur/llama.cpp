@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatScreenServerError'
+		title: 'Llama Chat/Chat/ChatScreen/ChatScreenServerError'
 	});
 
 	function seedServer(state: { error: string | null; loading?: boolean; status?: number | null }) {

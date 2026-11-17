@@ -9,7 +9,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormActionSubmit'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormActionSubmit'
 	});
 </script>
 

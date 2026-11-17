@@ -9,7 +9,7 @@
 
 	// the settings section switcher: a sidebar list from md up, a scrolling row below it
 	const { Story } = defineMeta({
-		title: 'UI/Blocks/Settings/Navigation'
+		title: 'Llama Chat/Settings/Navigation'
 	});
 </script>
 

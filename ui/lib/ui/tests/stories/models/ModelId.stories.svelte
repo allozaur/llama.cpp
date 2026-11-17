@@ -2,7 +2,7 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { ModelId, ModelOrgAvatar } from '$lib/components/models';
+	import { ModelId, ModelOrgAvatar } from '@ggml-org/llama-ui/models';
 
 	// a model's name with its badges and icons, as Llama Chat's lists and llama.app's catalog show it; the models are
 	// from llama.app's catalog
@@ -11,7 +11,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Models/ModelId'
+		title: 'Llama UI/Models/ModelId'
 	});
 </script>
 

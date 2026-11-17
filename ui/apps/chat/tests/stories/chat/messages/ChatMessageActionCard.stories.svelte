@@ -11,7 +11,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatMessages/ChatMessageActionCard'
+		title: 'Llama Chat/Chat/ChatMessages/ChatMessageActionCard'
 	});
 
 	const onDecision = () => {};

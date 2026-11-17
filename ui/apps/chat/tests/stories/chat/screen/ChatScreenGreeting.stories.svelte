@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatScreenGreeting'
+		title: 'Llama Chat/Chat/ChatScreen/ChatScreenGreeting'
 	});
 
 	function seedAudio(audio: boolean) {

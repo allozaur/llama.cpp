@@ -9,7 +9,7 @@
 		parameters: {
 			layout: 'fullscreen'
 		},
-		title: 'UI/Blocks/Settings/Sections'
+		title: 'Llama Chat/Settings/Sections'
 	});
 </script>
 

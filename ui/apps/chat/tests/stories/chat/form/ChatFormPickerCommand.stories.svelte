@@ -11,7 +11,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormPickerCommand'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormPickerCommand'
 	});
 
 	const common = { commands: chatCommands, isOpen: true, onClose: fn(), onSelect: fn() };

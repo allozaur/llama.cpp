@@ -7,7 +7,7 @@
 		parameters: {
 			layout: 'fullscreen'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatScreenDragOverlay'
+		title: 'Llama Chat/Chat/ChatScreen/ChatScreenDragOverlay'
 	});
 </script>
 

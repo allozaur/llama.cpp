@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { Database, Download, ScrollText } from '@lucide/svelte';
-	import { ModelCapabilityIcons, ModelCard, ModelId, ModelOrgAvatar } from '$lib/components/models';
+	import { ModelCapabilityIcons, ModelCard, ModelId, ModelOrgAvatar } from '@ggml-org/llama-ui/models';
 
 	// the surface every model card shares, Llama Chat's Discover and models page among them: the avatar and name are the
 	// card's one button (or link), capabilities and a description in the body, facts at the foot
@@ -12,7 +12,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Models/ModelCard'
+		title: 'Llama UI/Models/ModelCard'
 	});
 </script>
 

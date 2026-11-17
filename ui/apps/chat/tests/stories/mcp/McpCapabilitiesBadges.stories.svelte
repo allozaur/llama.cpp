@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/MCP/McpCapabilitiesBadges'
+		title: 'Llama Chat/MCP/McpCapabilitiesBadges'
 	});
 </script>
 

@@ -25,44 +25,51 @@ const preview: Preview = {
 		},
 
 		options: {
-			// sidebar sections: the introduction, the guidelines for agents, then the UI: its
-			// foundations first, the full chat screen leading its folder. The brand and communications are in llama-brand's Storybook
+			// sidebar sections: the introduction and the guidelines for agents, then the two layers as the code has them.
+			// Llama UI is the library (ui/lib/ui): its foundations, base components, app components, Model UI and mockups.
+			// Llama Chat is the app (ui/apps/chat): its own foundations, then one folder per src/lib/components/app/<area>,
+			// the full chat screen leading Chat. The brand and communications are in llama-brand's Storybook
 			storySort: {
 				order: [
 					'Introduction',
 					'Agents',
 					['Design guidelines'],
-					'UI',
+					'Llama UI',
 					[
 						'Foundations',
+						['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces'],
+						'Components',
+						['Actions', 'Forms', 'Display', 'Overlays', 'Navigation'],
+						'App components',
+						'Models',
+						'Mockups'
+					],
+					'Llama Chat',
+					[
+						'Foundations',
+						['Safe areas', 'Brand'],
+						'Chat',
 						[
-							'Colors',
-							'Typography',
-							'Sizing',
-							'Shapes',
-							'Elevation',
-							'Surfaces',
-							'Safe areas',
-							'Brand'
+							'ChatScreen',
+							['ChatScreen', '*'],
+							'ChatForm',
+							'ChatMessages',
+							'ChatAttachments',
+							'ChatTabs'
 						],
-						'Actions',
-						'Forms',
-						'Display',
-						'Overlays',
+						'Content',
+						'Models',
+						'MCP',
 						'Navigation',
-						'Patterns',
-						'Blocks',
-						[
-							'Chat',
-							['ChatScreen', ['ChatScreen', '*']],
-							'Content',
-							'Models',
-							'MCP',
-							'Navigation',
-							'Settings',
-							['DialogSettingsChat', 'Navigation', 'Sections'],
-							'App'
-						]
+						'Settings',
+						['DialogSettingsChat', 'Navigation', 'Sections'],
+						'Dialogs',
+						'Forms',
+						'Actions',
+						'Badges',
+						'Misc',
+						'Servers',
+						'PWA'
 					]
 				]
 			}

@@ -2,7 +2,7 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { ModelOrgAvatar } from '$lib/components/models';
+	import { ModelOrgAvatar } from '@ggml-org/llama-ui/models';
 
 	// the maker's Hugging Face avatar, with the quantizer's in the corner when someone else published the GGUF; an
 	// org with no avatar falls back to its initial on a hue of its own
@@ -11,7 +11,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Models/ModelOrgAvatar'
+		title: 'Llama UI/Models/ModelOrgAvatar'
 	});
 </script>
 

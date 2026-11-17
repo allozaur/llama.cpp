@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
-	import { BookOpen, Bot, LayoutGrid } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid, MessageSquare } from '@lucide/svelte';
 
 	const sections = [
 		{
@@ -21,18 +21,24 @@
 			pages: ['Design guidelines']
 		},
 		{
-			holds: 'Foundations, components, patterns, Llama Chat’s screens',
+			holds: 'The library: its foundations, components and Model UI',
 			icon: LayoutGrid,
-			name: 'UI',
+			name: 'Llama UI',
+			pages: ['Foundations', 'Components', 'App components', 'Models', 'Mockups']
+		},
+		{
+			holds: 'The app: its screens and the parts they are built from',
+			icon: MessageSquare,
+			name: 'Llama Chat',
 			pages: [
 				'Foundations',
-				'Actions',
-				'Forms',
-				'Display',
-				'Overlays',
+				'Chat',
+				'Content',
+				'Models',
+				'MCP',
 				'Navigation',
-				'Patterns',
-				'Blocks'
+				'Settings',
+				'Dialogs'
 			]
 		}
 	];

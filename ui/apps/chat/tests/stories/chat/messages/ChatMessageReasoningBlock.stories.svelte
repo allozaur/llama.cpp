@@ -15,7 +15,7 @@
 		parameters: {
 			layout: 'padded'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatMessages/ChatMessageReasoningBlock'
+		title: 'Llama Chat/Chat/ChatMessages/ChatMessageReasoningBlock'
 	});
 </script>
 

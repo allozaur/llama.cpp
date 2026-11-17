@@ -10,7 +10,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormInput'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormInput'
 	});
 
 	const common = {

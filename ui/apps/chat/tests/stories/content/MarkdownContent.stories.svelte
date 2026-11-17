@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Content/MarkdownContent'
+		title: 'Llama Chat/Content/MarkdownContent'
 	});
 </script>
 

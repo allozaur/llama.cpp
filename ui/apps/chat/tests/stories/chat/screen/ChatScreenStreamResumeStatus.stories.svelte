@@ -9,7 +9,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatScreenStreamResumeStatus'
+		title: 'Llama Chat/Chat/ChatScreen/ChatScreenStreamResumeStatus'
 	});
 </script>
 

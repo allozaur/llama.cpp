@@ -42,8 +42,21 @@ export default defineConfig({
       // If your environment is not supported, or you settled on a specific environment, switch out the adapter.
       // See https://svelte.dev/docs/kit/adapters for more information about adapters.
       adapter: adapter(),
-      // ui/apps/chat imports through $lib, which SvelteKit 3 dropped; keeping it lets its files be copied as they are
-      alias: { $lib: "src/lib" },
+      alias: {
+        // ui/apps/chat imports through $lib, which SvelteKit 3 dropped; keeping it lets its files be copied as they are
+        $lib: "src/lib",
+        // the stories import the package by its published entry points, as an app does, so that Llama Chat's
+        // Storybook can show them too (it maps the same names onto these sources, see ui/apps/chat/scripts/llama-ui.js)
+        "@ggml-org/llama-ui/ui/*": "src/lib/components/ui/*",
+        "@ggml-org/llama-ui/app/*": "src/lib/components/app/*",
+        "@ggml-org/llama-ui/models": "src/lib/components/models/index.ts",
+        "@ggml-org/llama-ui/constants": "src/lib/constants/index.ts",
+        "@ggml-org/llama-ui/enums": "src/lib/enums/index.ts",
+        "@ggml-org/llama-ui/code": "src/lib/utils/index.ts",
+        "@ggml-org/llama-ui/utils": "src/lib/components/ui/utils.ts",
+        "@ggml-org/llama-ui/styles/*": "src/lib/styles/*",
+        "@ggml-org/llama-ui": "src/lib/index.ts",
+      },
       // Storybook's content pages are Markdown with Svelte in them (.svx), as in ui/apps/chat
       extensions: [".svelte", ".svx"],
       preprocess: [vitePreprocess(), mdsvex()],

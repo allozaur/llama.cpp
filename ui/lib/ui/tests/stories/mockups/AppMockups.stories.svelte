@@ -2,7 +2,7 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { MacMenu, WindowsTray } from '$lib/components/mockups';
+	import { MacMenu, WindowsTray } from '@ggml-org/llama-ui';
 
 	// the native apps' UIs as the brand draws them, for pages and communications: Llama for Mac's menu and Llama for
 	// Windows' tray flyout, each with its parts marked the way llama.app's hero numbers them
@@ -11,7 +11,7 @@
 			controls: { disable: true },
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Mockups/App mockups'
+		title: 'Llama UI/Mockups/App mockups'
 	});
 </script>
 

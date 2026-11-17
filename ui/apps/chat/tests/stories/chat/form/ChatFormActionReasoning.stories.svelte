@@ -16,7 +16,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormActionReasoning'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormActionReasoning'
 	});
 
 	function seedEffort(

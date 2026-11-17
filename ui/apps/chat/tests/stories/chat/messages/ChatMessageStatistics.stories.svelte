@@ -11,7 +11,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatMessages/ChatMessageStatistics'
+		title: 'Llama Chat/Chat/ChatMessages/ChatMessageStatistics'
 	});
 
 	const stats = {

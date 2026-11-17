@@ -14,7 +14,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatMessages/ChatMessageActionIcons'
+		title: 'Llama Chat/Chat/ChatMessages/ChatMessageActionIcons'
 	});
 
 	const onRegenerate = () => {};

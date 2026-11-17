@@ -2,8 +2,8 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
-	import { ModelQuantChip, ModelQuantRow } from '$lib/components/models';
-	import { minMemoryTierGb } from '$lib/models';
+	import { ModelQuantChip, ModelQuantRow } from '@ggml-org/llama-ui/models';
+	import { minMemoryTierGb } from '@ggml-org/llama-ui/models';
 
 	// one quant of a model, in each state the app can give it; actions come back as callbacks, so the chip downloads
 	// nothing itself
@@ -12,7 +12,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Models/ModelQuantChip'
+		title: 'Llama UI/Models/ModelQuantChip'
 	});
 
 	const Q4 = 16_400_000_000;

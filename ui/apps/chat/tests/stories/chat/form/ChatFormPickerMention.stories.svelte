@@ -25,7 +25,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Chat/ChatScreen/ChatForm/ChatFormPickerMention'
+		title: 'Llama Chat/Chat/ChatForm/ChatFormPickerMention'
 	});
 
 	const searchTools = { serverHome: SERVER_HOME, serverTools: cwdServerTools };

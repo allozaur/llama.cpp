@@ -779,7 +779,7 @@ Design tokens come in three tiers, each in its own file under `ui/lib/ui/src/lib
    them as `bg-(--button-primary-background)` and similar.
 
 The front matter of this file mirrors those three files. When they disagree, the CSS wins
-and this file should be updated to match. Storybook shows every tier under **UI ›
+and this file should be updated to match. Storybook shows every tier under **Llama UI ›
 Foundations › Colors**.
 
 Light mode is the base. A semantic token whose dark value differs has a `-dark` twin here,

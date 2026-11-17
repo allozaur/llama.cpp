@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'fullscreen'
 		},
-		title: 'UI/Blocks/Settings/DialogSettingsChat'
+		title: 'Llama Chat/Settings/DialogSettingsChat'
 	});
 </script>
 

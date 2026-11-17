@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/Content/CollapsibleTerminalBlock'
+		title: 'Llama Chat/Content/CollapsibleTerminalBlock'
 	});
 </script>
 

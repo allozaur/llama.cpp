@@ -8,7 +8,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'UI/Blocks/MCP/McpConnectionLogs'
+		title: 'Llama Chat/MCP/McpConnectionLogs'
 	});
 </script>
 
