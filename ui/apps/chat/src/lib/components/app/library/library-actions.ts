@@ -1,4 +1,6 @@
-import { Download, Pencil, Trash2 } from '@lucide/svelte';
+import Download from '@lucide/svelte/icons/download';
+import Pencil from '@lucide/svelte/icons/pencil';
+import Trash2 from '@lucide/svelte/icons/trash-2';
 import type { MenuAction } from '#lib/types/index.ts';
 
 /** A media item's "more actions" and right-click menu. Placeholders: nothing acts yet. */

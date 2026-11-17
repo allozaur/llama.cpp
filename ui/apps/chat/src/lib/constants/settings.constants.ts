@@ -6,24 +6,22 @@ import { SETTINGS_KEYS } from './settings-keys.constants';
 import { TITLE_GENERATION } from './title-generation.constants';
 import { VOICE_TRANSCRIPTION_MODEL_AUTO } from './voice.constants';
 import { FILE_GLOB_SEARCH_PICKERS } from './working-directory.constants';
-import {
-	AudioLines,
-	Code,
-	Database,
-	File,
-	Funnel,
-	Gauge,
-	GlassWater,
-	ListRestart,
-	Mic,
-	Monitor,
-	Moon,
-	PencilRuler,
-	Puzzle,
-	SlidersVertical,
-	Sun,
-	TextCursorInput
-} from '@lucide/svelte';
+import AudioLines from '@lucide/svelte/icons/audio-lines';
+import Code from '@lucide/svelte/icons/code';
+import Database from '@lucide/svelte/icons/database';
+import File from '@lucide/svelte/icons/file';
+import Funnel from '@lucide/svelte/icons/funnel';
+import Gauge from '@lucide/svelte/icons/gauge';
+import GlassWater from '@lucide/svelte/icons/glass-water';
+import ListRestart from '@lucide/svelte/icons/list-restart';
+import Mic from '@lucide/svelte/icons/mic';
+import Monitor from '@lucide/svelte/icons/monitor';
+import Moon from '@lucide/svelte/icons/moon';
+import PencilRuler from '@lucide/svelte/icons/pencil-ruler';
+import Puzzle from '@lucide/svelte/icons/puzzle';
+import SlidersVertical from '@lucide/svelte/icons/sliders-vertical';
+import Sun from '@lucide/svelte/icons/sun';
+import TextCursorInput from '@lucide/svelte/icons/text-cursor-input';
 import { SurfaceTheme, SyncableParameterType, VoiceInputMode } from '#lib/enums/index.ts';
 import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
 import { ColorMode } from '#lib/enums/ui.enums.ts';

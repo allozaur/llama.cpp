@@ -6,7 +6,11 @@ import {
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
 import { ROUTES } from './routes.constants';
-import { Library, Search, Server, Settings, SquarePen } from '@lucide/svelte';
+import Library from '@lucide/svelte/icons/library';
+import Search from '@lucide/svelte/icons/search';
+import Server from '@lucide/svelte/icons/server';
+import Settings from '@lucide/svelte/icons/settings';
+import SquarePen from '@lucide/svelte/icons/square-pen';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
 import { resolve } from '$app/paths';
