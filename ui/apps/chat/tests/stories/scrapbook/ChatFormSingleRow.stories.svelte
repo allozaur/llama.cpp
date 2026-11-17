@@ -1,12 +1,12 @@
 <script lang="ts" module>
-	import Preview from './fixtures/ChatFormSingleRowPreview.svelte';
+	import Preview from '../fixtures/ChatFormSingleRowPreview.svelte';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 
 	const { Story } = defineMeta({
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'Scrapbook/ChatForm single row'
+		title: 'Scrapbook/UI/ChatForm single row'
 	});
 
 	const SHORT = 'What is the meaning of life?';

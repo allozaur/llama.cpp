@@ -9,7 +9,7 @@
 		parameters: {
 			layout: 'centered'
 		},
-		title: 'Design system/Foundations/Safe areas'
+		title: 'UI/Foundations/Safe areas'
 	});
 
 	/** An iPhone's status bar and home indicator, as an installed app sees them. */

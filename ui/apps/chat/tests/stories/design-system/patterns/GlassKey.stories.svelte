@@ -9,7 +9,7 @@
 	const { Story } = defineMeta({
 		component: GlassKey,
 		parameters: { layout: 'fullscreen' },
-		title: 'Design system/Patterns/GlassKey'
+		title: 'UI/Patterns/GlassKey'
 	});
 
 	const LINES = Array.from(
