@@ -6,20 +6,14 @@
  * formatting. No reactive state; consumed by mcpStore and its managers.
  */
 
-import { WebSocketClientTransport } from './mcp-websocket-transport';
-import {
+import type {
 	Client,
-	type GetPromptResult,
-	type ListChangedHandlers,
-	type McpSubscription,
-	type Prompt,
-	SdkError,
-	SdkErrorCode,
-	SdkHttpError,
-	SSEClientTransport,
-	StreamableHTTPClientTransport,
-	type Tool,
-	type Transport
+	GetPromptResult,
+	ListChangedHandlers,
+	McpSubscription,
+	Prompt,
+	Tool,
+	Transport
 } from '@modelcontextprotocol/client';
 import {
 	CORS_PROXY,
@@ -70,6 +64,18 @@ import {
 	summarizeRequestBody,
 	throwIfAborted
 } from '#lib/utils/index.ts';
+
+type McpSdk = typeof import('./mcp-sdk');
+
+// the SDK's runtime, set once loadSdk() resolved: a connection exists only after that
+let sdk: McpSdk | undefined;
+let sdkLoading: Promise<McpSdk> | undefined;
+
+function loadedSdk(): McpSdk {
+	if (!sdk) throw new Error('The MCP SDK is not loaded yet, call MCPService.loadSdk() first');
+
+	return sdk;
+}
 
 // The stores decide when to list again, so a list call must reach the server.
 // On a stateless connection the SDK can answer it from a cache the server set a TTL for.
@@ -221,6 +227,7 @@ export class MCPService {
 			console.log(`[MCPService][${serverName}] Creating transport...`);
 		}
 
+		const { Client } = await this.loadSdk();
 		const createdTransport = this.createTransport(serverName, serverConfig, (log) =>
 			onPhase?.(log.phase, log)
 		);
@@ -525,6 +532,8 @@ export class MCPService {
 			throw new Error('MCP server configuration is missing url');
 		}
 
+		const { SSEClientTransport, StreamableHTTPClientTransport, WebSocketClientTransport } =
+			loadedSdk();
 		const useProxy = config.useProxy ?? false;
 		const requestInit: RequestInit = {};
 
@@ -655,7 +664,7 @@ export class MCPService {
 			// Terminate the session first for streamable-http transports to cleanly
 			// close streams, matching the inspector's disconnect flow.
 			// No request is sent when the server gave no session (stateless protocol).
-			if (connection.transport instanceof StreamableHTTPClientTransport) {
+			if (sdk && connection.transport instanceof sdk.StreamableHTTPClientTransport) {
 				await connection.transport.terminateSession();
 			}
 
@@ -713,7 +722,8 @@ export class MCPService {
 	 */
 	static isSessionExpiredError(error: unknown, connection: MCPConnection): boolean {
 		return (
-			error instanceof SdkHttpError &&
+			sdk !== undefined &&
+			error instanceof sdk.SdkHttpError &&
 			error.status === 404 &&
 			connection.transport.sessionId !== undefined
 		);
@@ -856,6 +866,26 @@ export class MCPService {
 
 			return [];
 		}
+	}
+
+	/**
+	 * Load the MCP SDK, once. connect() calls it, so the SDK is downloaded only
+	 * when a server is actually used.
+	 *
+	 * @returns The SDK's runtime classes and the WebSocket transport
+	 */
+	static loadSdk(): Promise<McpSdk> {
+		sdkLoading ??= import('./mcp-sdk').then(
+			(module) => (sdk = module),
+			(error) => {
+				// a failed chunk download may succeed on the next connect
+				sdkLoading = undefined;
+
+				throw error;
+			}
+		);
+
+		return sdkLoading;
 	}
 
 	/**
@@ -1340,9 +1370,10 @@ export class MCPService {
 	 */
 	private static isProbeFailure(error: unknown): boolean {
 		return (
-			error instanceof SdkError &&
-			(error.code === SdkErrorCode.EraNegotiationFailed ||
-				error.code === SdkErrorCode.RequestTimeout) &&
+			sdk !== undefined &&
+			error instanceof sdk.SdkError &&
+			(error.code === sdk.SdkErrorCode.EraNegotiationFailed ||
+				error.code === sdk.SdkErrorCode.RequestTimeout) &&
 			!isAbortError(error.cause)
 		);
 	}
