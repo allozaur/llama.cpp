@@ -16,7 +16,7 @@ import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
 import { extensions } from '#lib/extensions/registry.svelte.ts';
 import { MigrationService } from '#lib/services/migration.service.ts';
 import { validateApiKey } from '#lib/utils/api-key-validation.ts';
-import { isRemoteServer } from '#lib/utils/servers.ts';
+import { isLocalServer, isRemoteServer } from '#lib/utils/servers.ts';
 import { browser } from '$app/env';
 
 let activeTunnel: Promise<void> | null = null;
@@ -120,6 +120,12 @@ export function initStores(): Promise<void> {
 
 		void requestPersistentStorage();
 
+		// the servers the page was published with, asked for alongside the rest of
+		// the startup rather than ahead of it, and loaded as they join the list
+		const presets = serversStore
+			.addPresetServers()
+			.then((ids) => Promise.all(ids.map((id) => serversModelsStore.ensureLoaded(id))));
+
 		// prefetch every server's model list in the background; failures are
 		// per-server and never block startup
 		void serversModelsStore.loadAll().then(() => modelsStore.warmHubDetails());
@@ -130,12 +136,22 @@ export function initStores(): Promise<void> {
 		// the local server state backs the installation facts and decides whether
 		// /tools exists at all, so probe it first and only then list the tools;
 		// otherwise they stay empty until the tools menu is opened
-		void serverStore.prefetchLocalState().then(() => {
+		void Promise.all([serverStore.prefetchLocalState(), presets]).then(async () => {
 			// a build served without a local server has no local server to fall
 			// back on, so the active server is only settled once that is known
 			connectActiveServer();
 
 			void toolsStore.fetchServerTools();
+
+			// the page asked the local server for its models before it was known to
+			// be missing; the server the app falls back on, such as one the page was
+			// published with, answers instead (a remote one does once its tunnel opens)
+			const active = serversStore.active;
+
+			if (serverStore.localServerMissing && !isLocalServer(active) && !isRemoteServer(active)) {
+				await modelsStore.switchServer();
+				await modelsStore.ensureFirstModelSelected();
+			}
 		});
 
 		await startExtensions();
