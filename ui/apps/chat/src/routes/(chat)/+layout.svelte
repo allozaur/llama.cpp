@@ -78,6 +78,7 @@
 			? page.params.projectId === conversation.projectId
 			: !page.params.projectId;
 
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- a resolved URL, keeping the current query
 		if (!onHome) void goto(home + page.url.search, { replace: true });
 	});
 

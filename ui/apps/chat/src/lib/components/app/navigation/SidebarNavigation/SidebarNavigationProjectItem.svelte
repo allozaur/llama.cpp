@@ -2,6 +2,7 @@
 	import SidebarNavigationDropZone from './SidebarNavigationDropZone.svelte';
 	import SidebarNavigationGroupSubmenu from './SidebarNavigationGroupSubmenu.svelte';
 	import SidebarNavigationShowMore from './SidebarNavigationShowMore.svelte';
+	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import {
 		Archive,
 		ChevronRight,
@@ -19,7 +20,6 @@
 	} from '@lucide/svelte';
 	import {
 		ActionIcon,
-		CollapsibleRegion,
 		ContextMenuActions,
 		DialogConfirmation,
 		DropdownMenuActions,
@@ -253,35 +253,37 @@
 		</ContextMenuActions>
 	{/snippet}
 
-	<CollapsibleRegion {open}>
-		<!-- the chats hang off the project's icon on a thin guide line -->
-		<ul class="ml-[15px] flex min-w-0 flex-col border-l border-foreground/10 pl-1.5 md:gap-0.5">
-			{#each shownConversations as conversation (conversation.id)}
-				<li transition:slide={{ duration: SIDEBAR_ROW_SLIDE_MS }} class="group/item relative p-0">
-					{@render conversationRow(conversation)}
-				</li>
-			{:else}
-				<li>
-					<button
-						class="w-full rounded-lg px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-						onclick={startChat}
-						type="button"
-					>
-						Start a chat in this project
-					</button>
-				</li>
-			{/each}
+	<Collapsible.Root {open}
+		><Collapsible.Content>
+			<!-- the chats hang off the project's icon on a thin guide line -->
+			<ul class="ml-[15px] flex min-w-0 flex-col border-l border-foreground/10 pl-1.5 md:gap-0.5">
+				{#each shownConversations as conversation (conversation.id)}
+					<li transition:slide={{ duration: SIDEBAR_ROW_SLIDE_MS }} class="group/item relative p-0">
+						{@render conversationRow(conversation)}
+					</li>
+				{:else}
+					<li>
+						<button
+							class="w-full rounded-lg px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+							onclick={startChat}
+							type="button"
+						>
+							Start a chat in this project
+						</button>
+					</li>
+				{/each}
 
-			{#if conversations.length > SIDEBAR_SECTION_PREVIEW_COUNT}
-				<li class={expanded ? SIDEBAR_SHOW_MORE_ROW_CLASS : 'p-0'}>
-					<SidebarNavigationShowMore
-						{expanded}
-						onToggle={() => uiStore.toggleSidebarSectionExpanded(foldId)}
-					/>
-				</li>
-			{/if}
-		</ul>
-	</CollapsibleRegion>
+				{#if conversations.length > SIDEBAR_SECTION_PREVIEW_COUNT}
+					<li class={expanded ? SIDEBAR_SHOW_MORE_ROW_CLASS : 'p-0'}>
+						<SidebarNavigationShowMore
+							{expanded}
+							onToggle={() => uiStore.toggleSidebarSectionExpanded(foldId)}
+						/>
+					</li>
+				{/if}
+			</ul>
+		</Collapsible.Content></Collapsible.Root
+	>
 </SidebarNavigationDropZone>
 
 {#snippet groupSubmenu({ close, kind }: { close: () => void; kind: MenuKind })}

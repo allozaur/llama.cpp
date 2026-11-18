@@ -100,9 +100,7 @@
 		conversation: DatabaseConversation,
 		snippet?: ConversationSearchSnippet
 	): SearchEntry {
-		const project = conversation.projectId
-			? projectsStore.get(conversation.projectId)
-			: undefined;
+		const project = conversation.projectId ? projectsStore.get(conversation.projectId) : undefined;
 		const time = formatRelativeTime(conversation.lastModified);
 
 		return {
