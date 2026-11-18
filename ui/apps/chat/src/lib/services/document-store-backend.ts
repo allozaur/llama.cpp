@@ -221,9 +221,9 @@ export class DocumentStoreBackend implements StorageBackend {
 		}
 	}
 
-	async transaction<T>(fn: () => Promise<T>): Promise<T> {
+	async transaction<T>(fn: (tx: StorageBackend) => Promise<T>): Promise<T> {
 		// a call made while a transaction runs joins it
-		if (this.pending) return await fn();
+		if (this.pending) return await fn(this);
 
 		const run = async (): Promise<T> => {
 			const batch: Batch = { before: new Map(), ops: new Map(), records: new Map() };
@@ -233,7 +233,7 @@ export class DocumentStoreBackend implements StorageBackend {
 			this.pending = batch;
 
 			try {
-				result = await fn();
+				result = await fn(this);
 			} catch (error) {
 				this.rollback(batch);
 

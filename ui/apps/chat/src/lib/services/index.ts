@@ -71,7 +71,7 @@ export { ChatService } from './chat.service';
  * **DatabaseService** - persistence layer for conversations and messages
  *
  * Provides stateless data access for conversations and messages on top of a
- * row-level `StorageBackend` (IndexedDB via Dexie by default, see idb-backend.ts).
+ * row-level `StorageBackend` (IndexedDB via idb by default, see idb-backend.ts).
  * Handles branching tree structures, cascade deletions, and transaction safety
  * for multi-table operations; the pure tree rules live in utils/conversation-tree.
  *

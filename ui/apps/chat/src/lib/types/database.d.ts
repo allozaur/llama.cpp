@@ -199,8 +199,11 @@ export interface MessageTimeRange {
  * and write rows; tree rules live in DatabaseService and utils/conversation-tree.
  */
 export interface StorageBackend {
-	/** Runs `fn` atomically; backend calls made inside it join the same transaction. */
-	transaction<T>(fn: () => Promise<T>): Promise<T>;
+	/**
+	 * Runs `fn` atomically. Calls made on the `tx` it is handed join the
+	 * transaction; `fn` must not await anything but those calls.
+	 */
+	transaction<T>(fn: (tx: StorageBackend) => Promise<T>): Promise<T>;
 
 	/**
 	 * Calls `visit` with each message of `convIds` (every conversation when null), in one
