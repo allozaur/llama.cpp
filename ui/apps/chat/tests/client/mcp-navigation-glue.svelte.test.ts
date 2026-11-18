@@ -13,7 +13,7 @@ import { RouterService } from '#lib/services/router.service.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { sidebarFooterItems } from '#lib/utils/index.ts';
 import { flushSync } from 'svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 function makeContext() {
 	const cleanups: (() => void | Promise<void>)[] = [];
@@ -32,6 +32,9 @@ function setServers(servers: { enabled: boolean; id: string; url: string }[]) {
 }
 
 describe('MCP navigation glue', () => {
+	// MCP waits behind its setting: show it, so its entry is there to find
+	beforeEach(() => settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MCP, true));
+
 	it('contributes the MCP entry, which the sidebar places right after Models', () => {
 		const { contributions, ctx } = makeContext();
 
@@ -56,6 +59,21 @@ describe('MCP navigation glue', () => {
 			'MCP',
 			...SIDEBAR_FOOTER_ITEMS.slice(1).map((entry) => entry.tooltip)
 		]);
+	});
+
+	it('leaves the MCP entry out of the sidebar while MCP is hidden', () => {
+		const { contributions, ctx } = makeContext();
+
+		contributeNavigation(ctx);
+
+		const item = contributions[0].value as NavigationItem;
+
+		settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MCP, false);
+
+		expect(item.shown?.()).toBe(false);
+		expect(sidebarFooterItems([item]).map((entry) => entry.tooltip)).toEqual(
+			SIDEBAR_FOOTER_ITEMS.map((entry) => entry.tooltip)
+		);
 	});
 
 	it('contributes the MCP servers page at the route its entry opens', () => {

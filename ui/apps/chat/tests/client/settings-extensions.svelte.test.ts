@@ -81,6 +81,9 @@ describe('Extensions settings', () => {
 		await page.viewport(1280, 900);
 		wasExpanded = uiStore.isSidebarExpanded;
 		uiStore.isSidebarExpanded = true;
+		// Models and MCP wait behind their settings: show them, so their entries are there to find
+		settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MODELS_MANAGER, true);
+		settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MCP, true);
 
 		settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, '[]');
 
