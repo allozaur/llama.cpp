@@ -5,7 +5,8 @@
 import SettingsChatToolsTab from '#lib/components/app/settings/SettingsChat/SettingsChatToolsTab.svelte';
 import {
 	DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
-	EXTENSIONS_LOCALSTORAGE_KEY
+	EXTENSIONS_LOCALSTORAGE_KEY,
+	SETTINGS_KEYS
 } from '#lib/constants/index.ts';
 import { ToolSource } from '#lib/enums/index.ts';
 import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
@@ -44,6 +45,8 @@ beforeAll(() => {
 });
 
 beforeEach(async () => {
+	// MCP is off until enabled: switch it on, so the panel can point at its servers
+	settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);
 	settingsStore.updateConfig('mcpServers', '[]');
 	serverId = mcpStore.addServer({
 		displayName: 'Docs',

@@ -12,6 +12,7 @@ vi.mock('#lib/extensions/mcp/components/contributions/McpToolGroupIdentity.svelt
 	default: () => {}
 }));
 
+import { SETTINGS_KEYS } from '#lib/constants/index.ts';
 import { HealthCheckStatus, ToolSource } from '#lib/enums/index.ts';
 import type { ExtensionContext, FlowHook, ToolProvider } from '#lib/extensions/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
@@ -22,6 +23,7 @@ import {
 	policyEnabledServerIds
 } from '#lib/extensions/mcp/tools.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
+import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type { HealthCheckState, MCPConnection, MCPServerSettingsEntry } from '#lib/types/index.ts';
 
@@ -57,6 +59,8 @@ function mockConnections(connections: Record<string, MCPConnection>) {
 
 beforeEach(() => {
 	vi.restoreAllMocks();
+	// MCP is off until enabled: switch it on, so the empty tools panel can point at its servers
+	settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);
 	vi.spyOn(mcpStore, 'getServers').mockReturnValue(SERVERS);
 	mockConnections({});
 });
@@ -241,7 +245,15 @@ describe('MCP tool provider', () => {
 
 		vi.mocked(mcpStore.getServers).mockReturnValue([]);
 
-		expect(provider.emptyHint?.().action).toBe('Add MCP Server(s) to access');
+		expect(provider.emptyHint?.()?.action).toBe('Add MCP Server(s) to access');
+	});
+
+	it('says nothing in the empty tools panel while MCP is off', () => {
+		const { provider } = contributed();
+
+		settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, false);
+
+		expect(provider.emptyHint?.()).toBeUndefined();
 	});
 });
 
