@@ -10,10 +10,11 @@
  * BroadcastChannel to every tab of the app.
  */
 
+import { MCPService } from '../services/mcp.service';
 import { mcpOAuthFetch } from './fetch';
 import { MCP_OAUTH_CALLBACK_PARAM, McpOAuthProvider, mcpOAuthRedirectUrl } from './provider';
 import { McpOAuthFlowMode, mcpOAuthStorage } from './storage.svelte';
-import { auth, type FetchLike, RegistrationRejectedError } from '@modelcontextprotocol/client';
+import type { FetchLike } from '@modelcontextprotocol/client';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
 const CHANNEL_NAME = 'llama-mcp-oauth';
@@ -206,6 +207,8 @@ class McpOAuthFlow {
 		this.signingIn.add(server.id);
 
 		try {
+			// the SDK loads on demand, see MCPService.loadSdk
+			const { auth } = await MCPService.loadSdk();
 			const outcome = await auth(provider, {
 				fetchFn: mcpOAuthFetch(useProxy),
 				serverUrl: server.url
@@ -219,9 +222,11 @@ class McpOAuthFlow {
 		} catch (error) {
 			popup?.close();
 
+			const sdk = await MCPService.loadSdk().catch(() => null);
+
 			// no registration endpoint, or one that turned the app down: the user's own app it is
 			if (
-				error instanceof RegistrationRejectedError ||
+				(sdk && error instanceof sdk.RegistrationRejectedError) ||
 				/dynamic client registration/i.test(errorMessage(error))
 			) {
 				this.manualClientRequired.add(server.id);
@@ -323,6 +328,8 @@ class McpOAuthFlow {
 		});
 
 		try {
+			const { auth } = await MCPService.loadSdk();
+
 			await auth(provider, {
 				authorizationCode: code,
 				fetchFn: mcpOAuthFetch(useProxy),

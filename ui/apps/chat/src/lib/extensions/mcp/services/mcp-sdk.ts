@@ -9,7 +9,9 @@
  */
 
 export {
+	auth,
 	Client,
+	RegistrationRejectedError,
 	SdkError,
 	SdkErrorCode,
 	SdkHttpError,
