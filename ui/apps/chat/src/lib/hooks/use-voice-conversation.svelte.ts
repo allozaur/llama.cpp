@@ -29,8 +29,9 @@ import {
 	serverStore,
 	settingsStore
 } from '#lib/stores/index.ts';
+import { apiUrl } from '#lib/utils/api-base.ts';
 import { getAuthHeaders } from '#lib/utils/api-headers.ts';
-import { withBase } from '#lib/utils/base-path.ts';
+import { getServer, isRemoteServer } from '#lib/utils/index.ts';
 import { resolveVoiceMode } from '#lib/utils/voice-mode.ts';
 import { onDestroy, untrack } from 'svelte';
 
@@ -72,11 +73,8 @@ function serverContext(): { context: VoiceServerContext; realtime: boolean } {
 	const hasAuth = Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
 
 	return {
-		context: {
-			getHeaders: () => getAuthHeaders(),
-			resolveUrl: (path) => withBase(path.replace(/^\./, ''))
-		},
-		realtime: !hasAuth
+		context: { getHeaders: () => getAuthHeaders(), resolveUrl: (path) => apiUrl(path) },
+		realtime: !isRemoteServer(getServer()) && !hasAuth
 	};
 }
 
@@ -97,7 +95,7 @@ export function useVoiceConversation() {
 		void modelsStore.props.cacheVersion;
 
 		const loadedAudioModel = isRouter
-			? (modelsStore.models.find(
+			? (modelsStore.activeModels.find(
 					(option) => hasAudio(option.model) && modelsStore.isModelLoaded(option.model)
 				)?.model ?? null)
 			: null;
@@ -114,7 +112,7 @@ export function useVoiceConversation() {
 	});
 	// the chat model reads its own replies when it can speak, else another model that can
 	const speechModel = $derived.by(() => {
-		const options = modelsStore.models;
+		const options = modelsStore.activeModels;
 		const chat = options.find((option) => option.model === chatModel);
 
 		if (chat?.speaks) return chat.model;
