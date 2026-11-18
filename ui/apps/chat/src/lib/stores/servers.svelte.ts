@@ -15,6 +15,7 @@ import {
 	LOCAL_BACKEND_ID,
 	PRESET_SERVERS_FILE,
 	PRESET_SERVERS_LOCALSTORAGE_KEY,
+	PRESET_SERVERS_META,
 	SETTINGS_KEYS
 } from '#lib/constants/index.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
@@ -108,14 +109,15 @@ class ServersStore {
 
 	/**
 	 * Add the servers the page was published with, listed in `llama-chat.json`
-	 * next to index.html, each once: one the user removed stays removed. Pages
-	 * without the file, such as the one llama-server serves, add nothing. With
+	 * next to index.html, each once: one the user removed stays removed. Only a
+	 * page whose index.html carries the marker for the file asks for it, so one
+	 * served by llama-server or the dev server adds nothing. With
 	 * no local server to fall back on, the app picks the first enabled one.
 	 *
 	 * @returns the ids of the servers it added
 	 */
 	async addPresetServers(): Promise<string[]> {
-		if (!browser) return [];
+		if (!browser || !document.querySelector(`meta[name="${PRESET_SERVERS_META}"]`)) return [];
 
 		let raw: unknown;
 

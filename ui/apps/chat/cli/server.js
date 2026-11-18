@@ -8,12 +8,13 @@
  * pointed at directly, so llama-server's own rules (--cors-origins, --api-key) apply as they do
  * to any other page. `--server` only tells the app which servers to add: the CLI serves them in
  * `llama-chat.json` next to index.html, and `build` writes that file, which the app reads at
- * startup.
+ * startup. index.html carries a marker for it, so a page served any other way, such as by
+ * llama-server or the dev server, does not ask for a file that is not there.
  */
 
 import { spawn } from 'node:child_process';
 import { createReadStream, readFileSync } from 'node:fs';
-import { cp, readdir, stat, writeFile } from 'node:fs/promises';
+import { cp, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import { extname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +33,12 @@ export const DEFAULTS = Object.freeze({
 
 /** The file next to index.html that lists the servers the app adds at startup. */
 export const PRESET_FILE = 'llama-chat.json';
+
+/**
+ * The marker in index.html that sends the app to `llama-chat.json`. It names the file rather
+ * than the servers: the service worker keeps index.html, so servers in it would outlive a run.
+ */
+export const PRESET_META = `<meta name="llama-chat-servers" content="${PRESET_FILE}" />`;
 
 // The same caching llama-server applies to the UI it embeds (tools/server/server-http.cpp):
 // index.html and the PWA's update checks are revalidated, hashed assets are cached for good.
@@ -187,6 +194,16 @@ export function parseServerUrl(value) {
 }
 
 /**
+ * index.html with the marker for `llama-chat.json` at the end of its head, once.
+ * @param {string} html
+ */
+export function withPresetMeta(html) {
+	if (html.includes('name="llama-chat-servers"')) return html;
+
+	return html.replace('</head>', `\t${PRESET_META}\n\t</head>`);
+}
+
+/**
  * The contents of `llama-chat.json`.
  * @param {string[]} servers
  */
@@ -225,7 +242,10 @@ function resolveStatic(root, pathname) {
  */
 function sendFile(req, res, file, pathname, stats) {
 	const name = pathname === '/' ? '/index.html' : pathname;
-	const etag = `W/"${stats.size.toString(16)}-${Math.floor(stats.mtimeMs).toString(16)}"`;
+	// index.html goes out with the marker for llama-chat.json, and an ETag of its own
+	const body =
+		name === '/index.html' ? Buffer.from(withPresetMeta(readFileSync(file, 'utf8'))) : null;
+	const etag = `W/"${(body?.length ?? stats.size).toString(16)}-${Math.floor(stats.mtimeMs).toString(16)}"`;
 
 	res.setHeader('ETag', etag);
 	res.setHeader('Cache-Control', NO_CACHE.has(name) ? CACHE_REVALIDATE : CACHE_IMMUTABLE);
@@ -245,11 +265,17 @@ function sendFile(req, res, file, pathname, stats) {
 		'Content-Type',
 		MIME_TYPES[extname(file).toLowerCase()] ?? 'application/octet-stream'
 	);
-	res.setHeader('Content-Length', stats.size);
+	res.setHeader('Content-Length', body?.length ?? stats.size);
 	res.writeHead(200);
 
 	if (req.method === 'HEAD') {
 		res.end();
+
+		return;
+	}
+
+	if (body) {
+		res.end(body);
 
 		return;
 	}
@@ -268,12 +294,13 @@ function sendError(res, status, message) {
 }
 
 /**
- * The HTTP server: the files of `dist`, read-only, and `llama-chat.json` when servers are given.
+ * The HTTP server: the files of `dist`, read-only, and `llama-chat.json` with the servers given,
+ * if any: index.html always points the app at it.
  * @param {{ distDir?: string, servers?: string[] }} [options]
  */
 export function createChatServer({ distDir = DIST_DIR, servers = [] } = {}) {
 	const root = normalize(distDir);
-	const preset = servers.length > 0 ? Buffer.from(presetFile(servers)) : null;
+	const preset = Buffer.from(presetFile(servers));
 
 	return http.createServer(async (req, res) => {
 		const { pathname } = new URL(req.url ?? '/', 'http://localhost');
@@ -285,7 +312,7 @@ export function createChatServer({ distDir = DIST_DIR, servers = [] } = {}) {
 			return;
 		}
 
-		if (preset && pathname === `/${PRESET_FILE}`) {
+		if (pathname === `/${PRESET_FILE}`) {
 			res.writeHead(200, {
 				'Cache-Control': CACHE_REVALIDATE,
 				'Content-Length': preset.length,
@@ -311,7 +338,7 @@ export function createChatServer({ distDir = DIST_DIR, servers = [] } = {}) {
 
 /**
  * Writes the app to a folder: the files of `dist` without source maps, ready for any static
- * file server, and `llama-chat.json` when servers are given. Refuses a folder that is not empty
+ * file server, and `llama-chat.json` when servers are given, with the marker in index.html. Refuses a folder that is not empty
  * unless `force` is set, and a folder in `dist`.
  * @param {{ distDir?: string, force?: boolean, out: string, servers?: string[] }} options
  * @returns {Promise<string>} the absolute path of the folder
@@ -333,7 +360,12 @@ export async function buildStatic({ distDir = DIST_DIR, force = false, out, serv
 
 	await cp(source, target, { filter: (file) => !file.endsWith('.map'), recursive: true });
 
-	if (servers.length > 0) await writeFile(join(target, PRESET_FILE), presetFile(servers));
+	if (servers.length > 0) {
+		const index = join(target, 'index.html');
+
+		await writeFile(join(target, PRESET_FILE), presetFile(servers));
+		await writeFile(index, withPresetMeta(await readFile(index, 'utf8')));
+	}
 
 	return target;
 }
