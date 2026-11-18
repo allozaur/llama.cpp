@@ -3,7 +3,7 @@ import { CORS_PROXY } from '#lib/constants/index.ts';
 import { MCPConnectionPhase, MCPTransportType } from '#lib/enums/index.ts';
 import { MCPService } from '#lib/extensions/mcp/services/mcp.service.ts';
 import type { MCPConnection, MCPConnectionLog, MCPServerConfig } from '#lib/types/index.ts';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 type DiagnosticFetchFactory = (
 	serverName: string,
@@ -25,6 +25,9 @@ const createDiagnosticFetch = (
 	).createDiagnosticFetch('test-server', config, baseInit, new URL(config.url), useProxy, onLog);
 
 describe('MCPService', () => {
+	// connect() loads the SDK on demand; tests that skip connect() need it loaded too
+	beforeAll(() => MCPService.loadSdk());
+
 	afterEach(() => {
 		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
