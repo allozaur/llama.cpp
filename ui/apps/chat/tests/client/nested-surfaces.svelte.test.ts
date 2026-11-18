@@ -12,6 +12,7 @@ import {
 	SIDEBAR_FOOTER_ITEMS
 } from '#lib/constants/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
+import { RouterService } from '#lib/services/router.service.ts';
 import { settingsStore } from '#lib/stores/index.ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
@@ -28,7 +29,7 @@ extensions.register({
 					icon: Puzzle,
 					id: 'fixture',
 					placement: 'footer',
-					route: '#/fixture',
+					route: RouterService.extensionPage('fixture'),
 					tooltip: 'Fixture'
 				});
 			}

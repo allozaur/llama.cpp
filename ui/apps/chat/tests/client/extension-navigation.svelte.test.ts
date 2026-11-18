@@ -3,8 +3,8 @@
 // sits right after Models, opens its dialog on a desktop and its page
 // on a phone, is lit on its page, and is gone, with everything still working,
 // once its extension is off.
-
 import '../../src/app.css';
+import { RouterService } from '#lib/services/router.service.ts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const pageState = vi.hoisted(() => ({
@@ -32,7 +32,7 @@ import { Puzzle } from '@lucide/svelte';
 import SidebarNavigationFooter from '#lib/components/app/navigation/SidebarNavigation/SidebarNavigationFooter.svelte';
 import {
 	APP_NAME,
-	EXTENSION_PAGE_ROUTE_ID,
+	ROUTES,
 	SETTINGS_KEYS,
 	SIDEBAR_ACTIONS_ITEMS,
 	SIDEBAR_FOOTER_ITEMS
@@ -48,7 +48,7 @@ import { render } from 'vitest-browser-svelte';
 const ACTIONS = SIDEBAR_ACTIONS_ITEMS.map((item) => item.tooltip);
 const FOOTER = SIDEBAR_FOOTER_ITEMS.map((item) => item.tooltip);
 const FIXTURE_ID = 'navigation-fixture';
-const FIXTURE_ROUTE = '#/fixture-page';
+const FIXTURE_ROUTE = RouterService.extensionPage('fixture-page');
 const gotoMock = vi.mocked(goto);
 const refreshAllMock = vi.mocked(refreshAll);
 
@@ -140,7 +140,7 @@ describe('navigation and pages extension points', () => {
 
 	it('lights a contributed item only while its page is the one shown', async () => {
 		await extensions.setEnabled(FIXTURE_ID, true);
-		showRoute(EXTENSION_PAGE_ROUTE_ID, { extensionPage: 'fixture-page' });
+		showRoute(ROUTES.EXTENSION_PAGE, { extensionPage: 'fixture-page' });
 
 		const onPage = render(SidebarNavigationFooter, {});
 
@@ -151,7 +151,7 @@ describe('navigation and pages extension points', () => {
 		onPage.unmount();
 
 		// another extension page, such as a path nothing is contributed for
-		showRoute(EXTENSION_PAGE_ROUTE_ID, { extensionPage: 'other-page' });
+		showRoute(ROUTES.EXTENSION_PAGE, { extensionPage: 'other-page' });
 
 		const elsewhere = render(SidebarNavigationFooter, {});
 
@@ -218,7 +218,7 @@ describe('navigation and pages extension points', () => {
 
 	it('renders the page contributed for the path, under its title', async () => {
 		await extensions.setEnabled(FIXTURE_ID, true);
-		showRoute(EXTENSION_PAGE_ROUTE_ID, { extensionPage: 'fixture-page' });
+		showRoute(ROUTES.EXTENSION_PAGE, { extensionPage: 'fixture-page' });
 
 		const screen = render(ExtensionPage);
 

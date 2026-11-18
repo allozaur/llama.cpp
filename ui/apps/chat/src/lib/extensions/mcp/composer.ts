@@ -7,7 +7,7 @@ import type { ExtensionContext } from '../types';
 import ComposerMcpPrompts from './components/contributions/ComposerMcpPrompts.svelte';
 import ComposerMcpResources from './components/contributions/ComposerMcpResources.svelte';
 import { mcpStore } from './stores/index.svelte';
-import { Sparkles } from '@lucide/svelte';
+import Sparkles from '@lucide/svelte/icons/sparkles';
 import { ToolSource } from '#lib/enums/index.ts';
 import { conversationsStore } from '#lib/stores/index.ts';
 
