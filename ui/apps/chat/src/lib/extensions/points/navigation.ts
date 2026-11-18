@@ -1,3 +1,4 @@
+import type { ResolvedPathname } from '$app/types';
 import type { Component } from 'svelte';
 
 /** Where a contributed item sits: `footer` is the sidebar's footer, right after Models. */
@@ -16,8 +17,11 @@ export interface NavigationItem {
 	/** Key combination shown beside the label. A hint only: the sidebar does not bind it. */
 	keys?: string[];
 	placement: NavigationPlacement;
-	/** Hash route of the extension's page the item opens, e.g. `#/mcp-servers`. The item is lit while that page shows. */
-	route: string;
+	/**
+	 * URL of the extension's page the item opens, from RouterService.extensionPage(). The item is lit
+	 * while that page shows.
+	 */
+	route: ResolvedPathname;
 	/** Whether the item shows right now, read reactively; it always shows without this. */
 	shown?(): boolean;
 	/** The item's label, also what the search dialog lists it under. */
