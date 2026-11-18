@@ -6,12 +6,15 @@
  * WebRTC tunnel by the access code its `llama-server --connect` prints. The
  * store registers the resolved list with the api-base registry, which services
  * use to build request URLs, and tells the remote access store when a tunnel is
- * no longer wanted.
+ * no longer wanted. A page published with servers (`llama-chat --server`)
+ * lists them in `llama-chat.json`, and the store adds each of them once.
  */
 
 import {
 	ACTIVE_SERVER_LOCALSTORAGE_KEY,
 	LOCAL_BACKEND_ID,
+	PRESET_SERVERS_FILE,
+	PRESET_SERVERS_LOCALSTORAGE_KEY,
 	SETTINGS_KEYS
 } from '#lib/constants/index.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
@@ -22,8 +25,11 @@ import { setServersResolver } from '#lib/utils/api-base.ts';
 import {
 	createLocalServer,
 	createRemoteServer,
+	createUrlServer,
 	isRemoteServer,
-	parseServersSettings
+	parsePresetServers,
+	parseServersSettings,
+	presetServersToAdd
 } from '#lib/utils/servers.ts';
 import { uuid } from '#lib/utils/uuid.ts';
 import { browser } from '$app/env';
@@ -43,6 +49,24 @@ function persistActiveServerId(serverId: string): void {
 
 	try {
 		localStorage.setItem(ACTIVE_SERVER_LOCALSTORAGE_KEY, serverId);
+	} catch {
+		/* ignore */
+	}
+}
+
+function loadSeenPresets(): string[] {
+	try {
+		const seen: unknown = JSON.parse(localStorage.getItem(PRESET_SERVERS_LOCALSTORAGE_KEY) ?? '[]');
+
+		return Array.isArray(seen) ? seen.filter((url) => typeof url === 'string') : [];
+	} catch {
+		return [];
+	}
+}
+
+function persistSeenPresets(urls: string[]): void {
+	try {
+		localStorage.setItem(PRESET_SERVERS_LOCALSTORAGE_KEY, JSON.stringify(urls));
 	} catch {
 		/* ignore */
 	}
@@ -80,6 +104,46 @@ class ServersStore {
 	/** Servers a tunnel can be opened to, enabled or not. */
 	get remote(): Server[] {
 		return this.external.filter(isRemoteServer);
+	}
+
+	/**
+	 * Add the servers the page was published with, listed in `llama-chat.json`
+	 * next to index.html, each once: one the user removed stays removed. Pages
+	 * without the file, such as the one llama-server serves, add nothing. With
+	 * no local server to fall back on, the app picks the first enabled one.
+	 *
+	 * @returns the ids of the servers it added
+	 */
+	async addPresetServers(): Promise<string[]> {
+		if (!browser) return [];
+
+		let raw: unknown;
+
+		try {
+			const response = await fetch(`./${PRESET_SERVERS_FILE}`, { cache: 'no-cache' });
+
+			if (!response.ok) return [];
+
+			raw = await response.json();
+		} catch {
+			// not there, or not JSON: an SPA fallback that answers with index.html
+			return [];
+		}
+
+		const urls = parsePresetServers(raw);
+
+		if (urls.length === 0) return [];
+
+		const seen = loadSeenPresets();
+		const added = presetServersToAdd(urls, this.external, seen).map((url) =>
+			createUrlServer(url, uuid())
+		);
+
+		if (added.length > 0) this.saveExternal([...this.external, ...added]);
+
+		persistSeenPresets([...new Set([...seen, ...urls])]);
+
+		return added.map((server) => server.id);
 	}
 
 	/**

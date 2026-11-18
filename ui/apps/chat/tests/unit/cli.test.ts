@@ -1,4 +1,11 @@
-import { buildStatic, createChatServer, DEFAULTS, parseCliArgs } from '../../cli/server.js';
+import {
+	buildStatic,
+	createChatServer,
+	DEFAULTS,
+	parseCliArgs,
+	parseServerUrl,
+	PRESET_FILE
+} from '../../cli/server.js';
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -25,6 +32,7 @@ describe('llama-chat CLI arguments', () => {
 		expect(options.host).toBe(DEFAULTS.host);
 		expect(options.port).toBe(DEFAULTS.port);
 		expect(options.open).toBe(true);
+		expect(options.servers).toEqual([]);
 	});
 
 	it('reads the documented flags', () => {
@@ -42,8 +50,23 @@ describe('llama-chat CLI arguments', () => {
 		expect(() => parseCliArgs(['--nope'])).toThrow();
 		expect(() => parseCliArgs(['--port', 'abc'])).toThrow(/invalid --port/);
 		expect(() => parseCliArgs(['--port', '70000'])).toThrow(/invalid --port/);
-		// it forwards nothing, so there is no llama-server to name
-		expect(() => parseCliArgs(['--server', 'http://127.0.0.1:9931'])).toThrow();
+	});
+
+	it('takes --server more than once, for serving and for build alike', () => {
+		expect(
+			parseCliArgs(['--server', 'localhost:9931', '--server', 'https://llm.example.com/api/'])
+				.servers
+		).toEqual(['http://localhost:9931', 'https://llm.example.com/api']);
+		expect(parseCliArgs(['build', '--server', '127.0.0.1:9931']).servers).toEqual([
+			'http://127.0.0.1:9931'
+		]);
+	});
+
+	it('refuses a server address the app could not use', () => {
+		expect(() => parseServerUrl('ftp://localhost')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://localhost:9931/?key=1')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://user:pass@localhost:9931')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://')).toThrow(/invalid --server/);
 	});
 
 	it('reads build with its own flags, and keeps serving flags out of it', () => {
@@ -103,6 +126,18 @@ describe('llama-chat build', () => {
 			join('_app', 'app.js'),
 			'index.html'
 		]);
+	});
+
+	it('writes the servers to llama-chat.json when given', async () => {
+		const out = await buildStatic({
+			distDir: dist,
+			out: join(work, 'with-servers'),
+			servers: ['http://127.0.0.1:9931']
+		});
+
+		expect(JSON.parse(await readFile(join(out, PRESET_FILE), 'utf8'))).toEqual({
+			servers: [{ url: 'http://127.0.0.1:9931' }]
+		});
 	});
 
 	it('refuses a folder that is not empty unless forced', async () => {
@@ -179,6 +214,28 @@ describe('llama-chat server', () => {
 		const worker = await fetch(`${chatUrl}/service-worker.js`);
 
 		expect(worker.headers.get('cache-control')).toBe('no-cache');
+	});
+
+	it('serves llama-chat.json only when given servers, revalidated', async () => {
+		expect((await fetch(`${chatUrl}/${PRESET_FILE}`)).status).toBe(404);
+
+		const withServers = createChatServer({
+			distDir: dist,
+			servers: ['http://127.0.0.1:9931', 'https://llm.example.com']
+		});
+		const url = await listen(withServers);
+
+		try {
+			const res = await fetch(`${url}/${PRESET_FILE}`);
+
+			expect(res.status).toBe(200);
+			expect(res.headers.get('cache-control')).toBe('no-cache');
+			expect(await res.json()).toEqual({
+				servers: [{ url: 'http://127.0.0.1:9931' }, { url: 'https://llm.example.com' }]
+			});
+		} finally {
+			await close(withServers);
+		}
 	});
 
 	it('forwards nothing: API paths are not found and other methods are refused', async () => {

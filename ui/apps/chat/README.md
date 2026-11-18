@@ -19,21 +19,22 @@ It works with a llama-server in either mode: **MODEL** (one model) or **ROUTER**
 Llama Chat is published to npm as [`@ggml-org/llama-chat`](https://www.npmjs.com/package/@ggml-org/llama-chat), with [`llama-chat`](https://www.npmjs.com/package/llama-chat) as its short name. It serves the prebuilt app as static files on localhost, or writes them to a folder for any static file server (see [Self-hosting](#self-hosting)); it brings no server and no models of its own. It needs Node.js 20 or later.
 
 ```bash
-npx @ggml-org/llama-chat                 # serve it on http://127.0.0.1:3000 and open the browser
-npx llama-chat --host 0.0.0.0 --no-open  # the same, by its short name, reachable from other devices
-npx llama-chat build                     # write the static app to ./llama-chat instead
+npx @ggml-org/llama-chat --server http://127.0.0.1:9931  # serve it on http://127.0.0.1:3000 with that server added
+npx llama-chat --host 0.0.0.0 --no-open                  # the same, by its short name, reachable from other devices
+npx llama-chat build --server https://llm.example.com    # write the static app to ./llama-chat instead
 ```
 
 | Flag                              | Default     | What it does                                                                                |
 | --------------------------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| `--server <url>`                  |             | A llama-server the app adds on startup, once; repeatable. Its API key goes in the app       |
 | `--port <n>`                      | `3000`      | Fixed, so the origin, and the chats the browser stores under it, stay the same between runs |
 | `--host <addr>`                   | `127.0.0.1` | `0.0.0.0` to open it to the LAN                                                             |
 | `--open` / `--no-open`            | open        | Opens the default browser once it listens                                                   |
 | `-v`, `--version`, `-h`, `--help` |             | As usual                                                                                    |
 
-The bare command is the documented form; `start` is accepted as an alias for it. `build` takes `--out <dir>` (default `./llama-chat`) and `--force`, which lets it write into a folder that is not empty.
+The bare command is the documented form; `start` is accepted as an alias for it. `build` takes `--out <dir>` (default `./llama-chat`), `--force`, which lets it write into a folder that is not empty, and `--server`.
 
-How it works: the CLI only serves the files of `dist`, with llama-server's headers for the UI (`index.html` cross-origin isolated, the PWA files revalidated, hashed assets cached for good), and forwards nothing. The browser talks to each llama-server you add in the app by URL directly, so llama-server's own rules apply: start it with `--cors-origins http://127.0.0.1:3000` (the address you open) when it restricts origins, as it does with tools or MCP enabled, and with `--api-key` when it is reachable from the LAN. An `http://` page like this one can reach a plain `http://` llama-server on the LAN, which an `https://` page cannot.
+How it works: the CLI only serves the files of `dist`, with llama-server's headers for the UI (`index.html` cross-origin isolated, the PWA files revalidated, hashed assets cached for good), and forwards nothing. `--server` only puts the address in `llama-chat.json` next to `index.html`, which the app reads at startup to add the server; one you remove in the app stays removed. The browser talks to each llama-server directly, so llama-server's own rules apply: start it with `--cors-origins http://127.0.0.1:3000` (the address you open) when it restricts origins, as it does with tools or MCP enabled, and with `--api-key` when it is reachable from the LAN. An `http://` page like this one can reach a plain `http://` llama-server on the LAN, which an `https://` page cannot.
 
 ## Self-hosting
 

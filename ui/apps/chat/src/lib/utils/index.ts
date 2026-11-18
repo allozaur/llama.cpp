@@ -41,8 +41,10 @@ export {
 	isReachableServer,
 	isRemoteServer,
 	normalizeShareCode,
+	parsePresetServers,
 	parseServersSettings,
 	parseTunnelOrigin,
+	presetServersToAdd,
 	readModelContextLength,
 	tunnelHostLabel,
 	tunnelOrigin
