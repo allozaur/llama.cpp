@@ -1,4 +1,6 @@
-import { AudioLines, Film, Image } from '@lucide/svelte';
+import AudioLines from '@lucide/svelte/icons/audio-lines';
+import Film from '@lucide/svelte/icons/film';
+import Image from '@lucide/svelte/icons/image';
 import { LibraryItemKind, LibraryTab } from '#lib/enums/index.ts';
 import type { Component } from 'svelte';
 
