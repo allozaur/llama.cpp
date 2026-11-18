@@ -4,7 +4,9 @@ import {
 	DEFAULTS,
 	parseCliArgs,
 	parseServerUrl,
-	PRESET_FILE
+	PRESET_FILE,
+	PRESET_META,
+	withPresetMeta
 } from '../../cli/server.js';
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import http from 'node:http';
@@ -20,6 +22,9 @@ function listen(server: http.Server): Promise<string> {
 		});
 	});
 }
+
+/** A built index.html in short: the CLI adds its marker for llama-chat.json before `</head>`. */
+const INDEX = '<!doctype html><html><head><title>Llama Chat</title></head><body></body></html>';
 
 function close(server: http.Server): Promise<void> {
 	return new Promise((resolve) => server.close(() => resolve()));
@@ -60,6 +65,13 @@ describe('llama-chat CLI arguments', () => {
 		expect(parseCliArgs(['build', '--server', '127.0.0.1:9931']).servers).toEqual([
 			'http://127.0.0.1:9931'
 		]);
+	});
+
+	it('puts the marker for llama-chat.json in the head of index.html once', () => {
+		const once = withPresetMeta(INDEX);
+
+		expect(once).toContain(`${PRESET_META}\n\t</head>`);
+		expect(withPresetMeta(once)).toBe(once);
 	});
 
 	it('refuses a server address the app could not use', () => {
@@ -108,7 +120,7 @@ describe('llama-chat build', () => {
 		dist = await mkdtemp(join(tmpdir(), 'llama-chat-dist-'));
 		work = await mkdtemp(join(tmpdir(), 'llama-chat-out-'));
 		await mkdir(join(dist, '_app'), { recursive: true });
-		await writeFile(join(dist, 'index.html'), '<!doctype html>');
+		await writeFile(join(dist, 'index.html'), INDEX);
 		await writeFile(join(dist, '_app', 'app.js'), 'export {};');
 		await writeFile(join(dist, '_app', 'app.js.map'), '{}');
 	});
@@ -126,6 +138,8 @@ describe('llama-chat build', () => {
 			join('_app', 'app.js'),
 			'index.html'
 		]);
+		// without servers there is no llama-chat.json, so nothing points the app at one
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe(INDEX);
 	});
 
 	it('writes the servers to llama-chat.json when given', async () => {
@@ -138,6 +152,9 @@ describe('llama-chat build', () => {
 		expect(JSON.parse(await readFile(join(out, PRESET_FILE), 'utf8'))).toEqual({
 			servers: [{ url: 'http://127.0.0.1:9931' }]
 		});
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toContain(PRESET_META);
+		// the copy in dist keeps no marker
+		expect(await readFile(join(dist, 'index.html'), 'utf8')).toBe(INDEX);
 	});
 
 	it('refuses a folder that is not empty unless forced', async () => {
@@ -149,7 +166,7 @@ describe('llama-chat build', () => {
 		await expect(buildStatic({ distDir: dist, out })).rejects.toThrow(/not empty/);
 		await buildStatic({ distDir: dist, force: true, out });
 		expect(await readFile(join(out, 'keep.txt'), 'utf8')).toBe('mine');
-		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe('<!doctype html>');
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe(INDEX);
 	});
 
 	it('refuses to write into the app files themselves', async () => {
@@ -170,7 +187,7 @@ describe('llama-chat server', () => {
 	beforeAll(async () => {
 		dist = await mkdtemp(join(tmpdir(), 'llama-chat-dist-'));
 		await mkdir(join(dist, '_app', 'immutable'), { recursive: true });
-		await writeFile(join(dist, 'index.html'), '<!doctype html><title>Llama Chat</title>');
+		await writeFile(join(dist, 'index.html'), INDEX);
 		await writeFile(join(dist, 'sw.js'), 'self;');
 		await writeFile(join(dist, 'service-worker.js'), 'self;');
 		await writeFile(join(dist, '_app', 'immutable', 'app.abc123.js'), 'export {};');
@@ -192,7 +209,7 @@ describe('llama-chat server', () => {
 		expect(res.headers.get('cache-control')).toBe('no-cache');
 		expect(res.headers.get('cross-origin-embedder-policy')).toBe('require-corp');
 		expect(res.headers.get('cross-origin-opener-policy')).toBe('same-origin');
-		expect(await res.text()).toContain('Llama Chat');
+		expect(await res.text()).toContain(PRESET_META);
 
 		const again = await fetch(`${chatUrl}/`, {
 			headers: { 'If-None-Match': res.headers.get('etag') ?? '' }
@@ -216,8 +233,11 @@ describe('llama-chat server', () => {
 		expect(worker.headers.get('cache-control')).toBe('no-cache');
 	});
 
-	it('serves llama-chat.json only when given servers, revalidated', async () => {
-		expect((await fetch(`${chatUrl}/${PRESET_FILE}`)).status).toBe(404);
+	it('serves llama-chat.json, revalidated, with no servers when none are given', async () => {
+		const empty = await fetch(`${chatUrl}/${PRESET_FILE}`);
+
+		expect(empty.status).toBe(200);
+		expect(await empty.json()).toEqual({ servers: [] });
 
 		const withServers = createChatServer({
 			distDir: dist,

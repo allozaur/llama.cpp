@@ -19,3 +19,9 @@ export const FAVICON_SERVICE_URL = 'https://www.google.com/s2/favicons?domain=';
  * serves it, and `llama-chat build --server` writes it.
  */
 export const PRESET_SERVERS_FILE = 'llama-chat.json';
+
+/**
+ * Name of the meta tag in index.html that says {@link PRESET_SERVERS_FILE} is
+ * there: pages served any other way, such as by llama-server, never ask for it.
+ */
+export const PRESET_SERVERS_META = 'llama-chat-servers';
