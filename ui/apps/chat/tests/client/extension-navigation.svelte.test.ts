@@ -33,11 +33,13 @@ import SidebarNavigationFooter from '#lib/components/app/navigation/SidebarNavig
 import {
 	APP_NAME,
 	EXTENSION_PAGE_ROUTE_ID,
+	SETTINGS_KEYS,
 	SIDEBAR_ACTIONS_ITEMS,
 	SIDEBAR_FOOTER_ITEMS
 } from '#lib/constants/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
 import { uiStore } from '#lib/stores/index.ts';
+import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { goto, refreshAll } from '$app/navigation';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -105,6 +107,9 @@ describe('navigation and pages extension points', () => {
 		await page.viewport(1280, 900);
 		wasExpanded = uiStore.isSidebarExpanded;
 		uiStore.isSidebarExpanded = true;
+		// Models and MCP wait behind their settings: show them, so their entries are there to find
+		settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MODELS_MANAGER, true);
+		settingsStore.updateConfig(SETTINGS_KEYS.SHOW_MCP, true);
 		showRoute(null);
 		gotoMock.mockClear();
 		refreshAllMock.mockClear();
