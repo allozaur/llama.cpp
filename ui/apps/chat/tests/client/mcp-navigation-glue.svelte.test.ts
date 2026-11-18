@@ -3,7 +3,7 @@
 // and the background health checks, which stop when the extension goes off,
 // when the live connections close too.
 
-import { ROUTES, SETTINGS_KEYS, SIDEBAR_FOOTER_ITEMS } from '#lib/constants/index.ts';
+import { SETTINGS_KEYS, SIDEBAR_FOOTER_ITEMS } from '#lib/constants/index.ts';
 import type { ExtensionContext, ExtensionPage, NavigationItem } from '#lib/extensions/index.ts';
 import { contributeNavigation } from '#lib/extensions/mcp/navigation.ts';
 import { contributePages } from '#lib/extensions/mcp/pages.ts';
@@ -48,7 +48,7 @@ describe('MCP navigation glue', () => {
 		expect(item).toMatchObject({
 			id: 'mcp',
 			placement: 'footer',
-			route: ROUTES.MCP_SERVERS,
+			route: '#/mcp-servers',
 			tooltip: 'MCP'
 		});
 		expect(item.dialog).toBeDefined();
@@ -88,7 +88,7 @@ describe('MCP navigation glue', () => {
 
 		expect(mcpPage.title).toBe('MCP Servers');
 		expect(mcpPage.component).toBeDefined();
-		expect(RouterService.extensionPage(mcpPage.path)).toBe(ROUTES.MCP_SERVERS);
+		expect(RouterService.extensionPage(mcpPage.path)).toBe('#/mcp-servers');
 	});
 
 	it('health-checks every server with a URL, again when the list changes, until deactivated', async () => {

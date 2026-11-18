@@ -1,11 +1,14 @@
 import type { ExtensionContext } from '../types';
 import McpServersPage from './components/contributions/McpServersPage.svelte';
 
-/** The MCP servers page. Its path is what `ROUTES.MCP_SERVERS` leads to. */
+/** Path of the MCP servers page, where the sidebar's MCP entry leads on a phone. */
+export const MCP_SERVERS_PAGE_PATH = 'mcp-servers';
+
+/** The MCP servers page. */
 export function contributePages(ctx: ExtensionContext): void {
 	ctx.contribute('pages', {
 		component: McpServersPage,
-		path: 'mcp-servers',
+		path: MCP_SERVERS_PAGE_PATH,
 		title: 'MCP Servers'
 	});
 }

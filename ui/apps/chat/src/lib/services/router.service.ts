@@ -15,7 +15,7 @@ export class RouterService {
 	}
 
 	/** Route of the page an extension contributes at `path`. */
-	static extensionPage(path: string): string {
-		return `${ROUTES.START}${path}`;
+	static extensionPage(path: string): ResolvedPathname {
+		return resolve(ROUTES.EXTENSION_PAGE, { extensionPage: path });
 	}
 }
