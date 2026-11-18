@@ -1,0 +1,8 @@
+# Package Managers
+package-lock.json
+
+# Build output
+/dist/
+/build/
+/.svelte-kit/
+test-results

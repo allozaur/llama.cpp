@@ -1,0 +1,79 @@
+name: UI Notes
+
+# Checks Llama Notes (ui/apps/notes): types, lint, tests and the static build.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths: [
+      '.github/workflows/ui-notes.yml',
+      'ui/apps/notes/**.*',
+      'ui/lib/ui/**.*'
+    ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths: [
+      '.github/workflows/ui-notes.yml',
+      'ui/apps/notes/**.*',
+      'ui/lib/ui/**.*'
+    ]
+
+cache-mode: none
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install dependencies
+        id: setup
+        run: npm ci
+        working-directory: ui/apps/notes
+
+      - name: Run type checking
+        if: ${{ always() && steps.setup.conclusion == 'success' }}
+        run: npm run check
+        working-directory: ui/apps/notes
+
+      - name: Run linting
+        if: ${{ always() && steps.setup.conclusion == 'success' }}
+        run: npm run lint
+        working-directory: ui/apps/notes
+
+      - name: Run Unit tests
+        if: ${{ always() && steps.setup.conclusion == 'success' }}
+        run: npm run test:unit -- --run
+        working-directory: ui/apps/notes
+
+      - name: Install Playwright browsers
+        id: playwright
+        if: ${{ always() && steps.setup.conclusion == 'success' }}
+        run: npx playwright install --with-deps chromium
+        working-directory: ui/apps/notes
+
+      - name: Run Client tests
+        if: ${{ always() && steps.playwright.conclusion == 'success' }}
+        run: npm run test:client -- --run
+        working-directory: ui/apps/notes
+
+      - name: Build application
+        if: ${{ always() && steps.setup.conclusion == 'success' }}
+        run: npm run build
+        working-directory: ui/apps/notes
