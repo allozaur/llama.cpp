@@ -543,7 +543,7 @@
 
 				break;
 			case SidebarAction.SERVERS:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.SERVERS));
+				if (isOnMobile) navigateBehind(() => goto(resolve(ROUTES.SERVERS)));
 				else openDialog(() => uiStore.openServers());
 
 				break;
