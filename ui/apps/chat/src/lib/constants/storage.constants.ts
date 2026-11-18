@@ -22,6 +22,9 @@ export const PERMISSION_RULES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.permission
 /* Kept under the name it was first stored under; only the constant was renamed. */
 export const ACTIVE_SERVER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.activeBackend`;
 
+/** Base URLs of the preset servers already added once, so one the user removed stays removed. */
+export const PRESET_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.presetServers`;
+
 export const CONFIG_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.config`;
 export const DISABLED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabledTools`;
 
