@@ -4,6 +4,7 @@ import {
 	PWA_MANIFEST_PLUGIN,
 	pwaManifest
 } from '../src/lib/constants/pwa.constants';
+import { loadBrand } from './brand';
 import type { Plugin } from 'vite';
 
 // the build writes files relative to its output directory: the path without its leading slash
@@ -17,10 +18,10 @@ export function pwaManifestPlugin(): Plugin {
 	let manifestSource = '';
 
 	return {
-		// named from the env Vite loaded (.env files too): this module runs in Node, where
+		// from the brand and the env Vite loaded (.env files too): this module runs in Node, where
 		// import.meta.env is not set and APP_NAME would fall back to its default
 		configResolved(config) {
-			manifestSource = JSON.stringify(pwaManifest(config.env));
+			manifestSource = JSON.stringify(pwaManifest(loadBrand(config.env)));
 		},
 		configureServer(server) {
 			server.middlewares.use(PWA_FILE_PATHS.MANIFEST, (_req, res) => {

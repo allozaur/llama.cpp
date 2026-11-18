@@ -1,6 +1,10 @@
 <script lang="ts">
+	import ChatScreenSuggestions from './ChatScreenSuggestions.svelte';
+	import { BRAND } from '#lib/brand/index.ts';
 	import { CHAT_FORM_RESIZE_MS, CHAT_GREETING_ENTER_DELAY_MS } from '#lib/constants/index.ts';
-	import { serverStore } from '#lib/stores/index.ts';
+	import { composerStore } from '#lib/stores/index.ts';
+	import Attribution from '$brand/Attribution.svelte';
+	import Greeting from '$brand/Greeting.svelte';
 
 	interface Props {
 		/** Transparent but still in place, e.g. behind the expanded chat form. */
@@ -60,12 +64,28 @@
 		isEmpty && 'md:absolute md:inset-x-0 md:bottom-[calc(100%-var(--chat-form-padding-top))]'
 	]}
 >
-	<div style:transition-delay="{CHAT_GREETING_ENTER_DELAY_MS}ms" class={enterClass}>
-		<h1 class="mb-2 text-2xl font-semibold tracking-tight md:text-3xl">Hello there</h1>
+	<div
+		style:transition-delay="{CHAT_GREETING_ENTER_DELAY_MS}ms"
+		class={[enterClass, 'mx-auto max-w-3xl']}
+	>
+		<!-- the brand's heading ($brand/Greeting.svelte), then its prompt suggestions -->
+		<Greeting brand={BRAND} composer={composerStore} />
 
-		<p class="text-muted-foreground md:text-lg">
-			{serverStore.props?.modalities?.audio ? 'Record audio, type a message ' : 'Type a message'} or upload
-			files to get started
-		</p>
+		<ChatScreenSuggestions
+			onSelect={(prompt) => composerStore.prefill(prompt)}
+			suggestions={BRAND.suggestions}
+		/>
 	</div>
 </div>
+
+{#if isEmpty}
+	<!-- the brand's attribution lockup ($brand/Attribution.svelte), top right of a new chat on desktop -->
+	<div
+		class={[
+			'fixed top-(--corner-control-top) right-4 z-10 transition-opacity duration-300 max-md:hidden',
+			faded || (!hasEntered && !instant) ? 'pointer-events-none opacity-0' : 'pointer-events-auto'
+		]}
+	>
+		<Attribution brand={BRAND} composer={composerStore} />
+	</div>
+{/if}

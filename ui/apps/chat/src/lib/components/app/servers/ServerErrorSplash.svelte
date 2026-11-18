@@ -3,6 +3,7 @@
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import { AlertTriangle, CheckCircle, Key, RefreshCw, XCircle } from '@lucide/svelte';
+	import { BRAND } from '#lib/brand/index.ts';
 	import { HEADERS, ICON_CLASS_DEFAULT, ROUTES, SETTINGS_KEYS } from '#lib/constants/index.ts';
 	import { KeyboardKey } from '#lib/enums/index.ts';
 	import { serverStore, settingsStore } from '#lib/stores/index.ts';
@@ -267,7 +268,7 @@
 							<p class="mb-4 font-medium">Start the llama-server:</p>
 
 							<div class="rounded bg-muted/50 px-2 py-1 font-mono text-xs">
-								<p>llama-server -hf ggml-org/gemma-3-4b-it-GGUF</p>
+								<p>llama-server -hf {BRAND.defaultModel}</p>
 							</div>
 
 							<p>or</p>

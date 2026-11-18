@@ -1,3 +1,4 @@
+import { brandPlugin } from './scripts/vite-plugin-brand';
 import { buildInfoPlugin } from './scripts/vite-plugin-build-info';
 import { llamaUiPlugin } from './scripts/vite-plugin-llama-ui';
 import { nerdamerPlugin } from './scripts/vite-plugin-nerdamer';
@@ -45,6 +46,8 @@ export default defineConfig(({ mode }) => {
 
 		plugins: [
 			llamaUiPlugin(),
+			// before Tailwind: it points Tailwind at the brand's components
+			brandPlugin(),
 			tailwindcss(),
 			sveltekit({
 				adapter: adapter({

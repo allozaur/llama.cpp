@@ -1,14 +1,15 @@
 <script lang="ts">
-	import { APP_NAME, APPLE_META_TAGS, MEDIA_QUERIES, THEME_COLORS } from '#lib/constants/index.ts';
+	import { BRAND } from '#lib/brand/index.ts';
+	import { APP_NAME, APPLE_META_TAGS, MEDIA_QUERIES } from '#lib/constants/index.ts';
 
 	let { appName = APP_NAME } = $props();
 </script>
 
 <svelte:head>
 	<!-- Theme color for light/dark modes -->
-	<meta content={THEME_COLORS.LIGHT} media={MEDIA_QUERIES.PREFERS_LIGHT} name="theme-color" />
+	<meta content={BRAND.colors.theme.light} media={MEDIA_QUERIES.PREFERS_LIGHT} name="theme-color" />
 
-	<meta content={THEME_COLORS.DARK} media={MEDIA_QUERIES.PREFERS_DARK} name="theme-color" />
+	<meta content={BRAND.colors.theme.dark} media={MEDIA_QUERIES.PREFERS_DARK} name="theme-color" />
 
 	<!-- Apple mobile web app meta tags -->
 	<meta

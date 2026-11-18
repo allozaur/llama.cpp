@@ -12,6 +12,7 @@ It works with a llama-server in either mode: **MODEL** (one model) or **ROUTER**
 - [Development](#development)
 - [Architecture](#architecture)
 - [Build and embedding](#build-and-embedding)
+- [White labels](#white-labels)
 - [Publishing to npm](#publishing-to-npm)
 
 ## Run it with npx
@@ -164,6 +165,30 @@ ui/apps/chat/
 ├── static/               # static assets
 └── tests/                # unit, client and end-to-end tests, and the Storybook stories
 ```
+
+## White labels
+
+A white label builds Llama Chat under another name and look from these sources, with no changes to them: everything that brands the app comes from a **brand directory**, named at build time with `LLAMA_CHAT_BRAND_DIR` (absolute, or relative to the working directory):
+
+```bash
+LLAMA_CHAT_BRAND_DIR=../my-brand npm run build
+```
+
+Every file in it is optional; the app imports each one as `$brand/<file>`, and a missing one falls back to llama.cpp's own (in `src/lib/brand/default`, or llama-brand's artwork):
+
+| File                              | What it sets                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand.json`                      | Name, short name, description, `lang`, theme and background colours, greeting title and subtitle, prompt suggestions, composer placeholder, default model, whether the logo is drawn in the text colour. Any part of `Brand` in [`src/lib/brand/brand.ts`](src/lib/brand/brand.ts); other keys are kept for the brand's own components. `VITE_PUBLIC_APP_NAME` and `VITE_PUBLIC_APP_LANG` still win over its name and language. |
+| `theme.css`                       | A stylesheet loaded after Llama UI's theme: override its tokens (see [DESIGN.md](DESIGN.md)) in `:root` and `.dark`, load fonts. Tailwind scans the brand directory, so its components can use utility classes.                                                                                                                                                                                                                 |
+| `logo.svg`                        | The mark Llama UI's `Logo` draws (the sidebar's key, among others)                                                                                                                                                                                                                                                                                                                                                              |
+| `favicon.svg`, `favicon-dark.svg` | The favicons, from which every PWA icon and splash screen is generated                                                                                                                                                                                                                                                                                                                                                          |
+| `Greeting.svelte`                 | The new-chat screen's heading, above the suggestions                                                                                                                                                                                                                                                                                                                                                                            |
+| `ComposerFooter.svelte`           | A line under the composer, e.g. a model disclaimer                                                                                                                                                                                                                                                                                                                                                                              |
+| `Attribution.svelte`              | A lockup in the new-chat screen's top-right corner on desktop, e.g. a funder                                                                                                                                                                                                                                                                                                                                                    |
+
+The three components receive `brand` (the resolved brand) and `composer`: `composer.prefill(text)` puts text in the composer without sending it, and setting `composer.placeholder` overrides the placeholder at runtime. Elsewhere in the app, `composerStore` (`#lib/stores`) is the same object. What a brand's modules import (`svelte`, `@lucide/svelte`, `$app/*`) resolves from this app's dependencies.
+
+Not covered yet: the interface's own strings have no translations (only a brand's own text can switch language), and storage is not namespaced (`STORAGE_APP_NAME`), so two labels served from one origin share their conversations.
 
 ## Publishing to npm
 

@@ -1,6 +1,8 @@
 <script lang="ts">
-	import '../app.css';
+	import '../brand.css';
+	import { setLogoMark } from '@ggml-org/llama-ui/app/misc';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
+	import { BRAND } from '#lib/brand/index.ts';
 	import { GlassKey, MenuIcon, SidebarNavigation } from '#lib/components/app/index.ts';
 	import { PwaMetaTags, PwaRefreshAlert } from '#lib/components/pwa/index.ts';
 	import {
@@ -37,6 +39,7 @@
 	import { browser } from '$app/env';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import logoSvg from '$brand/logo.svg?raw';
 	import { ModeWatcher } from 'mode-watcher';
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
@@ -44,6 +47,9 @@
 	import { Toaster } from 'svelte-sonner';
 
 	let { children } = $props();
+
+	// the brand's mark, which every Logo below draws
+	setLogoMark({ monochrome: BRAND.logo.monochrome, svg: logoSvg });
 
 	// migrations and store startup, ordered explicitly instead of import side effects
 	void initStores();
