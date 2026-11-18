@@ -166,7 +166,7 @@ struct realtime_conversation {
     std::mutex  mutex;
     std::string last_item_id;
     std::string transcribe_item_id; // transcription: the item being transcribed
-    std::string transcript;
+    server_asr_transcript transcript; // without the markup some ASR models write
     std::string response_id;
     std::string response_item_id;
     std::string response_text;
@@ -457,7 +457,7 @@ struct realtime_conversation {
         {
             std::lock_guard<std::mutex> lock(mutex);
             transcribe_item_id = last_item_id;
-            transcript.clear();
+            transcript = {};
         }
         // some models (VibeVoice-ASR) take an instruction after the audio, with its length
         const auto * tmpls = deps.meta.chat_params.tmpls.get();
@@ -843,13 +843,15 @@ struct realtime_conversation {
         std::lock_guard<std::mutex> lock(mutex);
         if (!transcribe_item_id.empty()) {
             if (!res.content.empty()) {
-                transcript += res.content.text;
-                send_event({{"type", "conversation.item.input_audio_transcription.delta"}, {"item_id", transcribe_item_id},
-                            {"content_index", 0}, {"delta", res.content.text}});
+                const std::string delta = transcript.feed(res.content.text);
+                if (!delta.empty()) {
+                    send_event({{"type", "conversation.item.input_audio_transcription.delta"}, {"item_id", transcribe_item_id},
+                                {"content_index", 0}, {"delta", delta}});
+                }
             }
             if (res.response_done) {
                 send_event({{"type", "conversation.item.input_audio_transcription.completed"}, {"item_id", transcribe_item_id},
-                            {"content_index", 0}, {"transcript", transcript}});
+                            {"content_index", 0}, {"transcript", transcript.text()}});
                 transcribe_item_id.clear();
             }
             return;
