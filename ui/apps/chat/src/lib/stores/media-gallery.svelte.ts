@@ -16,7 +16,10 @@ import { isMediaExtra } from '#lib/utils/index.ts';
 function isSameItem(a: DatabaseMessageExtra, b: DatabaseMessageExtra): boolean {
 	if (a === b) return true;
 
-	if (a.type !== b.type || a.name !== b.name) return false;
+	// a prompt attachment has no name, only media items do
+	const nameOf = (extra: DatabaseMessageExtra) => ('name' in extra ? extra.name : undefined);
+
+	if (a.type !== b.type || nameOf(a) !== nameOf(b)) return false;
 
 	const dataOf = (extra: DatabaseMessageExtra) =>
 		'base64Url' in extra ? extra.base64Url : 'base64Data' in extra ? extra.base64Data : undefined;
