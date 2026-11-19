@@ -211,10 +211,11 @@
 		</Button>
 	{/if}
 
-	{#if showRecord && !showStop}
+	{#snippet record(filled: boolean)}
 		<ChatFormActionRecord
 			action={voice?.action}
 			{disabled}
+			{filled}
 			hint={voice?.hint}
 			{micWarning}
 			{onMicClick}
@@ -223,6 +224,10 @@
 			secondary
 			unavailableReason={voice?.unavailableReason}
 		/>
+	{/snippet}
+
+	{#if showRecord && !showStop}
+		{@render record(false)}
 	{/if}
 
 	{#if showStop}
@@ -250,16 +255,6 @@
 
 	<!-- while a reply streams, the microphone is the last button, filled like stop -->
 	{#if showRecord && showStop}
-		<ChatFormActionRecord
-			action={voice?.action}
-			{disabled}
-			filled
-			hint={voice?.hint}
-			{micWarning}
-			{onMicClick}
-			onPrepare={voice?.prepare}
-			onPrepareEnd={voice?.unprepare}
-			secondary
-		/>
+		{@render record(true)}
 	{/if}
 </div>
