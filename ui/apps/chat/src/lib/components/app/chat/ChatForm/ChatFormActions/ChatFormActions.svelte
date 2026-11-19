@@ -15,12 +15,11 @@
 		VOICE_MODE_MESSAGE
 	} from '#lib/constants/index.ts';
 	import { setChatFormActionsContext } from '#lib/contexts/index.ts';
-	import { FileTypeCategory } from '#lib/enums/index.ts';
 	import { useChatFormModel } from '#lib/hooks/use-chat-form-model.svelte.ts';
 	import { useShowContextGauge } from '#lib/hooks/use-context-gauge.svelte.ts';
 	import { ChatService } from '#lib/services/index.ts';
 	import { conversationsStore, deviceStore, settingsStore, toolsStore } from '#lib/stores/index.ts';
-	import { abbreviateWorkingDir, getFileTypeCategory } from '#lib/utils/index.ts';
+	import { abbreviateWorkingDir } from '#lib/utils/index.ts';
 
 	interface Props {
 		canSend?: boolean;
@@ -45,7 +44,6 @@
 		};
 		showAddButton?: boolean;
 		showModelSelector?: boolean;
-		uploadedFiles?: ChatUploadedFile[];
 		/** The chat's working directory, which the + menu names. */
 		workingDirectory?: string | null;
 		onFileUpload?: () => void;
@@ -72,7 +70,6 @@
 		onWorkingDirectoryClick,
 		showAddButton = true,
 		showModelSelector = true,
-		uploadedFiles = [],
 		voice,
 		workingDirectory = null
 	}: Props = $props();
@@ -94,15 +91,12 @@
 		return '';
 	});
 
-	let hasAudioAttachments = $derived(
-		uploadedFiles.some((file) => getFileTypeCategory(file.type) === FileTypeCategory.AUDIO)
-	);
 	// the microphone sits beside the send or stop button: on an empty message when the setting
 	// asks for it (disabled, saying why, when no model can take a recording), and while a reply
-	// streams or the message has text, so more can be dictated without clearing it first
+	// streams or the message has text or a recording, so more can be said without clearing it
 	let showStop = $derived(isLoading && !canSend);
 	let showRecord = $derived.by(() => {
-		if (!voice?.show || hasAudioAttachments) return false;
+		if (!voice?.show) return false;
 
 		if (showStop || canSend) return !voice.unavailableReason;
 
