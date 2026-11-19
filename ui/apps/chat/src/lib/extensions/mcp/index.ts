@@ -13,6 +13,7 @@ import { contributeComposer } from './composer';
 import { contributeNavigation } from './navigation';
 import { contributePages } from './pages';
 import { contributeRenderers } from './renderers';
+import { contributeSignIn } from './sign-in';
 import { contributeStartup } from './startup.svelte';
 import { contributeTools } from './tools';
 
@@ -20,6 +21,7 @@ const mcp: Extension = {
 	activate(ctx) {
 		contributeComposer(ctx);
 		contributeNavigation(ctx);
+		contributeSignIn(ctx);
 		contributePages(ctx);
 		contributeRenderers(ctx);
 		contributeStartup(ctx);
