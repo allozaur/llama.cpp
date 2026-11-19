@@ -1,11 +1,13 @@
 <script lang="ts">
+	import { BRAND } from '#lib/brand/index.ts';
 	import { ChatForm } from '#lib/components/app/index.ts';
 	import { SETTINGS_KEYS } from '#lib/constants/index.ts';
 	import { useDraftMessages } from '#lib/hooks/use-draft-messages.svelte.ts';
-	import { deviceStore, settingsStore } from '#lib/stores/index.ts';
+	import { composerStore, deviceStore, settingsStore } from '#lib/stores/index.ts';
 	import { hapticTap } from '#lib/utils/index.ts';
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
+	import ComposerFooter from '$brand/ComposerFooter.svelte';
 	import { onMount, tick } from 'svelte';
 
 	interface Props {
@@ -139,6 +141,14 @@
 		}
 	});
 
+	// text put in the composer from elsewhere (composerStore.prefill): filled in, focused, not sent
+	$effect(() => {
+		if (composerStore.pending === null) return;
+
+		message = composerStore.takePending() ?? '';
+		tick().then(() => chatFormRef?.focus());
+	});
+
 	$effect(() => {
 		if (previousIsLoading && !isLoading) {
 			setTimeout(focusFormUnlessCaptured, 10);
@@ -162,6 +172,12 @@
 		onSubmit={handleSubmit}
 		onSystemPromptClick={handleSystemPromptClick}
 		onUploadedFileRemove={handleUploadedFileRemove}
+		placeholder={composerStore.placeholder ?? BRAND.composer.placeholder}
 		singleRow={settingsStore.config[SETTINGS_KEYS.SINGLE_ROW_CHAT_FORM] !== false}
 	/>
+
+	<!-- the form's wrapper takes no clicks: the brand's footer may hold links -->
+	<div class="pointer-events-auto">
+		<ComposerFooter brand={BRAND} composer={composerStore} />
+	</div>
 </div>

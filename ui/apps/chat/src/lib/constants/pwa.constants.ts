@@ -3,7 +3,7 @@
  * definitions across the codebase.
  */
 
-import { APP_LANG, APP_NAME } from './app.constants';
+import type { Brand } from '../brand/brand.ts';
 
 export const MEDIA_QUERIES = {
 	COARSE_POINTER: '(pointer: coarse)',
@@ -15,10 +15,6 @@ export const MEDIA_QUERIES = {
 export const THEME_COLORS = {
 	ACCENT_BLUE: '#2563eb',
 	ACCENT_BLUE_HOVER: '#1d4ed8',
-	BACKGROUND_DARK: '#111111',
-	BACKGROUND_LIGHT: 'white',
-	DARK: '#0d0d0d',
-	LIGHT: '#ffffff',
 	TITLE_UPDATE_ALERT: {
 		BG_DARK: 'zinc-800',
 		BG_LIGHT: 'white',
@@ -45,13 +41,10 @@ export const APPLE_ASSETS = {
 	TOUCH_ICON: 'apple-touch-icon-180x180.png'
 } as const;
 
-/**
- * The web app manifest. In the browser APP_NAME and APP_LANG follow the env; the manifest plugin
- * runs in Node, where import.meta.env is not set, so it names the manifest with pwaManifest().
- */
-export const PWA_MANIFEST = {
-	background_color: THEME_COLORS.BACKGROUND_LIGHT,
-	description: 'Local AI chat interface powered by llama.cpp',
+/** The web app manifest for a brand; built in Node by its Vite plugin (scripts/brand.ts loads the brand there) */
+export const pwaManifest = (brand: Brand) => ({
+	background_color: brand.colors.background.light,
+	description: brand.description,
 	display: 'standalone' as const,
 	icons: [
 		{ sizes: '64x64', src: 'pwa-64x64.png', type: 'image/png' },
@@ -64,25 +57,13 @@ export const PWA_MANIFEST = {
 			type: 'image/png'
 		}
 	],
-	lang: APP_LANG,
-	name: APP_NAME,
+	lang: brand.lang,
+	name: brand.name,
 	scope: './',
-	short_name: APP_NAME,
+	short_name: brand.shortName,
 	start_url: './',
-	theme_color: THEME_COLORS.BACKGROUND_LIGHT
-};
-
-/** PWA_MANIFEST with the name and language a build sets (VITE_PUBLIC_APP_NAME, VITE_PUBLIC_APP_LANG) */
-export function pwaManifest(env: Record<string, string | undefined>) {
-	const name = env.VITE_PUBLIC_APP_NAME || PWA_MANIFEST.name;
-
-	return {
-		...PWA_MANIFEST,
-		lang: env.VITE_PUBLIC_APP_LANG || PWA_MANIFEST.lang,
-		name,
-		short_name: name
-	};
-}
+	theme_color: brand.colors.background.light
+});
 
 export const PWA_ICON_PATHS = {
 	MASKABLE_512: '/maskable-icon-512x512.png',

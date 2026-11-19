@@ -1,9 +1,6 @@
+import { loadBrand } from './scripts/brand';
 import { writeBrandFavicons } from './scripts/brand-favicons';
-import {
-	PWA_ASSET_GENERATOR,
-	PWA_GENERATOR_DEVICES,
-	THEME_COLORS
-} from './src/lib/constants/pwa.constants';
+import { PWA_ASSET_GENERATOR, PWA_GENERATOR_DEVICES } from './src/lib/constants/pwa.constants';
 import { SplashOrientation } from './src/lib/enums/splash.enums';
 import {
 	combinePresetAndAppleSplashScreens,
@@ -14,6 +11,8 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 writeBrandFavicons();
+
+const { colors } = loadBrand();
 
 export default defineConfig({
 	headLinkOptions: {
@@ -36,7 +35,7 @@ export default defineConfig({
 				}
 			},
 			darkResizeOptions: {
-				background: THEME_COLORS.BACKGROUND_DARK,
+				background: colors.background.dark,
 				fit: PWA_ASSET_GENERATOR.FIT_MODE
 			},
 			linkMediaOptions: {
@@ -57,7 +56,7 @@ export default defineConfig({
 				quality: PWA_ASSET_GENERATOR.PNG_QUALITY
 			},
 			resizeOptions: {
-				background: THEME_COLORS.BACKGROUND_LIGHT,
+				background: colors.background.light,
 				fit: PWA_ASSET_GENERATOR.FIT_MODE
 			}
 		},

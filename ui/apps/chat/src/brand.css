@@ -1,0 +1,4 @@
+/* The app's stylesheet with the brand's over it ($brand/theme.css, see src/lib/brand/brand.ts).
+   A file of its own because Prettier's Tailwind plugin reads app.css, and it knows no aliases */
+@import './app.css';
+@import '$brand/theme.css';

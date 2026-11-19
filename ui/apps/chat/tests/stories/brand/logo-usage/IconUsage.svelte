@@ -26,7 +26,8 @@
 	import avatarSvg from '@ggml-org/llama-brand/logo/svg/social/x/x-avatar-light.svg?raw';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Download } from '@lucide/svelte';
-	import { PWA_ASSET_GENERATOR, THEME_COLORS } from '#lib/constants/index.ts';
+	import { BRAND } from '#lib/brand/index.ts';
+	import { PWA_ASSET_GENERATOR } from '#lib/constants/index.ts';
 
 	// the inks of llama-brand's light and dark favicons
 	const FAVICON_COLORS = { DARK: '#fafafa', LIGHT: '#111111' } as const;
@@ -140,7 +141,7 @@
 			]
 		},
 		{
-			background: THEME_COLORS.BACKGROUND_LIGHT,
+			background: BRAND.colors.background.light,
 			files: 'pwa-64x64, -192x192, -512x512.png',
 			ink: FAVICON_COLORS.LIGHT,
 			label: 'PWA',
@@ -153,7 +154,7 @@
 			]
 		},
 		{
-			background: THEME_COLORS.BACKGROUND_LIGHT,
+			background: BRAND.colors.background.light,
 			files: 'maskable-icon-512x512.png',
 			guide: 'safe',
 			ink: FAVICON_COLORS.LIGHT,
@@ -166,7 +167,7 @@
 			]
 		},
 		{
-			background: THEME_COLORS.BACKGROUND_LIGHT,
+			background: BRAND.colors.background.light,
 			files: 'apple-touch-icon-180x180.png',
 			guide: 'apple',
 			ink: FAVICON_COLORS.LIGHT,
@@ -182,7 +183,7 @@
 
 	const splashes = [
 		{
-			background: THEME_COLORS.BACKGROUND_LIGHT,
+			background: BRAND.colors.background.light,
 			files: 'apple-splash-portrait-*.png',
 			h: 2556,
 			ink: FAVICON_COLORS.LIGHT,
@@ -190,7 +191,7 @@
 			w: 1179
 		},
 		{
-			background: THEME_COLORS.BACKGROUND_DARK,
+			background: BRAND.colors.background.dark,
 			files: 'apple-splash-portrait-dark-*.png',
 			h: 2556,
 			ink: FAVICON_COLORS.DARK,
@@ -198,7 +199,7 @@
 			w: 1179
 		},
 		{
-			background: THEME_COLORS.BACKGROUND_LIGHT,
+			background: BRAND.colors.background.light,
 			files: 'apple-splash-landscape-*.png',
 			h: 2048,
 			ink: FAVICON_COLORS.LIGHT,

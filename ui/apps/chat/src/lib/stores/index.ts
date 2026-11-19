@@ -53,6 +53,9 @@ export { serverStore } from './llama-server.svelte';
 // UI / LAYOUT
 export { uiStore } from './ui.svelte';
 
+// COMPOSER (prefill and placeholder for the new-chat composer, e.g. from a brand's slots)
+export { composerStore } from './composer.svelte';
+
 // SETTINGS / UI PREFERENCES
 export { settingsStore } from './settings/index.svelte';
 
