@@ -1,9 +1,13 @@
 <script lang="ts">
+	import KeyboardShortcut from './KeyboardShortcut.svelte';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
+	import FolderOpen from '@lucide/svelte/icons/folder-open';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Trash from '@lucide/svelte/icons/trash-2';
 	import { notesStore } from '#lib/stores/notes.svelte.ts';
 	import { noteTitle } from '#lib/utils/note-title.ts';
+	import { openNotes } from '#lib/utils/open-notes.ts';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -30,10 +34,36 @@
 </script>
 
 <nav aria-label="Notes" class="flex min-h-0 flex-col gap-2 {className}">
-	<Button class="justify-start" onclick={createNote} variant="outline">
-		<Plus />
-		New note
-	</Button>
+	<div class="flex gap-2">
+		<Button class="flex-1 justify-start" onclick={createNote} variant="outline">
+			<Plus />
+			New note
+		</Button>
+
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						aria-label="Open Markdown file"
+						onclick={() => openNotes()}
+						size="icon"
+						variant="outline"
+					>
+						<FolderOpen />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+
+			<Tooltip.Content>
+				<div class="flex items-center gap-2">
+					<p>Open Markdown file</p>
+
+					<KeyboardShortcut keys={['mod', 'o']} />
+				</div>
+			</Tooltip.Content>
+		</Tooltip.Root>
+	</div>
 
 	<ul class="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
 		{#each notesStore.notes as note (note.id)}

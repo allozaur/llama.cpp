@@ -14,6 +14,20 @@ export const STORAGE_KEYS = {
 	SELECTED_MODEL: 'LlamaNotes.selectedModel'
 } as const;
 
+/** What a note opens from and saves to. */
+export const MARKDOWN_FILE = {
+	EXTENSION: '.md',
+	MIME_TYPE: 'text/markdown',
+	/** Extensions read in as notes, besides any `text/*` file. */
+	OPENABLE_EXTENSIONS: ['.md', '.markdown', '.txt'],
+	PICKER_TYPES: [
+		{
+			accept: { 'text/markdown': ['.md', '.markdown'], 'text/plain': ['.txt'] },
+			description: 'Markdown'
+		}
+	]
+} as const;
+
 /** Title of a note with no text yet. */
 export const UNTITLED_NOTE = 'Untitled note';
 export const NOTE_TITLE_MAX_LENGTH = 80;
