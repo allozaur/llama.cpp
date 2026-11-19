@@ -10,7 +10,9 @@
 
 import {
 	describeMicrophoneError,
+	levelToDb,
 	PauseDetector,
+	SpeechDetector,
 	synthesizeSpeech,
 	VOICE_LEVELS_INTERVAL_MS,
 	VoiceCapture,
@@ -60,6 +62,8 @@ const CONVERSATION_CONSTRAINTS: MediaTrackConstraints = {
 const TURN_PAUSE_MS = 900;
 /** Sound over the reply that pauses it, to hear whether it is speech. */
 const BARGE_IN_MS = 300;
+/** How far above the room speech over the reply must be: more than a turn needs, as the reply's echo is about. */
+const BARGE_IN_ABOVE_FLOOR_DB = 12;
 /** How long a paused reply waits for speech before it goes on: no speech, it was a noise or its own echo. */
 const BARGE_IN_CONFIRM_MS = 1000;
 
@@ -199,11 +203,11 @@ export function useVoiceConversation() {
 	}
 
 	/**
-	 * Starts a turn: listens until the speaker pauses, then sends what was said. `floor` is
+	 * Starts a turn: listens until the speaker pauses, then sends what was said. `floorDb` is
 	 * the room's noise level when known; `tentative` listens over a paused reply, which
 	 * goes on unless speech is heard within a second.
 	 */
-	async function listen(options: { floor?: number; tentative?: boolean } = {}) {
+	async function listen(options: { floorDb?: number; tentative?: boolean } = {}) {
 		stopMonitor();
 		stopRecorder();
 		liveText = '';
@@ -225,7 +229,7 @@ export function useVoiceConversation() {
 		const run = ++generation;
 		const model = resolution.transcriptionModel;
 		const pauses = new PauseDetector({
-			floor: options.floor,
+			floorDb: options.floorDb,
 			intervalMs: VOICE_LEVELS_INTERVAL_MS,
 			maxSegmentMs: Number.POSITIVE_INFINITY,
 			pauseMs: TURN_PAUSE_MS
@@ -352,20 +356,29 @@ export function useVoiceConversation() {
 	async function watchForBargeIn(run: number) {
 		if (micMuted || speakerMuted || !speechModel || monitor) return;
 
-		const capture = new VoiceCapture({ constraints: CONVERSATION_CONSTRAINTS });
+		// the microphone picked in the settings, cleaned up as the turns are
+		const { capture: captureOptions } = await VoiceService.sessionOptions(config, {
+			constraints: CONVERSATION_CONSTRAINTS,
+			isRouter,
+			model: null,
+			transcribe: false
+		});
+
+		if (run !== generation || monitor) return;
+
+		const capture = new VoiceCapture(captureOptions);
+		const speech = new SpeechDetector({ speechDb: BARGE_IN_ABOVE_FLOOR_DB });
 
 		let speechMs = 0;
-		let floor = 1;
 
 		monitor = capture;
 		capture.onLevels((next) => {
-			const level = next.at(-1) ?? 0;
+			const heard = speech.push(levelToDb(next.at(-1) ?? 0), VOICE_LEVELS_INTERVAL_MS);
 
-			floor = Math.min(level, floor + 0.002);
-			speechMs = level > floor + 0.2 ? speechMs + VOICE_LEVELS_INTERVAL_MS : 0;
+			speechMs = heard ? speechMs + VOICE_LEVELS_INTERVAL_MS : 0;
 
 			if (speechMs >= BARGE_IN_MS && run === generation && reader.speaking && !reader.paused) {
-				bargeIn(floor);
+				bargeIn(speech.floorDb);
 			}
 		});
 
@@ -383,11 +396,11 @@ export function useVoiceConversation() {
 	}
 
 	/** A sound over the reply: it pauses, and the next second tells whether it was speech. */
-	function bargeIn(floor: number) {
+	function bargeIn(floorDb: number) {
 		reader.pause();
 		heldReply = true;
 		tentative = true;
-		void listen({ floor, tentative: true });
+		void listen({ floorDb, tentative: true });
 	}
 
 	/** No speech came, or the microphone was muted: the reply goes on from where it paused. */

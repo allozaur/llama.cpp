@@ -49,7 +49,7 @@ describe('PauseDetector', () => {
 		unknown.push(0.6);
 		expect(unknown.heardSpeech).toBe(false);
 
-		const known = new PauseDetector({ floor: 0.1, intervalMs: INTERVAL });
+		const known = new PauseDetector({ floorDb: -54, intervalMs: INTERVAL });
 
 		known.push(0.6);
 		expect(known.heardSpeech).toBe(true);
