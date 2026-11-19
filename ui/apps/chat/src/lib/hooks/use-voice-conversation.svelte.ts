@@ -11,17 +11,15 @@
 import {
 	describeMicrophoneError,
 	PauseDetector,
-	resolveMicrophone,
 	synthesizeSpeech,
 	VOICE_LEVELS_INTERVAL_MS,
-	VOICE_MICROPHONE_AUTO,
 	VoiceCapture,
-	VoiceCaptureError,
-	type VoiceServerContext
+	VoiceCaptureError
 } from '@ggml-org/llama-voice';
 import { ReplyReader, VoiceRecorder } from '@ggml-org/llama-voice/svelte';
 import { SETTINGS_KEYS } from '#lib/constants/index.ts';
 import { MessageRole, VoiceInputMode, VoiceMode } from '#lib/enums/index.ts';
+import { VoiceService } from '#lib/services/voice.service.ts';
 import {
 	chatStore,
 	conversationsStore,
@@ -29,8 +27,6 @@ import {
 	serverStore,
 	settingsStore
 } from '#lib/stores/index.ts';
-import { getAuthHeaders } from '#lib/utils/api-headers.ts';
-import { withBase } from '#lib/utils/base-path.ts';
 import { resolveVoiceMode } from '#lib/utils/voice-mode.ts';
 import { onDestroy, untrack } from 'svelte';
 
@@ -66,19 +62,6 @@ const TURN_PAUSE_MS = 900;
 const BARGE_IN_MS = 300;
 /** How long a paused reply waits for speech before it goes on: no speech, it was a noise or its own echo. */
 const BARGE_IN_CONFIRM_MS = 1000;
-
-function serverContext(): { context: VoiceServerContext; realtime: boolean } {
-	const headers = getAuthHeaders();
-	const hasAuth = Object.keys(headers).some((key) => key.toLowerCase() === 'authorization');
-
-	return {
-		context: {
-			getHeaders: () => getAuthHeaders(),
-			resolveUrl: (path) => withBase(path.replace(/^\./, ''))
-		},
-		realtime: !hasAuth
-	};
-}
 
 export function useVoiceConversation() {
 	const config = $derived(settingsStore.config);
@@ -148,9 +131,7 @@ export function useVoiceConversation() {
 		},
 		playbackRate: () => Number(config[SETTINGS_KEYS.VOICE_READING_SPEED]) || 1.25,
 		synthesize: (text, signal) => {
-			const { context } = serverContext();
-
-			return synthesizeSpeech(context, text, {
+			return synthesizeSpeech(VoiceService.serverContext().context, text, {
 				model: isRouter && speechModel ? speechModel : undefined,
 				signal
 			});
@@ -207,12 +188,6 @@ export function useVoiceConversation() {
 		}
 	});
 
-	async function microphone(): Promise<string | undefined> {
-		return resolveMicrophone(
-			String(config[SETTINGS_KEYS.VOICE_MICROPHONE] ?? VOICE_MICROPHONE_AUTO)
-		);
-	}
-
 	function stopRecorder() {
 		recorder?.cancel();
 		recorder = null;
@@ -249,8 +224,6 @@ export function useVoiceConversation() {
 
 		const run = ++generation;
 		const model = resolution.transcriptionModel;
-		const { context, realtime } = serverContext();
-		const language = String(config[SETTINGS_KEYS.VOICE_TRANSCRIPTION_LANGUAGE] ?? '').trim();
 		const pauses = new PauseDetector({
 			floor: options.floor,
 			intervalMs: VOICE_LEVELS_INTERVAL_MS,
@@ -263,14 +236,15 @@ export function useVoiceConversation() {
 		state = 'starting';
 
 		try {
-			const deviceId = await microphone();
+			// echo cancellation on, whatever the settings: the replies play while it listens
+			const wiring = await VoiceService.sessionOptions(config, {
+				constraints: CONVERSATION_CONSTRAINTS,
+				isRouter,
+				model
+			});
 
 			await active.start({
-				capture: {
-					boost: config[SETTINGS_KEYS.VOICE_BOOST] !== false,
-					constraints: CONVERSATION_CONSTRAINTS,
-					...(deviceId ? { deviceId } : {})
-				},
+				...wiring,
 				onLevels: (next) => {
 					levels = next as number[];
 
@@ -285,12 +259,6 @@ export function useVoiceConversation() {
 				},
 				onText: (text) => {
 					if (run === generation) liveText = text;
-				},
-				realtime,
-				transcribe: {
-					context,
-					language: language || undefined,
-					model: isRouter && model ? model : undefined
 				}
 			});
 		} catch (cause) {
