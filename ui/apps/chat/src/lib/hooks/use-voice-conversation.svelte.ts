@@ -266,7 +266,11 @@ export function useVoiceConversation() {
 			const deviceId = await microphone();
 
 			await active.start({
-				capture: { constraints: CONVERSATION_CONSTRAINTS, ...(deviceId ? { deviceId } : {}) },
+				capture: {
+					boost: config[SETTINGS_KEYS.VOICE_BOOST] !== false,
+					constraints: CONVERSATION_CONSTRAINTS,
+					...(deviceId ? { deviceId } : {})
+				},
 				onLevels: (next) => {
 					levels = next as number[];
 
