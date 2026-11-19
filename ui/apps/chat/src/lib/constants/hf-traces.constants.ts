@@ -39,3 +39,27 @@ export const HF_REPO_ID_REGEX = /^[\w.-]+\/[\w.-]+$/;
 
 export const HF_TOKEN_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.huggingFaceToken`;
 export const HF_TRACES_DATASET_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.huggingFaceTracesDataset`;
+
+/**
+ * Signing in with a Hugging Face account: OAuth with PKCE, run in the browser.
+ * Reference: https://huggingface.co/docs/hub/oauth
+ */
+export const HF_OAUTH_AUTHORIZE_URL = `${HF_BASE_URL}/oauth/authorize`;
+export const HF_OAUTH_REGISTER_URL = `${HF_BASE_URL}/oauth/register`;
+export const HF_OAUTH_TOKEN_URL = `${HF_BASE_URL}/oauth/token`;
+/** Read the account, create datasets and commit traces to them. */
+export const HF_OAUTH_SCOPES = ['openid', 'profile', 'write-repos', 'manage-repos'] as const;
+/** The scope a share cannot do without: committing a trace. */
+export const HF_OAUTH_REQUIRED_SCOPE = 'write-repos';
+/** The name the app registers under, shown on the Hugging Face authorization page. */
+export const HF_OAUTH_CLIENT_NAME = 'Llama Chat';
+/** Query parameter that marks a page load as a Hugging Face sign-in coming back. */
+export const HF_OAUTH_CALLBACK_PARAM = 'hf_oauth';
+export const HF_OAUTH_CHANNEL_NAME = 'llama-hf-oauth';
+/** A sign-in that has not come back by then is dropped. */
+export const HF_OAUTH_PENDING_TTL_MS = 15 * 60 * 1000;
+/** Refresh an access token this long before it expires. */
+export const HF_OAUTH_EXPIRY_MARGIN_MS = 60 * 1000;
+export const HF_OAUTH_POPUP_NAME = 'hf-oauth';
+export const HF_OAUTH_POPUP_FEATURES = 'popup,width=520,height=720';
+export const HF_OAUTH_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.huggingFaceOAuth`;

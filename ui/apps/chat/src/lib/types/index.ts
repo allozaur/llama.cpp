@@ -52,6 +52,10 @@ export type {
 	HfModelSibling,
 	HfModelSiblingRef,
 	HfDataset,
+	HfOAuthPendingFlow,
+	HfOAuthRecord,
+	HfOAuthResult,
+	HfOAuthTokens,
 	HfTraceUpload,
 	HfUser
 } from './huggingface';

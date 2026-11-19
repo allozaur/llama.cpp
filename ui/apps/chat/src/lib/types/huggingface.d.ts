@@ -5,7 +5,7 @@
  * Reference: https://huggingface.co/docs/huggingface_hub/package_reference/hf_api
  */
 
-import type { HfEntryType, HfModelSort } from '#lib/enums/index.ts';
+import type { HfEntryType, HfModelSort, HfOAuthFlowMode } from '#lib/enums/index.ts';
 
 // Search Options
 
@@ -264,4 +264,44 @@ export interface HfTraceUpload {
 	content: string;
 	isPrivate: boolean;
 	commitMessage: string;
+}
+
+// Signing in with a Hugging Face account (OAuth)
+
+/** Tokens a sign-in with Hugging Face got, as kept in the browser. */
+export interface HfOAuthTokens {
+	accessToken: string;
+	refreshToken?: string;
+	/** Epoch milliseconds; unknown when the Hub did not say. */
+	expiresAt?: number;
+	/** The scopes Hugging Face granted, space-separated. */
+	scope?: string;
+}
+
+/** A sign-in waiting for its callback. */
+export interface HfOAuthPendingFlow {
+	codeVerifier: string;
+	mode: HfOAuthFlowMode;
+	/** Where a redirect sign-in returns to. */
+	returnUrl: string;
+	startedAt: number;
+	state: string;
+}
+
+/**
+ * What the browser keeps of a sign-in with Hugging Face. The client the app
+ * registered belongs to one redirect URL, so to the origin the app is served
+ * from: a new origin registers again.
+ */
+export interface HfOAuthRecord {
+	clientId?: string;
+	pending?: HfOAuthPendingFlow;
+	redirectUrl: string;
+	tokens?: HfOAuthTokens;
+}
+
+/** How a sign-in with Hugging Face ended, as every tab hears it. */
+export interface HfOAuthResult {
+	ok: boolean;
+	error?: string;
 }

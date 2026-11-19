@@ -166,6 +166,15 @@ export { HuggingFaceService } from './huggingface.service';
 export { HfTracesService } from './hf-traces.service';
 
 /**
+ * **HfOAuthService** - Signing in with a Hugging Face account
+ *
+ * Stateless OAuth client for the browser: registers the app for the origin's
+ * redirect URL, builds the authorization URL with PKCE, and trades codes and
+ * refresh tokens for access tokens.
+ */
+export { HfOAuthService } from './hf-oauth.service';
+
+/**
  * **PropsService** - Server properties and capabilities retrieval
  *
  * Fetches server configuration, model information, and capabilities from the `/props`
