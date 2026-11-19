@@ -4,7 +4,12 @@ A notes app for llama.cpp: write text and let a model on llama-server continue i
 talks to a model through chat messages, Notes sends the text of a note as it is, through
 llama-server's raw `/completion` endpoint, and appends what comes back.
 
-- Notes are kept in this browser (IndexedDB). There is no sync and no export yet.
+- Notes are kept in this browser (IndexedDB). There is no sync.
+- **Open** (Cmd/Ctrl+O, or a file dropped on the page) makes a note of each Markdown or text file;
+  **Save** (Cmd/Ctrl+S) writes a note to a Markdown file, and Cmd/Ctrl+Shift+S to a new one. In
+  Chrome and Edge on the desktop a note saves back into the file it came from (File System Access);
+  elsewhere it downloads, or goes to the share sheet on a phone. A dot on Save marks a note with
+  changes its file does not have.
 - **Generate** (Shift+Enter) continues the note from its end; **Stop** (Shift+Enter again) ends it.
 - **Undo** and **Redo** (Cmd/Ctrl+Z, Cmd/Ctrl+Y) take the last generation away and bring it back,
   until the note is edited.
@@ -18,7 +23,8 @@ src/
 ├── routes/                  / (the notes) and /note/[id] (one note)
 └── lib/
     ├── components/          the note screen, its editor and toolbar, the notes list
-    ├── services/            llama-server calls (completion, tokenize, props, models) and IndexedDB
+    ├── services/            llama-server calls (completion, tokenize, props, models), IndexedDB and
+    │                        Markdown files
     ├── stores/              the notes, the server's state, one open note's generation
     ├── types/, constants/, utils/
 ```

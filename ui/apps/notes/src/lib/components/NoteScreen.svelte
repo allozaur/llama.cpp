@@ -9,6 +9,7 @@
 	import * as AlertDialog from '@ggml-org/llama-ui/ui/alert-dialog';
 	import Play from '@lucide/svelte/icons/play';
 	import Redo from '@lucide/svelte/icons/redo';
+	import Save from '@lucide/svelte/icons/save';
 	import Square from '@lucide/svelte/icons/square';
 	import Undo from '@lucide/svelte/icons/undo';
 	import {
@@ -19,6 +20,7 @@
 	import { NoteSession } from '#lib/stores/note-session.svelte.ts';
 	import { notesStore } from '#lib/stores/notes.svelte.ts';
 	import type { Note } from '#lib/types/notes.ts';
+	import { hasUnsavedFileChanges } from '#lib/utils/markdown-file.ts';
 	import { onDestroy, onMount } from 'svelte';
 
 	interface Props {
@@ -51,6 +53,12 @@
 	let lastScrollTop = 0;
 
 	let canGenerate = $derived(note.content.length > 0 && serverStore.canGenerate);
+	let hasUnsavedChanges = $derived(hasUnsavedFileChanges(note));
+	let saveLabel = $derived(
+		note.fileName
+			? `Save to ${note.fileName}${hasUnsavedChanges ? ' (unsaved changes)' : ''}`
+			: 'Save as Markdown file'
+	);
 	let generateHint = $derived.by(() => {
 		if (serverStore.error) return 'Cannot reach llama-server';
 
@@ -75,6 +83,10 @@
 		session.redo(serverStore.requestModel);
 
 		return true;
+	}
+
+	function saveToFile(saveAs = false) {
+		void notesStore.saveToFile(noteId, { saveAs });
 	}
 
 	function handleChange(value: string) {
@@ -133,6 +145,14 @@
 		if (event.defaultPrevented || !(event.ctrlKey || event.metaKey)) return;
 
 		const key = event.key.toLowerCase();
+
+		// Shift saves to a new file
+		if (key === 's' && !event.altKey) {
+			event.preventDefault();
+			saveToFile(event.shiftKey);
+
+			return;
+		}
 
 		if (key === 'z' && !event.shiftKey && undoGeneration()) event.preventDefault();
 
@@ -215,6 +235,19 @@
 				shortcut={['mod', 'y']}
 			>
 				<Redo />
+			</ToolbarButton>
+
+			<ToolbarButton
+				class="relative"
+				label={saveLabel}
+				onclick={() => saveToFile()}
+				shortcut={['mod', 's']}
+			>
+				<Save />
+
+				{#if hasUnsavedChanges}
+					<span class="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary"></span>
+				{/if}
 			</ToolbarButton>
 
 			<div class="ml-auto flex min-w-0 items-center gap-1.5">
