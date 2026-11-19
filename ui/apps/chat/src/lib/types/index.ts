@@ -106,8 +106,15 @@ export type {
 	DatabaseMessageExtra,
 	DatabaseMessage,
 	ExportedConversation,
-	ExportedConversations
+	ExportedConversations,
+	DatabaseRecordKind,
+	DatabaseRecords,
+	MessageTimeRange,
+	StorageBackend
 } from './database';
+
+// Storage adapter types
+export type { StorageAdapter, StorageAdapterDefinition, StoredConversation } from './storage';
 
 // Model types
 export type {

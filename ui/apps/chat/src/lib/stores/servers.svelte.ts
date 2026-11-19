@@ -18,6 +18,7 @@ import {
 	PRESET_SERVERS_META,
 	SETTINGS_KEYS
 } from '#lib/constants/index.ts';
+import { PreferencesService } from '#lib/services/preferences.service.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { remoteAccessStore } from '#lib/stores/remote-access.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
@@ -39,7 +40,7 @@ function loadActiveServerId(): string {
 	if (!browser) return LOCAL_BACKEND_ID;
 
 	try {
-		return localStorage.getItem(ACTIVE_SERVER_LOCALSTORAGE_KEY) ?? LOCAL_BACKEND_ID;
+		return PreferencesService.getItem(ACTIVE_SERVER_LOCALSTORAGE_KEY) ?? LOCAL_BACKEND_ID;
 	} catch {
 		return LOCAL_BACKEND_ID;
 	}
@@ -49,7 +50,7 @@ function persistActiveServerId(serverId: string): void {
 	if (!browser) return;
 
 	try {
-		localStorage.setItem(ACTIVE_SERVER_LOCALSTORAGE_KEY, serverId);
+		PreferencesService.setItem(ACTIVE_SERVER_LOCALSTORAGE_KEY, serverId);
 	} catch {
 		/* ignore */
 	}

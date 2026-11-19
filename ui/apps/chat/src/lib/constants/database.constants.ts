@@ -1,5 +1,5 @@
 /**
- * Database-related constants (IndexedDB, Dexie).
+ * Database-related constants (IndexedDB).
  *
  * Centralized to ensure consistency across the app and simplify future
  * naming changes.
@@ -19,38 +19,25 @@ export const IDXDB_TABLES = {
 	prompts: 'prompts'
 } as const;
 
-/** IndexedDB store schemas */
-export const IDXDB_STORE_SCHEMAS = {
-	conversations: 'id, lastModified, currNode, name',
-	groups: 'id, updatedAt, name',
-	messages: 'id, convId, type, role, timestamp, parent, children',
-	projects: 'id, updatedAt, name',
-	prompts: 'id, lastModified, name'
-} as const;
+/**
+ * Indexes of each store, every one keyed by `id`. Each index is named after
+ * the field it covers and is neither unique nor multi-entry: the layout Dexie
+ * created from its `'id, lastModified, ...'` schemas, kept so existing
+ * databases open unchanged.
+ */
+export const IDXDB_STORE_INDEXES = {
+	conversations: ['lastModified', 'currNode', 'name'],
+	groups: ['updatedAt', 'name'],
+	messages: ['convId', 'type', 'role', 'timestamp', 'parent', 'children'],
+	projects: ['updatedAt', 'name'],
+	prompts: ['lastModified', 'name']
+} as const satisfies Record<keyof typeof IDXDB_TABLES, readonly string[]>;
 
-/** Combined Dexie stores definition — keys are table names, values are schemas */
-export const IDXDB_STORES = {
-	[IDXDB_TABLES.conversations]: IDXDB_STORE_SCHEMAS.conversations,
-	[IDXDB_TABLES.groups]: IDXDB_STORE_SCHEMAS.groups,
-	[IDXDB_TABLES.messages]: IDXDB_STORE_SCHEMAS.messages,
-	[IDXDB_TABLES.projects]: IDXDB_STORE_SCHEMAS.projects,
-	[IDXDB_TABLES.prompts]: IDXDB_STORE_SCHEMAS.prompts
-} as const;
+/** Primary key path of every store */
+export const IDXDB_KEY_PATH = 'id';
 
-/** Stores of schema version 1, before the groups table existed. */
-export const IDXDB_STORES_V1 = {
-	[IDXDB_TABLES.conversations]: IDXDB_STORE_SCHEMAS.conversations,
-	[IDXDB_TABLES.messages]: IDXDB_STORE_SCHEMAS.messages
-} as const;
-
-/** Schema version that added the groups table. */
-export const IDXDB_VERSION_GROUPS = 2;
-
-/** Schema version that added the projects table. */
-export const IDXDB_VERSION_PROJECTS = 3;
-
-/** Schema version that added the prompts table. */
-export const IDXDB_VERSION_PROMPTS = 4;
-
-/** Schema version new Dexie instances open the database at; bump with a new version block. */
-export const IDXDB_VERSION = 4;
+/**
+ * IndexedDB version the database is opened at. Dexie stored its schema
+ * version 4 (prompts added) as 4 * 10; a new store or index bumps this.
+ */
+export const IDXDB_VERSION = 40;

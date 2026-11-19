@@ -108,7 +108,7 @@
 		"@vitest/coverage-v8": "4.1.12",
 		"bits-ui": "2.18.1",
 		"clsx": "2.1.1",
-		"dexie": "4.4.3",
+		"idb": "8.0.4",
 		"dompurify": "3.4.17",
 		"eslint": "10.14.0",
 		"eslint-config-prettier": "10.1.8",

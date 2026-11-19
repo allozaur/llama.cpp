@@ -113,6 +113,7 @@ export default defineConfig(({ mode }) => {
 				'/models': toServer(),
 				'/props': toServer(),
 				'/slots': toServer(),
+				'/storage': toServer(),
 				'/tools': toServer(),
 				'/v1': toServer()
 			}

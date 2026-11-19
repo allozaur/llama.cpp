@@ -17,6 +17,7 @@ import type {
 	ExtensionStatus
 } from './types';
 import { EXTENSIONS_LOCALSTORAGE_KEY } from '#lib/constants/index.ts';
+import { PreferencesService } from '#lib/services/preferences.service.ts';
 import { browser } from '$app/env';
 import { SvelteMap } from 'svelte/reactivity';
 
@@ -199,7 +200,7 @@ class ExtensionRegistry {
 		this.choicesLoaded = true;
 
 		try {
-			const stored = localStorage.getItem(this.storageKey);
+			const stored = PreferencesService.getItem(this.storageKey);
 
 			if (!stored) return;
 
@@ -219,7 +220,10 @@ class ExtensionRegistry {
 		if (!browser || !this.storageKey) return;
 
 		try {
-			localStorage.setItem(this.storageKey, JSON.stringify(Object.fromEntries(this._choices)));
+			PreferencesService.setItem(
+				this.storageKey,
+				JSON.stringify(Object.fromEntries(this._choices))
+			);
 		} catch {
 			// ignore storage errors
 		}

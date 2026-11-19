@@ -144,7 +144,7 @@ sequenceDiagram
 - **Messages form a tree**: each message knows its parent and children, and a conversation points at the branch tip it shows, so editing or regenerating branches without losing history.
 - **Server role**: one codebase serves MODEL and ROUTER mode; `serverStore` reads the role from `/props`, and ROUTER-only UI shows only there.
 - **Modalities**: attachments a model cannot read (images for a text-only model, say) are refused before sending, from the model's `/props`.
-- **Storage**: conversations and messages in IndexedDB (Dexie), settings and model preferences in localStorage, server state and Hub details in memory only.
+- **Storage**: conversations and messages in IndexedDB (idb), settings and model preferences in localStorage, server state and Hub details in memory only.
 
 ### Extensions (`src/lib/extensions/`)
 

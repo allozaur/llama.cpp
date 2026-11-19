@@ -66,6 +66,23 @@ export const DISMISSED_RECOMMENDED_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAM
 /** Key prefix for per-conversation resumable stream state, conversationId is appended */
 export const STREAM_RESUME_LOCALSTORAGE_KEY_PREFIX = `${STORAGE_APP_NAME}.streamResume.`;
 
+/** Preference keys holding the user's own data; every other key is device-local UI state */
+export const USER_PREFERENCE_KEYS: ReadonlySet<string> = new Set([
+	ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY,
+	CONFIG_LOCALSTORAGE_KEY,
+	DISABLED_TOOL_CATEGORIES_LOCALSTORAGE_KEY,
+	DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
+	DISMISSED_RECOMMENDED_MCP_SERVERS_LOCALSTORAGE_KEY,
+	DISMISSED_RECOMMENDED_SERVERS_LOCALSTORAGE_KEY,
+	EXTENSIONS_LOCALSTORAGE_KEY,
+	FAVORITE_MODELS_LOCALSTORAGE_KEY,
+	HIDDEN_MODELS_LOCALSTORAGE_KEY,
+	MODEL_OVERRIDES_LOCALSTORAGE_KEY,
+	REASONING_EFFORT_DEFAULT_LOCALSTORAGE_KEY,
+	RECENT_MODELS_LOCALSTORAGE_KEY,
+	USER_OVERRIDES_LOCALSTORAGE_KEY
+]);
+
 // Deprecated old key names (kept for backward compat while users migrate)
 /** @deprecated Remote servers are settings-backed now; the demo build kept them here */
 export const LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY = 'llama_servers';
@@ -79,6 +96,12 @@ export const DEPRECATED_DISABLED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DE
 export const DEPRECATED_FAVORITE_MODELS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.favoriteModels`;
 /** @deprecated Use {@link USER_OVERRIDES_LOCALSTORAGE_KEY} instead */
 export const DEPRECATED_USER_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME_DEPRECATED}.userOverrides`;
+
+/** Storage adapter id this browser keeps conversations and user settings in, unset: this browser */
+export const STORAGE_ADAPTER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.storageAdapter`;
+
+/** API key kept in this browser while the rest of the config lives on the server */
+export const API_KEY_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.apiKey`;
 
 /** Maps new keys to their deprecated fallback keys */
 export const NEW_TO_DEPRECATED_MAP: Record<string, string> = {

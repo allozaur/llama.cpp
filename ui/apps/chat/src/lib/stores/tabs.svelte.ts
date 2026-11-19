@@ -27,6 +27,7 @@ import {
 	PROJECT_HOME_TAB_ID,
 	ROUTES
 } from '#lib/constants/index.ts';
+import { PreferencesService } from '#lib/services/preferences.service.ts';
 import { RouterService } from '#lib/services/router.service.ts';
 import { projectOfNewChatTab, type TabView } from '#lib/utils/chat-tabs.ts';
 import { browser } from '$app/env';
@@ -228,7 +229,7 @@ export class TabsStore {
 
 	private load(): string[] {
 		try {
-			const raw = localStorage.getItem(CONVERSATION_TABS_LOCALSTORAGE_KEY);
+			const raw = PreferencesService.getItem(CONVERSATION_TABS_LOCALSTORAGE_KEY);
 			const parsed: unknown = raw ? JSON.parse(raw) : [];
 
 			if (Array.isArray(parsed)) return parsed.filter((id) => typeof id === 'string');
@@ -251,7 +252,7 @@ export class TabsStore {
 		// write would clobber them
 		if (!browser || !this.initialized) return;
 
-		localStorage.setItem(CONVERSATION_TABS_LOCALSTORAGE_KEY, JSON.stringify(this.openTabs));
+		PreferencesService.setItem(CONVERSATION_TABS_LOCALSTORAGE_KEY, JSON.stringify(this.openTabs));
 	}
 }
 

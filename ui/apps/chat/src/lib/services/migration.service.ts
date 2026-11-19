@@ -8,14 +8,12 @@
  * migration. All migrations are non-destructive for downgrade compatibility.
  */
 
+import { openLlamaUiDatabase } from './idb-backend';
 import {
 	CONFIG_LOCALSTORAGE_KEY,
 	DB_APP_NAME_DEPRECATED,
 	DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
-	IDXDB_STORES,
-	IDXDB_STORES_V1,
 	IDXDB_TABLES,
-	IDXDB_VERSION,
 	LEGACY_AGENTIC_REGEX,
 	LEGACY_REASONING_TAGS,
 	LEGACY_TUNNEL_SERVERS_LOCALSTORAGE_KEY,
@@ -34,7 +32,7 @@ import {
 	parseServersSettings
 } from '#lib/utils/servers.ts';
 import { uuid } from '#lib/utils/uuid.ts';
-import Dexie from 'dexie';
+import { openDB } from 'idb';
 
 // Types
 
@@ -165,22 +163,27 @@ const idxdbMigration: Migration = {
 	id: IDXDB_MIGRATION_ID,
 
 	async run(): Promise<void> {
-		const oldDbNames = await Dexie.getDatabaseNames();
+		await copyDeprecatedDatabase(DB_APP_NAME_DEPRECATED, STORAGE_APP_NAME);
+	}
+};
 
-		if (!oldDbNames.includes(DB_APP_NAME_DEPRECATED)) {
-			if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
-				console.log('[Migration] IndexedDB: no old database found, skipping');
+/**
+ * Copies the conversations and messages of the old web UI's database into the
+ * app's, unless the app's already has conversations. The old database is kept.
+ */
+export async function copyDeprecatedDatabase(from: string, to: string): Promise<void> {
+	if (!(await databaseExists(from))) {
+		if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
+			console.log('[Migration] IndexedDB: no old database found, skipping');
 
-			return;
-		}
+		return;
+	}
 
+	const newDb = await openLlamaUiDatabase(to);
+
+	try {
 		// Check if new database already has data
-		const newDb = new Dexie(STORAGE_APP_NAME);
-
-		newDb.version(IDXDB_VERSION).stores(IDXDB_STORES);
-		const existingConvs = await newDb.table(IDXDB_TABLES.conversations).count();
-
-		if (existingConvs > 0) {
+		if ((await newDb.count(IDXDB_TABLES.conversations)) > 0) {
 			if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
 				console.log('[Migration] IndexedDB: new database already has data, skipping');
 
@@ -188,38 +191,74 @@ const idxdbMigration: Migration = {
 		}
 
 		if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
-			console.log('[Migration] IndexedDB: copying from', DB_APP_NAME_DEPRECATED);
+			console.log('[Migration] IndexedDB: copying from', from);
 
-		const oldDb = new Dexie(DB_APP_NAME_DEPRECATED);
+		const { conversations, messages } = await readDeprecatedDatabase(from);
+		const tx = newDb.transaction([IDXDB_TABLES.conversations, IDXDB_TABLES.messages], 'readwrite');
 
-		oldDb.version(1).stores(IDXDB_STORES_V1);
+		await Promise.all([
+			...conversations.map((conv) => tx.objectStore(IDXDB_TABLES.conversations).put(conv)),
+			...messages.map((message) => tx.objectStore(IDXDB_TABLES.messages).put(message)),
+			tx.done
+		]);
 
-		const conversations = await oldDb.table(IDXDB_TABLES.conversations).toArray();
-		const messages = await oldDb.table(IDXDB_TABLES.messages).toArray();
-
-		if (conversations.length > 0) {
-			await newDb.table(IDXDB_TABLES.conversations).bulkAdd(conversations);
-
-			if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
-				console.log(`[Migration] IndexedDB: copied ${conversations.length} conversations`);
-		}
-
-		if (messages.length > 0) {
-			await newDb.table(IDXDB_TABLES.messages).bulkAdd(messages);
-
-			if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
-				console.log(`[Migration] IndexedDB: copied ${messages.length} messages`);
-		}
-
-		// Non-destructive: DO NOT delete old database - keep for downgrade compatibility
 		if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
-			console.log('[Migration] IndexedDB: preserved old database for downgrade compatibility');
+			console.log(
+				`[Migration] IndexedDB: copied ${conversations.length} conversations and ${messages.length} messages`
+			);
+	} finally {
+		newDb.close();
 	}
-};
+
+	// Non-destructive: DO NOT delete old database - keep for downgrade compatibility
+	if (import.meta.env.DEV && import.meta.env.VITE_DEBUG)
+		console.log('[Migration] IndexedDB: preserved old database for downgrade compatibility');
+}
+
+/** Whether an IndexedDB database of that name exists, without creating it. */
+async function databaseExists(name: string): Promise<boolean> {
+	if (typeof indexedDB.databases === 'function') {
+		return (await indexedDB.databases()).some((info) => info.name === name);
+	}
+
+	// no listing: opening a missing database runs an upgrade, which is aborted so none is created
+	try {
+		const db = await openDB(name, undefined, {
+			upgrade(_db, _oldVersion, _newVersion, tx) {
+				tx.abort();
+			}
+		});
+
+		db.close();
+
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/** Rows of the database the old web UI wrote, as they are. */
+async function readDeprecatedDatabase(name: string): Promise<{
+	conversations: DatabaseConversation[];
+	messages: DatabaseMessage[];
+}> {
+	const db = await openDB(name);
+
+	try {
+		const read = async <T>(store: string): Promise<T[]> =>
+			db.objectStoreNames.contains(store) ? ((await db.getAll(store)) as T[]) : [];
+
+		return {
+			conversations: await read<DatabaseConversation>(IDXDB_TABLES.conversations),
+			messages: await read<DatabaseMessage>(IDXDB_TABLES.messages)
+		};
+	} finally {
+		db.close();
+	}
+}
 
 // Migration 3: Legacy Message Format
 
-// eslint-disable-next-line padding-line-between-statements -- comment header separates this const group
 const LEGACY_MESSAGE_MIGRATION_ID = 'legacy-message-format-v2';
 
 interface ParsedTurn {

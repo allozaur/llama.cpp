@@ -21,6 +21,7 @@ import {
 } from '#lib/enums/index.ts';
 import { HuggingFaceService } from '#lib/services/huggingface.service.ts';
 import { ModelsService } from '#lib/services/models.service.ts';
+import { PreferencesService } from '#lib/services/preferences.service.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import type { ModelPropsManager } from '#lib/stores/models/props.svelte.ts';
 import { serversStore } from '#lib/stores/servers.svelte.ts';
@@ -302,7 +303,7 @@ export class ModelStatusManager {
 	constructor(private host: ModelStatusHost) {
 		// the paused-ids registry moved to the server's unfinished-downloads record;
 		// drop the key this store used to persist
-		if (browser) localStorage.removeItem(`${STORAGE_APP_NAME}.pausedModelDownloads`);
+		if (browser) PreferencesService.removeItem(`${STORAGE_APP_NAME}.pausedModelDownloads`);
 	}
 
 	/**

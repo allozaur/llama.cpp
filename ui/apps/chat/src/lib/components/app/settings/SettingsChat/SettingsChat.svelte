@@ -19,6 +19,7 @@
 		SETTINGS_SECTION_SLUGS
 	} from '#lib/constants/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
+	import { StorageModeService } from '#lib/services/index.ts';
 	import { modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
 	import type { SettingsSection, SettingsSectionTitle } from '#lib/types/index.ts';
 	import { applySurfaceTheme } from '#lib/utils/index.ts';
@@ -225,7 +226,11 @@
 				</div>
 
 				<div class="mt-8 border-t border-border/30 pt-6 pb-6">
-					<p class="text-xs text-muted-foreground">Settings are saved in browser's localStorage</p>
+					<p class="text-xs text-muted-foreground">
+						{StorageModeService.activeAdapter
+							? `Settings are saved on ${StorageModeService.activeAdapter.name}`
+							: "Settings are saved in browser's localStorage"}
+					</p>
 				</div>
 			</div>
 
