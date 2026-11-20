@@ -1,3 +1,10 @@
+<!--
+	@component
+	The chat form's key for how much the model should think before answering: a bulb that opens the levels the model
+	offers, in a menu, or in a drawer on a phone. Reads and sets the conversation's level itself.
+
+	@summary The chat form's reasoning-level key.
+-->
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';

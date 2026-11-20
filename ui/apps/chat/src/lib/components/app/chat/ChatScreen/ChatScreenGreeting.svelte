@@ -1,3 +1,10 @@
+<!--
+	@component
+	The greeting in the middle of a new chat. `isEmpty` shows it, `faded` dims it while the user types, and
+	`instant` skips its entrance.
+
+	@summary The greeting on a new chat.
+-->
 <script lang="ts">
 	import { CHAT_FORM_RESIZE_MS, CHAT_GREETING_ENTER_DELAY_MS } from '#lib/constants/index.ts';
 	import { serverStore } from '#lib/stores/index.ts';

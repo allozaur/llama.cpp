@@ -6,7 +6,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Tabs.Root,
+		component: Tabs.Tabs,
 		parameters: {
 			layout: 'centered'
 		},

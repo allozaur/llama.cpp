@@ -4,7 +4,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Drawer.Root,
+		component: Drawer.Drawer,
 		parameters: {
 			layout: 'fullscreen'
 		},

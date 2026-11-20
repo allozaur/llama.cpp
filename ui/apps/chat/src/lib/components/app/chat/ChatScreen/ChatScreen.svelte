@@ -1,3 +1,11 @@
+<!--
+	@component
+	The chat page: the greeting on a new chat, the conversation's messages, the form pinned at the bottom, the
+	scroll-down key, the file drop overlay and the server error notice. It reads the conversation from the stores
+	and the route, and takes no data as props.
+
+	@summary The whole chat page.
+-->
 <script lang="ts">
 	import ChatScreenActionScrollDown from './ChatScreenActionScrollDown.svelte';
 	import ChatScreenDialogsAndAlerts from './ChatScreenDialogsAndAlerts.svelte';

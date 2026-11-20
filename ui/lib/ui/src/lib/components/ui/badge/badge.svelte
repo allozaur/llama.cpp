@@ -1,3 +1,10 @@
+<!--
+	@component
+	A small label for a status, a count or a tag next to other content. Renders a link when given `href`. It is not
+	a control: for something to press use Button.
+
+	@summary A small label for a status, count or tag.
+-->
 <script lang="ts" module>
 	import { tv } from '../utils';
 	import type { VariantProps } from 'tailwind-variants';

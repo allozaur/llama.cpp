@@ -1,3 +1,10 @@
+<!--
+	@component
+	A search field with a magnifier and a clear key that appears once there is text and calls `onClose`. `value` is
+	bindable. Use it for filtering a list in place.
+
+	@summary A search field with a clear key.
+-->
 <script lang="ts">
 	import { Search, X } from '@lucide/svelte';
 	import { Input } from '../../ui/input';

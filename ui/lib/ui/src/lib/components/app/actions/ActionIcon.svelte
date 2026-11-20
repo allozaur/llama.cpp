@@ -1,3 +1,10 @@
+<!--
+	@component
+	An icon-only button with its name in a tooltip and as its accessible label, for the small actions on a row, a
+	message or a toolbar. Renders a link when given `href`. For a button with visible text use Button.
+
+	@summary An icon-only button with a tooltip.
+-->
 <script lang="ts">
 	import { Button, type ButtonSize, type ButtonVariant } from '../../ui/button';
 	import * as Tooltip from '../../ui/tooltip';

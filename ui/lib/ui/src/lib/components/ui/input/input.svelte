@@ -1,3 +1,10 @@
+<!--
+	@component
+	A one-line text field, for any input type including files. Pair it with a Label; set `aria-invalid` to show an
+	error. For several lines use Textarea, for a search box SearchInput.
+
+	@summary A one-line text field.
+-->
 <script lang="ts">
 	import { cn, type WithElementRef } from '../utils';
 	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from 'svelte/elements';

@@ -1,3 +1,11 @@
+<!--
+	@component
+	The card for one MCP server in the settings: its header with the name, status and controls, the server's
+	instructions and tools, its connection logs, and the form to edit it. `enabled` and `onToggle` turn it on and
+	off.
+
+	@summary The settings card for one MCP server.
+-->
 <script lang="ts">
 	import * as Card from '@ggml-org/llama-ui/ui/card';
 	import { Skeleton } from '@ggml-org/llama-ui/ui/skeleton';

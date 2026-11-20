@@ -1,3 +1,10 @@
+<!--
+	@component
+	The avatar of the organisation that made a model, with the publisher of its GGUFs as a smaller avatar in the
+	corner when the two differ. Falls back to a coloured monogram when there is no image.
+
+	@summary A model maker's avatar, with the quantizer's in the corner.
+-->
 <script lang="ts">
 	import { DARK_INVERT_AVATAR_ORGS } from '../../models/constants';
 	import { getAvatarUrl } from '../../models/format';

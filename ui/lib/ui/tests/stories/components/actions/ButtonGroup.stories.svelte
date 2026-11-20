@@ -7,7 +7,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: ButtonGroup.Root,
+		component: ButtonGroup.ButtonGroup,
 		parameters: {
 			layout: 'centered'
 		},

@@ -7,7 +7,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Collapsible.Root,
+		component: Collapsible.Collapsible,
 		parameters: {
 			layout: 'centered'
 		},

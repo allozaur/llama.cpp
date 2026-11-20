@@ -3,7 +3,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Table.Root,
+		component: Table.Table,
 		parameters: {
 			layout: 'centered'
 		},

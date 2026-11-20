@@ -1,3 +1,10 @@
+<!--
+	@component
+	The chat form's send key. `canSend` enables it, `showErrorState` turns it red when sending is blocked, and
+	`tooltipLabel` says why.
+
+	@summary The chat form's send key.
+-->
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';

@@ -1,3 +1,10 @@
+<!--
+	@component
+	The collapsible block for a model's reasoning in an assistant message: a title that shimmers while the model is
+	thinking, and the reasoning text when open.
+
+	@summary The collapsible block for a model's reasoning.
+-->
 <script lang="ts">
 	import { Lightbulb } from '@lucide/svelte';
 	import { CollapsibleContentBlock, MarkdownContent } from '#lib/components/app/index.ts';

@@ -1,3 +1,10 @@
+<!--
+	@component
+	The floating picker for MCP prompts, opened from the chat form: it lists the prompts of the connected servers
+	filtered by `searchQuery`, asks for a prompt's arguments, loads it and reports the result to the form.
+
+	@summary The chat form's picker for MCP prompts.
+-->
 <script lang="ts">
 	import { Badge } from '@ggml-org/llama-ui/ui/badge';
 	import {

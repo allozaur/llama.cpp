@@ -1,3 +1,9 @@
+<!--
+	@component
+	The settings dialog: the navigation of sections and the open section. `initialSection` opens it on a given one.
+
+	@summary The settings dialog.
+-->
 <script lang="ts">
 	import * as Dialog from '@ggml-org/llama-ui/ui/dialog';
 	import { Settings, X } from '@lucide/svelte';

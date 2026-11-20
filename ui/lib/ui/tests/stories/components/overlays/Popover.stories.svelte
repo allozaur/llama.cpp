@@ -6,7 +6,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Popover.Root,
+		component: Popover.Popover,
 		parameters: {
 			layout: 'centered'
 		},

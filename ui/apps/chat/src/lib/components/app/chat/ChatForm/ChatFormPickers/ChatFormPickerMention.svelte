@@ -1,3 +1,10 @@
+<!--
+	@component
+	The floating picker for mentioning a file or folder in the chat form: `query` (what is typed after `@`) searches
+	under `scopePath`, and the choice comes back through `onSelect`. The form owns when it opens.
+
+	@summary The chat form's file and folder mention picker.
+-->
 <script lang="ts">
 	import * as Popover from '@ggml-org/llama-ui/ui/popover';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';

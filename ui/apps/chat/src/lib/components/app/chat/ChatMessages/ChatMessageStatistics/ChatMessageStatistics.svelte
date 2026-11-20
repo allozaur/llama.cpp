@@ -1,3 +1,10 @@
+<!--
+	@component
+	The statistics under an assistant message: tokens, time and speed for reading the prompt and for generating, and
+	the tool figures of an agentic turn. `isLive` updates them while the reply streams.
+
+	@summary Token and speed statistics for a reply.
+-->
 <script lang="ts">
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { BookOpenText, Clock, Gauge, Layers, Sparkles, WholeWord, Wrench } from '@lucide/svelte';

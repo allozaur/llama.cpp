@@ -1,3 +1,9 @@
+<!--
+	@component
+	The card that tells the user a new version of the app is ready and reloads into it.
+
+	@summary The card offering to reload into a new version.
+-->
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Card from '@ggml-org/llama-ui/ui/card';

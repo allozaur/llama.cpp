@@ -1,7 +1,10 @@
 <!--
+	@component
 	A model's name with its badges (draft kind, parameters, quantization, drafts, aliases, tags) and its capability,
 	context and size icons. The app passes the parts it already knows (a parsed id, a catalog entry) and the user's
 	display settings as the props it sets or leaves out, so the same markup serves Llama Chat and llama.app.
+
+	@summary A model's name with its badges and capability icons.
 -->
 <script lang="ts">
 	import ModelCapabilityIcons from './ModelCapabilityIcons.svelte';

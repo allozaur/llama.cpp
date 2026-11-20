@@ -1,3 +1,10 @@
+<!--
+	@component
+	A text field for several lines. Pair it with a Label; set `aria-invalid` to show an error. For one line use
+	Input.
+
+	@summary A text field for several lines.
+-->
 <script lang="ts">
 	import { cn, type WithElementRef, type WithoutChildren } from '../utils';
 	import type { HTMLTextareaAttributes } from 'svelte/elements';

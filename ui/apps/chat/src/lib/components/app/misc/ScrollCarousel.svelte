@@ -1,3 +1,10 @@
+<!--
+	@component
+	A row that scrolls sideways with arrow keys at its ends when its content overflows, for chips, tabs or cards
+	that may not fit.
+
+	@summary A sideways-scrolling row with arrow keys.
+-->
 <script lang="ts">
 	import { cn } from '@ggml-org/llama-ui/utils';
 	import { ChevronLeft, ChevronRight } from '@lucide/svelte';

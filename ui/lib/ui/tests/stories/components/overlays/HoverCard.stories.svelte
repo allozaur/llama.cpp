@@ -3,7 +3,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: HoverCard.Root,
+		component: HoverCard.HoverCard,
 		parameters: {
 			layout: 'centered'
 		},

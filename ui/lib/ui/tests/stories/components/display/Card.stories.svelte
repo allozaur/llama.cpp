@@ -4,7 +4,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Card.Root,
+		component: Card.Card,
 		parameters: {
 			layout: 'centered'
 		},

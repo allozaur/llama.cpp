@@ -1,8 +1,11 @@
 <!--
+	@component
 	One quant of a model as a chip: its label, any draft riding with it, its size and the action its state allows.
 	The props-in version of ui/apps/chat's ModelsDiscoverDetailsDownloadOptionsQuantDownloadButton: the app passes the state
 	and gets each action back as a callback; it never downloads anything itself. An idle chip with `href` is a link,
 	for pages that hand the install to another app (llama.app's Install, a deep link).
+
+	@summary One quant of a model as a chip with its download action.
 -->
 <script lang="ts">
 	import ModelDownloadProgressBar from './ModelDownloadProgressBar.svelte';

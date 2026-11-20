@@ -1,3 +1,10 @@
+<!--
+	@component
+	A scrolling region with the design system's thin scrollbars in place of the browser's, for a bounded panel such
+	as a menu, a side list or a log. `orientation` picks vertical, horizontal or both.
+
+	@summary A scrolling region with styled scrollbars.
+-->
 <script lang="ts">
 	import { Scrollbar } from './index.js';
 	import { cn, type WithoutChild } from '../utils';

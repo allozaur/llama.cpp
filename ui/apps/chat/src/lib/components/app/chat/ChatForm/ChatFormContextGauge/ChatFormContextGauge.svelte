@@ -1,3 +1,10 @@
+<!--
+	@component
+	A small dial of how full the model's context is for the current conversation, with the details in a popup.
+	`corner` draws it as a phone's corner key. Reads the usage from the stores itself.
+
+	@summary A dial of how full the model's context is.
+-->
 <script lang="ts">
 	import ContextGaugeDial from './ContextGaugeDial.svelte';
 	import {

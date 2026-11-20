@@ -1,3 +1,10 @@
+<!--
+	@component
+	The collapsible block for one tool call in an assistant message: the tool and its arguments in the title, the
+	call and its result when open, with states for streaming arguments and for a call still running.
+
+	@summary The collapsible block for one tool call.
+-->
 <script lang="ts">
 	import ChatMessageToolCallBlockDefault from './ChatMessageToolCallBlockDefault.svelte';
 	import ChatMessageToolCallBlockEditFile from './ChatMessageToolCallBlockEditFile.svelte';

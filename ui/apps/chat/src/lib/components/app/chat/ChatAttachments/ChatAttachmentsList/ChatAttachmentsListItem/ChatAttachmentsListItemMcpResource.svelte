@@ -1,3 +1,10 @@
+<!--
+	@component
+	The chip for an MCP resource attached to a message: its name, the server it comes from and its loading or error
+	state, with a remove key while it can still be removed.
+
+	@summary The chip for an attached MCP resource.
+-->
 <script lang="ts">
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { AlertCircle, Loader2 } from '@lucide/svelte';

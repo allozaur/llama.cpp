@@ -1,3 +1,11 @@
+<!--
+	@component
+	A read-only block of code highlighted for its `language`, scrolling within `maxHeight` and `maxWidth`.
+	`streaming` keeps the newest lines in view while the code is still arriving. For code inside a chat message,
+	MarkdownContent renders it.
+
+	@summary A read-only, syntax-highlighted block of code.
+-->
 <script lang="ts">
 	import { SYNTAX_CODE_SCROLL_AT_BOTTOM_THRESHOLD_PX, UI_DATA_ATTRS } from '../../../constants';
 	import { BooleanString, ColorMode } from '../../../enums';

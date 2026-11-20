@@ -1,3 +1,10 @@
+<!--
+	@component
+	What an MCP server offers, as outline badges: tools, resources, prompts, logging, completions and tasks.
+	`onBrowseResources` lets the resources badge open the resource browser.
+
+	@summary Badges for what an MCP server offers.
+-->
 <script lang="ts">
 	import { Badge } from '@ggml-org/llama-ui/ui/badge';
 	import {

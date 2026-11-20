@@ -1,3 +1,10 @@
+<!--
+	@component
+	The chat form's microphone key, which starts and stops recording a voice message. It is disabled with an
+	explanation when the model takes no audio (`hasAudioModality`) or the microphone is unavailable (`micWarning`).
+
+	@summary The chat form's microphone key.
+-->
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';

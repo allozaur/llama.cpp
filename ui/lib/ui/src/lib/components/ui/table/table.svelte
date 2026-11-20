@@ -1,3 +1,11 @@
+<!--
+	@component
+	A table for rows of data with the same columns, built from Table.Header, Table.Body, Table.Row, Table.Head and
+	Table.Cell, with an optional Table.Caption and Table.Footer. It scrolls sideways when it is wider than its
+	container.
+
+	@summary A table for rows of data with shared columns.
+-->
 <script lang="ts">
 	import { cn, type WithElementRef } from '../utils.js';
 	import type { HTMLTableAttributes } from 'svelte/elements';

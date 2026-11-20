@@ -6,7 +6,7 @@
 	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: RadioGroup.Root,
+		component: RadioGroup.RadioGroup,
 		parameters: {
 			layout: 'centered'
 		},
