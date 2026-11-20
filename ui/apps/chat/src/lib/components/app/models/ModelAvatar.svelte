@@ -38,7 +38,10 @@
 		size = 'size-5'
 	}: Props = $props();
 
-	let parsedId = $derived(ModelsService.parseModelId(option.model));
+	// a download's progress rebuilds its option on every event, so the avatar keys on
+	// the model id, which a derived only passes on when it changes
+	let modelId = $derived(option.model);
+	let parsedId = $derived(ModelsService.parseModelId(modelId));
 	let orgName = $derived(parsedId.orgName);
 	// A row names neither flag: a family heading already carries the base org, so a
 	// grouped list shows the repo's own org, and an ungrouped one the base org with the
@@ -61,12 +64,17 @@
 	);
 	// long lists mount hundreds of avatars at once, so the base org lookup waits
 	// until the row is near the viewport
-	let fetchedBaseModelOrg = $state<string | null>(null);
+	// the org found stays with the model it was found for, so a re-run of the lookup
+	// never shows the repo org in between
+	let fetchedBaseModel = $state<{ model: string; org: string } | null>(null);
+	let fetchedBaseModelOrg = $derived(
+		fetchedBaseModel?.model === modelId ? fetchedBaseModel.org : null
+	);
 	let baseModelOrg = $derived(orgOf(tagBaseModel) || fetchedBaseModelOrg);
 	let isNearViewport = $state(false);
 
 	$effect(() => {
-		fetchedBaseModelOrg = null;
+		const model = modelId;
 
 		if (!isNearViewport || !baseOrgMain || !orgName || tagBaseModel) return;
 
@@ -74,9 +82,9 @@
 
 		let cancelled = false;
 
-		void HuggingFaceService.getBaseModel(option.model)
+		void HuggingFaceService.getBaseModel(model)
 			.then((base) => {
-				if (!cancelled && base?.org) fetchedBaseModelOrg = base.org;
+				if (!cancelled && base?.org) fetchedBaseModel = { model, org: base.org };
 			})
 			// best-effort lookup: offline or unknown repos keep the repo org
 			.catch(() => {});

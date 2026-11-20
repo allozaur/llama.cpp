@@ -35,13 +35,18 @@
 	let actionText = $derived(entry.isPaused ? 'Resume downloading' : 'Pause downloading');
 
 	// the base model org resolves lazily via HF when unknown
-	let orgName = $derived(ModelsService.parseModelId(entry.repoWithTag).orgName);
-	let fetchedBaseModelOrg = $state<string | null>(null);
+	// the feed rebuilds the entry on every progress event, so the lookup keys on the
+	// repo id, which a derived only passes on when it changes, and the org found stays
+	// with the repo it was found for
+	let repoId = $derived(entry.repoWithTag);
+	let orgName = $derived(ModelsService.parseModelId(repoId).orgName);
+	let fetchedBaseModel = $state<{ repo: string; org: string } | null>(null);
+	let fetchedBaseModelOrg = $derived(
+		fetchedBaseModel?.repo === repoId ? fetchedBaseModel.org : null
+	);
 
 	$effect(() => {
-		const repoWithTag = entry.repoWithTag;
-
-		fetchedBaseModelOrg = null;
+		const repoWithTag = repoId;
 
 		// avatars hidden with the Hub metadata setting off: no lookups at all
 		if (!HuggingFaceService.isEnabled()) return;
@@ -50,7 +55,7 @@
 
 		void HuggingFaceService.getBaseModel(repoWithTag)
 			.then((base) => {
-				if (!cancelled && base?.org) fetchedBaseModelOrg = base.org;
+				if (!cancelled && base?.org) fetchedBaseModel = { org: base.org, repo: repoWithTag };
 			})
 			// best-effort lookup: offline or unknown repos keep the repo org
 			.catch(() => {});
