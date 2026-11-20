@@ -207,6 +207,12 @@ export interface RunOptions {
    * rest of the run. Keep the tool list append-only within a conversation, so the server can reuse its prompt cache.
    */
   prepareTurn?: (turn: TurnState) => Promise<TurnChanges | void>;
+  /**
+   * Find a tool the model called that is not in the tool list, e.g. one it knows of but has not loaded yet. Return it
+   * to run the call, through `authorize`, as if it were listed; return nothing for an `Unknown tool` error. It is not
+   * added to the list: `prepareTurn` does that if the app wants it in the next requests.
+   */
+  resolveTool?: (name: string) => Tool | undefined;
 }
 
 export type Authorization = { type: "allow" } | { type: "deny"; reason: string };
