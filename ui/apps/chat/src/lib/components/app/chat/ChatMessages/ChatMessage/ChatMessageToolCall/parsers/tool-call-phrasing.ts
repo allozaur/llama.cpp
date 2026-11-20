@@ -13,9 +13,9 @@ import {
 	TOOL_CALL_SUMMARY,
 	TOOL_CALL_TARGET_MAX_CHARS,
 	TOOL_SEARCH_LOAD_PHRASING,
+	TOOL_SEARCH_PHRASING_NAME,
+	TOOL_SEARCH_PHRASING_SELECT_PREFIX,
 	TOOL_SEARCH_QUERY_PHRASING,
-	TOOL_SEARCH_SELECT_PREFIX,
-	TOOL_SEARCH_TOOL_NAME,
 	WEB_SEARCH_PHRASING
 } from '#lib/constants/index.ts';
 import { AgenticSectionType, BuiltInTool, ToolCallSummaryKind } from '#lib/enums/index.ts';
@@ -116,12 +116,12 @@ function resolveCall(toolName: string, toolArgs: string): ResolvedCall {
 			return { phrasing: TOOL_CALL_PHRASING[toolName], target: matches.join(', ') || undefined };
 		}
 
-		case TOOL_SEARCH_TOOL_NAME: {
+		case TOOL_SEARCH_PHRASING_NAME: {
 			const query = stringArg(args, 'query')?.trim();
 
-			if (query?.startsWith(TOOL_SEARCH_SELECT_PREFIX)) {
+			if (query?.startsWith(TOOL_SEARCH_PHRASING_SELECT_PREFIX)) {
 				const names = query
-					.slice(TOOL_SEARCH_SELECT_PREFIX.length)
+					.slice(TOOL_SEARCH_PHRASING_SELECT_PREFIX.length)
 					.split(',')
 					.map((name) => name.trim())
 					.filter(Boolean);

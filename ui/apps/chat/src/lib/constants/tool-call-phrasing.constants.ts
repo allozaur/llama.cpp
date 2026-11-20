@@ -7,8 +7,8 @@ import { BuiltInTool, ToolCallSummaryKind } from '#lib/enums/index.ts';
 import type { ToolCallPhrasing } from '#lib/types/index.ts';
 
 /** The tool that loads tools on demand, and its exact-name query prefix. */
-export const TOOL_SEARCH_TOOL_NAME = 'tool_search';
-export const TOOL_SEARCH_SELECT_PREFIX = 'select:';
+export const TOOL_SEARCH_PHRASING_NAME = 'tool_search';
+export const TOOL_SEARCH_PHRASING_SELECT_PREFIX = 'select:';
 
 /** Longest target shown after the verb before it is cut with "...". */
 export const TOOL_CALL_TARGET_MAX_CHARS = 60;
