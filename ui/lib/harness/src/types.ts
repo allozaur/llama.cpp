@@ -61,7 +61,7 @@ export interface ToolResult {
   /** Media the model reads after the text, e.g. an image the tool produced. */
   parts?: ContentPart[];
   isError?: boolean;
-  /** Set it when the tool times itself, e.g. to leave out a wait for approval. Default: the time execute took. */
+  /** Set it when the tool times itself. Default: the time execute took, which leaves out `authorize`. */
   durationMs?: number;
   /** App data the loop does not read. It comes back on the tool_result event. */
   details?: unknown;
@@ -159,6 +159,8 @@ export type DoneReason =
 export type HarnessEvent =
   /** `turn` starts at 1, and again at 1 once `onTurnLimit` grants more turns. */
   | { type: "turn_start"; turn: number }
+  /** What the turn sends to the inference client, after `prepareTurn`: e.g. to measure the context it uses. */
+  | { type: "request"; turn: number; messages: readonly Message[]; tools: readonly ToolDefinition[] }
   | { type: "text"; delta: string }
   | { type: "reasoning"; delta: string }
   | { type: "tool_call_delta"; toolCalls: PartialToolCall[] }
@@ -193,6 +195,34 @@ export interface RunOptions {
    * not run yet get a result that says so. Use `signal` to stop at once.
    */
   interrupted?: () => boolean;
+  /**
+   * Decide whether a tool call may run, e.g. by asking the user. Called after `tool_call` and before `execute`; the
+   * time it takes does not count as the tool's. A denial becomes the call's error result, which the model reads.
+   * Reject with an AbortError to end the run. Default: every call runs.
+   */
+  authorize?: (toolCall: ToolCall, signal?: AbortSignal) => Promise<Authorization>;
+  /**
+   * Change what the next request sends, before each turn: return `tools` to replace the tool list (e.g. to add tools
+   * loaded on demand) or `history` to replace the messages (e.g. a compacted history). What it returns stays for the
+   * rest of the run. Keep the tool list append-only within a conversation, so the server can reuse its prompt cache.
+   */
+  prepareTurn?: (turn: TurnState) => Promise<TurnChanges | void>;
+}
+
+export type Authorization = { type: "allow" } | { type: "deny"; reason: string };
+
+/** What the next turn would send. The arrays are the run's own: return new ones instead of changing them. */
+export interface TurnState {
+  turn: number;
+  history: readonly Message[];
+  tools: readonly Tool[];
+  /** The last request's timings, when the server reports them. */
+  timings?: LlmTimings;
+}
+
+export interface TurnChanges {
+  history?: Message[];
+  tools?: Tool[];
 }
 
 /**

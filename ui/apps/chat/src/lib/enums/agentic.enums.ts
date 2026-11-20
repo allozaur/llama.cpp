@@ -54,6 +54,7 @@ export enum HarnessEventType {
 	MESSAGE = 'message',
 	MODEL = 'model',
 	REASONING = 'reasoning',
+	REQUEST = 'request',
 	TEXT = 'text',
 	TIMINGS = 'timings',
 	TOOL_CALL = 'tool_call',
