@@ -1,5 +1,6 @@
 import { isAbortError } from "./abort.js";
 import type {
+  Authorization,
   DoneReason,
   Harness,
   HarnessEvent,
@@ -14,6 +15,7 @@ import type {
   Tool,
   ToolCall,
   ToolResult,
+  TurnChanges,
   TurnStats,
 } from "./types.js";
 
@@ -65,10 +67,11 @@ async function* run(
   signal?: AbortSignal,
   options: RunOptions = {},
 ): AsyncGenerator<HarnessEvent> {
-  const { interrupted = () => false, maxTurns = Infinity, onTurnLimit } = options;
-  const history = [...messages];
-  const definitions = tools.map((tool) => tool.definition);
-  const toolsByName = new Map(tools.map((tool) => [tool.definition.function.name, tool]));
+  const { authorize, interrupted = () => false, maxTurns = Infinity, onTurnLimit, prepareTurn } = options;
+  let history = [...messages];
+  let currentTools = tools;
+  let definitions = currentTools.map((tool) => tool.definition);
+  let toolsByName = new Map(currentTools.map((tool) => [tool.definition.function.name, tool]));
   const totals: RunTimings = {
     llm: emptyTotals(),
     perTurn: [],
@@ -121,6 +124,36 @@ async function* run(
     }
 
     yield { turn: turn + 1, type: "turn_start" };
+
+    if (prepareTurn) {
+      let changes: TurnChanges | void;
+
+      try {
+        changes = await prepareTurn({ history, timings: lastTimings, tools: currentTools, turn: turn + 1 });
+      } catch (error) {
+        if (signal?.aborted || isAbortError(error)) {
+          yield done("aborted");
+        } else {
+          yield {
+            error: error instanceof Error ? error : new Error(errorMessage(error)),
+            timings: runTimings(),
+            type: "error",
+          };
+        }
+
+        return;
+      }
+
+      if (changes?.history) history = [...changes.history];
+
+      if (changes?.tools) {
+        currentTools = changes.tools;
+        definitions = currentTools.map((tool) => tool.definition);
+        toolsByName = new Map(currentTools.map((tool) => [tool.definition.function.name, tool]));
+      }
+    }
+
+    yield { messages: [...history], tools: definitions, turn: turn + 1, type: "request" };
 
     let content = "";
     let reasoning = "";
@@ -266,12 +299,38 @@ async function* run(
       yield { toolCall, type: "tool_call" };
 
       const tool = toolsByName.get(toolCall.function.name);
+
+      let authorization: Authorization = { type: "allow" };
+
+      if (tool && authorize) {
+        try {
+          authorization = await authorize(toolCall, signal);
+        } catch (error) {
+          if (signal?.aborted || isAbortError(error)) {
+            yield done("aborted");
+
+            return;
+          }
+
+          authorization = { reason: `Error: ${errorMessage(error)}`, type: "deny" };
+        }
+
+        if (signal?.aborted) {
+          yield done("aborted");
+
+          return;
+        }
+      }
+
+      // the time spent on authorization does not count as the tool's
       const startTime = performance.now();
 
       let result: ToolResult;
 
       if (!tool) {
         result = { content: `Error: Unknown tool: ${toolCall.function.name}`, isError: true };
+      } else if (authorization.type === "deny") {
+        result = { content: authorization.reason, isError: true };
       } else {
         // only the latest update matters, so a slow consumer skips the ones in between
         let pendingUpdate: string | undefined;

@@ -86,8 +86,8 @@ describe("createHarness", () => {
     ]);
     const events = await collect(client);
 
-    expect(types(events)).toEqual(["turn_start", "reasoning", "text", "text", "message", "done"]);
-    expect(events[4]).toMatchObject({ content: "Hello", final: true, reasoning: "think" });
+    expect(types(events)).toEqual(["turn_start", "request", "reasoning", "text", "text", "message", "done"]);
+    expect(events[5]).toMatchObject({ content: "Hello", final: true, reasoning: "think" });
     expect(last(events)).toMatchObject({ reason: "complete" });
     expect(requests[0].tools).toBeUndefined();
   });
@@ -101,6 +101,7 @@ describe("createHarness", () => {
 
     expect(types(events)).toEqual([
       "turn_start",
+      "request",
       "text",
       "tool_call_delta",
       "message",
@@ -108,12 +109,13 @@ describe("createHarness", () => {
       "tool_result",
       "turn_end",
       "turn_start",
+      "request",
       "text",
       "message",
       "turn_end",
       "done",
     ]);
-    expect(events[3]).toMatchObject({
+    expect(events[4]).toMatchObject({
       final: false,
       toolCalls: [{ id: "call_0", type: "function" }],
     });
@@ -217,8 +219,8 @@ describe("createHarness", () => {
     };
     const events = await collect(client, [], undefined, controller.signal);
 
-    expect(types(events)).toEqual(["turn_start", "text", "message", "done"]);
-    expect(events[2]).toMatchObject({ content: "par", final: true });
+    expect(types(events)).toEqual(["turn_start", "request", "text", "message", "done"]);
+    expect(events[3]).toMatchObject({ content: "par", final: true });
     expect(last(events)).toMatchObject({ reason: "aborted" });
   });
 
@@ -226,7 +228,7 @@ describe("createHarness", () => {
     const { client } = scriptedClient([new Error("HTTP 500")]);
     const events = await collect(client);
 
-    expect(types(events)).toEqual(["turn_start", "message", "error"]);
+    expect(types(events)).toEqual(["turn_start", "request", "message", "error"]);
     expect(last(events)).toMatchObject({ error: { message: "HTTP 500" } });
   });
 
@@ -234,8 +236,8 @@ describe("createHarness", () => {
     const { client, requests } = scriptedClient([[callEvent("read")], []]);
     const events = await collect(client, [tool("read")], { interrupted: () => true });
 
-    expect(types(events)).toEqual(["turn_start", "tool_call_delta", "message", "done"]);
-    expect(events[2]).toMatchObject({ final: true, toolCalls: [{ id: "call_0" }] });
+    expect(types(events)).toEqual(["turn_start", "request", "tool_call_delta", "message", "done"]);
+    expect(events[3]).toMatchObject({ final: true, toolCalls: [{ id: "call_0" }] });
     expect(last(events)).toMatchObject({ reason: "interrupted" });
     expect(requests).toHaveLength(1);
   });
@@ -310,7 +312,148 @@ describe("createHarness", () => {
     const { client } = scriptedClient([[{ timings: { predicted_n: 3 }, type: "timings" }]]);
     const events = await collect(client);
 
-    expect(types(events)).toEqual(["turn_start", "timings", "message", "turn_end", "done"]);
+    expect(types(events)).toEqual(["turn_start", "request", "timings", "message", "turn_end", "done"]);
     expect(last(events)).toEqual({ reason: "complete", timings: { predicted_n: 3 }, type: "done" });
+  });
+
+  it("reports what each turn sends", async () => {
+    const { client } = scriptedClient([[callEvent("read")], [{ delta: "ok", type: "text" }]]);
+    const events = await collect(client, [tool("read")]);
+    const sent = events.filter((event) => event.type === "request");
+
+    expect(sent).toHaveLength(2);
+    expect(sent[0]).toMatchObject({
+      messages: USER,
+      tools: [{ function: { name: "read" }, type: "function" }],
+      turn: 1,
+    });
+    expect(sent[1]).toMatchObject({ turn: 2 });
+    if (sent[1].type === "request") expect(sent[1].messages.map((m) => m.role)).toEqual(["user", "assistant", "tool"]);
+  });
+
+  it("runs a call that authorize allows and times it without the wait", async () => {
+    const { client } = scriptedClient([[callEvent("read")], []]);
+    const seen: string[] = [];
+    const events = await collect(client, [tool("read")], {
+      authorize: async (call) => {
+        seen.push(call.function.name);
+        await new Promise((resolve) => setTimeout(resolve, 30));
+
+        return { type: "allow" };
+      },
+    });
+
+    expect(seen).toEqual(["read"]);
+    expect(results(events)[0]).toMatchObject({ result: { content: "read ran" } });
+    expect(last(events)).toMatchObject({ reason: "complete" });
+    const end = events.find((event) => event.type === "turn_end");
+    if (end?.type === "turn_end") expect(end.timings.agentic?.toolCalls[0].duration_ms).toBeLessThan(30);
+  });
+
+  it("gives the model the reason when authorize denies a call, without running it", async () => {
+    let ran = false;
+    const { client, requests } = scriptedClient([[callEvent("write")], []]);
+    const events = await collect(
+      client,
+      [tool("write", async () => ((ran = true), { content: "written" }))],
+      { authorize: async () => ({ reason: "Tool execution was denied by the user.", type: "deny" }) },
+    );
+
+    expect(ran).toBe(false);
+    expect(results(events)[0]).toMatchObject({
+      result: { content: "Tool execution was denied by the user.", isError: true },
+      skipped: false,
+    });
+    expect(requests[1].messages[2]).toEqual({
+      content: "Tool execution was denied by the user.",
+      role: "tool",
+      tool_call_id: "call_0",
+    });
+  });
+
+  it("does not ask authorize about a tool it was not given", async () => {
+    let asked = false;
+    const { client } = scriptedClient([[callEvent("ghost")], []]);
+    const events = await collect(client, [], {
+      authorize: async () => ((asked = true), { type: "allow" }),
+    });
+
+    expect(asked).toBe(false);
+    expect(results(events)[0]).toMatchObject({ result: { content: "Error: Unknown tool: ghost" } });
+  });
+
+  it("ends the run when authorize rejects with an AbortError", async () => {
+    const controller = new AbortController();
+    const { client } = scriptedClient([[callEvent("read")]]);
+    const events = await collect(
+      client,
+      [tool("read")],
+      {
+        authorize: async () => {
+          controller.abort();
+
+          throw new DOMException("stopped", "AbortError");
+        },
+      },
+      controller.signal,
+    );
+
+    expect(results(events)).toHaveLength(0);
+    expect(last(events)).toMatchObject({ reason: "aborted", type: "done" });
+  });
+
+  it("lets prepareTurn add tools for the next turn and keeps them", async () => {
+    const { client, requests } = scriptedClient([[callEvent("search")], [callEvent("loaded")], []]);
+    const loaded = tool("loaded");
+    const events = await collect(client, [tool("search")], {
+      prepareTurn: async ({ tools, turn }) => (turn === 2 ? { tools: [...tools, loaded] } : undefined),
+    });
+
+    expect(requests.map((r) => r.tools?.map((t) => t.function.name))).toEqual([
+      ["search"],
+      ["search", "loaded"],
+      ["search", "loaded"],
+    ]);
+    expect(results(events).map((e) => e.type === "tool_result" && e.result.content)).toEqual([
+      "search ran",
+      "loaded ran",
+    ]);
+  });
+
+  it("lets prepareTurn replace the history it sends, e.g. with a compacted one", async () => {
+    const { client, requests } = scriptedClient([[callEvent("read")], [{ delta: "ok", type: "text" }]]);
+    const summary: Message = { content: "Summary: the user said hi; read ran.", role: "user" };
+
+    await collect(client, [tool("read")], {
+      prepareTurn: async ({ turn }) => (turn === 2 ? { history: [summary] } : undefined),
+    });
+
+    expect(requests[1].messages).toEqual([summary]);
+  });
+
+  it("passes the last request's timings to prepareTurn", async () => {
+    const seen: unknown[] = [];
+    const { client } = scriptedClient([
+      [{ timings: { prompt_n: 40 }, type: "timings" }, callEvent("read")],
+      [],
+    ]);
+
+    await collect(client, [tool("read")], {
+      prepareTurn: async ({ timings }) => void seen.push(timings),
+    });
+
+    expect(seen).toEqual([undefined, { prompt_n: 40 }]);
+  });
+
+  it("ends with an error event when prepareTurn throws", async () => {
+    const { client, requests } = scriptedClient([[]]);
+    const events = await collect(client, [], {
+      prepareTurn: async () => {
+        throw new Error("compaction failed");
+      },
+    });
+
+    expect(requests).toHaveLength(0);
+    expect(types(events)).toEqual(["turn_start", "error"]);
   });
 });
