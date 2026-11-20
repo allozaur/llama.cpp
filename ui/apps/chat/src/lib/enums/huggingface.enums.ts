@@ -39,3 +39,19 @@ export enum TraceShareScope {
 	ALL = 'all',
 	UP_TO_MESSAGE = 'up-to-message'
 }
+
+/** How the Hugging Face account a share uploads with was signed in. */
+export enum HfAuthMethod {
+	/** A user access token pasted into the share dialog. */
+	ACCESS_TOKEN = 'access-token',
+	/** "Sign in with Hugging Face": OAuth in the browser. */
+	OAUTH = 'oauth'
+}
+
+/** How a Hugging Face sign-in that left for the authorization page comes back. */
+export enum HfOAuthFlowMode {
+	/** In a popup, which closes itself once the tokens are in. */
+	POPUP = 'popup',
+	/** In this tab, which goes back to where it was. */
+	REDIRECT = 'redirect'
+}

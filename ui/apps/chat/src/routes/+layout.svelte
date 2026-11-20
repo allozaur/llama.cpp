@@ -23,6 +23,7 @@
 		chatStore,
 		conversationsStore,
 		deviceStore,
+		huggingFaceStore,
 		mcpStore,
 		modelsStore,
 		serverStore,
@@ -41,7 +42,7 @@
 	import { untrack } from 'svelte';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { Toaster } from 'svelte-sonner';
+	import { toast, Toaster } from 'svelte-sonner';
 
 	let { children } = $props();
 
@@ -202,7 +203,35 @@
 		});
 	}
 
+	/** How long a finished sign-in popup waits to close itself before saying it can be closed. */
+	const SIGN_IN_POPUP_CLOSE_GRACE_MS = 400;
+
+	// a page load that is Hugging Face sending the browser back finishes its sign-in
+	function completeHuggingFaceSignIn() {
+		void huggingFaceStore.completeSignInFromLocation().then((outcome) => {
+			if (!outcome?.result) return;
+
+			const { result } = outcome;
+
+			if (outcome.closeWindow) {
+				window.close();
+
+				// a browser may keep a window its script did not open in this document: say so
+				setTimeout(() => {
+					if (result.ok) toast.success('Signed in to Hugging Face. You can close this window.');
+					else toast.error(`${result.error ?? 'The sign-in failed.'} You can close this window.`);
+				}, SIGN_IN_POPUP_CLOSE_GRACE_MS);
+
+				return;
+			}
+
+			if (result.ok) toast.success('Signed in to Hugging Face');
+			else toast.error(result.error ?? 'The sign-in failed.');
+		});
+	}
+
 	onMount(() => {
+		completeHuggingFaceSignIn();
 		updateFavicon();
 		// snapshot of every backend running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet
