@@ -9,6 +9,16 @@ export const API = {
 export const SERVER_ROLE_ROUTER = 'router';
 
 export const DATABASE_NAME = 'LlamaNotes';
+/**
+ * Native IndexedDB version of the notes database. Dexie 4 created it at its
+ * schema version 1 and stored it as 1 * 10, so later builds open it at 10.
+ */
+export const DATABASE_VERSION = 10;
+export const DATABASE_KEY_PATH = 'id';
+/** Indexes of each store, each named after its field, as Dexie created them. */
+export const DATABASE_STORE_INDEXES = {
+	notes: ['updatedAt']
+} as const;
 
 export const STORAGE_KEYS = {
 	SELECTED_MODEL: 'LlamaNotes.selectedModel'
