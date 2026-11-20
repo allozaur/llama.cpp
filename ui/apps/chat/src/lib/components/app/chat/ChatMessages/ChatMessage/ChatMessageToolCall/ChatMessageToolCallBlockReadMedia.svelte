@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { parseReadMediaMeta } from './parsers/read-media';
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { ATTACHMENT_SAVED_REGEX } from '#lib/constants/agentic.constants.ts';
 	import { AttachmentType, MimeTypeAudio } from '#lib/enums/index.ts';
@@ -18,6 +19,10 @@
 	}
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
+
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
 
 	const readMediaMeta = $derived(parseReadMediaMeta(section));
 
@@ -49,7 +54,7 @@
 <ToolCallBlock {isStreaming} meta={readMediaMeta} {onToggle} {open} {section}>
 	{#snippet titleSnippet()}
 		<span class="flex min-w-0 flex-wrap items-baseline gap-x-1">
-			<span class="shrink-0 text-muted-foreground">Read media</span>
+			<span class="shrink-0 text-muted-foreground">{phrase.label}</span>
 
 			<span class="min-w-0 overflow-x-auto font-mono">{readMediaMeta?.fileName}</span>
 		</span>

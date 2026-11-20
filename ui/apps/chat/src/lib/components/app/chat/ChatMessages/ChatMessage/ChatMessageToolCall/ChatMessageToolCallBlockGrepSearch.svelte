@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { parseGrepSearchMeta } from './parsers/grep-search';
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { XCircle } from '@lucide/svelte';
 	import { toolsStore } from '#lib/stores/index.ts';
@@ -15,6 +16,10 @@
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
 
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+
 	const grepMeta = $derived(parseGrepSearchMeta(section));
 	const home = $derived(toolsStore.serverHome);
 </script>
@@ -22,7 +27,7 @@
 <ToolCallBlock {isStreaming} meta={grepMeta} {onToggle} {open} {section}>
 	{#snippet titleSnippet()}
 		{#if grepMeta}
-			<span class="text-muted-foreground">Search for&nbsp;</span>
+			<span class="text-muted-foreground">{phrase.label}&nbsp;</span>
 
 			<span class="font-mono">{grepMeta.pattern}</span>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { XCircle } from '@lucide/svelte';
 	import { toolsStore } from '#lib/stores/index.ts';
@@ -13,6 +14,10 @@
 	}
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
+
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
 
 	type GetInfoMeta = {
 		os?: string;
@@ -55,7 +60,7 @@
 	{open}
 	{section}
 	spinIconWhenActive
-	title="Runtime info"
+	title={phrase.label}
 >
 	{#snippet children(meta, _ctx)}
 		{#if meta?.errorMessage}

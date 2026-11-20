@@ -32,6 +32,8 @@
 		 * message width on its own.
 		 */
 		flushBody?: boolean;
+		/** Shown at the end of the header row, before the chevron. */
+		trailing?: Snippet;
 		onToggle?: () => void;
 		children: Snippet;
 	}
@@ -50,6 +52,7 @@
 		subtitle,
 		title = '',
 		titleSnippet,
+		trailing,
 		variant = 'default'
 	}: Props = $props();
 
@@ -144,6 +147,12 @@
 
 				{@render toggleTitle('overflow-x-auto text-body-sm')}
 			</div>
+
+			{#if trailing}
+				<div class="ml-auto flex shrink-0 items-center">
+					{@render trailing()}
+				</div>
+			{/if}
 
 			<ChevronDown
 				class={cn(

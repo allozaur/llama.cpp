@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { parseRunJavascriptMeta } from './parsers/run-javascript';
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { Terminal, XCircle } from '@lucide/svelte';
 	import { SyntaxHighlightedCode } from '#lib/components/app/index.ts';
 	import { MAX_HEIGHT_CODE_BLOCK } from '#lib/constants/index.ts';
 	import { FileTypeText } from '#lib/enums/index.ts';
 	import type { AgenticSection } from '#lib/types/index.ts';
-	import { getToolUi } from '#lib/utils/index.ts';
 
 	interface Props {
 		section: AgenticSection;
@@ -17,8 +17,12 @@
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
 
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+
 	const runJsMeta = $derived(parseRunJavascriptMeta(section));
-	const title = $derived(getToolUi(section.toolName)?.label ?? section.toolName ?? '');
+	const title = $derived(phrase.label);
 </script>
 
 <ToolCallBlock {isStreaming} meta={runJsMeta} {onToggle} {open} {section} {title}>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { parseFileGlobSearchMeta } from './parsers/file-glob-search';
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { XCircle } from '@lucide/svelte';
 	import { toolsStore } from '#lib/stores/index.ts';
@@ -15,6 +16,10 @@
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
 
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+
 	const fileGlobMeta = $derived(parseFileGlobSearchMeta(section));
 	const home = $derived(toolsStore.serverHome);
 </script>
@@ -22,9 +27,7 @@
 <ToolCallBlock {isStreaming} meta={fileGlobMeta} {onToggle} {open} {section}>
 	{#snippet titleSnippet()}
 		{#if fileGlobMeta}
-			<span class="text-muted-foreground"
-				>{fileGlobMeta.include === '**' ? 'List files' : 'Search files'}&nbsp;</span
-			>
+			<span class="text-muted-foreground">{phrase.label}&nbsp;</span>
 
 			{#if fileGlobMeta.include !== '**'}
 				<span class="font-mono">{fileGlobMeta.include}</span>
