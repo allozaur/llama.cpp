@@ -180,7 +180,7 @@
 					<div class="m-auto flex flex-col items-center gap-4 text-center">
 						<Logo class="text-primary" style="--size: 2.5rem" />
 
-						<h1 class="text-2xl font-semibold tracking-tight md:text-3xl">
+						<h1 class="text-heading tracking-tight md:text-display">
 							{VOICE_CONVERSATION_MESSAGE.greeting}
 						</h1>
 					</div>
@@ -255,13 +255,13 @@
 
 		<p
 			aria-live="polite"
-			class="min-h-12 max-w-xl text-center text-lg text-balance italic text-fg-muted"
+			class="min-h-12 max-w-xl text-center text-title font-normal text-balance italic text-fg-muted"
 			data-slot="voice-mode-live"
 		>
 			{#if conversation.liveText && (listening || conversation.state === 'transcribing')}
 				<VoiceSpokenText live text={conversation.liveText} />
 			{:else}
-				<span class="text-sm not-italic">{status}</span>
+				<span class="text-body-sm not-italic">{status}</span>
 			{/if}
 		</p>
 
