@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Drawer.Root,

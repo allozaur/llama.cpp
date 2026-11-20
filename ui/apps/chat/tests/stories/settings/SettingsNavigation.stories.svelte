@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import {
 		SettingsChatDesktopSidebar,
 		SettingsChatMobileHeader

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormActionRecord from '#lib/components/app/chat/ChatForm/ChatFormActions/ChatFormActionRecord.svelte';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';
 	import StateGalleryItem from '$llama-ui-stories/helpers/StateGalleryItem.svelte';

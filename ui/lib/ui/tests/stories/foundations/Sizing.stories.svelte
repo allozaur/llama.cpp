@@ -2,7 +2,7 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { Settings } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	// control heights and icon sizes from ui/lib/ui/src/lib/styles/tokens/semantic.css, and the 4px spacing grid
 	const { Story } = defineMeta({

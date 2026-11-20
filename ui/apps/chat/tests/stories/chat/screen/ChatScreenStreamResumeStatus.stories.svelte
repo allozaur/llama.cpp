@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreenStreamResumeStatus from '#lib/components/app/chat/ChatScreen/ChatScreenStreamResumeStatus.svelte';
 	import { StreamConnectionState } from '#lib/enums/index.ts';
 	import { chatStore } from '#lib/stores/index.ts';

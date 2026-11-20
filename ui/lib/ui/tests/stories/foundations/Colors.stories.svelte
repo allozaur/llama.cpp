@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { componentGroups, primitiveGroups, semanticGroups } from './tokens';
 	import TokenTier from './TokenTier.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	// read from ui/lib/ui/src/lib/styles/tokens/*.css, so the swatches follow the CSS as it changes
 	const { Story } = defineMeta({

@@ -1,6 +1,6 @@
 /**
  * The Storybook's top-level sections and the groups under each, in sidebar order, for the Introduction's Sections
- * figure. Storybook reads the sidebar order from `storySort` in .storybook/preview.ts, which it parses as written, so
+ * figure. Storybook reads the sidebar order from `storySorts` in .storybook/main.ts, which the browser never loads, so
  * this list cannot be imported there; tests/unit/storybook-sections.test.ts checks that the two match.
  */
 export interface StorybookSection {

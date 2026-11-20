@@ -25,57 +25,6 @@ const preview: Preview = {
 			disabled: true
 		},
 
-		options: {
-			// sidebar sections: the introduction and the guidelines for agents, then the two layers as the code has them.
-			// Llama UI is the library (ui/lib/ui): its foundations, base components, app components, Model UI and mockups.
-			// Llama Chat is the app (ui/apps/chat): its own foundations, then one folder per src/lib/components/app/<area>,
-			// the full chat screen leading Chat. The brand and communications are in llama-brand's Storybook
-			storySort: {
-				order: [
-					'Introduction',
-					'Agents',
-					['Design guidelines'],
-					'Llama UI',
-					[
-						'Foundations',
-						['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces'],
-						'Components',
-						['Actions', 'Forms', 'Display', 'Overlays', 'Navigation'],
-						'App components',
-						'Models',
-						'Mockups'
-					],
-					'Llama Chat',
-					[
-						'Foundations',
-						['Safe areas', 'Brand'],
-						'Chat',
-						[
-							'ChatScreen',
-							['ChatScreen', '*'],
-							'ChatForm',
-							'ChatMessages',
-							'ChatAttachments',
-							'ChatTabs'
-						],
-						'Content',
-						'Models',
-						'MCP',
-						'Navigation',
-						'Settings',
-						['DialogSettingsChat', 'Navigation', 'Sections'],
-						'Dialogs',
-						'Forms',
-						'Actions',
-						'Badges',
-						'Misc',
-						'Servers',
-						'PWA'
-					]
-				]
-			}
-		},
-
 		a11y: {
 			// 'todo' shows violations in the Accessibility panel and the test UI without failing a test; 'error' would
 			// fail CI on them. Not yet 'error': about half the stories fail it, most on colour contrast (the muted

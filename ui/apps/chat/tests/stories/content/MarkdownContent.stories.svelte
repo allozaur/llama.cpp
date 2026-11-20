@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import { AI_TUTORIAL_MD } from '../fixtures/ai-tutorial.js';
 	import { MERMAID_DIAGRAMS_MD } from '../fixtures/mermaid-diagrams.js';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { MarkdownContent } from '#lib/components/app/index.ts';
 	import { expect, userEvent, waitFor } from 'storybook/test';
 

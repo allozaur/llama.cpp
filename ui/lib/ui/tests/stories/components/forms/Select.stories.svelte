@@ -2,7 +2,7 @@
 	import StateGallery from '../../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import * as Select from '@ggml-org/llama-ui/ui/select';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Select.Root,

@@ -5,7 +5,7 @@
 		SEQUENCE_SVG,
 		SMALL_SVG
 	} from '../fixtures/mermaid-preview.js';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { MermaidPreview } from '#lib/components/app/index.ts';
 	import { expect, userEvent, waitFor } from 'storybook/test';
 

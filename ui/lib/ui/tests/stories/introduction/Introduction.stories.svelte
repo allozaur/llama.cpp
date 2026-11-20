@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import Editorial from '../editorial/Editorial.svelte';
 	import Introduction from './Introduction.svx';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	// the Storybook's front page: what the package is and how it keeps in step with ui/apps/chat
 	const { Story } = defineMeta({

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ScrollCarousel } from '#lib/components/app/index.ts';
 	import { ScrollCarouselVariant } from '#lib/enums/index.ts';
 	import { expect, waitFor } from 'storybook/test';

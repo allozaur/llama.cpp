@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { mcpPrompts, mcpServers, override, seedStores } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormPickerMcpPrompts from '#lib/components/app/chat/ChatForm/ChatFormPickers/ChatFormPickerMcpPrompts/ChatFormPickerMcpPrompts.svelte';
 	import { mcpStore } from '#lib/stores/index.ts';
 	import { fn, screen } from 'storybook/test';

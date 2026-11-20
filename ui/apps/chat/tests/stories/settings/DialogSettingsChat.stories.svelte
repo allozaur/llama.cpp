@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import DialogSettingsChat from '#lib/components/app/dialogs/DialogSettingsChat.svelte';
 
 	// the whole settings dialog; each section has its own story under Settings/Sections

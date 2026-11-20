@@ -9,7 +9,7 @@
 		type StoreSeed,
 		toGlobEntries
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormCurrentWorkingDirectory from '#lib/components/app/chat/ChatForm/ChatFormCurrentWorkingDirectory/ChatFormCurrentWorkingDirectory.svelte';
 	import { FileMentionEntryType } from '#lib/enums/index.ts';
 	import { fn } from 'storybook/test';

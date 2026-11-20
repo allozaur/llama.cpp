@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import * as ContextMenu from '@ggml-org/llama-ui/ui/context-menu';
 	import * as DropdownMenu from '@ggml-org/llama-ui/ui/dropdown-menu';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { expect, screen, waitFor, within } from 'storybook/test';
 
 	const { Story } = defineMeta({

@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ModelOrgAvatar } from '@ggml-org/llama-ui/models';
 
 	// the maker's Hugging Face avatar, with the quantizer's in the corner when someone else published the GGUF; an

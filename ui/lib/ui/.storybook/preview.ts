@@ -21,26 +21,6 @@ const preview: Preview = {
 			disabled: true
 		},
 
-		options: {
-			// the package's own sections, in the order Llama Chat's Storybook (ui/apps/chat) shows them under Llama UI:
-			// the foundations, the base components, the app components, then the Model UI and the mockups
-			storySort: {
-				order: [
-					'Introduction',
-					'Llama UI',
-					[
-						'Foundations',
-						['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces'],
-						'Components',
-						['Actions', 'Forms', 'Display', 'Overlays', 'Navigation'],
-						'App components',
-						'Models',
-						'Mockups'
-					]
-				]
-			}
-		},
-
 		a11y: {
 			// 'todo' shows violations in the Accessibility panel and the test UI without failing a test; 'error' would
 			// fail CI on them. Not yet 'error': about half the stories fail it, most on colour contrast (the muted

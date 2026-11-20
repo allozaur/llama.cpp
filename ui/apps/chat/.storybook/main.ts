@@ -20,7 +20,6 @@ const config: StorybookConfig = {
 		}
 	],
 	addons: [
-		'@storybook/addon-svelte-csf',
 		'@chromatic-com/storybook',
 		'@storybook/addon-vitest',
 		'@storybook/addon-a11y',
@@ -47,12 +46,58 @@ const config: StorybookConfig = {
 					}))),
 			{ find: '$llama-ui-stories', replacement: LLAMA_UI_STORIES }
 		];
-		config.resolve.dedupe = [
-			...(config.resolve.dedupe || []),
-			'@storybook/addon-svelte-csf',
-			'storybook'
-		];
+		config.resolve.dedupe = [...(config.resolve.dedupe || []), '@storybook/sveltekit', 'storybook'];
 		return config;
-	}
+	},
+	// sidebar sections: the introduction and the guidelines for agents, then the two layers as the code has them.
+	// Llama UI is the library (ui/lib/ui): its foundations, base components, app components, Model UI and mockups.
+	// Llama Chat is the app (ui/apps/chat): its own foundations, then one folder per src/lib/components/app/<area>,
+	// the full chat screen leading Chat. The brand and communications are in llama-brand's Storybook
+	storySorts: [
+		{
+			order: [
+				'Introduction',
+				'Agents',
+				['Design guidelines'],
+				'Llama UI',
+				[
+					'Foundations',
+					['Colors', 'Typography', 'Sizing', 'Shapes', 'Elevation', 'Surfaces'],
+					'Components',
+					['Actions', 'Forms', 'Display', 'Overlays', 'Navigation'],
+					'App components',
+					'Models',
+					'Mockups'
+				],
+				'Llama Chat',
+				[
+					'Foundations',
+					['Safe areas', 'Brand'],
+					'Chat',
+					[
+						'ChatScreen',
+						['ChatScreen', '*'],
+						'ChatForm',
+						'ChatMessages',
+						'ChatAttachments',
+						'ChatTabs'
+					],
+					'Content',
+					'Models',
+					'MCP',
+					'Navigation',
+					'Settings',
+					['DialogSettingsChat', 'Navigation', 'Sections'],
+					'Dialogs',
+					'Forms',
+					'Actions',
+					'Badges',
+					'Misc',
+					'Servers',
+					'PWA'
+				]
+			]
+		}
+	]
 };
 export default config;

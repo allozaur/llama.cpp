@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Switch,

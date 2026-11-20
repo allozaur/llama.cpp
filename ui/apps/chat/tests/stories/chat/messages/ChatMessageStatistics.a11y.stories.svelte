@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatMessageStatistics from '#lib/components/app/chat/ChatMessages/ChatMessageStatistics/ChatMessageStatistics.svelte';
 	import { expect } from 'storybook/test';
 

@@ -2,7 +2,7 @@
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
 	import { Pencil, RefreshCw, Trash2 } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ActionIcon } from '@ggml-org/llama-ui/app/actions';
 
 	// the small icon buttons under messages, code blocks and list rows

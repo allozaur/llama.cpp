@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { SquareTerminal } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import CollapsibleTerminalBlock from '#lib/components/app/content/CollapsibleTerminalBlock.svelte';
 
 	const { Story } = defineMeta({

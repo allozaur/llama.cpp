@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { SearchInput } from '@ggml-org/llama-ui/app/forms';
 
 	// the search field of the sidebar, model lists and pickers, and how matches are marked

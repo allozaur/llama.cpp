@@ -4,7 +4,7 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as ButtonGroup from '@ggml-org/llama-ui/ui/button-group';
 	import { ChevronDown, Copy, Pencil, Trash2 } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: ButtonGroup.Root,

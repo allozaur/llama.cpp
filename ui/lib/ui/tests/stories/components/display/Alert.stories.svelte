@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import * as Alert from '@ggml-org/llama-ui/ui/alert';
 	import { CircleAlert, CircleCheck, Info, TriangleAlert } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Alert.Root,

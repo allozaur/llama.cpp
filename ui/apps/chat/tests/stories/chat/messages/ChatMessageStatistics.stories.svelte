@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { agenticTimings } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatMessageStatistics from '#lib/components/app/chat/ChatMessages/ChatMessageStatistics/ChatMessageStatistics.svelte';
 	import { ChatMessageStatisticsMode, ChatMessageStatsView } from '#lib/enums/index.ts';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

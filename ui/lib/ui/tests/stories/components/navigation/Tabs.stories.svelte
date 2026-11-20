@@ -3,7 +3,7 @@
 	import StateGalleryItem from '../../helpers/StateGalleryItem.svelte';
 	import * as Tabs from '@ggml-org/llama-ui/ui/tabs';
 	import { Cpu, MessageSquare, Wrench } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Tabs.Root,

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import SidebarNavigation from '#lib/components/app/navigation/SidebarNavigation/SidebarNavigation.svelte';
 	import { waitFor } from 'storybook/test';
 

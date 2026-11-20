@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ModelsManagerModelRow from '#lib/components/app/models/ModelsManager/ModelsManagerModelRow.svelte';
 	import { MODEL_ROW_GRID_CLASS } from '#lib/constants/index.ts';
 	import type { ModelOption } from '#lib/types/models.js';
