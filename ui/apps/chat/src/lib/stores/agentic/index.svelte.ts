@@ -26,7 +26,9 @@ import {
 	DEFAULT_AGENTIC_CONFIG,
 	NEWLINE,
 	SETTINGS_KEYS,
-	TOOL_DENIED_RESULT
+	TOOL_DENIED_RESULT,
+	TOOL_LOADING,
+	TOOL_SEARCH_NAME
 } from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
@@ -41,6 +43,7 @@ import {
 	BuiltInTool,
 	PermissionEffect,
 	PermissionMode,
+	ToolLoadingMode,
 	ToolPermissionDecision,
 	ToolSource
 } from '#lib/enums/index.ts';
@@ -100,6 +103,7 @@ import {
 	isAbortError,
 	throwIfAborted
 } from '#lib/utils/index.ts';
+import { createToolCatalog, definitionsSize, type ToolCatalog } from '#lib/utils/tool-catalog.ts';
 import { SvelteMap } from 'svelte/reactivity';
 
 function createDefaultSession(): AgenticSession {
@@ -164,6 +168,8 @@ function toAgenticMessages(messages: ApiChatMessageData[]): AgenticMessage[] {
 class AgenticStore {
 	// permission, continue and steering gates the loop waits on between turns
 	private gates = new AgenticGates();
+	/** Tools loaded on demand per conversation: they stay loaded, so the tool list only grows */
+	private loadedTools = new Map<string, Set<string>>();
 	private sessions = new SvelteMap<string, AgenticSession>();
 
 	get isAnyRunning(): boolean {
@@ -430,6 +436,10 @@ class AgenticStore {
 		signal?: AbortSignal
 	): Promise<Authorization> {
 		const toolName = toolCall.function.name;
+
+		// loading a tool is not using it: the loaded tool asks when it is called
+		if (toolName === TOOL_SEARCH_NAME) return { type: 'allow' };
+
 		const toolKey = toolsStore.getPermissionKey(toolName) ?? toolName;
 		const isServerTool = toolsStore.getToolSource(toolName) === ToolSource.SERVER;
 		const args = this.parseToolArguments(toolCall.function.arguments);
@@ -662,22 +672,36 @@ class AgenticStore {
 			execute: (toolCall, context) =>
 				this.executeTool({ callbacks, context, conversationId, effectiveModel, toolCall })
 		}));
+		const catalog = this.toolCatalog(conversationId, harnessTools, effectiveModel);
 		// result messages of streaming tools, created while the tool runs, by tool call id
 		const streamedResults = new SvelteMap<string, { content: string; messageId: string }>();
-		const events = harness.run(toAgenticMessages(messages) as Message[], harnessTools, signal, {
-			authorize: (toolCall, runSignal) => this.authorizeTool(conversationId, toolCall, runSignal),
-			interrupted: () => this.gates.hasPendingSteeringMessage(conversationId),
-			maxTurns: agenticConfig.maxTurns,
-			onTurnLimit: async () => {
-				// Turn limit reached - ask user whether to continue
-				const shouldContinue = await this.gates.requestContinue(conversationId, signal);
+		const events = harness.run(
+			toAgenticMessages(messages) as Message[],
+			catalog ? catalog.initialTools() : harnessTools,
+			signal,
+			{
+				authorize: (toolCall, runSignal) => this.authorizeTool(conversationId, toolCall, runSignal),
+				interrupted: () => this.gates.hasPendingSteeringMessage(conversationId),
+				maxTurns: agenticConfig.maxTurns,
+				onTurnLimit: async () => {
+					// Turn limit reached - ask user whether to continue
+					const shouldContinue = await this.gates.requestContinue(conversationId, signal);
 
-				// Yield to allow Svelte to flush the UI update
-				await new Promise((r) => setTimeout(r, 0));
+					// Yield to allow Svelte to flush the UI update
+					await new Promise((r) => setTimeout(r, 0));
 
-				return shouldContinue;
+					return shouldContinue;
+				},
+				prepareTurn: catalog
+					? async ({ tools: sent }) => {
+							const loaded = catalog.takeNewlyLoaded();
+
+							return loaded.length > 0 ? { tools: [...sent, ...loaded] } : undefined;
+						}
+					: undefined,
+				resolveTool: catalog ? (name) => catalog.resolve(name) : undefined
 			}
-		});
+		);
 
 		let totalToolCallCount = 0;
 		let lastStreamingToolCallName = '';
@@ -1009,6 +1033,52 @@ class AgenticStore {
 	 * policies never re-initializes connections; a caller without a policy
 	 * falls back to the global defaults.
 	 */
+	/**
+	 * The catalog that loads MCP and custom tools on demand, or nothing when
+	 * every tool goes up front: by the setting, or in automatic mode while
+	 * the definitions take a small share of the context.
+	 */
+	private toolCatalog(conversationId: string, tools: Tool[], model: string): ToolCatalog | null {
+		const mode = toolLoadingMode(settingsStore.config[SETTINGS_KEYS.TOOL_LOADING]);
+
+		if (mode === ToolLoadingMode.UP_FRONT) return null;
+
+		const isDeferred = (tool: Tool) => {
+			const source = toolsStore.getToolSource(tool.definition.function.name);
+
+			return source === ToolSource.MCP || source === ToolSource.CUSTOM;
+		};
+		const deferred = tools.filter(isDeferred);
+
+		if (deferred.length === 0) return null;
+
+		const contextTokens =
+			modelsStore.props.getModelContextSize(model) ?? TOOL_LOADING.DEFAULT_CONTEXT_TOKENS;
+		const definitionTokens = definitionsSize(tools) / TOOL_LOADING.CHARS_PER_TOKEN;
+
+		if (
+			mode === ToolLoadingMode.AUTO &&
+			definitionTokens < contextTokens * TOOL_LOADING.AUTO_SHARE
+		) {
+			return null;
+		}
+
+		let loaded = this.loadedTools.get(conversationId);
+
+		if (!loaded) {
+			loaded = new Set();
+			this.loadedTools.set(conversationId, loaded);
+		}
+
+		return createToolCatalog({
+			core: tools.filter((tool) => !isDeferred(tool)),
+			deferred,
+			groupOf: (tool) => toolsStore.getToolServerLabel(tool.definition.function.name) || 'Other',
+			listBudgetChars: contextTokens * TOOL_LOADING.LIST_SHARE * TOOL_LOADING.CHARS_PER_TOKEN,
+			loaded
+		});
+	}
+
 	private async toolsFor(toolPolicy?: AgenticToolPolicy): Promise<OpenAIToolDefinition[]> {
 		if (
 			toolsStore.serverTools.length === 0 &&
@@ -1058,4 +1128,10 @@ function permissionMode(value: unknown): PermissionMode {
 	return Object.values(PermissionMode).includes(value as PermissionMode)
 		? (value as PermissionMode)
 		: PermissionMode.ASK;
+}
+
+function toolLoadingMode(value: unknown): ToolLoadingMode {
+	return Object.values(ToolLoadingMode).includes(value as ToolLoadingMode)
+		? (value as ToolLoadingMode)
+		: ToolLoadingMode.AUTO;
 }

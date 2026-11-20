@@ -7,18 +7,22 @@ vi.mock('#lib/services/database.service.ts', () => ({
 	DatabaseService: {}
 }));
 
+import { SETTINGS_KEYS, TOOL_SEARCH_NAME } from '#lib/constants/index.ts';
 import {
 	BuiltInTool,
 	MessageRole,
 	PermissionEffect,
+	ToolLoadingMode,
 	ToolPermissionDecision,
 	ToolSource
 } from '#lib/enums/index.ts';
 import { ChatService } from '#lib/services/chat.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticStore } from '#lib/stores/agentic/index.svelte.ts';
+import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 import { permissionsStore } from '#lib/stores/permissions.svelte.ts';
+import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type { AgenticFlowCallbacks } from '#lib/types/agentic.js';
 import type { ApiChatMessageData } from '#lib/types/api.js';
@@ -238,6 +242,37 @@ describe('agentic flow', () => {
 		expect(named('onFlowComplete')[0][1]).toMatchObject({
 			agentic: { toolCalls: [{ success: false }] }
 		});
+	});
+
+	it('loads a listed MCP tool on demand when the model calls it, and sends it from then on', async () => {
+		const config = settingsStore.config;
+
+		settingsStore.config = { ...config, [SETTINGS_KEYS.TOOL_LOADING]: ToolLoadingMode.ON_DEMAND };
+		mockTools(ToolSource.MCP, 'create_issue', 'list_issues');
+		vi.spyOn(mcpStore, 'executeTool').mockResolvedValue({ content: 'issue #7', isError: false });
+
+		const sent: string[][] = [];
+
+		vi.spyOn(ChatService, 'sendMessage').mockImplementation(async (_messages, options) => {
+			sent.push(
+				(options?.tools ?? []).map((tool: { function: { name: string } }) => tool.function.name)
+			);
+
+			if (sent.length === 1) options?.onToolCallChunk?.(toolCalls('create_issue'));
+			else options?.onChunk?.('done');
+		});
+
+		try {
+			const { callbacks, named } = recorder();
+
+			await runFlow(callbacks);
+
+			// the tool list only grows: the loaded tool is appended after the search tool
+			expect(sent).toEqual([[TOOL_SEARCH_NAME], [TOOL_SEARCH_NAME, 'create_issue']]);
+			expect(named('createToolResultMessage')[0][2]).toBe('issue #7');
+		} finally {
+			settingsStore.config = config;
+		}
 	});
 
 	it('reports a failing tool to the model and goes on', async () => {
