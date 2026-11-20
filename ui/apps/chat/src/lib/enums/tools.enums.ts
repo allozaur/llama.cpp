@@ -6,10 +6,16 @@ export enum ToolSource {
 }
 
 export enum ToolPermissionDecision {
+	/** Always, everywhere. */
 	ALWAYS = 'always',
+	/** Always, in the conversation's working folder. */
+	ALWAYS_HERE = 'always_here',
+	/** Every tool of the same server, always. */
 	ALWAYS_SERVER = 'always_server',
 	DENY = 'deny',
-	ONCE = 'once'
+	ONCE = 'once',
+	/** For the rest of this conversation, until the app reloads. */
+	SESSION = 'session'
 }
 
 export enum ToolResponseField {

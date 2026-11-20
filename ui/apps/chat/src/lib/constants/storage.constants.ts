@@ -14,7 +14,9 @@ export const STORAGE_APP_NAME_DEPRECATED = 'LlamaCppWebui';
 /** @deprecated Deprecated IndexedDB name — will be removed after all users have migrated */
 export const DB_APP_NAME_DEPRECATED = 'LlamacppWebui';
 
+/** @deprecated Tools allowed for good, before permission rules; read once to migrate them */
 export const ALWAYS_ALLOWED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.alwaysAllowedTools`;
+export const PERMISSION_RULES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.permissionRules`;
 
 export const CONFIG_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.config`;
 export const DISABLED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabledTools`;
