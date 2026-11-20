@@ -196,31 +196,56 @@
 	border-radius: 0 0.375rem 0.375rem 0;
 }
 
-/* Tables */
+/* Tables: a framed card with a filled header row and row dividers only */
 .markdown-content :global(table) {
+	--table-line: color-mix(in oklab, var(--line-default) 70%, transparent);
+
 	width: 100%;
 	margin: 1.5rem 0;
-	border-collapse: collapse;
-	border: 1px solid var(--line-default);
-	border-radius: 0.375rem;
-	overflow: hidden;
+	border-collapse: separate;
+	border-spacing: 0;
+	font-size: var(--text-body-sm);
+	line-height: var(--text-body-sm--line-height);
+	font-variant-numeric: tabular-nums;
+}
+
+.markdown-content :global(th),
+.markdown-content :global(td) {
+	padding: 0.5rem 0.875rem;
+	text-align: start;
+	vertical-align: top;
+	border-bottom: 1px solid var(--table-line);
+}
+
+/* code in a cell follows the cell's size and stays on one line, e.g. a flag */
+.markdown-content :global(:is(th, td) code:not(pre code)) {
+	font-size: 0.9em;
+	white-space: nowrap;
+}
+
+/* many columns scroll instead of squeezing each cell to a few letters */
+.markdown-content :global(td) {
+	min-width: 7rem;
 }
 
 .markdown-content :global(th) {
-	background: hsl(var(--surface-muted) / 0.3);
-	border: 1px solid var(--line-default);
-	padding: 0.5rem 0.75rem;
-	text-align: left;
+	background: var(--surface-muted);
+	color: var(--fg-default);
 	font-weight: 600;
+	white-space: nowrap;
 }
 
-.markdown-content :global(td) {
-	border: 1px solid var(--line-default);
-	padding: 0.5rem 0.75rem;
+.markdown-content :global(tbody tr:last-child td) {
+	border-bottom: none;
 }
 
-.markdown-content :global(tr:nth-child(even)) {
-	background: hsl(var(--surface-muted) / 0.1);
+/* GFM column alignment comes as an align attribute */
+.markdown-content :global(:is(th, td)[align='center']) {
+	text-align: center;
+}
+
+.markdown-content :global(:is(th, td)[align='right']) {
+	text-align: end;
 }
 
 /* User message markdown should keep table borders visible on light primary backgrounds */
@@ -229,6 +254,11 @@ div.markdown-user-content :global(th),
 div.markdown-user-content :global(td),
 div.markdown-user-content :global(.table-wrapper) {
 	border-color: currentColor;
+}
+
+div.markdown-user-content :global(th) {
+	background: transparent;
+	color: inherit;
 }
 
 /* Horizontal rules */
@@ -386,21 +416,10 @@ div.markdown-user-content :global(.table-wrapper) {
 	}
 }
 
-/* Advanced table enhancements */
-.markdown-content :global(table) {
-	transition: all 0.2s ease;
-}
-
+/* Row highlight to follow a row across wide tables */
 @media (hover: hover) and (pointer: fine) {
-	.markdown-content :global(table:hover) {
-		box-shadow:
-			0 4px 6px -1px rgb(0 0 0 / 0.1),
-			0 2px 4px -2px rgb(0 0 0 / 0.1);
-	}
-
-	.markdown-content :global(th:hover),
-	.markdown-content :global(td:hover) {
-		background: var(--surface-muted);
+	.markdown-content :global(tbody tr:hover td) {
+		background: color-mix(in oklab, var(--surface-muted) 50%, transparent);
 	}
 }
 
@@ -410,12 +429,7 @@ div.markdown-user-content :global(.table-wrapper) {
 	color: inherit;
 }
 
-.markdown-user-content :global(table:hover) {
-	box-shadow: none;
-}
-
-.markdown-user-content :global(th:hover),
-.markdown-user-content :global(td:hover) {
+.markdown-user-content :global(tbody tr:hover td) {
 	background: inherit;
 }
 
@@ -509,14 +523,20 @@ div.markdown-user-content :global(.table-wrapper) {
 	overflow-x: auto;
 	margin: 1.5rem 0;
 	border-radius: 0.5rem;
-	border: 1px solid var(--line-default);
+	border: 1px solid color-mix(in oklab, var(--line-default) 70%, transparent);
 	/* a wide table scrolls here, it does not widen the column */
 	max-width: 100%;
+	overscroll-behavior-x: contain;
 }
 
 .markdown-content :global(.table-wrapper table) {
 	margin: 0;
-	border: none;
+}
+
+/* six or more columns: keep each cell on one line and scroll */
+.markdown-content :global(.table-wrapper table:has(th:nth-child(6))) {
+	width: max-content;
+	min-width: 100%;
 }
 
 /* Responsive adjustments */
@@ -534,12 +554,17 @@ div.markdown-user-content :global(.table-wrapper) {
 	}
 
 	.markdown-content :global(table) {
-		font-size: 0.875rem;
+		font-size: var(--text-caption);
+		line-height: var(--text-caption--line-height);
 	}
 
 	.markdown-content :global(th),
 	.markdown-content :global(td) {
-		padding: 0.375rem 0.5rem;
+		padding: 0.375rem 0.625rem;
+	}
+
+	.markdown-content :global(td) {
+		min-width: 6rem;
 	}
 
 	/* no full-bleed: it hid the outer columns */
