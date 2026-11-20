@@ -67,7 +67,14 @@ async function* run(
   signal?: AbortSignal,
   options: RunOptions = {},
 ): AsyncGenerator<HarnessEvent> {
-  const { authorize, interrupted = () => false, maxTurns = Infinity, onTurnLimit, prepareTurn } = options;
+  const {
+    authorize,
+    interrupted = () => false,
+    maxTurns = Infinity,
+    onTurnLimit,
+    prepareTurn,
+    resolveTool,
+  } = options;
   let history = [...messages];
   let currentTools = tools;
   let definitions = currentTools.map((tool) => tool.definition);
@@ -298,7 +305,7 @@ async function* run(
 
       yield { toolCall, type: "tool_call" };
 
-      const tool = toolsByName.get(toolCall.function.name);
+      const tool = toolsByName.get(toolCall.function.name) ?? resolveTool?.(toolCall.function.name);
 
       let authorization: Authorization = { type: "allow" };
 

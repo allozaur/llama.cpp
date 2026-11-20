@@ -75,3 +75,20 @@ export const LEGACY_AGENTIC_REGEX = {
 	REASONING_EXTRACT: /<<<reasoning_content_start>>>([\s\S]*?)<<<reasoning_content_end>>>/,
 	REASONING_OPEN: /<<<reasoning_content_start>>>[\s\S]*$/
 } as const;
+
+/** The tool that loads tools on demand. */
+export const TOOL_SEARCH_NAME = 'tool_search';
+/** A search for tools by exact name: `select:a,b`. */
+export const TOOL_SEARCH_SELECT_PREFIX = 'select:';
+export const TOOL_SEARCH_DEFAULT_LIMIT = 5;
+
+export const TOOL_LOADING = {
+	/** Automatic mode loads on demand once definitions pass this share of the context. */
+	AUTO_SHARE: 0.1,
+	/** Rough characters per token, to size tool definitions without a tokenizer. */
+	CHARS_PER_TOKEN: 4,
+	/** Context assumed when the server does not report its size. */
+	DEFAULT_CONTEXT_TOKENS: 8192,
+	/** The share of the context the list of tools to load may take. */
+	LIST_SHARE: 0.05
+} as const;
