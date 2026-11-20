@@ -7,7 +7,13 @@ vi.mock('#lib/services/database.service.ts', () => ({
 	DatabaseService: {}
 }));
 
-import { BuiltInTool, MessageRole, ToolPermissionDecision, ToolSource } from '#lib/enums/index.ts';
+import {
+	BuiltInTool,
+	MessageRole,
+	PermissionEffect,
+	ToolPermissionDecision,
+	ToolSource
+} from '#lib/enums/index.ts';
 import { ChatService } from '#lib/services/chat.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticStore } from '#lib/stores/agentic/index.svelte.ts';
@@ -119,7 +125,7 @@ beforeEach(() => {
 	vi.spyOn(toolsStore, 'fetchServerTools').mockResolvedValue();
 	vi.spyOn(toolsStore, 'getToolServerLabel').mockReturnValue('Browser');
 	vi.spyOn(toolsStore, 'getPermissionKey').mockReturnValue('tool-key');
-	vi.spyOn(permissionsStore, 'hasTool').mockReturnValue(true);
+	vi.spyOn(permissionsStore, 'check').mockReturnValue({ effect: PermissionEffect.ALLOW });
 });
 
 describe('agentic flow', () => {
@@ -203,7 +209,7 @@ describe('agentic flow', () => {
 
 	it('waits for permission and tells the model when it is denied', async () => {
 		mockTools(ToolSource.BROWSER, BuiltInTool.BROWSER_GET_DATETIME);
-		vi.mocked(permissionsStore.hasTool).mockReturnValue(false);
+		vi.mocked(permissionsStore.check).mockReturnValue({ effect: PermissionEffect.ASK });
 
 		const requests = mockTurns(
 			(options) => options.onToolCallChunk?.(toolCalls(BuiltInTool.BROWSER_GET_DATETIME)),
@@ -213,8 +219,10 @@ describe('agentic flow', () => {
 		const flow = runFlow(callbacks);
 
 		await vi.waitFor(() =>
-			expect(agenticStore.getPendingPermissionRequest(CONV_ID)).toEqual({
+			expect(agenticStore.getPendingPermissionRequest(CONV_ID)).toMatchObject({
+				patterns: [],
 				serverLabel: 'Browser',
+				toolKey: 'tool-key',
 				toolName: BuiltInTool.BROWSER_GET_DATETIME
 			})
 		);

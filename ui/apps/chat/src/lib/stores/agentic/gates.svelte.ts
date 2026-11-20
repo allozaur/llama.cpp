@@ -7,11 +7,17 @@
  * resolvePermission/resolveContinue. Owned by agenticStore, no host coupling.
  */
 
-import { ToolPermissionDecision } from '#lib/enums/index.ts';
+import { PermissionEffect, ToolPermissionDecision } from '#lib/enums/index.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { permissionsStore } from '#lib/stores/permissions.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
-import type { DatabaseMessageExtra, SteeringMessage } from '#lib/types/index.ts';
+import type {
+	DatabaseMessageExtra,
+	PermissionAnswer,
+	PermissionRequest,
+	PermissionRule,
+	SteeringMessage
+} from '#lib/types/index.ts';
 import { SvelteMap } from 'svelte/reactivity';
 
 export class AgenticGates {
@@ -21,12 +27,12 @@ export class AgenticGates {
 	private pendingContinueRequests = new SvelteMap<string, boolean>();
 
 	/** Dedicated reactive state for pending permission requests (ensures immediate UI updates) */
-	private pendingPermissions = new SvelteMap<
-		string,
-		{ toolName: string; serverLabel: string } | null
-	>();
+	private pendingPermissions = new SvelteMap<string, PermissionRequest | null>();
 	/** Resolve functions for pending permission Promises; nothing derives from this map */
-	private permissionResolvers = new SvelteMap<string, (decision: ToolPermissionDecision) => void>();
+	private permissionResolvers = new SvelteMap<
+		string,
+		(decision: ToolPermissionDecision, answer?: PermissionAnswer) => void
+	>();
 
 	/** Reactive: queued steering messages to inject between turns */
 	private steeringMessages = new SvelteMap<string, SteeringMessage>();
@@ -67,9 +73,7 @@ export class AgenticGates {
 		return this.pendingContinueRequests.get(conversationId) ?? false;
 	}
 
-	getPendingPermissionRequest(
-		conversationId: string
-	): { toolName: string; serverLabel: string } | null {
+	getPendingPermissionRequest(conversationId: string): PermissionRequest | null {
 		return this.pendingPermissions.get(conversationId) ?? null;
 	}
 
@@ -129,19 +133,17 @@ export class AgenticGates {
 		});
 	}
 
+	/**
+	 * Ask the user about a tool call, and keep what they chose to remember:
+	 * for this conversation, in its working folder, everywhere, or every tool
+	 * of the same server. A stopped run counts as a denial.
+	 */
 	async requestPermission(
 		conversationId: string,
-		toolName: string,
-		serverLabel: string,
+		request: PermissionRequest,
 		signal?: AbortSignal
 	): Promise<ToolPermissionDecision> {
-		const permissionKey = toolsStore.getPermissionKey(toolName);
-
-		if (permissionKey && permissionsStore.hasTool(permissionKey)) {
-			return ToolPermissionDecision.ONCE;
-		}
-
-		this.pendingPermissions.set(conversationId, { serverLabel, toolName });
+		this.pendingPermissions.set(conversationId, request);
 
 		return new Promise<ToolPermissionDecision>((resolve) => {
 			if (signal?.aborted) {
@@ -151,24 +153,9 @@ export class AgenticGates {
 				return;
 			}
 
-			this.permissionResolvers.set(conversationId, (decision) => {
+			this.permissionResolvers.set(conversationId, (decision, answer) => {
 				this.pendingPermissions.set(conversationId, null);
-
-				if (decision === ToolPermissionDecision.ALWAYS && permissionKey) {
-					permissionsStore.allowTool(permissionKey);
-				} else if (decision === ToolPermissionDecision.ALWAYS_SERVER) {
-					const serverToolKeys = toolsStore.allTools
-						.filter((t) =>
-							t.serverName
-								? t.serverName === serverLabel
-								: toolsStore.getToolServerLabel(t.definition.function.name) === serverLabel
-						)
-						.map((t) => toolsStore.getPermissionKey(t.definition.function.name)!)
-						.filter((k): k is string => k !== null);
-
-					permissionsStore.allowTools(serverToolKeys);
-				}
-
+				this.remember(conversationId, request, decision, answer);
 				resolve(decision);
 			});
 
@@ -197,12 +184,59 @@ export class AgenticGates {
 		}
 	}
 
-	resolvePermission(conversationId: string, decision: ToolPermissionDecision): void {
+	resolvePermission(
+		conversationId: string,
+		decision: ToolPermissionDecision,
+		answer?: PermissionAnswer
+	): void {
 		const resolver = this.permissionResolvers.get(conversationId);
 
 		if (resolver) {
 			this.permissionResolvers.delete(conversationId);
-			resolver(decision);
+			resolver(decision, answer);
+		}
+	}
+
+	private remember(
+		conversationId: string,
+		request: PermissionRequest,
+		decision: ToolPermissionDecision,
+		answer?: PermissionAnswer
+	): void {
+		if (decision === ToolPermissionDecision.ALWAYS_SERVER) {
+			const serverToolKeys = toolsStore.allTools
+				.filter((t) =>
+					t.serverName
+						? t.serverName === request.serverLabel
+						: toolsStore.getToolServerLabel(t.definition.function.name) === request.serverLabel
+				)
+				.map((t) => toolsStore.getPermissionKey(t.definition.function.name))
+				.filter((k): k is string => k !== null);
+
+			permissionsStore.allowTools(serverToolKeys);
+
+			return;
+		}
+
+		const patterns = (answer?.patterns ?? request.patterns)
+			.map((pattern) => pattern.trim())
+			.filter(Boolean);
+		// a shell command is remembered by its patterns, any other tool as a whole
+		const rules: Omit<PermissionRule, 'createdAt' | 'id'>[] =
+			request.command !== undefined && patterns.length > 0
+				? patterns.map((pattern) => ({
+						effect: PermissionEffect.ALLOW,
+						pattern,
+						tool: request.toolKey
+					}))
+				: [{ effect: PermissionEffect.ALLOW, tool: request.toolKey }];
+
+		if (decision === ToolPermissionDecision.SESSION) {
+			permissionsStore.addSessionRules(conversationId, rules);
+		} else if (decision === ToolPermissionDecision.ALWAYS_HERE && request.cwd) {
+			permissionsStore.addRules(rules.map((rule) => ({ ...rule, cwd: request.cwd })));
+		} else if (decision === ToolPermissionDecision.ALWAYS) {
+			permissionsStore.addRules(rules);
 		}
 	}
 }

@@ -10,7 +10,9 @@ import { VOICE_MICROPHONE_AUTO } from '@ggml-org/llama-voice';
 import AudioLines from '@lucide/svelte/icons/audio-lines';
 import Code from '@lucide/svelte/icons/code';
 import Database from '@lucide/svelte/icons/database';
+import Eye from '@lucide/svelte/icons/eye';
 import File from '@lucide/svelte/icons/file';
+import FilePen from '@lucide/svelte/icons/file-pen';
 import Funnel from '@lucide/svelte/icons/funnel';
 import GlassWater from '@lucide/svelte/icons/glass-water';
 import ListRestart from '@lucide/svelte/icons/list-restart';
@@ -18,10 +20,17 @@ import Mic from '@lucide/svelte/icons/mic';
 import Monitor from '@lucide/svelte/icons/monitor';
 import Moon from '@lucide/svelte/icons/moon';
 import PencilRuler from '@lucide/svelte/icons/pencil-ruler';
+import ShieldQuestion from '@lucide/svelte/icons/shield-question-mark';
 import SlidersVertical from '@lucide/svelte/icons/sliders-vertical';
 import Sun from '@lucide/svelte/icons/sun';
 import TextCursorInput from '@lucide/svelte/icons/text-cursor-input';
-import { SurfaceTheme, SyncableParameterType, VoiceInputMode } from '#lib/enums/index.ts';
+import Zap from '@lucide/svelte/icons/zap';
+import {
+	PermissionMode,
+	SurfaceTheme,
+	SyncableParameterType,
+	VoiceInputMode
+} from '#lib/enums/index.ts';
 import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
 import { ColorMode } from '#lib/enums/ui.enums.ts';
 import type {
@@ -525,6 +534,19 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				key: SETTINGS_KEYS.AGENTIC_MAX_TURNS,
 				label: 'Agentic turns',
 				type: SettingsFieldType.INPUT
+			},
+			{
+				defaultValue: PermissionMode.ASK,
+				help: 'What happens to a tool call that no permission rule decides. Ask shows a prompt. Accept edits also writes and edits files inside the working folder without asking. Read-only refuses tools that change files or run commands, except read-only shell commands. Auto-approve runs everything no rule denies. Commands that could destroy the system are refused in every mode.',
+				key: SETTINGS_KEYS.PERMISSION_MODE,
+				label: 'Permission mode',
+				options: [
+					{ icon: ShieldQuestion, label: 'Ask', value: PermissionMode.ASK },
+					{ icon: FilePen, label: 'Accept edits', value: PermissionMode.ACCEPT_EDITS },
+					{ icon: Eye, label: 'Read-only', value: PermissionMode.READ_ONLY },
+					{ icon: Zap, label: 'Auto-approve', value: PermissionMode.AUTO }
+				],
+				type: SettingsFieldType.SELECT
 			},
 			{
 				defaultValue: DEFAULT_MCP_CONFIG.requestTimeoutSeconds,

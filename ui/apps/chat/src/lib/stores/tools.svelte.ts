@@ -51,6 +51,8 @@ class ToolsStore {
 	// server tools that resolve their paths against the working directory,
 	// as declared by the server in its `/tools` listing
 	private cwdAwareTools = $state(new SvelteSet<string>());
+	/** llama-server tools that can change files or run commands, per `/tools` */
+	private writeTools = $state(new SvelteSet<string>());
 
 	get allToolDefinitions(): OpenAIToolDefinition[] {
 		return this.allTools.map((t) => t.definition);
@@ -216,6 +218,19 @@ class ToolsStore {
 		return groups;
 	}
 
+	/** Permission key for a tool name, identical to the selection key */
+	/**
+	 * Whether a tool can change files or run commands: llama-server says so
+	 * per tool, browser tools cannot, and MCP or custom tools are assumed to.
+	 */
+	canWrite(toolName: string): boolean {
+		const source = this.getToolSource(toolName);
+
+		if (source === ToolSource.SERVER) return this.writeTools.has(toolName);
+
+		return source !== ToolSource.BROWSER;
+	}
+
 	/** Enable all tools belonging to a specific MCP server */
 	enableAllToolsForServer(serverId: string): void {
 		const connection = mcpStore.getConnections().get(serverId);
@@ -245,6 +260,9 @@ class ToolsStore {
 			this._serverTools = toolInfos.map((info) => info.definition);
 			this.cwdAwareTools = new SvelteSet(
 				toolInfos.filter((info) => info.uses_cwd).map((info) => info.tool)
+			);
+			this.writeTools = new SvelteSet(
+				toolInfos.filter((info) => info.permissions?.write).map((info) => info.tool)
 			);
 		} catch (err) {
 			this._error = err instanceof Error ? err.message : String(err);
@@ -306,7 +324,6 @@ class ToolsStore {
 		return `mcp:${serverId}`;
 	}
 
-	/** Permission key for a tool name, identical to the selection key */
 	getPermissionKey(toolName: string): string | null {
 		return this.findEntryByName(toolName)?.key ?? null;
 	}

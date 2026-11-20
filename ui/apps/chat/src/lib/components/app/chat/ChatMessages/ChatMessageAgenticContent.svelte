@@ -17,7 +17,8 @@
 		AgenticSection,
 		ChatMessageAgenticTimings,
 		ChatMessageAgenticTurnStats,
-		DatabaseMessage
+		DatabaseMessage,
+		PermissionAnswer
 	} from '#lib/types/index.ts';
 	import { deriveAgenticSections, isSectionExpandedByDefault } from '#lib/utils/index.ts';
 
@@ -68,9 +69,9 @@
 		pendingPermission && dismissedPermission !== pendingPermission ? pendingPermission : null
 	);
 
-	function handlePermission(decision: ToolPermissionDecision) {
+	function handlePermission(decision: ToolPermissionDecision, answer?: PermissionAnswer) {
 		dismissedPermission = pendingPermission;
-		agenticStore.resolvePermission(message.convId, decision);
+		agenticStore.resolvePermission(message.convId, decision, answer);
 	}
 
 	const pendingContinue = $derived(
@@ -238,11 +239,13 @@
 	{/if}
 
 	{#if visiblePermission}
-		<ChatMessageActionCardPermissionRequest
-			onDecision={handlePermission}
-			serverLabel={visiblePermission.serverLabel}
-			toolName={visiblePermission.toolName}
-		/>
+		<!-- a new request gets a new card, so patterns edited for one never carry over -->
+		{#key visiblePermission}
+			<ChatMessageActionCardPermissionRequest
+				onDecision={handlePermission}
+				request={visiblePermission}
+			/>
+		{/key}
 	{/if}
 
 	{#if showContinue}
