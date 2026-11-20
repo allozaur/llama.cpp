@@ -22,7 +22,12 @@ import {
 	type ToolContext,
 	type ToolResult
 } from '@ggml-org/llama-harness';
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE, TOOL_DENIED_RESULT } from '#lib/constants/index.ts';
+import {
+	DEFAULT_AGENTIC_CONFIG,
+	NEWLINE,
+	SETTINGS_KEYS,
+	TOOL_DENIED_RESULT
+} from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -32,7 +37,13 @@ import {
 	MCP_ATTACHMENT_NAME_PREFIX,
 	MIME_TYPE_PREFIXES
 } from '#lib/constants/index.ts';
-import { BuiltInTool, ToolPermissionDecision, ToolSource } from '#lib/enums/index.ts';
+import {
+	BuiltInTool,
+	PermissionEffect,
+	PermissionMode,
+	ToolPermissionDecision,
+	ToolSource
+} from '#lib/enums/index.ts';
 import {
 	AttachmentType,
 	ContentPartType,
@@ -52,6 +63,7 @@ import { ToolsService } from '#lib/services/tools.service.ts';
 import { AgenticGates } from '#lib/stores/agentic/gates.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
+import { permissionsStore } from '#lib/stores/permissions.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type {
@@ -59,7 +71,6 @@ import type {
 	AgenticFlowOptions,
 	AgenticMessage,
 	AgenticToolPolicy,
-	PendingPermissionRequest,
 	SteeringMessage
 } from '#lib/types/agentic.js';
 import type { ApiChatMessageData } from '#lib/types/api.js';
@@ -74,6 +85,8 @@ import type {
 	AgenticFlowParams,
 	AgenticFlowResult,
 	AgenticSession,
+	PermissionAnswer,
+	PermissionRequest,
 	SettingsConfigType,
 	ToolExecutionResult
 } from '#lib/types/index.ts';
@@ -255,7 +268,7 @@ class AgenticStore {
 		return this.gates.getPendingContinueRequest(conversationId);
 	}
 
-	getPendingPermissionRequest(conversationId: string): PendingPermissionRequest | null {
+	getPendingPermissionRequest(conversationId: string): PermissionRequest | null {
 		return this.gates.getPendingPermissionRequest(conversationId);
 	}
 
@@ -333,8 +346,12 @@ class AgenticStore {
 		this.gates.resolveContinue(conversationId, shouldContinue);
 	}
 
-	resolvePermission(conversationId: string, decision: ToolPermissionDecision): void {
-		this.gates.resolvePermission(conversationId, decision);
+	resolvePermission(
+		conversationId: string,
+		decision: ToolPermissionDecision,
+		answer?: PermissionAnswer
+	): void {
+		this.gates.resolvePermission(conversationId, decision, answer);
 	}
 
 	async runAgenticFlow(params: AgenticFlowParams): Promise<AgenticFlowResult> {
@@ -415,8 +432,9 @@ class AgenticStore {
 	}
 
 	/**
-	 * The permission gate as the harness's authorize: the user's answer, or
-	 * the end of the run when it is stopped while the prompt is open.
+	 * The permission gate as the harness's authorize: the rules and the mode
+	 * decide first, and the user is asked about what they leave open. A run
+	 * stopped while the prompt is open ends.
 	 */
 	private async authorizeTool(
 		conversationId: string,
@@ -424,11 +442,50 @@ class AgenticStore {
 		signal?: AbortSignal
 	): Promise<Authorization> {
 		const toolName = toolCall.function.name;
-		const permission = await this.gates.requestPermission(
+		const toolKey = toolsStore.getPermissionKey(toolName) ?? toolName;
+		const isServerTool = toolsStore.getToolSource(toolName) === ToolSource.SERVER;
+		const args = this.parseToolArguments(toolCall.function.arguments);
+		const command =
+			isServerTool &&
+			toolName === BuiltInTool.SERVER_EXEC_SHELL_COMMAND &&
+			typeof args.command === 'string'
+				? args.command
+				: undefined;
+		const editsFiles =
+			isServerTool &&
+			(toolName === BuiltInTool.SERVER_WRITE_FILE || toolName === BuiltInTool.SERVER_EDIT_FILE);
+		const cwd = conversationsStore.activeConversation?.cwd ?? undefined;
+		const verdict = permissionsStore.check(
+			{
+				command,
+				cwd,
+				editsFiles,
+				mode: permissionMode(settingsStore.config[SETTINGS_KEYS.PERMISSION_MODE]),
+				path: typeof args.path === 'string' ? args.path : undefined,
+				toolKey,
+				toolName,
+				writes: toolsStore.canWrite(toolName)
+			},
+			conversationId
+		);
+
+		if (verdict.effect === PermissionEffect.ALLOW) return { type: 'allow' };
+
+		if (verdict.effect === PermissionEffect.DENY) {
+			return { reason: verdict.reason ?? TOOL_DENIED_RESULT, type: 'deny' };
+		}
+
+		const decision = await this.gates.requestPermission(
 			conversationId,
-			toolName,
-			toolsStore.getToolServerLabel(toolName),
-			toolCall.id,
+			{
+				command,
+				cwd,
+				patterns: verdict.pending?.map((part) => part.pattern) ?? [],
+				serverLabel: toolsStore.getToolServerLabel(toolName),
+				toolCallId: toolCall.id,
+				toolKey,
+				toolName
+			},
 			signal
 		);
 
@@ -437,7 +494,7 @@ class AgenticStore {
 
 		throwIfAborted(signal);
 
-		return permission === ToolPermissionDecision.DENY
+		return decision === ToolPermissionDecision.DENY
 			? { reason: TOOL_DENIED_RESULT, type: 'deny' }
 			: { type: 'allow' };
 	}
@@ -1007,7 +1064,16 @@ class AgenticStore {
 
 		for (const provider of toolsStore.providers) await provider.prepare?.();
 
-		return toolsStore.getEnabledToolsForLLM(disabledTools, disabledToolCategories);
+		const cwd = conversationsStore.activeConversation?.cwd ?? undefined;
+
+		// a tool that rules refuse outright here is not offered at all
+		return toolsStore
+			.getEnabledToolsForLLM(disabledTools, disabledToolCategories)
+			.filter((tool) => {
+				const key = toolsStore.getPermissionKey(tool.function.name);
+
+				return !key || !permissionsStore.isToolDenied(key, cwd);
+			});
 	}
 
 	private updateSession(conversationId: string, update: Partial<AgenticSession>): void {
@@ -1018,3 +1084,9 @@ class AgenticStore {
 }
 
 export const agenticStore = new AgenticStore();
+
+function permissionMode(value: unknown): PermissionMode {
+	return Object.values(PermissionMode).includes(value as PermissionMode)
+		? (value as PermissionMode)
+		: PermissionMode.ASK;
+}

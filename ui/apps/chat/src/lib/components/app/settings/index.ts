@@ -91,3 +91,8 @@ export { default as SettingsChatFields } from './SettingsChat/SettingsChatFields
  * server favicons and permission management controls.
  */
 export { default as SettingsChatToolsTab } from './SettingsChat/SettingsChatToolsTab.svelte';
+
+/**
+ * **SettingsChatPermissionRules** - The kept permission rules, with a way to remove each
+ */
+export { default as SettingsChatPermissionRules } from './SettingsChat/SettingsChatPermissionRules.svelte';

@@ -3,7 +3,7 @@
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
-	import { TruncatedText } from '#lib/components/app/index.ts';
+	import { SettingsChatPermissionRules, TruncatedText } from '#lib/components/app/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
 		SETTINGS_KEYS,
@@ -229,3 +229,5 @@
 		{/each}
 	</div>
 {/if}
+
+<SettingsChatPermissionRules />

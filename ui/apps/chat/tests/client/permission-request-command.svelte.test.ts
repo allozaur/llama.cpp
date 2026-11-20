@@ -39,10 +39,15 @@ function shellCall(): DatabaseMessage {
 describe('approving a shell command', () => {
 	it('shows the command in the permission card', async () => {
 		const { container } = render(ChatMessageActionCardPermissionRequest, {
-			command: COMMAND,
 			onDecision: () => {},
-			serverLabel: 'Server Tools',
-			toolName: BuiltInTool.SERVER_EXEC_SHELL_COMMAND
+			request: {
+				command: COMMAND,
+				patterns: [],
+				serverLabel: 'Server Tools',
+				toolCallId: 'c1',
+				toolKey: `server:${BuiltInTool.SERVER_EXEC_SHELL_COMMAND}`,
+				toolName: BuiltInTool.SERVER_EXEC_SHELL_COMMAND
+			}
 		});
 
 		await tick();
