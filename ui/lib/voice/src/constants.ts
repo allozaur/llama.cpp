@@ -84,6 +84,7 @@ export const VOICE_BASE64_SLICE = 0x8000;
 /** Server routes, relative so a server under a subpath still works. */
 export const VOICE_API_PATHS = {
 	REALTIME: './v1/realtime',
+	SPEECH: './v1/audio/speech',
 	TRANSCRIPTIONS: './v1/audio/transcriptions'
 } as const;
 

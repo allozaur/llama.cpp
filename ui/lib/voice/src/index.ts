@@ -46,7 +46,9 @@ export {
 export { PauseDetector, type PauseDetectorOptions } from './pauses.js';
 export { base64ToBytes } from './pcm.js';
 export { computePeaks, computePeaksFromAudio } from './peaks.js';
+export { type ReadAloudPiece, readAloudPieces, toSpeech } from './read-aloud.js';
 export { RealtimeTranscriber } from './realtime.js';
+export { synthesizeSpeech, type SynthesizeSpeechOptions } from './speech.js';
 export { startVoiceSession } from './session.js';
 export { SpeechDetector, type SpeechDetectorOptions } from './speech-detector.js';
 export {

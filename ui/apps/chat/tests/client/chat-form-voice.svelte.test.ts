@@ -2,13 +2,17 @@
 // what the microphone offers per model, the recording row, dictated text written into the
 // message around what the user types, and a voice message whose transcript comes later.
 
-import { modelServerProps, seedStores } from '../stories/chat/form/fixtures';
+import { modelServerProps, routerModels, seedStores } from '../stories/chat/form/fixtures';
 import { deferred, FakeVoiceRecorder } from '../stories/voice/fake-voice-recorder.svelte';
 import ChatFormVoiceTestWrapper from './components/ChatFormVoiceTestWrapper.svelte';
 import { EditorView } from '@codemirror/view';
 import { VoiceTranscriptStatus } from '@ggml-org/llama-ui/voice';
 import { VoiceRecorderStatus } from '@ggml-org/llama-voice';
-import { SETTINGS_KEYS, VOICE_MODE_MESSAGE } from '#lib/constants/index.ts';
+import {
+	SETTINGS_KEYS,
+	VOICE_CONVERSATION_MESSAGE,
+	VOICE_MODE_MESSAGE
+} from '#lib/constants/index.ts';
 import { ServerRole, VoiceInputMode } from '#lib/enums/index.ts';
 import { voiceTranscriptsStore } from '#lib/stores/index.ts';
 import { parseFilesToMessageExtras } from '#lib/utils/browser-only.ts';
@@ -41,10 +45,38 @@ function seed(
 	});
 }
 
-async function renderForm({ isLoading = false } = {}) {
+/** A router whose chat model (Qwen3) can't hear while another (Gemma) can, none of them loaded. */
+function seedRouter(transcriptionModel = '') {
+	const [chat, hearing] = routerModels;
+	const restoreStores = seedStores({
+		config: {
+			autoMicOnEmpty: true,
+			[SETTINGS_KEYS.VOICE_INPUT_MODE]: VoiceInputMode.AUTO,
+			[SETTINGS_KEYS.VOICE_TRANSCRIPTION_MODEL]: transcriptionModel
+		},
+		modelProps: {
+			[chat.model]: modelServerProps(),
+			[hearing.model]: modelServerProps({
+				modalities: { audio: true, video: false, vision: false }
+			})
+		},
+		models: routerModels,
+		selectedModelId: chat.id,
+		serverRole: ServerRole.ROUTER
+	});
+
+	restore = restoreStores;
+}
+
+async function renderForm(options: { isLoading?: boolean; voiceMode?: boolean } = {}) {
 	const recorder = new FakeVoiceRecorder();
 	const state = $state({ files: [] as ChatUploadedFile[], sent: 0, value: '' });
-	const screen = render(ChatFormVoiceTestWrapper, { isLoading, state, voiceRecorder: recorder });
+	const screen = render(ChatFormVoiceTestWrapper, {
+		isLoading: options.isLoading,
+		state,
+		voiceMode: options.voiceMode,
+		voiceRecorder: recorder
+	});
 
 	await tick();
 
@@ -286,6 +318,40 @@ describe('while a reply streams', () => {
 		await expect
 			.element(screen.getByRole('button', { name: VOICE_MODE_MESSAGE.voiceMessage }).last())
 			.toBeEnabled();
+	});
+});
+
+describe('voice mode', () => {
+	it('is the main button when the model hears', async () => {
+		seed(true);
+
+		const { screen } = await renderForm({ voiceMode: true });
+
+		await expect
+			.element(screen.getByRole('button', { name: VOICE_CONVERSATION_MESSAGE.open }).last())
+			.toBeInTheDocument();
+	});
+
+	it('leaves the lead to the microphone when nothing can transcribe what is said', async () => {
+		seedRouter();
+
+		const { screen } = await renderForm({ voiceMode: true });
+
+		// the microphone stays, saying why it can't record
+		await expect
+			.element(screen.getByRole('button', { name: VOICE_MODE_MESSAGE.unavailable }).last())
+			.toBeInTheDocument();
+		expect(screen.container.innerHTML).not.toContain(VOICE_CONVERSATION_MESSAGE.open);
+	});
+
+	it('is the main button again once a transcription model is chosen', async () => {
+		seedRouter(routerModels[1].model);
+
+		const { screen } = await renderForm({ voiceMode: true });
+
+		await expect
+			.element(screen.getByRole('button', { name: VOICE_CONVERSATION_MESSAGE.open }).last())
+			.toBeInTheDocument();
 	});
 });
 

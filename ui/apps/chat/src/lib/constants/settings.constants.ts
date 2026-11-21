@@ -12,6 +12,7 @@ import Code from '@lucide/svelte/icons/code';
 import Database from '@lucide/svelte/icons/database';
 import File from '@lucide/svelte/icons/file';
 import Funnel from '@lucide/svelte/icons/funnel';
+import Gauge from '@lucide/svelte/icons/gauge';
 import GlassWater from '@lucide/svelte/icons/glass-water';
 import ListRestart from '@lucide/svelte/icons/list-restart';
 import Mic from '@lucide/svelte/icons/mic';
@@ -485,6 +486,20 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				key: SETTINGS_KEYS.VOICE_AUTO_GAIN,
 				label: 'Automatic gain',
 				type: SettingsFieldType.CHECKBOX
+			},
+			{
+				defaultValue: '1.25',
+				help: 'How fast voice mode reads replies aloud. The voice keeps its pitch.',
+				key: SETTINGS_KEYS.VOICE_READING_SPEED,
+				label: 'Reading speed',
+				options: [
+					{ icon: Gauge, label: '1×', value: '1' },
+					{ icon: Gauge, label: '1.25×', value: '1.25' },
+					{ icon: Gauge, label: '1.5×', value: '1.5' },
+					{ icon: Gauge, label: '1.75×', value: '1.75' },
+					{ icon: Gauge, label: '2×', value: '2' }
+				],
+				type: SettingsFieldType.SELECT
 			},
 			{
 				defaultValue: '',

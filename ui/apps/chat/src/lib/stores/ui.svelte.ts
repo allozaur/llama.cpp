@@ -107,6 +107,8 @@ class UiStore {
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
 	sidebarWidth = $state<number | null>(this.loadSidebarWidth());
+	/** Whether the full-screen voice mode is open: a spoken conversation with the chat model. */
+	voiceModeOpen = $state(false);
 
 	#isSidebarExpanded = $state(this.loadSidebarExpanded());
 
