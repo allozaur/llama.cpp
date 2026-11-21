@@ -226,6 +226,7 @@ export type {
 	AgenticToolCallList,
 	AgenticChatCompletionRequest,
 	AgenticSession,
+	AgenticRequestSnapshot,
 	AgenticFlowCallbacks,
 	AgenticFlowOptions,
 	AgenticFlowParams,

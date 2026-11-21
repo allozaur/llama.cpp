@@ -19,6 +19,8 @@ export interface ToolCatalog {
 	resolve(name: string): Tool | undefined;
 	/** Tools loaded since the last call, to append to the next request. */
 	takeNewlyLoaded(): Tool[];
+	/** The listed tools not loaded yet, which take no room but their line in the search tool. */
+	unloaded(): Tool[];
 }
 
 interface CatalogOptions {
@@ -88,6 +90,9 @@ export function createToolCatalog(options: CatalogOptions): ToolCatalog {
 		},
 		takeNewlyLoaded() {
 			return pending.splice(0, pending.length);
+		},
+		unloaded() {
+			return deferred.filter((tool) => !loaded.has(toolName(tool)));
 		}
 	};
 }

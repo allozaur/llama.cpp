@@ -403,3 +403,19 @@ export {
 	voiceModelRole,
 	type VoiceModeResolution
 } from './voice-mode';
+
+// Context breakdown
+export {
+	buildContextBreakdown,
+	contextShare,
+	type ContextBreakdown,
+	type ContextBreakdownInput,
+	type ContextBreakdownItem,
+	type ContextBreakdownPart,
+	type ContextMessage,
+	type ContextToolDefinition,
+	type ContextToolInfo,
+	estimateTokens,
+	formatContextShare,
+	formatTokenCount
+} from './context-breakdown';

@@ -27,19 +27,6 @@ export function colorLevelTextClass(level: ColorLevel): string {
 	}
 }
 
-export function colorLevelBgClass(level: ColorLevel): string {
-	switch (level) {
-		case ColorLevel.CRITICAL:
-			return 'bg-fill-danger';
-		case ColorLevel.WARNING:
-			return 'bg-fill-warning';
-		case ColorLevel.OK:
-			return 'bg-fill-success';
-		default:
-			return 'bg-muted';
-	}
-}
-
 /**
  * Whether the conversation has spent any tokens yet, so the gauge has something to show: the
  * timings its replies recorded, or the live state of a reply still being generated.
