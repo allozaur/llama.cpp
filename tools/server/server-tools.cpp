@@ -9,6 +9,8 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <condition_variable>
+#include <map>
 #include <cstring>
 #include <cctype>
 #include <cstdint>
@@ -30,6 +32,8 @@
 #   include <io.h>
 #else
 #   include <cerrno>
+#   include <csignal>
+#   include <poll.h>
 #   include <unistd.h>
 #endif
 
@@ -185,7 +189,16 @@ public:
             size_t max_output,
             int timeout_secs,
             const std::function<bool(const std::string &)> & on_chunk = nullptr) const = 0;
+    // start a process that outlives the call: stdout and stderr combined, stdin closed
+    virtual bool spawn(common_subproc & proc, const std::vector<std::string> & args) const = 0;
+    // signal a process group that a spawned command created; force sends SIGKILL instead of SIGTERM
+    virtual void kill_group(long pgid, bool force) const = 0;
 };
+
+static constexpr int SERVER_TOOL_SPAWN_OPTIONS = subprocess_option_no_window
+                                               | subprocess_option_inherit_environment
+                                               | subprocess_option_search_user_path
+                                               | subprocess_option_combined_stdout_stderr;
 
 // shared subprocess execution helper, used by both the local and the isolate-backed tools_io implementations.
 // combine_stderr=false when the raw stdout bytes must not be tainted by stderr, e.g. reading file contents.
@@ -254,10 +267,31 @@ static tools_io::exec_result run_subprocess(
         // read raw bytes, not lines: the output can hold NUL and must arrive as soon as it is ready
         // keep draining past the size cap, else the child blocks on a full pipe
         char buf[4096];
+#if !defined(_WIN32)
+        // a child the command put in the background (`cmd &`) keeps the pipe open after the kill,
+        // so stop reading shortly after the timeout instead of waiting for that child to exit
+        std::chrono::steady_clock::time_point stop_reading_at = std::chrono::steady_clock::time_point::max();
+#endif
         for (;;) {
 #if defined(_WIN32)
             const int n = _read(_fileno(f), buf, (unsigned) sizeof(buf));
 #else
+            if (timed_out.load()) {
+                const auto now = std::chrono::steady_clock::now();
+                if (stop_reading_at == std::chrono::steady_clock::time_point::max()) {
+                    stop_reading_at = now + std::chrono::seconds(1);
+                } else if (now >= stop_reading_at) {
+                    break;
+                }
+            }
+            pollfd pfd = { fileno(f), POLLIN, 0 };
+            const int pr = poll(&pfd, 1, 100);
+            if (pr < 0 && errno != EINTR) {
+                break;
+            }
+            if (pr <= 0) {
+                continue;
+            }
             ssize_t n = read(fileno(f), buf, sizeof(buf));
             while (n < 0 && errno == EINTR) {
                 n = read(fileno(f), buf, sizeof(buf));
@@ -412,6 +446,27 @@ public:
             int timeout_secs,
             const std::function<bool(const std::string &)> & on_chunk = nullptr) const override {
         return run_subprocess(args, max_output, timeout_secs, on_chunk, /*combine_stderr=*/true, cwd);
+    }
+
+    bool spawn(common_subproc & proc, const std::vector<std::string> & args) const override {
+        if (!proc.create(args, SERVER_TOOL_SPAWN_OPTIONS, {}, cwd.empty() ? nullptr : cwd.c_str())) {
+            return false;
+        }
+        proc.close_stdin();
+        return true;
+    }
+
+    void kill_group(long pgid, bool force) const override {
+#if defined(_WIN32)
+        (void) pgid;
+        (void) force;
+#else
+        const int sig = force ? SIGKILL : SIGTERM;
+        // without job control in the shell, the leader has no group of its own
+        if (::kill(-(pid_t) pgid, sig) != 0) {
+            ::kill((pid_t) pgid, sig);
+        }
+#endif
     }
 
 private:
@@ -629,6 +684,20 @@ public:
         return run_subprocess(
             build_argv(with_cwd(inner), /*needs_stdin=*/true),
             max_output, timeout_secs + 5, on_chunk, true);
+    }
+
+    bool spawn(common_subproc & proc, const std::vector<std::string> & args) const override {
+        if (!proc.create(build_argv(with_cwd(args), /*needs_stdin=*/false), SERVER_TOOL_SPAWN_OPTIONS)) {
+            return false;
+        }
+        proc.close_stdin();
+        return true;
+    }
+
+    // killing the host-side client does not reach the processes in the isolate, so signal them there
+    void kill_group(long pgid, bool force) const override {
+        const std::string sig = force ? "KILL" : "TERM";
+        exec({"sh", "-c", "kill -" + sig + " -- -\"$1\" 2>/dev/null || kill -" + sig + " \"$1\"", "_", std::to_string(pgid)}, 1024, true);
     }
 
 protected:
@@ -1254,6 +1323,387 @@ struct server_tool_grep_search : server_tool {
 };
 
 //
+// shell tasks: commands that exec_shell_command started with run_in_background
+//
+
+static constexpr size_t SERVER_TOOL_SHELL_TASK_BUFFER_SIZE  = 256 * 1024; // newest output kept per task
+static constexpr size_t SERVER_TOOL_SHELL_TASK_MAX_RUNNING  = 16;
+static constexpr size_t SERVER_TOOL_SHELL_TASK_MAX_FINISHED = 32;         // older finished tasks are forgotten
+static constexpr int    SERVER_TOOL_SHELL_TASK_START_WAIT_MS = 5000;      // the start call returns after this at the latest
+static constexpr int    SERVER_TOOL_SHELL_TASK_START_IDLE_MS = 1000;      // or once the first output has been quiet this long
+static constexpr int    SERVER_TOOL_SHELL_TASK_STOP_GRACE_MS = 3000;      // SIGTERM, then SIGKILL after this
+
+// first line the group leader prints, so the whole group can be signalled later
+static const std::string SERVER_TOOL_SHELL_TASK_PGID_MARKER = "\x1e" "llama-task-pgid:";
+
+// runs "$1" as the leader of a process group of its own, which first prints its group id
+// setsid where it exists; else job control (set -m), which dash only gives with a tty
+// the outer shell then only waits, and its job notices go to /dev/null
+static const char * SERVER_TOOL_SHELL_TASK_WRAPPER =
+    "exec 3>&2 2>/dev/null; "
+    "lead='printf \"\\036llama-task-pgid:%s\\n\" $$; exec sh -c \"$1\"'; "
+    "if command -v setsid >/dev/null; then exec setsid sh -c \"$lead\" _ \"$1\" 2>&3 3>&-; fi; "
+    "set -m; sh -c \"$lead\" _ \"$1\" 2>&3 3>&- & wait $!";
+
+static int64_t unix_time_ms() {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+struct server_shell_task {
+    int id = 0;
+    std::string command;
+    std::string cwd;
+    int64_t started_at = 0;
+    std::unique_ptr<tools_io> io;
+    common_subproc proc;
+    std::thread reader;
+    std::atomic<bool> abandon{false}; // set on shutdown: the reader stops even if the pipe stays open
+
+    std::mutex mtx;
+    std::condition_variable cv;
+    std::string buf;    // newest output, trimmed back to the buffer size once it is twice as large
+    uint64_t total = 0; // output bytes so far; buf holds the range [total - buf.size(), total)
+    std::chrono::steady_clock::time_point last_output;
+    long pgid = -1;
+    std::string status = "running"; // running, exited or stopped
+    int exit_code = -1;
+    int64_t ended_at = 0;
+    bool stop_requested = false;
+    bool reaping = false; // set before join(), terminate() must not touch the handle after that
+
+    void append(const std::string & chunk) {
+        if (chunk.empty()) return;
+        std::lock_guard<std::mutex> lock(mtx);
+        buf += chunk;
+        total += chunk.size();
+        if (buf.size() > 2 * SERVER_TOOL_SHELL_TASK_BUFFER_SIZE) {
+            buf.erase(0, buf.size() - SERVER_TOOL_SHELL_TASK_BUFFER_SIZE);
+        }
+        last_output = std::chrono::steady_clock::now();
+        cv.notify_all();
+    }
+
+    void read_output(bool wants_marker) {
+        FILE * f = proc.stdout_file();
+        std::string head; // the marker line, until it is complete
+        if (f) {
+#if defined(_WIN32)
+            _setmode(_fileno(f), _O_BINARY);
+#endif
+            char chunk[4096];
+            for (;;) {
+#if defined(_WIN32)
+                const int n = _read(_fileno(f), chunk, (unsigned) sizeof(chunk));
+#else
+                pollfd pfd = { fileno(f), POLLIN, 0 };
+                const int pr = poll(&pfd, 1, 100);
+                if (abandon.load() || (pr < 0 && errno != EINTR)) {
+                    break;
+                }
+                if (pr <= 0) {
+                    continue;
+                }
+                ssize_t n = ::read(fileno(f), chunk, sizeof(chunk));
+                while (n < 0 && errno == EINTR) {
+                    n = ::read(fileno(f), chunk, sizeof(chunk));
+                }
+#endif
+                if (n <= 0) {
+                    break;
+                }
+                std::string data(chunk, (size_t) n);
+                if (wants_marker) {
+                    head += data;
+                    data.clear();
+                    const size_t cmp_len = std::min(head.size(), SERVER_TOOL_SHELL_TASK_PGID_MARKER.size());
+                    const size_t nl = head.find('\n');
+                    if (head.compare(0, cmp_len, SERVER_TOOL_SHELL_TASK_PGID_MARKER, 0, cmp_len) != 0) {
+                        // no marker, e.g. the isolate could not enter the working directory
+                        data.swap(head);
+                        wants_marker = false;
+                    } else if (nl != std::string::npos) {
+                        const std::string id_str = head.substr(SERVER_TOOL_SHELL_TASK_PGID_MARKER.size(), nl - SERVER_TOOL_SHELL_TASK_PGID_MARKER.size());
+                        {
+                            std::lock_guard<std::mutex> lock(mtx);
+                            pgid = std::strtol(id_str.c_str(), nullptr, 10);
+                        }
+                        data = head.substr(nl + 1);
+                        head.clear();
+                        wants_marker = false;
+                    }
+                }
+                append(console_output_to_utf8(data));
+            }
+        }
+        append(head);
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            reaping = true;
+        }
+        const int code = proc.join();
+
+        std::lock_guard<std::mutex> lock(mtx);
+        status     = stop_requested ? "stopped" : "exited";
+        exit_code  = code;
+        ended_at   = unix_time_ms();
+        cv.notify_all();
+    }
+
+    bool running() {
+        std::lock_guard<std::mutex> lock(mtx);
+        return status == "running";
+    }
+
+    // the last max_bytes of the output from `offset` on, cut at UTF-8 character boundaries
+    json read(uint64_t offset, size_t max_bytes) {
+        std::lock_guard<std::mutex> lock(mtx);
+        const uint64_t first = total - buf.size();
+        uint64_t from = std::min(std::max(offset, first), total);
+        if (total - from > max_bytes) {
+            from = total - max_bytes;
+        }
+        std::string text = buf.substr((size_t) (from - first));
+        size_t lead = 0;
+        while (lead < text.size() && lead < 3 && ((unsigned char) text[lead] & 0xC0) == 0x80) {
+            lead++;
+        }
+        text.erase(0, lead);
+        from += lead;
+        // a character cut in half by the last read is returned by the next call
+        if (status == "running") {
+            text.resize(validate_utf8(text));
+        }
+        json res = info();
+        res["output"]      = text;
+        res["offset"]      = from;
+        res["next_offset"] = from + text.size();
+        res["skipped"]     = offset < from ? from - offset : 0;
+        return res;
+    }
+
+    // call with mtx held
+    json info() const {
+        return {
+            {"task_id",     id},
+            {"command",     command},
+            {"cwd",         cwd},
+            {"status",      status},
+            {"exit_code",   status == "running" ? json() : json(exit_code)},
+            {"started_at",  started_at},
+            {"ended_at",    ended_at > 0 ? json(ended_at) : json()},
+            {"output_size", total},
+        };
+    }
+
+    void signal(bool force) {
+        long group;
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            group = pgid;
+            if (group <= 0) {
+                if (!reaping) proc.terminate();
+                return;
+            }
+        }
+        io->kill_group(group, force);
+    }
+
+    void stop() {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (status != "running") return;
+            stop_requested = true;
+        }
+        signal(false);
+        std::unique_lock<std::mutex> lock(mtx);
+        if (cv.wait_for(lock, std::chrono::milliseconds(SERVER_TOOL_SHELL_TASK_STOP_GRACE_MS), [this] { return status != "running"; })) {
+            return;
+        }
+        lock.unlock();
+        signal(true);
+        lock.lock();
+        if (!cv.wait_for(lock, std::chrono::seconds(2), [this] { return status != "running"; }) && !reaping) {
+            // the group could not be signalled, kill at least the client we started
+            proc.terminate();
+        }
+    }
+};
+
+struct server_shell_tasks {
+    std::mutex mtx;
+    std::map<int, std::shared_ptr<server_shell_task>> tasks;
+    int next_id = 1;
+
+    ~server_shell_tasks() {
+        std::vector<std::shared_ptr<server_shell_task>> all;
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            for (auto & it : tasks) all.push_back(it.second);
+        }
+        for (auto & t : all) {
+            if (t->running()) {
+                {
+                    std::lock_guard<std::mutex> lock(t->mtx);
+                    t->stop_requested = true;
+                }
+                t->signal(true);
+            }
+            t->abandon.store(true);
+        }
+        for (auto & t : all) {
+#if defined(_WIN32)
+            // a blocking read cannot be cut short, and the thread owns a reference to its task
+            if (t->reader.joinable()) t->reader.detach();
+#else
+            if (t->reader.joinable()) t->reader.join();
+#endif
+        }
+    }
+
+    std::shared_ptr<server_shell_task> get(int id) {
+        std::lock_guard<std::mutex> lock(mtx);
+        auto it = tasks.find(id);
+        if (it == tasks.end()) {
+            throw std::invalid_argument(string_format("unknown task_id %d", id));
+        }
+        return it->second;
+    }
+
+    json list() {
+        std::lock_guard<std::mutex> lock(mtx);
+        json res = json::array();
+        for (auto it = tasks.rbegin(); it != tasks.rend(); ++it) {
+            std::lock_guard<std::mutex> task_lock(it->second->mtx);
+            res.push_back(it->second->info());
+        }
+        return res;
+    }
+
+    // starts the task, then waits until it has printed its first output or exited
+    std::shared_ptr<server_shell_task> start(std::unique_ptr<tools_io> io, const std::string & command, const std::string & cwd, bool in_isolate) {
+        std::shared_ptr<server_shell_task> t = std::make_shared<server_shell_task>();
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            size_t n_running = 0;
+            std::vector<int> finished;
+            for (auto & it : tasks) {
+                if (it.second->running()) n_running++;
+                else finished.push_back(it.first);
+            }
+            if (n_running >= SERVER_TOOL_SHELL_TASK_MAX_RUNNING) {
+                throw std::runtime_error(string_format("too many background tasks running (%zu), stop one first", n_running));
+            }
+            for (size_t i = 0; i + SERVER_TOOL_SHELL_TASK_MAX_FINISHED < finished.size(); i++) {
+                auto & old = tasks[finished[i]];
+                if (old->reader.joinable()) old->reader.join();
+                tasks.erase(finished[i]);
+            }
+            t->id = next_id++;
+        }
+
+        t->command    = command;
+        t->cwd        = cwd;
+        t->started_at = unix_time_ms();
+        t->io         = std::move(io);
+
+        // the host shell on Windows has no process groups: stop then ends only the shell
+#ifdef _WIN32
+        bool use_group = in_isolate;
+        std::vector<std::string> args = use_group
+            ? std::vector<std::string>{"sh", "-c", SERVER_TOOL_SHELL_TASK_WRAPPER, "_", command}
+            : std::vector<std::string>{"cmd", "/c", command};
+#else
+        (void) in_isolate;
+        bool use_group = true;
+        std::vector<std::string> args = {"sh", "-c", SERVER_TOOL_SHELL_TASK_WRAPPER, "_", command};
+#endif
+        if (!t->io->spawn(t->proc, args)) {
+            throw std::runtime_error("failed to spawn process");
+        }
+        t->reader = std::thread([t, use_group]() { t->read_output(use_group); });
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            tasks[t->id] = t;
+        }
+
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(SERVER_TOOL_SHELL_TASK_START_WAIT_MS);
+        std::unique_lock<std::mutex> lock(t->mtx);
+        while (t->status == "running") {
+            const auto now = std::chrono::steady_clock::now();
+            if (now >= deadline) break;
+            if (t->total > 0 && now - t->last_output >= std::chrono::milliseconds(SERVER_TOOL_SHELL_TASK_START_IDLE_MS)) break;
+            t->cv.wait_for(lock, std::chrono::milliseconds(100));
+        }
+        return t;
+    }
+};
+
+static constexpr size_t SERVER_TOOL_SHELL_TASK_OUTPUT_DEFAULT = 16 * 1024; // what the model reads by default
+
+struct server_tool_shell_task : server_tool {
+    server_shell_tasks & tasks;
+
+    explicit server_tool_shell_task(server_shell_tasks & tasks) : tasks(tasks) {
+        name = "shell_task";
+        display_name = "Background shell task";
+        permission_write = false;
+    }
+
+    json get_definition() const override {
+        return {
+            {"type", "function"},
+            {"function", {
+                {"name", name},
+                {"description", "Read or stop the commands that exec_shell_command started with run_in_background. "
+                                "list: every task with its status. output: the newest output of a task, with its status and exit code. "
+                                "stop: stop a task and every process it started."},
+                {"parameters", {
+                    {"type", "object"},
+                    {"properties", {
+                        {"action",          {{"type", "string"},  {"enum", json::array({"list", "output", "stop"})}}},
+                        {"task_id",         {{"type", "integer"}, {"description", "Task id, required for output and stop"}}},
+                        {"offset",          {{"type", "integer"}, {"description", "Read output from this byte offset on, the next_offset of a previous read (default 0)"}}},
+                        {"max_output_size", {{"type", "integer"}, {"description", string_format("Maximum output size in bytes; when there is more, the newest part is returned (default %zu)", SERVER_TOOL_SHELL_TASK_OUTPUT_DEFAULT)}}},
+                    }},
+                    {"required", json::array({"action"})},
+                }},
+            }},
+        };
+    }
+
+    json invoke(json params, server_tool::stream *, const std::function<bool()> &) const override {
+        const std::string action = json_value(params, "action", std::string());
+        if (action == "list") {
+            return {{"tasks", tasks.list()}};
+        }
+        if (action != "output" && action != "stop") {
+            return {{"error", "action must be list, output or stop"}};
+        }
+        if (!params.contains("task_id")) {
+            return {{"error", "task_id is required"}};
+        }
+        const int id = json_value(params, "task_id", 0);
+        std::shared_ptr<server_shell_task> t;
+        try {
+            t = tasks.get(id);
+        } catch (const std::invalid_argument & e) {
+            return {{"error", e.what()}};
+        }
+        if (action == "output") {
+            const int64_t offset = std::max<int64_t>(0, json_value(params, "offset", (int64_t) 0));
+            const int64_t max_out = json_value(params, "max_output_size", (int64_t) SERVER_TOOL_SHELL_TASK_OUTPUT_DEFAULT);
+            return t->read((uint64_t) offset, (size_t) std::clamp<int64_t>(max_out, 1, (int64_t) SERVER_TOOL_SHELL_TASK_BUFFER_SIZE));
+        }
+        t->stop();
+        std::lock_guard<std::mutex> lock(t->mtx);
+        return t->info();
+    }
+};
+
+//
 // exec_shell_command: run an arbitrary shell command
 //
 
@@ -1261,7 +1711,9 @@ static constexpr size_t SERVER_TOOL_EXEC_SHELL_COMMAND_MAX_OUTPUT_SIZE = 16 * 10
 static constexpr int    SERVER_TOOL_EXEC_SHELL_COMMAND_MAX_TIMEOUT     = 60;        // seconds
 
 struct server_tool_exec_shell_command : server_tool {
-    server_tool_exec_shell_command() {
+    server_shell_tasks & tasks;
+
+    explicit server_tool_exec_shell_command(server_shell_tasks & tasks) : tasks(tasks) {
         name = "exec_shell_command";
         display_name = "Execute shell command";
         uses_cwd = true;
@@ -1274,7 +1726,11 @@ struct server_tool_exec_shell_command : server_tool {
             {"type", "function"},
             {"function", {
                 {"name", name},
-                {"description", "Execute a shell command and return its output (stdout and stderr combined)."},
+                {"description", "Execute a shell command and return its output (stdout and stderr combined). "
+                                "The call waits for the command to finish, up to the timeout. "
+                                "For a command that keeps running, such as a dev server, a watcher or a log follower, set run_in_background: "
+                                "the call returns the first output and a task id, and the shell_task tool reads more output or stops it. "
+                                "Do not end a command with & to run it in the background."},
                 {"parameters", {
                     {"type", "object"},
                     {"properties", {
@@ -1283,6 +1739,7 @@ struct server_tool_exec_shell_command : server_tool {
                         {"command",         {{"type", "string"},  {"description", "Shell command to execute"}}},
                         {"timeout",         {{"type", "integer"}, {"description", string_format("Timeout in seconds (default 10, max %d)", SERVER_TOOL_EXEC_SHELL_COMMAND_MAX_TIMEOUT)}}},
                         {"max_output_size", {{"type", "integer"}, {"description", string_format("Maximum output size in bytes (default %zu)", SERVER_TOOL_EXEC_SHELL_COMMAND_MAX_OUTPUT_SIZE)}}},
+                        {"run_in_background", {{"type", "boolean"}, {"description", "Start the command as a background task and return without waiting for it to exit (default false)"}}},
                     }},
                     {"required", json::array({"description", "command"})},
                 }},
@@ -1308,6 +1765,30 @@ struct server_tool_exec_shell_command : server_tool {
 #endif
 
         auto io = make_tools_io(params);
+
+        if (json_value(params, "run_in_background", false)) {
+            const std::string runtime = json_value(params, "runtime", std::string());
+            std::string cwd = json_value(params, "cwd", std::string());
+            if (cwd.empty() && runtime.empty()) {
+                std::error_code ec;
+                cwd = fs::current_path(ec).generic_string();
+            }
+            auto task = tasks.start(std::move(io), command, cwd, !runtime.empty());
+            json first = task->read(0, max_output);
+            std::string text = first.at("output").get<std::string>();
+            if (!text.empty() && text.back() != '\n') text += "\n";
+            text += string_format("[background task: %d]", task->id);
+            if (first.at("status") == "running") {
+                text += " [running; read its output with shell_task, or stop it]";
+            } else {
+                text += string_format(" [exit code: %d]", first.at("exit_code").get<int>());
+            }
+            if (st) {
+                st->push(text);
+                return json();
+            }
+            return {{"plain_text_response", text}};
+        }
 
         if (st) {
             auto res = io->run(args, max_output, timeout, [st](const std::string & chunk) {
@@ -1969,7 +2450,7 @@ static server_tool & find_tool(std::vector<std::unique_ptr<server_tool>> & tools
 // public API
 //
 
-static std::vector<std::unique_ptr<server_tool>> build_tools() {
+static std::vector<std::unique_ptr<server_tool>> build_tools(server_shell_tasks & shell_tasks) {
     // IMPORTANT: for contributors, please keep this array of tools as minimal as possible
     //            we only accept minimal i/o and shell command tools here
     //            for example, do not add: web search, get date time, etc.
@@ -1978,7 +2459,8 @@ static std::vector<std::unique_ptr<server_tool>> build_tools() {
     tools.push_back(std::make_unique<server_tool_read_file>());
     tools.push_back(std::make_unique<server_tool_file_glob_search>());
     tools.push_back(std::make_unique<server_tool_grep_search>());
-    tools.push_back(std::make_unique<server_tool_exec_shell_command>());
+    tools.push_back(std::make_unique<server_tool_exec_shell_command>(shell_tasks));
+    tools.push_back(std::make_unique<server_tool_shell_task>(shell_tasks));
     tools.push_back(std::make_unique<server_tool_write_file>());
     tools.push_back(std::make_unique<server_tool_edit_file>());
     tools.push_back(std::make_unique<server_tool_get_info>());
@@ -2028,7 +2510,12 @@ void server_tools::setup(const std::vector<std::string> & enabled_tools,
         }
 
         std::unordered_set<std::string> enabled_set(enabled_tools.begin(), enabled_tools.end());
-        auto all_tools = build_tools();
+        // background tasks are part of the shell tool
+        if (enabled_set.count("exec_shell_command") > 0) {
+            enabled_set.insert("shell_task");
+        }
+        shell_tasks = std::make_unique<server_shell_tasks>();
+        auto all_tools = build_tools(*shell_tasks);
 
         // collect all known tool names for validation
         std::vector<std::string> known_names;
