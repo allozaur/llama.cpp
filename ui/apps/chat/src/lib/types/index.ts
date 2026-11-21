@@ -94,11 +94,13 @@ export type {
 export type {
 	McpServerOverride,
 	DatabaseConversation,
+	DatabasePrompt,
 	DatabaseMessageExtraAudioFile,
 	DatabaseMessageExtraVideoFile,
 	DatabaseMessageExtraImageFile,
 	DatabaseMessageExtraLegacyContext,
 	DatabaseMessageExtraMcpPrompt,
+	DatabaseMessageExtraPrompt,
 	DatabaseMessageExtraMcpResource,
 	DatabaseMessageExtraPdfFile,
 	DatabaseMessageExtraTextFile,
@@ -209,6 +211,8 @@ export type {
 export type { Group } from './groups';
 // Project types
 export type { Project, ProjectContextItem, ProjectDraft } from './projects';
+// Library types
+export type { LibraryItem } from './library';
 
 // Search result types
 export type { SearchResult } from './search';

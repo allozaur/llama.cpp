@@ -20,6 +20,8 @@ export const ROUTES = {
 	CHAT: '/(chat)/chat/[id]',
 	/** A page an extension contributes, see RouterService.extensionPage(). */
 	EXTENSION_PAGE: '/[extensionPage]',
+	/** Library. */
+	LIBRARY: '/library',
 	/** Models manager. */
 	MODELS: '/models',
 	/** A project's overview. */

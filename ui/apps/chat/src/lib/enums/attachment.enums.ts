@@ -8,6 +8,7 @@ export enum AttachmentType {
 	MCP_PROMPT = 'MCP_PROMPT',
 	MCP_RESOURCE = 'MCP_RESOURCE',
 	PDF = 'PDF',
+	PROMPT = 'PROMPT',
 	TEXT = 'TEXT',
 	VIDEO = 'VIDEO'
 }

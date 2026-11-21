@@ -14,6 +14,7 @@
 		VOICE_MODE_MESSAGE
 	} from '#lib/constants/index.ts';
 	import { setChatFormActionsContext } from '#lib/contexts/index.ts';
+	import type { SystemPromptEntry, SystemPromptSource } from '#lib/extensions/index.ts';
 	import { useChatFormModel } from '#lib/hooks/use-chat-form-model.svelte.ts';
 	import { useShowContextGauge } from '#lib/hooks/use-context-gauge.svelte.ts';
 	import { ChatService } from '#lib/services/index.ts';
@@ -52,7 +53,9 @@
 		onFileUpload?: () => void;
 		onMicClick?: () => void;
 		onStop?: () => void;
+		onPromptArguments?: (source: SystemPromptSource, entry: SystemPromptEntry) => void;
 		onSystemPromptClick?: () => void;
+		onSystemPromptWithContent?: (content: string, promptId: string, title: string) => void;
 		onWorkingDirectoryClick?: () => void;
 	}
 
@@ -68,8 +71,10 @@
 		micWarning = null,
 		onFileUpload,
 		onMicClick,
+		onPromptArguments,
 		onStop,
 		onSystemPromptClick,
+		onSystemPromptWithContent,
 		onWorkingDirectoryClick,
 		showAddButton = true,
 		showModelSelector = true,
@@ -135,8 +140,14 @@
 		get onFileUpload() {
 			return onFileUpload;
 		},
+		get onPromptArguments() {
+			return onPromptArguments;
+		},
 		get onSystemPromptClick() {
 			return onSystemPromptClick;
+		},
+		get onSystemPromptWithContent() {
+			return onSystemPromptWithContent;
 		},
 		get onWorkingDirectoryClick() {
 			return onWorkingDirectoryClick;
