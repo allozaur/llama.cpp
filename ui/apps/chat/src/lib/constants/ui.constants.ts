@@ -187,5 +187,8 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 /** A light haptic tap's length where the browser vibrates (Android): a click, not a buzz. */
 export const HAPTIC_TAP_MS = 8;
 
-/** From this window width the chat screen's side cards start unfolded */
-export const CHAT_SIDE_CARDS_WIDE_MIN_PX = 1440;
+/**
+ * From this window width the chat screen's side cards get a column of their own,
+ * beside the messages; narrower, they float folded over the messages' corner
+ */
+export const CHAT_SIDE_CARDS_COLUMN_MIN_PX = 1024;

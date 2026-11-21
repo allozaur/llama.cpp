@@ -25,6 +25,8 @@
 		activeConversationId?: string | null;
 		/** Builds the link to the conversation that started a task. */
 		conversationHref?: (conversationId: string) => string;
+		/** In the side column: fills its width instead of sizing itself. */
+		docked?: boolean;
 		home?: string | null;
 		isStopping?: (key: string) => boolean;
 		/** Time used for running tasks' elapsed time, ticks once a second. */
@@ -42,6 +44,7 @@
 		activeConversationId = null,
 		class: className,
 		conversationHref,
+		docked = false,
 		home = null,
 		isStopping = () => false,
 		now = Date.now(),
@@ -141,7 +144,10 @@
 				{@render stopKey(openTask)}
 			</div>
 
-			<TerminalOutput class="h-80 max-h-[50dvh] rounded-md px-3 py-2" output={openTask.output} />
+			<TerminalOutput
+				class={cn('rounded-md px-3 py-2', docked ? 'h-[60dvh]' : 'h-80 max-h-[50dvh]')}
+				output={openTask.output}
+			/>
 
 			{#if openTask.cwd}
 				<p
