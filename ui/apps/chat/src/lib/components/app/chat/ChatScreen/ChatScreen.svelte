@@ -25,6 +25,7 @@
 		CHAT_FORM_MOVE_SHIFT_PX,
 		CHAT_FORM_MOVE_TO_BOTTOM_IN_MS,
 		CHAT_FORM_MOVE_TO_BOTTOM_OUT_MS,
+		CHAT_SIDE_CARDS_COLUMN_MIN_PX,
 		ROUTES
 	} from '#lib/constants/index.ts';
 	import { useChatScreenActiveModel } from '#lib/hooks/use-chat-screen-active-model.svelte.ts';
@@ -45,9 +46,13 @@
 	import { disableScrollHandling, onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 	import { fade } from 'svelte/transition';
 
 	let { showCenteredEmpty = false } = $props();
+
+	// wide enough for the side cards to take a column beside the messages
+	const sideCardsColumn = new MediaQuery(`min-width: ${CHAT_SIDE_CARDS_COLUMN_MIN_PX}px`);
 
 	let emptyFileNames = $state<string[]>([]);
 	let showDeleteDialog = $state(false);
@@ -288,110 +293,119 @@
 {#if isServerLoading}
 	<ServerLoadingSplash />
 {:else}
-	<div
-		style:--chat-form-bottom-position={chatFormBottomPosition}
-		style:--chat-form-side-inset={chatFormSideInset}
-		class="chat-screen flex grow flex-col min-h-[calc(100dvh-1rem)] md:min-h-[calc(100dvh-var(--chat-tabs-offset,0px))] px-4 md:py-0 pt-(--page-top) pb-48 md:pb-4"
-		ondragenter={dragAndDrop.dragHandlers.dragenter}
-		ondragleave={dragAndDrop.dragHandlers.dragleave}
-		ondragover={dragAndDrop.dragHandlers.dragover}
-		ondrop={dragAndDrop.dragHandlers.drop}
-		role="main"
-	>
-		<!-- a phone pins the gauge to the top right, across from the menu toggle; like the toggle,
-		     it steps aside while the expanded chat form covers the screen and its collapse key -->
-		{#if deviceStore.isMobile && showContextGauge.current && !uiStore.isComposerExpanded}
-			<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
-				<ChatFormContextGauge
-					class="sidebar-reveal-pin-top fixed top-(--corner-control-top) right-4 z-20"
-					corner
-				/>
-			</div>
-		{/if}
-
-		<!-- a phone's chat shows its title and working directory between the corner keys; a new
-		     chat has neither yet, and offers the directory in the + menu instead. Like the keys,
-		     it steps aside while the expanded chat form covers the screen -->
-		{#if deviceStore.isMobile && page.params.id && !uiStore.isComposerExpanded}
-			<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
-				<ChatScreenMobileHeader
-					onWorkingDirectoryClick={() => chatScreenForm?.openWorkingDirectoryPicker()}
-				/>
-			</div>
-		{/if}
-
-		<ChatSideCards />
-
-		{#if !isEmpty}
-			<ChatMessages
-				messages={conversationsStore.activeMessages}
-				onMessagesReady={handleMessagesReady}
-			/>
-		{/if}
-
-		<!-- the scroll anchor that keeps the page at its bottom, see createStickToBottom -->
-		<div bind:this={stickPin} aria-hidden="true" class="stick-to-bottom-pin"></div>
-
+	<!-- the chat column, and the side cards' column on its right once a card has something to show -->
+	<div class="chat-screen-columns flex grow">
 		<div
-			bind:this={formWrapper}
-			style:--chat-form-resize-ease={isFormLifted ? CHAT_FORM_EASE_OUT : undefined}
-			style:padding-top="var(--chat-form-padding-top)"
-			class={[
-				// moves between the centered and bottom positions with a fade (see moveForm), at
-				// the same height in the page, so the messages never shift
-				'pointer-events-none md:sticky fixed mt-auto max-md:z-10',
-				// a phone holds it in place on screen while the page is slid aside
-				deviceStore.isMobile && 'sidebar-reveal-pin-bottom',
-				// on a phone the expanded form is a sheet: flush with the screen's sides and bottom
-				uiStore.isComposerExpanded
-					? 'bottom-0 right-0 left-0'
-					: deviceStore.isStandalone
-						? 'bottom-6 right-4 left-4'
-						: deviceStore.isIOSSafari
-							? 'bottom-2 left-2 right-2'
-							: 'bottom-3 right-2 left-2',
-				// Lifted on a new chat until the resting card's top edge is on the screen's middle,
-				// by its sticky bottom offset and not a translate, which a quick reversal starts a
-				// frame ahead of the card's height
-				isFormLifted && 'md:[--chat-form-drop:calc(50dvh-1rem-var(--chat-form-resting-height))]',
-				isFormLifted && !uiStore.isComposerExpanded
-					? 'md:bottom-[calc(var(--chat-form-drop)+1rem)]'
-					: 'md:bottom-4',
-				!isFormMoving &&
-					'transition-[left,right,bottom] duration-400 ease-[var(--chat-form-resize-ease,cubic-bezier(0.3,1.12,0.5,1))] max-md:transition-none motion-reduce:transition-none'
-			]}
+			style:--chat-form-bottom-position={chatFormBottomPosition}
+			style:--chat-form-side-inset={chatFormSideInset}
+			class="chat-screen flex min-w-0 grow flex-col min-h-[calc(100dvh-1rem)] md:min-h-[calc(100dvh-var(--chat-tabs-offset,0px))] px-4 md:py-0 pt-(--page-top) pb-48 md:pb-4"
+			ondragenter={dragAndDrop.dragHandlers.dragenter}
+			ondragleave={dragAndDrop.dragHandlers.dragleave}
+			ondragover={dragAndDrop.dragHandlers.dragover}
+			ondrop={dragAndDrop.dragHandlers.drop}
+			role="main"
 		>
-			<ChatScreenGreeting
-				faded={uiStore.isComposerExpanded}
-				instant={deviceStore.isMobile}
-				isEmpty={isFormLifted}
-			/>
-
-			<ChatScreenServerError />
-
-			{#if page.params.id}
-				<ChatScreenStreamResumeStatus />
+			<!-- a phone pins the gauge to the top right, across from the menu toggle; like the toggle,
+		     it steps aside while the expanded chat form covers the screen and its collapse key -->
+			{#if deviceStore.isMobile && showContextGauge.current && !uiStore.isComposerExpanded}
+				<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
+					<ChatFormContextGauge
+						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) right-4 z-20"
+						corner
+					/>
+				</div>
 			{/if}
 
-			<div class="pointer-events-none flex flex-col gap-6 items-center w-full">
-				{#if stick.farFromBottom && page.route.id === ROUTES.CHAT && page.params.id}
-					<ChatScreenActionScrollDown onclick={() => stick.scrollToBottom('smooth')} />
-				{/if}
-			</div>
+			<!-- a phone's chat shows its title and working directory between the corner keys; a new
+		     chat has neither yet, and offers the directory in the + menu instead. Like the keys,
+		     it steps aside while the expanded chat form covers the screen -->
+			{#if deviceStore.isMobile && page.params.id && !uiStore.isComposerExpanded}
+				<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
+					<ChatScreenMobileHeader
+						onWorkingDirectoryClick={() => chatScreenForm?.openWorkingDirectoryPicker()}
+					/>
+				</div>
+			{/if}
 
-			<ChatScreenForm
-				bind:this={chatScreenForm}
-				bind:uploadedFiles={fileUpload.uploadedFiles}
-				class="pointer-events-auto conversation-chat-form"
-				disabled={hasPropsError || chatStore.isEditing()}
-				isLoading={isCurrentConversationLoading}
-				onFileRemove={fileUpload.handleFileRemove}
-				onFileUpload={fileUpload.handleFileUpload}
-				onSend={handleSendMessage}
-				onStop={() => chatStore.stopGeneration()}
-				onSystemPromptAdd={handleSystemPromptAdd}
-			/>
+			{#if !sideCardsColumn.current}
+				<ChatSideCards />
+			{/if}
+
+			{#if !isEmpty}
+				<ChatMessages
+					messages={conversationsStore.activeMessages}
+					onMessagesReady={handleMessagesReady}
+				/>
+			{/if}
+
+			<!-- the scroll anchor that keeps the page at its bottom, see createStickToBottom -->
+			<div bind:this={stickPin} aria-hidden="true" class="stick-to-bottom-pin"></div>
+
+			<div
+				bind:this={formWrapper}
+				style:--chat-form-resize-ease={isFormLifted ? CHAT_FORM_EASE_OUT : undefined}
+				style:padding-top="var(--chat-form-padding-top)"
+				class={[
+					// moves between the centered and bottom positions with a fade (see moveForm), at
+					// the same height in the page, so the messages never shift
+					'pointer-events-none md:sticky fixed mt-auto max-md:z-10',
+					// a phone holds it in place on screen while the page is slid aside
+					deviceStore.isMobile && 'sidebar-reveal-pin-bottom',
+					// on a phone the expanded form is a sheet: flush with the screen's sides and bottom
+					uiStore.isComposerExpanded
+						? 'bottom-0 right-0 left-0'
+						: deviceStore.isStandalone
+							? 'bottom-6 right-4 left-4'
+							: deviceStore.isIOSSafari
+								? 'bottom-2 left-2 right-2'
+								: 'bottom-3 right-2 left-2',
+					// Lifted on a new chat until the resting card's top edge is on the screen's middle,
+					// by its sticky bottom offset and not a translate, which a quick reversal starts a
+					// frame ahead of the card's height
+					isFormLifted && 'md:[--chat-form-drop:calc(50dvh-1rem-var(--chat-form-resting-height))]',
+					isFormLifted && !uiStore.isComposerExpanded
+						? 'md:bottom-[calc(var(--chat-form-drop)+1rem)]'
+						: 'md:bottom-4',
+					!isFormMoving &&
+						'transition-[left,right,bottom] duration-400 ease-[var(--chat-form-resize-ease,cubic-bezier(0.3,1.12,0.5,1))] max-md:transition-none motion-reduce:transition-none'
+				]}
+			>
+				<ChatScreenGreeting
+					faded={uiStore.isComposerExpanded}
+					instant={deviceStore.isMobile}
+					isEmpty={isFormLifted}
+				/>
+
+				<ChatScreenServerError />
+
+				{#if page.params.id}
+					<ChatScreenStreamResumeStatus />
+				{/if}
+
+				<div class="pointer-events-none flex flex-col gap-6 items-center w-full">
+					{#if stick.farFromBottom && page.route.id === ROUTES.CHAT && page.params.id}
+						<ChatScreenActionScrollDown onclick={() => stick.scrollToBottom('smooth')} />
+					{/if}
+				</div>
+
+				<ChatScreenForm
+					bind:this={chatScreenForm}
+					bind:uploadedFiles={fileUpload.uploadedFiles}
+					class="pointer-events-auto conversation-chat-form"
+					disabled={hasPropsError || chatStore.isEditing()}
+					isLoading={isCurrentConversationLoading}
+					onFileRemove={fileUpload.handleFileRemove}
+					onFileUpload={fileUpload.handleFileUpload}
+					onSend={handleSendMessage}
+					onStop={() => chatStore.stopGeneration()}
+					onSystemPromptAdd={handleSystemPromptAdd}
+				/>
+			</div>
 		</div>
+
+		{#if sideCardsColumn.current}
+			<ChatSideCards docked />
+		{/if}
 	</div>
 {/if}
 
