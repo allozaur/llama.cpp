@@ -614,3 +614,26 @@ export { default as ChatScreenServerError } from './ChatScreen/ChatScreenServerE
  * Renders nothing otherwise. Shown inside ChatScreen only on an active conversation route.
  */
 export { default as ChatScreenStreamResumeStatus } from './ChatScreen/ChatScreenStreamResumeStatus.svelte';
+
+/**
+ * **ChatSideCards** - The chat screen's invisible sidebar
+ *
+ * A fixed column of floating cards on the right of the chat screen, with no
+ * panel around them. Each card shows only while it has something to show.
+ * The first is the Background tasks card.
+ */
+export { default as ChatSideCards } from './ChatSideCards/ChatSideCards.svelte';
+
+/**
+ * **ChatSideCard** - One floating card of the side column: a title that folds it, and its body.
+ */
+export { default as ChatSideCard } from './ChatSideCards/ChatSideCard.svelte';
+
+/**
+ * **BackgroundTasksCard** - Shell commands running in the background on llama-server
+ *
+ * Lists the tasks with their status, elapsed time and a Stop key; opening one
+ * shows its output in a TerminalOutput. Presentational: the side column feeds
+ * it from backgroundTasksStore.
+ */
+export { default as BackgroundTasksCard } from './ChatSideCards/BackgroundTasksCard.svelte';
