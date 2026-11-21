@@ -1,0 +1,27 @@
+/** Prefix for generated ids of user-added servers. */
+export const SERVER_ID_PREFIX = 'server';
+
+/** Chat completions path every server serves. */
+export const DEFAULT_SERVER_CHAT_PATH = '/v1/chat/completions';
+
+/** Models listing path every server serves. */
+export const DEFAULT_SERVER_MODELS_PATH = '/v1/models';
+
+/** Id of the built-in backend that points at the server serving this UI. */
+export const LOCAL_BACKEND_ID = 'local';
+
+/** Favicon extract keyed by domain, for servers with no bundled mark. */
+export const FAVICON_SERVICE_URL = 'https://www.google.com/s2/favicons?domain=';
+
+/**
+ * File next to index.html listing servers the app adds on startup, as
+ * `{ "servers": [{ "url": "http://127.0.0.1:9931" }] }`. `llama-chat --server`
+ * serves it, and `llama-chat build --server` writes it.
+ */
+export const PRESET_SERVERS_FILE = 'llama-chat.json';
+
+/**
+ * Name of the meta tag in index.html that says {@link PRESET_SERVERS_FILE} is
+ * there: pages served any other way, such as by llama-server, never ask for it.
+ */
+export const PRESET_SERVERS_META = 'llama-chat-servers';

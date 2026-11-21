@@ -16,6 +16,8 @@ export {
 	ToolCallType
 } from './agentic.enums';
 
+export { ServerKind, ServerCardState, TunnelStatus } from './servers.enums';
+
 export {
 	ChatMessageStatsView,
 	ChatMessageStatisticsMode,
@@ -84,6 +86,7 @@ export {
 	ModelGroupKind,
 	ModelRowDownloadState,
 	ModelsTableGroupKind,
+	ModelsTableServerKind,
 	ModelsTableSortKey
 } from './model.enums';
 

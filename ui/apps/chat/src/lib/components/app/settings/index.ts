@@ -96,3 +96,8 @@ export { default as SettingsChatToolsTab } from './SettingsChat/SettingsChatTool
  * **SettingsChatPermissionRules** - The kept permission rules, with a way to remove each
  */
 export { default as SettingsChatPermissionRules } from './SettingsChat/SettingsChatPermissionRules.svelte';
+
+/**
+ * Servers panel for chat settings. Switches between the llama.cpp and
+ * OpenAI-compatible protocols and lists the endpoints configured for each.
+ */

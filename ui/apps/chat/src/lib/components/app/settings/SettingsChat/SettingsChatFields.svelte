@@ -5,7 +5,7 @@
 	import * as RadioGroup from '@ggml-org/llama-ui/ui/radio-group';
 	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
-	import { FlaskConical, RotateCcw } from '@lucide/svelte';
+	import { FlaskConical, RotateCcw, ShieldAlert } from '@lucide/svelte';
 	import { SettingsChatParameterSourceIndicator } from '#lib/components/app/settings/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
@@ -47,7 +47,7 @@
 	let currentModelParams = $derived.by(() => {
 		void modelsStore.props.cacheVersion;
 
-		if (serverStore.isRouterMode) {
+		if (serverStore.localIsRouter) {
 			const currentModelName = modelsStore.selectedModelName;
 
 			if (currentModelName) {
@@ -347,6 +347,14 @@
 						{#if field.help || SETTING_CONFIG_INFO[field.key]}
 							<p class="text-caption text-muted-foreground">
 								{field.help || SETTING_CONFIG_INFO[field.key]}
+							</p>
+						{/if}
+
+						{#if field.note}
+							<p class="flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+								<ShieldAlert class="mt-px size-3.5 shrink-0" />
+
+								{field.note}
 							</p>
 						{/if}
 					</div>

@@ -7,6 +7,7 @@ import {
 } from './keyboard-shortcuts.constants';
 import { ROUTES } from './routes.constants';
 import Search from '@lucide/svelte/icons/search';
+import Server from '@lucide/svelte/icons/server';
 import Settings from '@lucide/svelte/icons/settings';
 import SquarePen from '@lucide/svelte/icons/square-pen';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
@@ -96,8 +97,8 @@ export const STATS_UNITS = {
 
 export const DEFAULT_MOBILE_BREAKPOINT = 768;
 
-/** Models listed per remote provider before the "+ X more" line; search covers the rest. */
-export const REMOTE_PROVIDER_MODEL_LIMIT = 12;
+/** Models listed per remote server before the "+ X more" line; search covers the rest. */
+export const REMOTE_SERVER_MODEL_LIMIT = 12;
 
 /** Model rows mounted before the list scrolls; a local catalog can hold hundreds. */
 export const MODEL_ROW_WINDOW = 50;
@@ -175,6 +176,12 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		icon: MODEL_ICON,
 		keys: SHORTCUT_MODELS,
 		tooltip: 'Models'
+	},
+	{
+		action: SidebarAction.SERVERS,
+		activeRouteId: ROUTES.SERVERS,
+		icon: Server,
+		tooltip: 'Servers'
 	},
 	{
 		action: SidebarAction.SETTINGS,

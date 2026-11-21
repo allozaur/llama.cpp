@@ -103,6 +103,8 @@ class UiStore {
 	modelsReturnRoute: ResolvedPathname = resolve(ROUTES.START);
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** Open state of the servers dialog, the door to pairing on a phone. */
+	serversOpen = $state(false);
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
@@ -233,6 +235,17 @@ class UiStore {
 		void goto(resolve(ROUTES.MODELS));
 	}
 
+	/** Open the servers, where a server is paired or pointed at: a page on a phone, a dialog elsewhere. */
+	openServers(): void {
+		if (deviceStore.isMobile) {
+			void goto(resolve(ROUTES.SERVERS));
+
+			return;
+		}
+
+		this.serversOpen = true;
+	}
+
 	/**
 	 * Puts sections in the order the user gave them. One never moved, such as a
 	 * section that was empty until now, keeps its default place: right before the next section in
@@ -269,6 +282,7 @@ class UiStore {
 		// with the hash router, the page's hash is its resolved URL
 		this.modelsReturnRoute = (page.url.hash as ResolvedPathname) || resolve(ROUTES.START);
 	}
+
 	/** Ask the composer to take focus, e.g. after a dialog closes onto the chat. */
 	requestComposerFocus(): void {
 		this.composerFocusRequested = true;

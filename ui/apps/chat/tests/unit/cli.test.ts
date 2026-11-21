@@ -1,4 +1,13 @@
-import { buildStatic, createChatServer, DEFAULTS, parseCliArgs } from '../../cli/server.js';
+import {
+	buildStatic,
+	createChatServer,
+	DEFAULTS,
+	parseCliArgs,
+	parseServerUrl,
+	PRESET_FILE,
+	PRESET_META,
+	withPresetMeta
+} from '../../cli/server.js';
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -14,6 +23,9 @@ function listen(server: http.Server): Promise<string> {
 	});
 }
 
+/** A built index.html in short: the CLI adds its marker for llama-chat.json before `</head>`. */
+const INDEX = '<!doctype html><html><head><title>Llama Chat</title></head><body></body></html>';
+
 function close(server: http.Server): Promise<void> {
 	return new Promise((resolve) => server.close(() => resolve()));
 }
@@ -25,6 +37,7 @@ describe('llama-chat CLI arguments', () => {
 		expect(options.host).toBe(DEFAULTS.host);
 		expect(options.port).toBe(DEFAULTS.port);
 		expect(options.open).toBe(true);
+		expect(options.servers).toEqual([]);
 	});
 
 	it('reads the documented flags', () => {
@@ -42,8 +55,30 @@ describe('llama-chat CLI arguments', () => {
 		expect(() => parseCliArgs(['--nope'])).toThrow();
 		expect(() => parseCliArgs(['--port', 'abc'])).toThrow(/invalid --port/);
 		expect(() => parseCliArgs(['--port', '70000'])).toThrow(/invalid --port/);
-		// it forwards nothing, so there is no llama-server to name
-		expect(() => parseCliArgs(['--server', 'http://127.0.0.1:9931'])).toThrow();
+	});
+
+	it('takes --server more than once, for serving and for build alike', () => {
+		expect(
+			parseCliArgs(['--server', 'localhost:9931', '--server', 'https://llm.example.com/api/'])
+				.servers
+		).toEqual(['http://localhost:9931', 'https://llm.example.com/api']);
+		expect(parseCliArgs(['build', '--server', '127.0.0.1:9931']).servers).toEqual([
+			'http://127.0.0.1:9931'
+		]);
+	});
+
+	it('puts the marker for llama-chat.json in the head of index.html once', () => {
+		const once = withPresetMeta(INDEX);
+
+		expect(once).toContain(`${PRESET_META}\n\t</head>`);
+		expect(withPresetMeta(once)).toBe(once);
+	});
+
+	it('refuses a server address the app could not use', () => {
+		expect(() => parseServerUrl('ftp://localhost')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://localhost:9931/?key=1')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://user:pass@localhost:9931')).toThrow(/invalid --server/);
+		expect(() => parseServerUrl('http://')).toThrow(/invalid --server/);
 	});
 
 	it('reads build with its own flags, and keeps serving flags out of it', () => {
@@ -85,7 +120,7 @@ describe('llama-chat build', () => {
 		dist = await mkdtemp(join(tmpdir(), 'llama-chat-dist-'));
 		work = await mkdtemp(join(tmpdir(), 'llama-chat-out-'));
 		await mkdir(join(dist, '_app'), { recursive: true });
-		await writeFile(join(dist, 'index.html'), '<!doctype html>');
+		await writeFile(join(dist, 'index.html'), INDEX);
 		await writeFile(join(dist, '_app', 'app.js'), 'export {};');
 		await writeFile(join(dist, '_app', 'app.js.map'), '{}');
 	});
@@ -103,6 +138,23 @@ describe('llama-chat build', () => {
 			join('_app', 'app.js'),
 			'index.html'
 		]);
+		// without servers there is no llama-chat.json, so nothing points the app at one
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe(INDEX);
+	});
+
+	it('writes the servers to llama-chat.json when given', async () => {
+		const out = await buildStatic({
+			distDir: dist,
+			out: join(work, 'with-servers'),
+			servers: ['http://127.0.0.1:9931']
+		});
+
+		expect(JSON.parse(await readFile(join(out, PRESET_FILE), 'utf8'))).toEqual({
+			servers: [{ url: 'http://127.0.0.1:9931' }]
+		});
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toContain(PRESET_META);
+		// the copy in dist keeps no marker
+		expect(await readFile(join(dist, 'index.html'), 'utf8')).toBe(INDEX);
 	});
 
 	it('refuses a folder that is not empty unless forced', async () => {
@@ -114,7 +166,7 @@ describe('llama-chat build', () => {
 		await expect(buildStatic({ distDir: dist, out })).rejects.toThrow(/not empty/);
 		await buildStatic({ distDir: dist, force: true, out });
 		expect(await readFile(join(out, 'keep.txt'), 'utf8')).toBe('mine');
-		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe('<!doctype html>');
+		expect(await readFile(join(out, 'index.html'), 'utf8')).toBe(INDEX);
 	});
 
 	it('refuses to write into the app files themselves', async () => {
@@ -135,7 +187,7 @@ describe('llama-chat server', () => {
 	beforeAll(async () => {
 		dist = await mkdtemp(join(tmpdir(), 'llama-chat-dist-'));
 		await mkdir(join(dist, '_app', 'immutable'), { recursive: true });
-		await writeFile(join(dist, 'index.html'), '<!doctype html><title>Llama Chat</title>');
+		await writeFile(join(dist, 'index.html'), INDEX);
 		await writeFile(join(dist, 'sw.js'), 'self;');
 		await writeFile(join(dist, 'service-worker.js'), 'self;');
 		await writeFile(join(dist, '_app', 'immutable', 'app.abc123.js'), 'export {};');
@@ -157,7 +209,7 @@ describe('llama-chat server', () => {
 		expect(res.headers.get('cache-control')).toBe('no-cache');
 		expect(res.headers.get('cross-origin-embedder-policy')).toBe('require-corp');
 		expect(res.headers.get('cross-origin-opener-policy')).toBe('same-origin');
-		expect(await res.text()).toContain('Llama Chat');
+		expect(await res.text()).toContain(PRESET_META);
 
 		const again = await fetch(`${chatUrl}/`, {
 			headers: { 'If-None-Match': res.headers.get('etag') ?? '' }
@@ -179,6 +231,31 @@ describe('llama-chat server', () => {
 		const worker = await fetch(`${chatUrl}/service-worker.js`);
 
 		expect(worker.headers.get('cache-control')).toBe('no-cache');
+	});
+
+	it('serves llama-chat.json, revalidated, with no servers when none are given', async () => {
+		const empty = await fetch(`${chatUrl}/${PRESET_FILE}`);
+
+		expect(empty.status).toBe(200);
+		expect(await empty.json()).toEqual({ servers: [] });
+
+		const withServers = createChatServer({
+			distDir: dist,
+			servers: ['http://127.0.0.1:9931', 'https://llm.example.com']
+		});
+		const url = await listen(withServers);
+
+		try {
+			const res = await fetch(`${url}/${PRESET_FILE}`);
+
+			expect(res.status).toBe(200);
+			expect(res.headers.get('cache-control')).toBe('no-cache');
+			expect(await res.json()).toEqual({
+				servers: [{ url: 'http://127.0.0.1:9931' }, { url: 'https://llm.example.com' }]
+			});
+		} finally {
+			await close(withServers);
+		}
 	});
 
 	it('forwards nothing: API paths are not found and other methods are refused', async () => {

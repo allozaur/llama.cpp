@@ -65,7 +65,7 @@ function renderList(currentModel: string) {
 
 	return render(ModelsSelectorListWrapper, {
 		currentModel,
-		groups: { available: [{ items, orgName: null }] },
+		groups: { available: [{ items, orgName: null }], servers: [] },
 		loaded: [{ option: CHAT }, { option: ASR }]
 	});
 }
