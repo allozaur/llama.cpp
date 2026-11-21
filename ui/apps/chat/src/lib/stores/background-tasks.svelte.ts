@@ -78,14 +78,16 @@ class BackgroundTasksStore {
 		return this._tasks;
 	}
 
-	/** Hide finished tasks; the server forgets them on its own. */
-	clearFinished(): void {
+	/** Hide a conversation's finished tasks; the server forgets them on its own. */
+	clearFinished(conversationId: string): void {
+		const cleared = (t: BackgroundTask) =>
+			t.conversationId === conversationId && t.status !== BackgroundTaskStatus.RUNNING;
+
 		for (const task of this._tasks) {
-			if (task.status !== BackgroundTaskStatus.RUNNING)
-				this.remember(task.key, { dismissed: true });
+			if (cleared(task)) this.remember(task.key, { dismissed: true });
 		}
 
-		this._tasks = this._tasks.filter((t) => t.status === BackgroundTaskStatus.RUNNING);
+		this._tasks = this._tasks.filter((t) => !cleared(t));
 
 		if (this._openKey && !this.openTask) this._openKey = null;
 	}
@@ -171,6 +173,11 @@ class BackgroundTasksStore {
 		} finally {
 			this.stopping.delete(key);
 		}
+	}
+
+	/** The tasks a conversation started, newest first. */
+	tasksOf(conversationId: string): BackgroundTask[] {
+		return this._tasks.filter((t) => t.conversationId === conversationId);
 	}
 
 	/** Note a task a tool call just started, so it shows at once and keeps its conversation. */
