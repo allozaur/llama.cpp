@@ -35,6 +35,8 @@ The component library **Llama UI**, built on the **Llama Brand** (the icon, Llam
 
 ## How we think
 
+The short version of **Philosophy**; the reasons are in **Ideology**, **Product** and **Design**.
+
 <Figure n={3} caption="Five ideas, each drawn with the real system: the devices a model runs on, the first run's recommendation, the three places the character lives, a control on its grid and one token chain.">
 	<Principles />
 </Figure>

@@ -1,17 +1,20 @@
 <!--
 	How this Storybook is laid out, as one column in sidebar order: each section is a stop on a rail, with its icon, what
-	it holds and the pages under it, as in the sidebar. Introduction is marked as where you are, in cinder.
+	it holds and the pages under it, as in the sidebar. Introduction is marked as where you are, in cinder; Agents and
+	Philosophy are paired as the rules and the reasons.
 -->
 <script lang="ts">
 	import { PATHS, SIZE } from '../brand/logo-showcase/lib/logo';
 	import { STORYBOOK_SECTIONS } from './sections';
-	import { BookOpen, Bot, LayoutGrid, MessageSquare } from '@lucide/svelte';
+	import { BookOpen, Bot, LayoutGrid, Lightbulb, MessageSquare, Network } from '@lucide/svelte';
 
 	const ICONS: Record<string, typeof BookOpen> = {
 		Agents: Bot,
+		Architecture: Network,
 		Introduction: BookOpen,
 		'Llama Chat': MessageSquare,
-		'Llama UI': LayoutGrid
+		'Llama UI': LayoutGrid,
+		Philosophy: Lightbulb
 	};
 
 	const sections = STORYBOOK_SECTIONS.map((section) => ({
