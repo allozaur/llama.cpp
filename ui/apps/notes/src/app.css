@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+@source '.';
+@import 'tw-animate-css';
+/* the brand's colours, which Llama UI's primitives build on */
+@import '@ggml-org/llama-brand/css/colors.css';
+/* Llama UI's theme (ui/lib/ui). By path rather than as @ggml-org/llama-ui/theme.css:
+   prettier's Tailwind plugin reads this file too, and it knows no aliases */
+@import '../../../lib/ui/src/lib/styles/theme.css';
+
+@layer base {
+	html,
+	body {
+		overscroll-behavior: none;
+	}
+
+	html {
+		-webkit-tap-highlight-color: transparent;
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+}
