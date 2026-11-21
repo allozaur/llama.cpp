@@ -121,6 +121,7 @@ export {
 	ShellTaskAction,
 	SearchChatsMessageSelection,
 	SearchChatsOrder,
+	ServerToolType,
 	ToolSource,
 	ToolLoadingMode,
 	ToolPermissionDecision,

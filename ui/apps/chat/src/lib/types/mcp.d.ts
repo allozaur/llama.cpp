@@ -5,15 +5,16 @@ import type {
 	ClientCapabilities as SDKClientCapabilities,
 	GetPromptResult,
 	Implementation as SDKImplementation,
+	McpSubscription,
 	Prompt,
 	PromptMessage,
 	ServerCapabilities as SDKServerCapabilities,
 	Tool,
 	Transport
-} from '@modelcontextprotocol/sdk';
+} from '@modelcontextprotocol/client';
 import type { ColorMode } from '#lib/enums/index.ts';
 import type { HealthCheckStatus, MCPConnectionPhase, MCPLogLevel } from '#lib/enums/mcp.enums.ts';
-import type { ToolSource } from '#lib/enums/tools.enums.ts';
+import type { ServerToolType } from '#lib/enums/tools.enums.ts';
 
 export type { Tool, CallToolResult, Prompt, GetPromptResult, PromptMessage };
 export type ClientCapabilities = SDKClientCapabilities;
@@ -137,6 +138,8 @@ export interface MCPConnection {
 	connectionTimeMs: number;
 	/** Configured timeout for individual requests (tool calls, etc.) in milliseconds */
 	requestTimeoutMs: number;
+	/** Open resource update streams by URI, stateless protocol only */
+	resourceSubscriptions?: Map<string, McpSubscription>;
 }
 
 /**
@@ -192,7 +195,6 @@ export type MCPServerConfig = {
 
 export type MCPClientConfig = {
 	servers: Record<string, MCPServerConfig>;
-	protocolVersion?: string;
 	capabilities?: ClientCapabilities;
 	clientInfo?: Implementation;
 	requestTimeoutMs?: number;
@@ -287,8 +289,10 @@ export interface ToolExecutionResult {
 
 export interface ServerToolInfo {
 	display_name: string;
+	/** The MCP server llama-server runs the tool from, for a tool of type `mcp`; missing on older servers. */
+	mcp_server?: string;
 	tool: string;
-	type: ToolSource.SERVER;
+	type: ServerToolType;
 	permissions: {
 		write: boolean;
 	};

@@ -80,11 +80,11 @@ export enum PdfViewMode {
 	TEXT = 'text'
 }
 
+/** What a built-in slash command of the chat form does. */
 export enum ChatFormCommandAction {
 	COMPACT = 'compact',
 	CWD = 'cwd',
-	MODEL = 'model',
-	PROMPT = 'prompt'
+	MODEL = 'model'
 }
 
 export enum FileMentionEntryType {

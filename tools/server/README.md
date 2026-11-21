@@ -390,7 +390,7 @@ The same JSON can be passed inline with `--mcp-servers-json`. Each entry under `
 | `cwd` | working directory of the child process |
 | `timeout_ms` | per-tool-call timeout (default: 30000) |
 
-Every server is spawned once at startup to list its tools, then stopped, and respawned on demand when one of its tools is called. Tools are exposed as `<server>_<tool>` alongside the built-in ones: they show up in Llama Chat and in `GET /tools`, and the model calls them like any other tool. A name colliding with an already registered tool is skipped. This is independent of `--tools`, MCP servers can be the only tools available.
+Every server is spawned once at startup to list its tools, then stopped, and respawned on demand when one of its tools is called. Tools are exposed as `<server>_<tool>` alongside the built-in ones: they show up in Llama Chat, which lists each of these servers on its MCP servers page, and in `GET /tools`, with `"type": "mcp"` and the server's name in `mcp_server`. The model calls them like any other tool. A name colliding with an already registered tool is skipped. This is independent of `--tools`, MCP servers can be the only tools available.
 
 The child process runs with the same privileges as the server, so only declare commands you trust. As with `--tools`, `--cors-origins` then defaults to `localhost`.
 

@@ -6,6 +6,8 @@ import { settingsStore } from './settings/index.svelte';
 import { tabsStore } from './tabs.svelte';
 import { toolsStore } from './tools.svelte';
 import { versionStore } from './version.svelte';
+import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
+import { extensions } from '#lib/extensions/registry.svelte.ts';
 import { MigrationService } from '#lib/services/migration.service.ts';
 import { validateApiKey } from '#lib/utils/api-key-validation.ts';
 import { browser } from '$app/env';
@@ -34,6 +36,12 @@ export function initStores(): Promise<void> {
 		settingsStore.initialize();
 		permissionsStore.initialize();
 		toolsStore.initialize();
+
+		// extensions start once the settings they read are in place
+		for (const manifest of BUILT_IN_EXTENSIONS) extensions.register(manifest);
+
+		await extensions.activateEnabled();
+
 		void versionStore.initialize();
 		void groupsStore.initialize();
 

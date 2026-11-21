@@ -93,7 +93,7 @@ static std::string console_output_to_utf8(const std::string & text) {
 }
 
 json server_tool::to_json() const {
-    return {
+    json res = {
         {"display_name", display_name},
         {"tool", name},
         {"type", type()},
@@ -103,6 +103,10 @@ json server_tool::to_json() const {
         {"uses_cwd", uses_cwd},
         {"definition", get_definition()},
     };
+    if (!mcp_server.empty()) {
+        res["mcp_server"] = mcp_server;
+    }
+    return res;
 }
 
 static constexpr size_t SERVER_TOOL_GIT_LS_FILES_MAX_OUTPUT = 8 * 1024 * 1024; // 8 MB
@@ -2295,6 +2299,7 @@ struct server_mcp_tool : server_tool {
     {
         name = server_name + "_" + tool_name;
         display_name = name;
+        mcp_server = server_name;
         permission_write = false;
         support_stream = false;
     }

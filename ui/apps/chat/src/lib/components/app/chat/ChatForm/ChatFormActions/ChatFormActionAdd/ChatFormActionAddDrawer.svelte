@@ -170,7 +170,7 @@
 									{@render groupRow(group)}
 								{/each}
 
-								{#each toolsPanel.mcpGroups as group (group.key)}
+								{#each toolsPanel.providerGroups as group (group.key)}
 									{@render groupRow(group)}
 								{/each}
 							</div>
