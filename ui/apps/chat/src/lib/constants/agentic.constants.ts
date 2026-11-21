@@ -27,6 +27,9 @@ export const RESULT_STAT_SEPARATOR = ' - ';
 // session when they are joined for the clipboard.
 export const AGENTIC_TEXT_COPY_SEPARATOR = '\n\n';
 
+/** The result the model reads when the user denies a tool call. */
+export const TOOL_DENIED_RESULT = 'Tool execution was denied by the user.';
+
 export const DEFAULT_AGENTIC_CONFIG: AgenticConfig = {
 	enabled: true,
 	maxTurns: 100
