@@ -498,7 +498,7 @@ const toolCallsParseCache = new Map<string, ApiChatCompletionToolCall[]>();
  * Memoized: the same JSON string is re-parsed on every render during
  * streaming, which is wasted CPU since tool calls don't change mid-stream.
  */
-function parseToolCalls(toolCallsJson?: string): ApiChatCompletionToolCall[] {
+export function parseToolCalls(toolCallsJson?: string): ApiChatCompletionToolCall[] {
 	if (!toolCallsJson) return [];
 
 	const cached = toolCallsParseCache.get(toolCallsJson);

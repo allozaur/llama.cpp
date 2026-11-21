@@ -278,7 +278,8 @@ export {
 	hasAgenticContent,
 	isSectionExpandedByDefault,
 	classifyToolResult,
-	classifyContinueIntent
+	classifyContinueIntent,
+	parseToolCalls
 } from './agentic';
 
 // Line-level unified diff for tool result rendering (`edit_file` block)
