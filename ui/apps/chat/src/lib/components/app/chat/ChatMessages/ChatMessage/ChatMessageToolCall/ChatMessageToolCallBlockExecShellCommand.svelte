@@ -8,20 +8,28 @@
 
 	import { parseExecShellCommandMeta } from './parsers/exec-shell-command';
 	import ToolCallBlock from './ToolCallBlock.svelte';
-	import { AlertTriangle, Check, CircleStop, Loader2, XCircle } from '@lucide/svelte';
+	import {
+		AlertTriangle,
+		Check,
+		CircleStop,
+		Loader2,
+		SquareTerminal,
+		XCircle
+	} from '@lucide/svelte';
 	import { CollapsibleTerminalBlock } from '#lib/components/app/index.ts';
 	import {
 		SETTINGS_KEYS,
 		TOOL_RUNTIME_SCROLL_AT_BOTTOM_THRESHOLD_PX
 	} from '#lib/constants/index.ts';
-	import { AgenticSectionType, AttachmentType } from '#lib/enums/index.ts';
-	import { settingsStore, toolsStore } from '#lib/stores/index.ts';
+	import { AgenticSectionType, AttachmentType, BackgroundTaskStatus } from '#lib/enums/index.ts';
+	import { backgroundTasksStore, settingsStore, toolsStore } from '#lib/stores/index.ts';
 	import type { AgenticSection, DatabaseMessageExtra, ToolResultLine } from '#lib/types/index.ts';
 	import {
 		abbreviateHome,
 		type ExecShellExitStatus,
 		highlightCode,
 		isExitCodeSummaryLine,
+		parseBackgroundTaskStart,
 		parseExecShellCommandError,
 		parseExecShellCommandExitStatus,
 		parseToolResultWithMedia
@@ -75,21 +83,40 @@
 		parseExecShellCommandExitStatus(section.toolResult)
 	);
 
+	// a run_in_background start ends with "[background task: N]" instead of an exit code
+	const backgroundStart = $derived(parseBackgroundTaskStart(section.toolResult));
+	const backgroundTask = $derived(
+		backgroundStart ? backgroundTasksStore.findById(backgroundStart.taskId) : null
+	);
+	const backgroundStatus = $derived.by(() => {
+		if (backgroundTask) {
+			return { exitCode: backgroundTask.exitCode, status: backgroundTask.status };
+		}
+
+		// the task is gone, e.g. llama-server restarted: what the result said
+		return execShellExitStatus
+			? { exitCode: execShellExitStatus.code, status: BackgroundTaskStatus.EXITED }
+			: { exitCode: null, status: BackgroundTaskStatus.RUNNING };
+	});
+
 	const parsedLines: ToolResultLine[] = $derived(
-		section.toolResult ? parseToolResultWithMedia(section.toolResult, attachments) : []
+		section.toolResult
+			? parseToolResultWithMedia(backgroundStart?.output ?? section.toolResult, attachments)
+			: []
 	);
 
 	// Drop the trailing "[exit code: N]" line - rendered as a colored
 	// badge below. During streaming we keep it so a partial stream still
 	// shows the status once the final chunk lands.
 	const outputLines: ToolResultLine[] = $derived(
-		execShellExitStatus && parsedLines.length > 0
+		execShellExitStatus && !backgroundStart && parsedLines.length > 0
 			? parsedLines.slice(0, parsedLines.length - 1)
 			: parsedLines
 	);
 
 	const isExitCodeFinalLine = $derived(
-		execShellExitStatus !== undefined &&
+		!backgroundStart &&
+			execShellExitStatus !== undefined &&
 			parsedLines.length > 0 &&
 			isExitCodeSummaryLine(parsedLines[parsedLines.length - 1].text, execShellExitStatus)
 	);
@@ -283,7 +310,33 @@
 					{/if}
 				{/each}
 
-				{#if isExitCodeFinalLine && execShellExitStatus}
+				{#if backgroundStart}
+					<div class="background-row">
+						{#if backgroundStatus.status === BackgroundTaskStatus.RUNNING}
+							<Loader2 class="size-icon-xs animate-spin text-fg-info" />
+
+							<span>Running in the background</span>
+						{:else if backgroundStatus.status === BackgroundTaskStatus.STOPPED}
+							<CircleStop class="size-icon-xs" />
+
+							<span>Background task stopped</span>
+						{:else}
+							<SquareTerminal class="size-icon-xs" />
+
+							<span>Background task exited {backgroundStatus.exitCode ?? ''}</span>
+						{/if}
+
+						{#if backgroundTask}
+							<button
+								class="background-link"
+								onclick={() => backgroundTasksStore.open(backgroundTask.key)}
+								type="button"
+							>
+								Show task
+							</button>
+						{/if}
+					</div>
+				{:else if isExitCodeFinalLine && execShellExitStatus}
 					<div class={exitBadgeClass}>
 						{#if execShellExitStatus.timedOut}
 							<AlertTriangle class="size-icon-xs" />
@@ -382,5 +435,22 @@
 
 	.exit-sep {
 		opacity: 0.45;
+	}
+
+	.background-row {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 0.5rem;
+		font-size: 11px;
+		color: var(--fg-muted);
+	}
+
+	.background-link {
+		margin-left: 0.25rem;
+		color: var(--fg-default);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		cursor: pointer;
 	}
 </style>

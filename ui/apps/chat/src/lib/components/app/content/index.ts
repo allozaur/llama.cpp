@@ -123,6 +123,19 @@ export { default as CollapsibleContentBlock } from './CollapsibleContentBlock.sv
 export { default as CollapsibleTerminalBlock } from './CollapsibleTerminalBlock.svelte';
 
 /**
+ * **TerminalOutput** - Terminal-like view of a command's output
+ *
+ * Monospace text with ANSI colours (from the status tokens), carriage returns
+ * applied, pinned to the newest line until the user scrolls up.
+ *
+ * @example
+ * ```svelte
+ * <TerminalOutput class="h-80" output={task.output} />
+ * ```
+ */
+export { default as TerminalOutput } from './TerminalOutput.svelte';
+
+/**
  * **MermaidPreview** - Pan and zoom viewer for a diagram's svg
  *
  * Shows a diagram (a Pele-drawn Mermaid block or an svg block) fitted to its box, with

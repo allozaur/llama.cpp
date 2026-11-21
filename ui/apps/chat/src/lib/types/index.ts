@@ -242,8 +242,11 @@ export type { DesktopIconStripItem, MenuAction } from './navigation';
 // Tools types
 export type {
 	EditFileEdit,
+	BackgroundTask,
 	EditFileMeta,
 	EditFileTitleMeta,
+	ShellTaskInfo,
+	ShellTaskOutput,
 	ToolEntry,
 	ToolGroup,
 	ToolUiEntry,

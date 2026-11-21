@@ -10,6 +10,7 @@ export * from './database.constants';
 export * from './reasoning-effort.constants';
 export * from './recommended-mcp-servers.constants';
 export * from './storage.constants';
+export * from './background-tasks.constants';
 export * from './icons.constants';
 export * from './attachment-menu.constants';
 export * from './auto-scroll.constants';

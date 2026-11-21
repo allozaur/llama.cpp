@@ -61,6 +61,9 @@ export { permissionsStore } from './permissions.svelte';
 // TOOLS
 export { toolsStore } from './tools.svelte';
 
+// BACKGROUND TASKS (shell commands running in the background on llama-server)
+export { backgroundTasksStore } from './background-tasks.svelte';
+
 // VOICE (which model does what, and transcripts of voice messages on their way)
 export { voiceStore } from './voice.svelte';
 export { voiceTranscriptsStore } from './voice-transcripts.svelte';
