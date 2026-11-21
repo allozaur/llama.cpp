@@ -63,6 +63,7 @@ import { SearchChatsService } from '#lib/services/search-chats.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { AgenticGates } from '#lib/stores/agentic/gates.svelte.ts';
+import { backgroundTasksStore } from '#lib/stores/background-tasks.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
 import { modelsStore } from '#lib/stores/models/index.svelte.ts';
@@ -101,6 +102,7 @@ import {
 	executeGetDatetimeTool,
 	getAudioInputFormat,
 	isAbortError,
+	parseBackgroundTaskStart,
 	throwIfAborted
 } from '#lib/utils/index.ts';
 import { createToolCatalog, definitionsSize, type ToolCatalog } from '#lib/utils/tool-catalog.ts';
@@ -439,6 +441,14 @@ class AgenticStore {
 
 		// loading a tool is not using it: the loaded tool asks when it is called
 		if (toolName === TOOL_SEARCH_NAME) return { type: 'allow' };
+
+		// reading or stopping a background task only touches what an allowed command started
+		if (
+			toolName === BuiltInTool.SERVER_SHELL_TASK &&
+			toolsStore.getToolSource(toolName) === ToolSource.SERVER
+		) {
+			return { type: 'allow' };
+		}
 
 		const toolKey = toolsStore.getPermissionKey(toolName) ?? toolName;
 		const isServerTool = toolsStore.getToolSource(toolName) === ToolSource.SERVER;
@@ -896,6 +906,8 @@ class AgenticStore {
 			this.updateSession(conversationId, { executingToolCallId: null });
 		}
 
+		this.noteBackgroundTask(conversationId, toolCall, execution);
+
 		const { attachments, cleanedResult } = this.extractBase64Attachments(execution.content);
 
 		return {
@@ -1012,6 +1024,39 @@ class AgenticStore {
 				return events;
 			}
 		};
+	}
+
+	/** Hand background tasks a shell call started, or a task call changed, to their store. */
+	private noteBackgroundTask(
+		conversationId: string,
+		toolCall: ToolCall,
+		execution: ToolExecutionResult
+	): void {
+		const toolName = toolCall.function.name;
+
+		if (execution.isError || toolsStore.getToolSource(toolName) !== ToolSource.SERVER) return;
+
+		if (toolName === BuiltInTool.SERVER_SHELL_TASK) {
+			void backgroundTasksStore.refresh();
+
+			return;
+		}
+
+		if (toolName !== BuiltInTool.SERVER_EXEC_SHELL_COMMAND) return;
+
+		const start = parseBackgroundTaskStart(execution.content);
+
+		if (!start) return;
+
+		const args = this.parseToolArguments(toolCall.function.arguments);
+
+		backgroundTasksStore.track({
+			command: typeof args.command === 'string' ? args.command : '',
+			conversationId,
+			cwd: conversationsStore.activeConversation?.cwd ?? '',
+			output: start.output,
+			taskId: start.taskId
+		});
 	}
 
 	private parseToolArguments(args: string | Record<string, unknown>): Record<string, unknown> {

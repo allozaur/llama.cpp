@@ -3,6 +3,7 @@
 	import ChatScreenDialogsAndAlerts from './ChatScreenDialogsAndAlerts.svelte';
 	import ChatScreenGreeting from './ChatScreenGreeting.svelte';
 	import ChatScreenMobileHeader from './ChatScreenMobileHeader.svelte';
+	import ChatSideCards from '#lib/components/app/chat/ChatSideCards/ChatSideCards.svelte';
 	import {
 		ChatFormContextGauge,
 		ChatMessages,
@@ -318,6 +319,8 @@
 				/>
 			</div>
 		{/if}
+
+		<ChatSideCards />
 
 		{#if !isEmpty}
 			<ChatMessages
