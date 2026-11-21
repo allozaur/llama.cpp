@@ -264,6 +264,13 @@ or, if `invoke()` threw:
 
 There is no `[DONE]` sentinel (unlike `/chat/completions`), the stream ends after the `done`
 
+Background shell tasks: `exec_shell_command` with `run_in_background: true` starts the command and returns after its first output (at most ~5 s), with a `[background task: <id>]` line at the end. The `shell_task` tool, enabled together with `exec_shell_command`, works on these tasks:
+- `{"action": "list"}`: `{"tasks": [...]}`, newest first, each with `task_id`, `command`, `cwd`, `status` (`running`, `exited` or `stopped`), `exit_code`, `started_at`, `ended_at` (unix ms) and `output_size`
+- `{"action": "output", "task_id": N, "offset": O, "max_output_size": M}`: the task's fields plus `output` from byte `offset` on (the newest `M` bytes if there is more), `offset` of the returned text, `next_offset` and `skipped`; a client polls with the last `next_offset`
+- `{"action": "stop", "task_id": N}`: SIGTERM to the task's process group, SIGKILL after 3 s
+
+Each task keeps the newest 256 KB of its output. The command runs as the leader of its own process group (`setsid`, else `set -m`), so stop and server exit reach every process it started. On a Windows host without `--tools-runtime`, stop ends only the `cmd` process.
+
 ### Router mode: how child <--> router communicates
 
 Upon spawning a new child process using `subprocess`, both child and router listen to the stdout/stderr (combined)

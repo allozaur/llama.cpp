@@ -289,6 +289,7 @@
 	// wrapped, as the wider row of its own would fit it again and flip it straight back
 	let textHeight = $state<number | null>(null);
 	let wrappedAtLength = Infinity;
+	let measuredLength = 0;
 	let canBeSingleRow = $derived(
 		singleRow &&
 			!deviceStore.isMobile &&
@@ -310,7 +311,11 @@
 		const fitsOneLine = height < CHAT_FORM_SINGLE_ROW_MAX_TEXT_PX;
 		const length = value.length;
 
-		if (!length) wrappedAtLength = Infinity;
+		// cleared text may fit one row again; an empty row that wraps (a narrow column)
+		// stays two rows, or the switch would flip back and forth
+		if (!length && measuredLength) wrappedAtLength = Infinity;
+
+		measuredLength = length;
 
 		if (!canBeSingleRow) {
 			isSingleRow = false;

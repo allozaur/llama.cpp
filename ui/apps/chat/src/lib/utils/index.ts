@@ -294,6 +294,10 @@ export {
 	isExitCodeSummaryLine,
 	type ExecShellExitStatus
 } from './parse-exec-shell-status';
+export { type BackgroundTaskStart, parseBackgroundTaskStart } from './parse-background-task';
+
+// Terminal output (ANSI colours, carriage returns)
+export { type AnsiRun, type AnsiStyle, applyCarriageReturns, parseAnsi, stripAnsi } from './ansi';
 
 // Search-result parsing (web-search / fetch MCP tools)
 export {

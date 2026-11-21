@@ -17,6 +17,7 @@ import FileText from '@lucide/svelte/icons/file-text';
 import Info from '@lucide/svelte/icons/info';
 import MessagesSquare from '@lucide/svelte/icons/messages-square';
 import SearchCode from '@lucide/svelte/icons/search-code';
+import SquareTerminal from '@lucide/svelte/icons/square-terminal';
 import Terminal from '@lucide/svelte/icons/terminal';
 import { BuiltInTool, ToolSource } from '#lib/enums/index.ts';
 import type { ToolUiEntry } from '#lib/types/index.ts';
@@ -56,6 +57,11 @@ export const TOOL_UI: Readonly<Record<BuiltInTool, ToolUiEntry>> = {
 		source: ToolSource.SERVER
 	},
 	[BuiltInTool.SERVER_READ_FILE]: { icon: FileText, label: 'Read file', source: ToolSource.SERVER },
+	[BuiltInTool.SERVER_SHELL_TASK]: {
+		icon: SquareTerminal,
+		label: 'Background task',
+		source: ToolSource.SERVER
+	},
 	[BuiltInTool.SERVER_WRITE_FILE]: {
 		icon: FilePlus,
 		label: 'Write file',
