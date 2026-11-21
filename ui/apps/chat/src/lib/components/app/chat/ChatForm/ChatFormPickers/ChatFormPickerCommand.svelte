@@ -1,3 +1,10 @@
+<!--
+	@component
+	The floating slash-command picker of the chat form: `query` (what is typed after `/`) filters `commands`, and
+	the choice comes back through `onSelect`. The form owns when it opens.
+
+	@summary The chat form's slash-command picker.
+-->
 <script lang="ts">
 	import {
 		ChatFormPickerList,

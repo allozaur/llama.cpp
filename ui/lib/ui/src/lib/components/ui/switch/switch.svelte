@@ -1,3 +1,10 @@
+<!--
+	@component
+	An on/off setting that applies as soon as it is flipped. Pair it with a Label. For an option that is submitted
+	with a form use Checkbox.
+
+	@summary An on/off setting that applies at once.
+-->
 <script lang="ts">
 	import { cn, type WithoutChildrenOrChild } from '../utils.js';
 	import { Switch as SwitchPrimitive } from 'bits-ui';

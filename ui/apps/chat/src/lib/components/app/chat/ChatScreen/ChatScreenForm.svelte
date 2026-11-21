@@ -1,3 +1,10 @@
+<!--
+	@component
+	ChatForm wired up for the chat screen, which passes the files in and gets `onSend`, `onStop` and the file
+	callbacks back. Use it rather than ChatForm to show the form as the app does.
+
+	@summary The chat form as the chat screen shows it.
+-->
 <script lang="ts">
 	import { ChatForm } from '#lib/components/app/index.ts';
 	import { SETTINGS_KEYS } from '#lib/constants/index.ts';

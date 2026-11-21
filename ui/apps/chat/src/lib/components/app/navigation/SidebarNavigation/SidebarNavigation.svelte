@@ -1,3 +1,11 @@
+<!--
+	@component
+	The app's sidebar: its actions at the top, the list of conversations with pins, groups and selection of several
+	at once, and the footer. It also holds the dialogs they open (search, settings, MCP servers, rename, delete) and
+	reads everything from the stores.
+
+	@summary The app's sidebar.
+-->
 <script lang="ts">
 	import { PanelLeftClose, PanelLeftOpen, Search } from '@lucide/svelte';
 	import {

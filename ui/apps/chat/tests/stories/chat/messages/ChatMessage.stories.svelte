@@ -31,7 +31,7 @@
 		userMessage,
 		userWithAttachmentsMessage
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatMessage from '#lib/components/app/chat/ChatMessages/ChatMessage/ChatMessage.svelte';
 	import { MessageRole } from '#lib/enums/index.ts';
 	import { chatActivityStore } from '#lib/stores/chat/activity.svelte.ts';

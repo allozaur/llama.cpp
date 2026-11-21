@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { SERVER_HOME } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormInput from '#lib/components/app/chat/ChatForm/ChatFormInput/ChatFormInput.svelte';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';
 	import StateGalleryItem from '$llama-ui-stories/helpers/StateGalleryItem.svelte';

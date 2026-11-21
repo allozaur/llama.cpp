@@ -8,7 +8,7 @@
 		SERVER_HOME,
 		toGlobEntries
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormPickerMention from '#lib/components/app/chat/ChatForm/ChatFormPickers/ChatFormPickerMention.svelte';
 	import { fn } from 'storybook/test';
 	import type { ComponentProps } from 'svelte';

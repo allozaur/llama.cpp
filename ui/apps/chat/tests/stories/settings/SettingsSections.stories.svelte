@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import DialogSettingsChat from '#lib/components/app/dialogs/DialogSettingsChat.svelte';
 	import { SETTINGS_SECTIONS } from '#lib/constants/index.ts';
 

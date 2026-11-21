@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import ActionIconsStoryHost from './ActionIconsStoryHost.svelte';
 	import { siblingInfo } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';
 	import StateGalleryItem from '$llama-ui-stories/helpers/StateGalleryItem.svelte';
 

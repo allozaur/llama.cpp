@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import ShowcaseFrame from '../brand/logo-showcase/ShowcaseFrame.svelte';
 	import IconUsage from '../brand/logo-usage/IconUsage.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	// the brand where the web app shows it: the splash screens, the icon on the page colour while the app opens
 	const { Story } = defineMeta({

@@ -1,3 +1,10 @@
+<!--
+	@component
+	A pulsing grey block that stands in for content while it loads. Size and round it with classes to match what is
+	coming, so the layout does not jump.
+
+	@summary A placeholder block for content that is loading.
+-->
 <script lang="ts">
 	import { cn, type WithElementRef, type WithoutChildren } from '../utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';

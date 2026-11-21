@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { SquarePen } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatTabsItem from '#lib/components/app/chat/ChatTabs/ChatTabsItem.svelte';
 	import { NEW_CHAT_LABEL, NEW_CHAT_TAB_ID } from '#lib/constants/index.ts';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

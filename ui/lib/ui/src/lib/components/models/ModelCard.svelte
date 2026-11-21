@@ -1,3 +1,11 @@
+<!--
+	@component
+	The card every model is shown on: an avatar and a title that is the card's one button or link, actions at the
+	top right, a body, and a footer with facts and a control. It only lays out the snippets it is given;
+	ModelFamilyCard fills it for a catalog entry.
+
+	@summary The card layout a model is shown on.
+-->
 <script lang="ts">
 	import * as Card from '../ui/card';
 	import type { Snippet } from 'svelte';

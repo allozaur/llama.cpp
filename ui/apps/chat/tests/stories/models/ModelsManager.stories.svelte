@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ModelsManagerModelsTable from '#lib/components/app/models/ModelsManager/ModelsManagerModelsTable.svelte';
 	import type {
 		ModelQuantGroup,

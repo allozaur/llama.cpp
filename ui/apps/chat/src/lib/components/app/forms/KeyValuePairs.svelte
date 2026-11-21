@@ -1,3 +1,10 @@
+<!--
+	@component
+	An editable list of key and value rows with an add key, for things like request headers or environment
+	variables. Reports every change through `onPairsChange`.
+
+	@summary An editable list of key and value pairs.
+-->
 <script lang="ts">
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Plus, Trash2 } from '@lucide/svelte';

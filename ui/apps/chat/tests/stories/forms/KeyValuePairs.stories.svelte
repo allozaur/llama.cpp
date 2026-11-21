@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { KeyValuePairs } from '#lib/components/app/index.ts';
 	import type { KeyValuePair } from '#lib/types/index.ts';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

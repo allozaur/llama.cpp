@@ -1,3 +1,9 @@
+<!--
+	@component
+	The collapsible log of an MCP server's connection attempt, with how long connecting took.
+
+	@summary The collapsible log of an MCP connection.
+-->
 <script lang="ts">
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';

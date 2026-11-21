@@ -19,7 +19,7 @@
 		svgAsset,
 		toGlobEntries
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreenForm from '#lib/components/app/chat/ChatScreen/ChatScreenForm.svelte';
 	import { ATTACHMENT_TOOLTIP_TEXT } from '#lib/constants/index.ts';
 	import { expect, screen } from 'storybook/test';

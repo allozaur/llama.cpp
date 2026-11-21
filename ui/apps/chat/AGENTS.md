@@ -7,6 +7,19 @@ These add to the repository's [AGENTS.md](../../../AGENTS.md) for work in `ui/ap
 - **Releases:** `@ggml-org/llama-chat` and `@ggml-org/llama-ui` are versioned by hand and published by CI when a new version reaches `master` (see [Releases](../../README.md#releases)). Bump a version only when asked to release, never as a side effect of a change; Chat's version and its alias's (`alias/package.json`) always move together.
 - **Components:** the `SKILL.md` next to a component folder (such as [src/lib/components/app/SKILL.md](src/lib/components/app/SKILL.md)) holds that folder's conventions.
 
+## Storybook workflow
+
+Both Storybooks (this app's and the library's, `ui/lib/ui`) are on Storybook 11, which answers questions about components from the command line, without a running dev server. For every change to how the UI looks (a component, story, style, theme or design token is created, changed or deleted), follow these steps in order. Each has a Storybook skill in `ui/.claude/skills` (and `ui/.agents/skills`, the same files for other agents):
+
+1. `component-docs`: look up the components to reuse, with their props and usage examples, before editing any file. Also for a question about a component's props, API or usage.
+2. `write-stories`: every component created or changed gets stories.
+3. `test-stories`: run the story tests after every change, the way the skill says, and fix what fails.
+4. `ui-review`: publish a review that shows what changed, as the last step.
+
+- Where a skill's general advice differs from this repository's conventions, the conventions win: stories are Svelte CSF (`defineMeta` from `@storybook/sveltekit`), live and are titled as **Stories** above says, and fake llama-server with the fixtures next to them rather than MSW.
+- Run every `npx storybook ...` command from the package the component belongs to: `ui/apps/chat` (which also shows the library's stories) or `ui/lib/ui`.
+- The skills only point at `npx storybook skills <name>`, which prints the steps for the installed Storybook version, so they rarely change. `ui/skills-lock.json` records the version they came from. After a Storybook upgrade, refresh them from `ui/`: `npx skills@latest add storybookjs/skills#v<storybook version> --yes --agent claude-code universal --copy`. The upgrade also writes them, and a Storybook section, at the repository root: move the skills back under `ui/` and drop the section, which this one replaces.
+
 ## Content is Markdown, custom pieces are Svelte: .svx
 
 Anything that is mostly content (a doc, an overview, a showcase or a Storybook page with prose) is written in Markdown, and whatever Markdown cannot express (a live example, a diagram, a real component) is a Svelte component placed in it. Together that is a `.svx` page, compiled by [mdsvex](https://mdsvex.pngwk.com).

@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { seedServerHealth, servers } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import McpServerCard from '#lib/components/app/mcp/McpServerCard/McpServerCard.svelte';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';
 	import StateGalleryItem from '$llama-ui-stories/helpers/StateGalleryItem.svelte';

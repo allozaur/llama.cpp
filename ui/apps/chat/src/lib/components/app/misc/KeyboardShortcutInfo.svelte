@@ -1,3 +1,9 @@
+<!--
+	@component
+	A keyboard shortcut written as its keys, shown beside an action in a menu or a tooltip.
+
+	@summary A keyboard shortcut written as its keys.
+-->
 <script lang="ts">
 	import { ArrowBigUp } from '@lucide/svelte';
 	import { ICON_CLASS_DEFAULT } from '#lib/constants/index.ts';

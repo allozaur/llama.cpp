@@ -1,3 +1,9 @@
+<!--
+	@component
+	The key that floats over the conversation once the user has scrolled up, and jumps back to the newest message.
+
+	@summary The floating scroll-to-latest key.
+-->
 <script lang="ts">
 	import { ArrowDown } from '@lucide/svelte';
 	import GlassKey from '#lib/components/app/actions/GlassKey.svelte';

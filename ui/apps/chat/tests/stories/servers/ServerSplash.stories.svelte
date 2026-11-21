@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ServerErrorSplash from '#lib/components/app/servers/ServerErrorSplash.svelte';
 	import ServerLoadingSplash from '#lib/components/app/servers/ServerLoadingSplash.svelte';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

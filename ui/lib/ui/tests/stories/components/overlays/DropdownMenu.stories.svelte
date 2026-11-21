@@ -2,7 +2,7 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as DropdownMenu from '@ggml-org/llama-ui/ui/dropdown-menu';
 	import { Download, Pencil, Trash2 } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: DropdownMenu.Root,

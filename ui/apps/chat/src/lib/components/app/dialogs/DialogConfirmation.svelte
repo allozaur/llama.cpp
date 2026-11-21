@@ -1,3 +1,10 @@
+<!--
+	@component
+	The dialog that asks the user to confirm an action before it runs, with a title, a description and confirm and
+	cancel keys. `variant="destructive"` is for deleting. Use it instead of building an AlertDialog by hand.
+
+	@summary The dialog that confirms an action.
+-->
 <script lang="ts">
 	import * as AlertDialog from '@ggml-org/llama-ui/ui/alert-dialog';
 	import { KeyboardKey } from '#lib/enums/index.ts';

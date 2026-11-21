@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { FLOWCHART_SVG } from '../fixtures/mermaid-preview.js';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { DialogMermaidPreview } from '#lib/components/app/index.ts';
 	import { expect, waitFor } from 'storybook/test';
 

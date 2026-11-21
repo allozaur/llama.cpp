@@ -1,3 +1,10 @@
+<!--
+	@component
+	An icon button that copies `text` to the clipboard and shows a check mark for a moment. `canCopy` disables it
+	while there is nothing to copy yet.
+
+	@summary An icon button that copies text to the clipboard.
+-->
 <script lang="ts">
 	import { ActionIcon } from '@ggml-org/llama-ui/app/actions';
 	import { Check, Copy } from '@lucide/svelte';

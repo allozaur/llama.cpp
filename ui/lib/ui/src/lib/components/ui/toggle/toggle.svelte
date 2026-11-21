@@ -1,3 +1,10 @@
+<!--
+	@component
+	A button that stays pressed: one option that is on or off, such as bold in a toolbar. For a setting in a form
+	use Switch; for one choice out of several use ToggleGroup.
+
+	@summary A button that stays pressed, for one on/off option.
+-->
 <script lang="ts" module>
 	import { tv } from '../utils';
 	import type { VariantProps } from 'tailwind-variants';

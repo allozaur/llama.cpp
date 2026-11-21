@@ -1,3 +1,9 @@
+<!--
+	@component
+	The large dialog a Mermaid diagram opens in from a message, holding a MermaidPreview.
+
+	@summary The dialog a Mermaid diagram opens in.
+-->
 <script lang="ts">
 	import * as Dialog from '@ggml-org/llama-ui/ui/dialog';
 	import { MermaidPreview } from '#lib/components/app/content/index.ts';

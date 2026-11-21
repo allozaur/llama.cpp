@@ -3,10 +3,10 @@
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import * as Popover from '@ggml-org/llama-ui/ui/popover';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Popover.Root,
+		component: Popover.Popover,
 		parameters: {
 			layout: 'centered'
 		},

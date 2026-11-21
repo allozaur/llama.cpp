@@ -22,7 +22,7 @@
 		seedChatStory,
 		writeFileSection
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatMessageToolCallBlock from '#lib/components/app/chat/ChatMessages/ChatMessage/ChatMessageToolCall/ChatMessageToolCallBlock.svelte';
 	import { AgenticSectionType } from '#lib/enums/index.ts';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

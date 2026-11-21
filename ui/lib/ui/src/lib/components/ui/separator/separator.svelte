@@ -1,3 +1,9 @@
+<!--
+	@component
+	A hairline between groups of content, horizontal or vertical.
+
+	@summary A hairline between groups of content.
+-->
 <script lang="ts">
 	import { cn } from '../utils.js';
 	import { Separator as SeparatorPrimitive } from 'bits-ui';

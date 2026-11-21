@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { MacMenu, WindowsTray } from '@ggml-org/llama-ui';
 
 	// the native apps' UIs as the brand draws them, for pages and communications: Llama for Mac's menu and Llama for

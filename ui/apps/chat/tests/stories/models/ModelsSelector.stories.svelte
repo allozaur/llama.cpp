@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ModelsSelectorList from '#lib/components/app/models/ModelsSelector/ModelsSelectorList.svelte';
 	import { modelsStore } from '#lib/stores/models/index.svelte.ts';
 	import type { GroupedModelOptions, ModelItem } from '#lib/utils/index.ts';

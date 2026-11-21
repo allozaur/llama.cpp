@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { ArrowDown } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { GlassKey, MenuIcon } from '#lib/components/app/index.ts';
 	import { ICON_CLASS_DEFAULT } from '#lib/constants/index.ts';
 

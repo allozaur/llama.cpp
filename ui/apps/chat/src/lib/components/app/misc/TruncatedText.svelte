@@ -1,3 +1,10 @@
+<!--
+	@component
+	One line of text cut off with an ellipsis when it does not fit, with the full text in a tooltip only when it was
+	cut.
+
+	@summary One line of text, with a tooltip when cut off.
+-->
 <script lang="ts">
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 

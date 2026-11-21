@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { Trash2 } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { DialogConfirmation } from '#lib/components/app/index.ts';
 
 	// the shared confirm dialog; Enter confirms

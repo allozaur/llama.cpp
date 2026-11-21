@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { capabilities } from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import McpCapabilitiesBadges from '#lib/components/app/mcp/McpCapabilitiesBadges.svelte';
 
 	const { Story } = defineMeta({
