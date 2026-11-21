@@ -66,11 +66,7 @@
 		return undefined;
 	}
 
-	function isItemActive(item: {
-		activeRouteId?: string;
-		activeRoutePrefix?: string;
-		activeUrlIncludes?: string;
-	}): boolean {
+	function isItemActive(item: DesktopIconStripItem): boolean {
 		if (item.activeRouteId) {
 			return page.route.id === item.activeRouteId;
 		}
