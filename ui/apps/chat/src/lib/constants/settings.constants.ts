@@ -15,11 +15,14 @@ import File from '@lucide/svelte/icons/file';
 import FilePen from '@lucide/svelte/icons/file-pen';
 import Funnel from '@lucide/svelte/icons/funnel';
 import GlassWater from '@lucide/svelte/icons/glass-water';
+import Layers from '@lucide/svelte/icons/layers';
 import ListRestart from '@lucide/svelte/icons/list-restart';
+import ListTree from '@lucide/svelte/icons/list-tree';
 import Mic from '@lucide/svelte/icons/mic';
 import Monitor from '@lucide/svelte/icons/monitor';
 import Moon from '@lucide/svelte/icons/moon';
 import PencilRuler from '@lucide/svelte/icons/pencil-ruler';
+import Search from '@lucide/svelte/icons/search';
 import ShieldQuestion from '@lucide/svelte/icons/shield-question-mark';
 import SlidersVertical from '@lucide/svelte/icons/sliders-vertical';
 import Sun from '@lucide/svelte/icons/sun';
@@ -29,6 +32,7 @@ import {
 	PermissionMode,
 	SurfaceTheme,
 	SyncableParameterType,
+	ToolLoadingMode,
 	VoiceInputMode
 } from '#lib/enums/index.ts';
 import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
@@ -545,6 +549,18 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 					{ icon: FilePen, label: 'Accept edits', value: PermissionMode.ACCEPT_EDITS },
 					{ icon: Eye, label: 'Read-only', value: PermissionMode.READ_ONLY },
 					{ icon: Zap, label: 'Auto-approve', value: PermissionMode.AUTO }
+				],
+				type: SettingsFieldType.SELECT
+			},
+			{
+				defaultValue: ToolLoadingMode.AUTO,
+				help: 'How MCP and custom tools reach the model. On demand sends a short list of them and a search tool; the model loads the ones it needs, and they stay loaded for the conversation. Automatic does that once the tools would take more than a tenth of the context. Built-in and llama-server tools are always sent in full.',
+				key: SETTINGS_KEYS.TOOL_LOADING,
+				label: 'Tool loading',
+				options: [
+					{ icon: ListTree, label: 'Automatic', value: ToolLoadingMode.AUTO },
+					{ icon: Search, label: 'On demand', value: ToolLoadingMode.ON_DEMAND },
+					{ icon: Layers, label: 'All up front', value: ToolLoadingMode.UP_FRONT }
 				],
 				type: SettingsFieldType.SELECT
 			},

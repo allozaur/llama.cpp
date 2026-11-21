@@ -83,6 +83,7 @@ export const SETTINGS_KEYS = {
 	TITLE_GENERATION_PROMPT: 'titleGenerationPrompt',
 	TITLE_GENERATION_USE_FIRST_LINE: 'titleGenerationUseFirstLine',
 	TITLE_GENERATION_USE_LLM: 'titleGenerationUseLLM',
+	TOOL_LOADING: 'toolLoading',
 	TOP_K: 'top_k',
 	TOP_P: 'top_p',
 	TYP_P: 'typ_p',
