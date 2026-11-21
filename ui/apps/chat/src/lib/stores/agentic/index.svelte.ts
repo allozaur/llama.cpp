@@ -74,6 +74,7 @@ import type {
 	AgenticFlowCallbacks,
 	AgenticFlowOptions,
 	AgenticMessage,
+	AgenticRequestSnapshot,
 	AgenticToolPolicy,
 	SteeringMessage
 } from '#lib/types/agentic.js';
@@ -177,6 +178,8 @@ function withTotalTime<T extends ChatMessageTimings | undefined>(timings: T, sta
 class AgenticStore {
 	// permission, continue and steering gates the loop waits on between turns
 	private gates = new AgenticGates();
+	/** The last request each conversation sent, for the context breakdown; memory only */
+	private lastRequests = new SvelteMap<string, AgenticRequestSnapshot>();
 	/** Tools loaded on demand per conversation: they stay loaded, so the tool list only grows */
 	private loadedTools = new Map<string, Set<string>>();
 	private sessions = new SvelteMap<string, AgenticSession>();
@@ -214,6 +217,7 @@ class AgenticStore {
 		conversationsStore.onConversationsDeleted((convIds) => {
 			for (const convId of convIds) {
 				this.sessions.delete(convId);
+				this.lastRequests.delete(convId);
 			}
 		});
 	}
@@ -265,6 +269,11 @@ class AgenticStore {
 
 	getLastError(conversationId: string): Error | null {
 		return this.sessions.get(conversationId)?.lastError ?? null;
+	}
+
+	// read-only: safe to call from derivations
+	getLastRequest(conversationId: string): AgenticRequestSnapshot | null {
+		return this.lastRequests.get(conversationId) ?? null;
 	}
 
 	// read-only: safe to call from derivations, unlike getSession
@@ -330,6 +339,32 @@ class AgenticStore {
 
 	isRunning(conversationId: string): boolean {
 		return this.sessions.get(conversationId)?.isRunning ?? false;
+	}
+
+	/**
+	 * The tools the next request of a conversation would send, and those it
+	 * would list for loading on demand, from what is enabled now. Stands in for
+	 * the last request when the conversation has none in memory (after a
+	 * reload). Read-only, safe to call from derivations.
+	 */
+	previewRequestTools(
+		conversationId: string,
+		model: string
+	): Pick<AgenticRequestSnapshot, 'deferred' | 'tools'> {
+		if (!this.getConfig(settingsStore.config).enabled) return { deferred: [], tools: [] };
+
+		const tools: Tool[] = this.offeredTools().map((definition) => ({
+			definition,
+			execute: async () => ({ content: '' })
+		}));
+		const catalog = this.toolCatalog(conversationId, tools, model, true);
+
+		if (!catalog) return { deferred: [], tools: tools.map((tool) => tool.definition) };
+
+		return {
+			deferred: catalog.unloaded().map((tool) => tool.definition),
+			tools: catalog.initialTools().map((tool) => tool.definition)
+		};
 	}
 
 	/**
@@ -781,6 +816,16 @@ class AgenticStore {
 					break;
 				}
 
+				case HarnessEventType.REQUEST:
+					this.lastRequests.set(conversationId, {
+						deferred: catalog ? catalog.unloaded().map((tool) => tool.definition) : [],
+						messages: event.messages,
+						tools: event.tools,
+						turn: event.turn
+					});
+
+					break;
+
 				case HarnessEventType.TIMINGS:
 					onTimings?.(event.timings, event.progress);
 
@@ -1076,6 +1121,24 @@ class AgenticStore {
 		});
 	}
 
+	/** The enabled tools a flow offers, without fetching or initializing anything. */
+	private offeredTools(toolPolicy?: AgenticToolPolicy): OpenAIToolDefinition[] {
+		const disabledTools = new Set(toolPolicy?.disabledTools ?? toolsStore.disabledTools);
+		const disabledToolCategories = new Set(
+			toolPolicy?.disabledToolCategories ?? toolsStore.disabledToolCategories
+		);
+		const cwd = conversationsStore.activeConversation?.cwd ?? undefined;
+
+		// a tool that rules refuse outright here is not offered at all
+		return toolsStore
+			.getEnabledToolsForLLM(disabledTools, disabledToolCategories)
+			.filter((tool) => {
+				const key = toolsStore.getPermissionKey(tool.function.name);
+
+				return !key || !permissionsStore.isToolDenied(key, cwd);
+			});
+	}
+
 	private parseToolArguments(args: string | Record<string, unknown>): Record<string, unknown> {
 		if (typeof args === 'object') return args;
 
@@ -1120,7 +1183,12 @@ class AgenticStore {
 	 * every tool goes up front: by the setting, or in automatic mode while
 	 * the definitions take a small share of the context.
 	 */
-	private toolCatalog(conversationId: string, tools: Tool[], model: string): ToolCatalog | null {
+	private toolCatalog(
+		conversationId: string,
+		tools: Tool[],
+		model: string,
+		preview = false
+	): ToolCatalog | null {
 		const mode = toolLoadingMode(settingsStore.config[SETTINGS_KEYS.TOOL_LOADING]);
 
 		if (mode === ToolLoadingMode.UP_FRONT) return null;
@@ -1147,6 +1215,9 @@ class AgenticStore {
 
 		let loaded = this.loadedTools.get(conversationId);
 
+		// a preview reads the loaded tools and never records any
+		if (preview) loaded = new Set(loaded);
+
 		if (!loaded) {
 			loaded = new Set();
 			this.loadedTools.set(conversationId, loaded);
@@ -1172,23 +1243,9 @@ class AgenticStore {
 
 		if (!this.getConfig(settingsStore.config).enabled) return [];
 
-		const disabledTools = new Set(toolPolicy?.disabledTools ?? toolsStore.disabledTools);
-		const disabledToolCategories = new Set(
-			toolPolicy?.disabledToolCategories ?? toolsStore.disabledToolCategories
-		);
-
 		for (const provider of toolsStore.providers) await provider.prepare?.();
 
-		const cwd = conversationsStore.activeConversation?.cwd ?? undefined;
-
-		// a tool that rules refuse outright here is not offered at all
-		return toolsStore
-			.getEnabledToolsForLLM(disabledTools, disabledToolCategories)
-			.filter((tool) => {
-				const key = toolsStore.getPermissionKey(tool.function.name);
-
-				return !key || !permissionsStore.isToolDenied(key, cwd);
-			});
+		return this.offeredTools(toolPolicy);
 	}
 
 	private updateSession(conversationId: string, update: Partial<AgenticSession>): void {
