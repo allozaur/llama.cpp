@@ -68,6 +68,18 @@ export type AgenticChatCompletionRequest = Omit<ApiChatCompletionRequest, 'messa
 };
 
 /**
+ * The last request a conversation's flow sent, kept for the context breakdown:
+ * the messages and tool definitions as they went out, and the tools listed for
+ * loading on demand that were not loaded yet.
+ */
+export interface AgenticRequestSnapshot {
+	turn: number;
+	messages: readonly import('@ggml-org/llama-harness').Message[];
+	tools: readonly import('@ggml-org/llama-harness').ToolDefinition[];
+	deferred: readonly import('@ggml-org/llama-harness').ToolDefinition[];
+}
+
+/**
  * Per-conversation agentic session state.
  * Enables parallel agentic flows across multiple chats.
  */

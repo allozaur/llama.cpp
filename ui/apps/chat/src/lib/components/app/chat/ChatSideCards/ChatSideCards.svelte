@@ -6,7 +6,11 @@
 	// add a new card as one more block in the column.
 
 	import BackgroundTasksCard from './BackgroundTasksCard.svelte';
+	import ContextCard from './ContextCard.svelte';
+	import { colorLevelTextClass } from '#lib/components/app/chat/ChatForm/ChatFormContextGauge/context-gauge.ts';
 	import { BackgroundTaskStatus } from '#lib/enums/index.ts';
+	import { useContextBreakdown } from '#lib/hooks/use-context-breakdown.svelte.ts';
+	import { useContextGauge, useShowContextGauge } from '#lib/hooks/use-context-gauge.svelte.ts';
 	import { backgroundTasksStore, toolsStore, uiStore } from '#lib/stores/index.ts';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
@@ -21,6 +25,7 @@
 
 	// floating cards start folded, so they do not cover the messages
 	let tasksOpen = $state(untrack(() => docked));
+	let contextOpen = $state(true);
 	let now = $state(Date.now());
 
 	const conversationId = $derived(page.params.id ?? null);
@@ -32,6 +37,12 @@
 		return task && task.conversationId === conversationId ? task : null;
 	});
 	const showTasks = $derived(tasks.length > 0);
+
+	const gauge = useContextGauge();
+	const showGauge = useShowContextGauge();
+	const breakdown = useContextBreakdown();
+	// in the column only: on a narrow screen the gauge by the chat form shows the same
+	const showContext = $derived(docked && showGauge.current);
 
 	$effect(() => {
 		if (backgroundTasksStore.available) backgroundTasksStore.connect();
@@ -52,24 +63,35 @@
 </script>
 
 {#snippet cards(cardClass: string)}
-	<BackgroundTasksCard
-		bind:open={tasksOpen}
-		class={cardClass}
-		{docked}
-		home={toolsStore.serverHome}
-		isStopping={(key) => backgroundTasksStore.isStopping(key)}
-		{now}
-		onClearFinished={() => conversationId && backgroundTasksStore.clearFinished(conversationId)}
-		onClose={() => backgroundTasksStore.close()}
-		onOpen={(key) => backgroundTasksStore.open(key)}
-		onStop={(key) => void backgroundTasksStore.stop(key)}
-		{openTask}
-		{tasks}
-	/>
+	{#if showTasks}
+		<BackgroundTasksCard
+			bind:open={tasksOpen}
+			class={cardClass}
+			{docked}
+			home={toolsStore.serverHome}
+			isStopping={(key) => backgroundTasksStore.isStopping(key)}
+			{now}
+			onClearFinished={() => conversationId && backgroundTasksStore.clearFinished(conversationId)}
+			onClose={() => backgroundTasksStore.close()}
+			onOpen={(key) => backgroundTasksStore.open(key)}
+			onStop={(key) => void backgroundTasksStore.stop(key)}
+			{openTask}
+			{tasks}
+		/>
+	{/if}
+
+	{#if showContext}
+		<ContextCard
+			bind:open={contextOpen}
+			breakdown={breakdown.current}
+			class={cardClass}
+			levelClass={colorLevelTextClass(gauge.colorLevel)}
+		/>
+	{/if}
 {/snippet}
 
 {#if docked}
-	{#if showTasks}
+	{#if showTasks || showContext}
 		<!-- slides in from the right, narrowing the messages' column as it comes -->
 		<aside
 			transition:slide={{ axis: 'x', duration: 200 }}

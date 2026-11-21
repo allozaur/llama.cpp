@@ -92,10 +92,12 @@
 			{@render dial('sm')}
 		</Popover.Trigger>
 
-		<!-- bits-ui sets aria-haspopup="dialog" on the trigger but gives the content no role -->
+		<!-- bits-ui sets aria-haspopup="dialog" on the trigger but gives the content no role; focus
+		     stays on the trigger, as the first focusable row would open its hint on opening -->
 		<Popover.Content
 			aria-label="Context"
-			class="w-64 rounded-xl p-1.5 text-body-sm"
+			class="w-72 rounded-xl p-1.5 text-body-sm"
+			onOpenAutoFocus={(e) => e.preventDefault()}
 			role="dialog"
 			side="top"
 			sideOffset={8}
