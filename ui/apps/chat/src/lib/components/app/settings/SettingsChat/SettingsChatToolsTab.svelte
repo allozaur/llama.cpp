@@ -2,7 +2,11 @@
 	import { Checkbox } from '@ggml-org/llama-ui/ui/checkbox';
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import { ChevronDown, ChevronRight } from '@lucide/svelte';
-	import { McpServerIdentity, TruncatedText } from '#lib/components/app/index.ts';
+	import {
+		McpServerIdentity,
+		SettingsChatPermissionRules,
+		TruncatedText
+	} from '#lib/components/app/index.ts';
 	import { ICON_CLASS_DEFAULT } from '#lib/constants/index.ts';
 	import { ToolSource } from '#lib/enums/tools.enums.ts';
 	import { conversationsStore, mcpStore, permissionsStore, toolsStore } from '#lib/stores/index.ts';
@@ -136,3 +140,5 @@
 		{/each}
 	</div>
 {/if}
+
+<SettingsChatPermissionRules />
