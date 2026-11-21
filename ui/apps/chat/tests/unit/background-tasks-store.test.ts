@@ -116,16 +116,29 @@ describe('backgroundTasksStore', () => {
 	it('drops tasks the server no longer knows, and hides cleared ones', async () => {
 		list.mockResolvedValueOnce([
 			info({ started_at: 9000, task_id: 1 }),
-			info({ exit_code: 0, started_at: 8000, status: BackgroundTaskStatus.EXITED, task_id: 2 })
+			info({ exit_code: 0, started_at: 8000, status: BackgroundTaskStatus.EXITED, task_id: 2 }),
+			info({ exit_code: 1, started_at: 7000, status: BackgroundTaskStatus.EXITED, task_id: 3 })
 		]);
+
+		for (const [taskId, conversationId] of [
+			[1, 'conv-a'],
+			[2, 'conv-a'],
+			[3, 'conv-b']
+		] as const) {
+			backgroundTasksStore.track({ command: 'x', conversationId, cwd: '/', output: '', taskId });
+		}
+
 		await backgroundTasksStore.refresh();
 
-		expect(backgroundTasksStore.tasks.map((t) => t.key)).toEqual(['9000-1', '8000-2']);
+		expect(backgroundTasksStore.tasks.map((t) => t.key)).toEqual(['9000-1', '8000-2', '7000-3']);
 		expect(backgroundTasksStore.openTask).toBeNull();
+		expect(backgroundTasksStore.tasksOf('conv-a').map((t) => t.key)).toEqual(['9000-1', '8000-2']);
+		expect(backgroundTasksStore.tasksOf('conv-b').map((t) => t.key)).toEqual(['7000-3']);
 
-		backgroundTasksStore.clearFinished();
+		// only the conversation's own finished tasks go
+		backgroundTasksStore.clearFinished('conv-a');
 
-		expect(backgroundTasksStore.tasks.map((t) => t.key)).toEqual(['9000-1']);
+		expect(backgroundTasksStore.tasks.map((t) => t.key)).toEqual(['9000-1', '7000-3']);
 	});
 });
 

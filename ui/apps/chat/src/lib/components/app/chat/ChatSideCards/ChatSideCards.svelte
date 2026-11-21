@@ -2,16 +2,13 @@
 	// The chat screen's side cards: a third column beside the messages on wide
 	// screens, and a corner of floating cards over the messages on narrow ones,
 	// where a column would not fit. Each card shows only while it has something
-	// to show; add a new card as one more block in the column.
+	// to show for the conversation on screen, so the new-chat screen has none;
+	// add a new card as one more block in the column.
 
 	import BackgroundTasksCard from './BackgroundTasksCard.svelte';
-	import { RouterService } from '#lib/services/router.service.ts';
-	import {
-		backgroundTasksStore,
-		conversationsStore,
-		toolsStore,
-		uiStore
-	} from '#lib/stores/index.ts';
+	import { BackgroundTaskStatus } from '#lib/enums/index.ts';
+	import { backgroundTasksStore, toolsStore, uiStore } from '#lib/stores/index.ts';
+	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 
@@ -26,7 +23,15 @@
 	let tasksOpen = $state(untrack(() => docked));
 	let now = $state(Date.now());
 
-	const showTasks = $derived(backgroundTasksStore.tasks.length > 0);
+	const conversationId = $derived(page.params.id ?? null);
+	// only the tasks this conversation started
+	const tasks = $derived(conversationId ? backgroundTasksStore.tasksOf(conversationId) : []);
+	const openTask = $derived.by(() => {
+		const task = backgroundTasksStore.openTask;
+
+		return task && task.conversationId === conversationId ? task : null;
+	});
+	const showTasks = $derived(tasks.length > 0);
 
 	$effect(() => {
 		if (backgroundTasksStore.available) backgroundTasksStore.connect();
@@ -34,11 +39,11 @@
 
 	// a task opened from elsewhere (its tool call) unfolds the card
 	$effect(() => {
-		if (backgroundTasksStore.openTask) tasksOpen = true;
+		if (openTask) tasksOpen = true;
 	});
 
 	$effect(() => {
-		if (backgroundTasksStore.runningCount === 0) return;
+		if (!tasks.some((t) => t.status === BackgroundTaskStatus.RUNNING)) return;
 
 		const timer = setInterval(() => (now = Date.now()), 1000);
 
@@ -49,19 +54,17 @@
 {#snippet cards(cardClass: string)}
 	<BackgroundTasksCard
 		bind:open={tasksOpen}
-		activeConversationId={conversationsStore.activeConversation?.id ?? null}
 		class={cardClass}
-		conversationHref={(id) => RouterService.chat(id)}
 		{docked}
 		home={toolsStore.serverHome}
 		isStopping={(key) => backgroundTasksStore.isStopping(key)}
 		{now}
-		onClearFinished={() => backgroundTasksStore.clearFinished()}
+		onClearFinished={() => conversationId && backgroundTasksStore.clearFinished(conversationId)}
 		onClose={() => backgroundTasksStore.close()}
 		onOpen={(key) => backgroundTasksStore.open(key)}
 		onStop={(key) => void backgroundTasksStore.stop(key)}
-		openTask={backgroundTasksStore.openTask}
-		tasks={backgroundTasksStore.tasks}
+		{openTask}
+		{tasks}
 	/>
 {/snippet}
 
