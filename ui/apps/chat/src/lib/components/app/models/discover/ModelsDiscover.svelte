@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ModelsDiscoverListItem from './ModelsDiscoverList/ModelsDiscoverListItem.svelte';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
-	import { Download } from '@lucide/svelte';
+	import { ChevronLeft, Download } from '@lucide/svelte';
 	import { DialogConfirmDownload } from '#lib/components/app/dialogs/index.ts';
 	import { ModelsSection } from '#lib/components/app/index.ts';
 	import {
@@ -18,6 +18,18 @@
 
 	let selectedId = $state<string | null>(null);
 	let searchQuery = $state('');
+	// A phone shows one view at a time: the search with its results (suggested models
+	// while the query is empty), or the details of the model picked from them. The
+	// list stays mounted behind the details, so the query, results and scroll survive
+	// the way back.
+	let detailsOpen = $state(false);
+	let detailsPane = $state<HTMLElement | null>(null);
+
+	function openDetails(id: string) {
+		selectedId = id;
+		detailsOpen = true;
+		detailsPane?.scrollTo({ top: 0 });
+	}
 	// running and paused downloads both lead the list, with or without a search query
 	let downloadEntries = $derived(modelsStore.status.getDownloadEntries());
 
@@ -108,7 +120,7 @@
 
 		if (!focus) return;
 
-		selectedId = focus;
+		openDetails(focus);
 		uiStore.discoverModelFocus = null;
 	});
 
@@ -128,13 +140,16 @@
 		activeId={selectedId}
 		loading={modelsDiscoverStore.loading || modelsDiscoverStore.searching}
 		models={listedModels}
-		onSelect={(id) => (selectedId = id)}
+		onSelect={openDetails}
 		showBaseModelAvatar
 	/>
 {/snippet}
 
 <aside
-	class="w-md shrink-0 self-start border-r border-border/40 bg-background overflow-y-auto md:pr-4 h-full space-y-4"
+	class={[
+		'h-full w-full shrink-0 space-y-4 self-start overflow-y-auto bg-background md:w-md md:border-r md:border-border/40 md:pr-4',
+		detailsOpen && 'max-md:hidden'
+	]}
 >
 	<ModelsDiscoverListSearch bind:value={searchQuery} onSearch={handleSearchInput} />
 
@@ -164,7 +179,7 @@
 						repoWithTag: entry.repoWithTag
 					}}
 					model={recordOf(repo)}
-					onSelect={(id) => (selectedId = id)}
+					onSelect={openDetails}
 					showBaseModelAvatar
 					sidecarBadges={modelsStore.status.getDraftSidecars(repo)}
 				/>
@@ -203,8 +218,17 @@
 	</div>
 </aside>
 
-<main class="overflow-y-auto">
+<main bind:this={detailsPane} class={['overflow-y-auto', !detailsOpen && 'max-md:hidden']}>
 	{#if selectedId}
+		<!-- a phone reaches the details from the list, so it gets a way back to it -->
+		<div class="sticky top-0 z-20 -mx-1 bg-background pb-2 md:hidden">
+			<Button class="gap-1 px-2" onclick={() => (detailsOpen = false)} size="sm" variant="ghost">
+				<ChevronLeft class="size-icon-md" />
+
+				{isSearching ? 'Search results' : 'Suggested models'}
+			</Button>
+		</div>
+
 		<ModelsDiscoverDetailsContainer modelId={selectedId} />
 	{/if}
 </main>
