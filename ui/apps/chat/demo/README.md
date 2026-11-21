@@ -117,6 +117,18 @@ Records every `scripts/docs/*.demo.ts` from the storage target and uploads `vide
 
 Scripts get `test` and `expect` from `helpers.ts` without importing them. `demo.click`, `demo.hover` and `demo.type` glide a visible cursor to the target before acting, with timing varied like a person's (seeded per demo, so re-takes match); `demo.scroll` turns the mouse wheel over a target; `demo.zoom` pinches in on a control or a point to show a detail too small to read in the frame, holds, and pinches back out (with the fingertips drawn on a touch device); `demo.caption` shows a caption at the top of the frame. For voice input, `demo.microphone()` gives the page a microphone that hears nothing but `demo.speak(text)`, which reads the text in a synthetic voice (macOS `say`) and shows it as a caption, since the video has no sound. Use `test.use({ settings, startPath })` to seed other settings or start on another route.
 
+## A mocked llama-server
+
+`test.use({ mockServer: { models: ['org/Model-GGUF:Q4_K_M'], reply: 'A **Markdown** reply' } })` answers llama-server's endpoints in the browser (`fixtures/llama-server.ts`): the model list, props, model loading, tools and a streamed reply. Nothing reaches the server and no model loads, so a demo that sends a message looks the same on every machine. `tests/e2e` checks call `mockLlamaServer(page)` directly, since the e2e build runs without a server.
+
+## Storybook stories
+
+`test.use({ story: 'ui-forms-switch--default' })` records a Storybook story (the id from its `?path=/story/<id>` URL) instead of Llama Chat, from the Storybook that `DEMO_STORYBOOK` adds to the servers: `ui` for Llama UI (`ui/lib/ui`), `chat` for Llama Chat's. It runs on `DEMO_STORYBOOK_PORT` (default `:6007`). A small component reads better at a smaller `viewport` than zoomed in.
+
+```bash
+DEMO_STORYBOOK=ui npm run demo:record -- demo/<name>
+```
+
 ## Conversations
 
 Demos that need existing chats import them with `test.use({ traces: ['long-chat'] })`, through Settings > Import/Export before the video starts. Traces use the export format (llama.app JSONL), so the Hub shows them as Llama traces:
@@ -130,4 +142,6 @@ Demos that need existing chats import them with `test.use({ traces: ['long-chat'
 
 To try a script locally, put it in `demo/` as `<name>.demo.ts`, importing from `./helpers.ts`, and run `npm run demo:record -- demo/<name>`. `npm run demo:codegen` opens Playwright codegen against `:5180` for a first draft.
 
-The config starts, or reuses when already running, the fixture MCP servers on `:8765`, `llama-server` on `:9931` (router mode, `--tools all`) and the UI's vite dev server.
+The config starts, or reuses when already running, the fixture MCP servers on `:8765`, `llama-server` on `:9931` (router mode, `--tools all`), the UI's vite dev server and, with `DEMO_STORYBOOK`, a Storybook.
+
+For agents, [skills/ui-demo](../../../../skills/ui-demo/SKILL.md) walks through a demo, an e2e check and docs media for one change.
