@@ -1,5 +1,10 @@
 <script lang="ts">
 	import ChatMessageToolCallBlock from './ChatMessage/ChatMessageToolCall/ChatMessageToolCallBlock.svelte';
+	import ChatMessageToolCallGroup from './ChatMessage/ChatMessageToolCall/ChatMessageToolCallGroup.svelte';
+	import {
+		groupToolCallRuns,
+		isToolCallSection
+	} from './ChatMessage/ChatMessageToolCall/parsers/tool-call-phrasing';
 	import ChatMessageReasoningBlock from './ChatMessageReasoningBlock.svelte';
 	import {
 		ChatMessageActionCardContinueRequest,
@@ -7,6 +12,7 @@
 		ChatMessageStatistics,
 		MarkdownContent
 	} from '#lib/components/app/index.ts';
+	import { TOOL_CALL_GROUP_MIN_CALLS } from '#lib/constants/index.ts';
 	import {
 		AgenticSectionType,
 		ChatMessageStatsView,
@@ -41,6 +47,8 @@
 	const isStreaming = $derived(isChatStreaming && isLastAssistantMessage);
 
 	let expandedStates: Record<number, boolean> = $state({});
+	// keyed by the flat index of the group's first call
+	let groupExpandedStates: Record<number, boolean> = $state({});
 
 	const showThoughtInProgress = $derived(Boolean(settingsStore.config.showThoughtInProgress));
 	const showToolCallInProgress = $derived(Boolean(settingsStore.config.showToolCallInProgress));
@@ -112,6 +120,8 @@
 	type TurnGroup = {
 		sections: AgenticSection[];
 		flatIndices: number[];
+		/** Flat indices of single sections, and runs of tool calls shown as one group row */
+		items: (number | number[])[];
 	};
 
 	const turnGroups: TurnGroup[] = $derived.by(() => {
@@ -121,15 +131,20 @@
 		let currentIndices: number[] = [];
 		let prevWasTool = false;
 
+		const pushTurn = () => {
+			groups.push({
+				flatIndices: currentIndices,
+				items: groupToolCallRuns(sections, currentIndices, TOOL_CALL_GROUP_MIN_CALLS),
+				sections: currentTurn
+			});
+		};
+
 		for (let i = 0; i < sections.length; i++) {
 			const section = sections[i];
-			const isTool =
-				section.type === AgenticSectionType.TOOL_CALL ||
-				section.type === AgenticSectionType.TOOL_CALL_PENDING ||
-				section.type === AgenticSectionType.TOOL_CALL_STREAMING;
+			const isTool = isToolCallSection(section);
 
 			if (!isTool && prevWasTool && currentTurn.length > 0) {
-				groups.push({ flatIndices: currentIndices, sections: currentTurn });
+				pushTurn();
 				currentTurn = [];
 				currentIndices = [];
 			}
@@ -140,16 +155,23 @@
 		}
 
 		if (currentTurn.length > 0) {
-			groups.push({ flatIndices: currentIndices, sections: currentTurn });
+			pushTurn();
 		}
 
 		return groups;
 	});
 
-	function isExpanded(index: number, section: AgenticSection): boolean {
+	function isExecutingCall(section: AgenticSection): boolean {
+		return section.toolCallId !== undefined && section.toolCallId === currentlyExecutingToolCallId;
+	}
+
+	function isExpanded(index: number, section: AgenticSection, inOpenGroup = false): boolean {
 		if (expandedStates[index] !== undefined) {
 			return expandedStates[index];
 		}
+
+		// opening a group while a call runs shows that call's live output
+		if (inOpenGroup && isExecutingCall(section)) return true;
 
 		return isSectionExpandedByDefault(section, {
 			alwaysShowToolCallContent,
@@ -159,10 +181,34 @@
 		});
 	}
 
-	function toggleExpanded(index: number, section: AgenticSection) {
-		const currentState = isExpanded(index, section);
+	function toggleExpanded(index: number, section: AgenticSection, inOpenGroup = false) {
+		const currentState = isExpanded(index, section, inOpenGroup);
 
 		expandedStates[index] = !currentState;
+	}
+
+	function isGroupExpanded(indices: number[]): boolean {
+		const state = groupExpandedStates[indices[0]];
+
+		if (state !== undefined) return state;
+
+		if (alwaysShowToolCallContent) return true;
+
+		return (
+			showToolCallInProgress &&
+			indices.some((i) =>
+				isSectionExpandedByDefault(sections[i], {
+					alwaysShowToolCallContent,
+					executingToolCallId: currentlyExecutingToolCallId,
+					showThoughtInProgress,
+					showToolCallInProgress
+				})
+			)
+		);
+	}
+
+	function toggleGroupExpanded(indices: number[]) {
+		groupExpandedStates[indices[0]] = !isGroupExpanded(indices);
 	}
 
 	function buildTurnAgenticTimings(stats: ChatMessageAgenticTurnStats): ChatMessageAgenticTimings {
@@ -176,7 +222,7 @@
 	}
 </script>
 
-{#snippet renderSection(section: AgenticSection, index: number)}
+{#snippet renderSection(section: AgenticSection, index: number, inOpenGroup = false)}
 	{#if section.type === AgenticSectionType.TEXT}
 		<div class="agentic-text">
 			<MarkdownContent attachments={message?.extra} content={section.content} />
@@ -194,13 +240,31 @@
 		<ChatMessageToolCallBlock
 			attachments={section.toolResultExtras}
 			{conversationCwd}
-			isExecuting={section.toolCallId !== undefined &&
-				section.toolCallId === currentlyExecutingToolCallId}
+			isExecuting={isExecutingCall(section)}
 			{isStreaming}
-			onToggle={() => toggleExpanded(index, section)}
-			open={isExpanded(index, section)}
+			onToggle={() => toggleExpanded(index, section, inOpenGroup)}
+			open={isExpanded(index, section, inOpenGroup)}
 			{section}
 		/>
+	{/if}
+{/snippet}
+
+{#snippet renderItem(item: number | number[])}
+	{#if Array.isArray(item)}
+		{@const groupOpen = isGroupExpanded(item)}
+		<ChatMessageToolCallGroup
+			executingToolCallId={currentlyExecutingToolCallId}
+			{isStreaming}
+			onToggle={() => toggleGroupExpanded(item)}
+			open={groupOpen}
+			sections={item.map((i) => sections[i])}
+		>
+			{#each item as index (index)}
+				{@render renderSection(sections[index], index, groupOpen)}
+			{/each}
+		</ChatMessageToolCallGroup>
+	{:else}
+		{@render renderSection(sections[item], item)}
 	{/if}
 {/snippet}
 
@@ -210,8 +274,8 @@
 			{@const turnStats = message?.timings?.agentic?.perTurn?.[turnIndex]}
 
 			<div class="agentic-turn group/turn grid gap-2">
-				{#each turn.sections as section, sIdx (turn.flatIndices[sIdx])}
-					{@render renderSection(section, turn.flatIndices[sIdx])}
+				{#each turn.items as item (Array.isArray(item) ? `g${item[0]}` : item)}
+					{@render renderItem(item)}
 				{/each}
 
 				{#if turnStats && showAgenticTurnStats}
@@ -232,8 +296,8 @@
 			</div>
 		{/each}
 	{:else}
-		{#each sections as section, index (index)}
-			{@render renderSection(section, index)}
+		{#each turnGroups[0]?.items ?? [] as item (Array.isArray(item) ? `g${item[0]}` : item)}
+			{@render renderItem(item)}
 		{/each}
 	{/if}
 

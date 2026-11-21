@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { parseEditFileMeta, parseEditFileTitleMeta } from './parsers/edit-file';
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { XCircle } from '@lucide/svelte';
 	import { SyntaxHighlightedCode } from '#lib/components/app/index.ts';
 	import { MAX_HEIGHT_CODE_BLOCK, RESULT_STAT_SEPARATOR } from '#lib/constants/index.ts';
-	import { FileTypeText } from '#lib/enums/index.ts';
+	import { AgenticSectionType, DiffLineKind, FileTypeText } from '#lib/enums/index.ts';
 	import { toolsStore } from '#lib/stores/index.ts';
 	import type { AgenticSection } from '#lib/types/index.ts';
 	import {
@@ -32,17 +33,51 @@
 	const editDiffs = $derived(
 		(editFileBody?.edits ?? []).map((edit) => computeLineDiff(edit.oldText, edit.newText))
 	);
+
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+
+	// Lines added and removed, for the title once the edit has applied. A
+	// finished call never changes, so the full parse runs once.
+	const diffStats = $derived.by(() => {
+		if (section.type !== AgenticSectionType.TOOL_CALL || !section.toolResult) return null;
+
+		const meta = parseEditFileMeta(section);
+
+		if (!meta || meta.errorMessage || meta.edits.length === 0) return null;
+
+		let added = 0;
+		let removed = 0;
+
+		for (const edit of meta.edits) {
+			for (const line of computeLineDiff(edit.oldText, edit.newText)) {
+				if (line.kind === DiffLineKind.ADD) added++;
+				else if (line.kind === DiffLineKind.REMOVE) removed++;
+			}
+		}
+
+		return { added, removed };
+	});
 </script>
 
 <ToolCallBlock {isStreaming} meta={editFileMeta} {onToggle} {open} {section}>
 	{#snippet titleSnippet()}
 		<span class="flex min-w-0 flex-wrap items-baseline gap-x-1">
-			<span class="shrink-0 text-muted-foreground">Edit file</span>
+			<span class="shrink-0 text-muted-foreground">{phrase.label}</span>
 
 			<span class="flex min-w-0 items-baseline gap-1.5">
 				<span class="min-w-0 overflow-x-auto font-mono" title={editFileMeta?.filePath}>
 					{abbreviateHome(editFileMeta?.filePath ?? '', home)}
 				</span>
+
+				{#if diffStats}
+					<span class="shrink-0 font-mono text-caption">
+						<span class="text-fg-success">+{diffStats.added}</span>
+
+						<span class="text-fg-danger">-{diffStats.removed}</span>
+					</span>
+				{/if}
 
 				{#if editFileMeta?.errorMessage}
 					<span class="shrink-0 text-caption italic text-muted-foreground/70">(failed)</span>

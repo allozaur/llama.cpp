@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { describeToolCall, isToolCallRunning } from './parsers/tool-call-phrasing';
 	import { parseWriteFileMeta, parseWriteFileTitleMeta } from './parsers/write-file';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { XCircle } from '@lucide/svelte';
@@ -18,6 +19,10 @@
 
 	let { isStreaming, onToggle, open, section }: Props = $props();
 
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+
 	const writeFileMeta = $derived(parseWriteFileTitleMeta(section));
 	// body-only: the full meta parses the embedded file content, and this
 	// derived is read solely from the children snippet, which renders only
@@ -29,7 +34,7 @@
 <ToolCallBlock {isStreaming} meta={writeFileMeta} {onToggle} {open} {section}>
 	{#snippet titleSnippet()}
 		<span class="flex min-w-0 flex-wrap items-baseline gap-x-1">
-			<span class="shrink-0 text-muted-foreground">Write file</span>
+			<span class="shrink-0 text-muted-foreground">{phrase.label}</span>
 
 			<span class="flex min-w-0 items-baseline gap-1.5">
 				<span class="min-w-0 overflow-x-auto font-mono" title={writeFileMeta?.filePath}>

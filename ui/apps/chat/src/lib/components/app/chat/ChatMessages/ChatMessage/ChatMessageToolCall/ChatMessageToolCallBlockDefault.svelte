@@ -3,6 +3,11 @@
 	// Renders section.toolArgs / section.toolResult directly using the
 	// shared chrome shell.
 
+	import {
+		describeToolCall,
+		isToolCallRunning,
+		simpleToolArgFields
+	} from './parsers/tool-call-phrasing';
 	import ToolCallBlock from './ToolCallBlock.svelte';
 	import { Loader2 } from '@lucide/svelte';
 	import { MarkdownContent, SyntaxHighlightedCode } from '#lib/components/app/index.ts';
@@ -13,7 +18,6 @@
 	import {
 		classifyToolResult,
 		formatJsonPretty,
-		getToolUi,
 		parseToolResultWithMedia
 	} from '#lib/utils/index.ts';
 
@@ -27,14 +31,39 @@
 
 	let { attachments, isStreaming, onToggle, open, section }: Props = $props();
 
-	const title = $derived(getToolUi(section.toolName)?.label ?? section.toolName ?? '');
+	const phrase = $derived(
+		describeToolCall(section.toolName, section.toolArgs, isToolCallRunning(section, isStreaming))
+	);
+	const argFields = $derived(simpleToolArgFields(section.toolArgs));
 	const outputKind = $derived(classifyToolResult(section.toolResult));
 	const parsedLines: ToolResultLine[] = $derived(
 		section.toolResult ? parseToolResultWithMedia(section.toolResult, attachments) : []
 	);
 </script>
 
-<ToolCallBlock {isStreaming} meta={null} {onToggle} {open} {section} {title}>
+{#snippet inputFields(fields: { label: string; value: string }[])}
+	<dl class="grid grid-cols-[minmax(0,max-content)_minmax(0,1fr)] gap-x-6 gap-y-1 text-caption">
+		{#each fields as field, i (i)}
+			<dt class="text-muted-foreground">{field.label}</dt>
+
+			<dd class="min-w-0 font-mono break-words text-foreground/90">{field.value}</dd>
+		{/each}
+	</dl>
+{/snippet}
+
+<ToolCallBlock {isStreaming} meta={null} {onToggle} {open} {section}>
+	{#snippet titleSnippet()}
+		<span class="flex min-w-0 flex-wrap items-baseline gap-x-1">
+			<span class="shrink-0 text-muted-foreground">{phrase.label}</span>
+
+			{#if phrase.target}
+				<span class="min-w-0 truncate font-mono"
+					>{phrase.quoted ? `'${phrase.target}'` : phrase.target}</span
+				>
+			{/if}
+		</span>
+	{/snippet}
+
 	{#snippet children(_meta, ctx)}
 		{#if ctx.isStreamingCall}
 			<div class="mb-2 flex items-center gap-2 text-caption text-muted-foreground/70">
@@ -70,12 +99,16 @@
 					<span>Input</span>
 				</div>
 
-				<SyntaxHighlightedCode
-					code={formatJsonPretty(section.toolArgs ?? '')}
-					language={FileTypeText.JSON}
-					maxHeight={MAX_HEIGHT_CODE_BLOCK}
-					streaming={ctx.isCodeStreaming}
-				/>
+				{#if argFields}
+					{@render inputFields(argFields)}
+				{:else}
+					<SyntaxHighlightedCode
+						code={formatJsonPretty(section.toolArgs ?? '')}
+						language={FileTypeText.JSON}
+						maxHeight={MAX_HEIGHT_CODE_BLOCK}
+						streaming={ctx.isCodeStreaming}
+					/>
+				{/if}
 			{/if}
 
 			<div
