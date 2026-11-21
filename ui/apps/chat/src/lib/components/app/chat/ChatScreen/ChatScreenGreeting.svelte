@@ -43,9 +43,10 @@
 	class={[
 		'transition-opacity duration-300',
 		faded && 'opacity-0',
-		'pointer-events-none mb-4 hidden px-4 text-center text-balance',
+		'mb-4 hidden px-4 text-center text-balance',
 		isEmpty && 'md:mb-8 block!',
-		isEmpty && !faded && 'pointer-events-auto',
+		// clickable only while shown: both classes at once would leave it to Tailwind's CSS order
+		isEmpty && !faded ? 'pointer-events-auto' : 'pointer-events-none',
 		// held just above the middle of a phone screen, so the form growing into its
 		// expanded editor never pushes it: it only fades. Its place is counted from the
 		// form's wrapper, which floats above the screen's bottom until it is a sheet

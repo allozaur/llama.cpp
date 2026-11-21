@@ -4,7 +4,7 @@
 		SearchInput,
 		SidebarNavigationSearchResults
 	} from '#lib/components/app/index.ts';
-	import { ROUTES } from '#lib/constants/index.ts';
+	import { APP_NAME, ROUTES } from '#lib/constants/index.ts';
 	import { RouterService } from '#lib/services/router.service.ts';
 	import { chatStore, conversationsStore, deviceStore } from '#lib/stores/index.ts';
 	import { browser } from '$app/env';
@@ -88,7 +88,7 @@
 </script>
 
 <svelte:head>
-	<title>Search · llama.cpp</title>
+	<title>Search · {APP_NAME}</title>
 </svelte:head>
 
 <div class="fixed top-0 z-10 left-0 right-0 p-2">
