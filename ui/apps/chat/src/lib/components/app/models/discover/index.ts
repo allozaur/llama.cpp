@@ -2,15 +2,17 @@
  *
  * MODELS DISCOVER
  *
- * Components for the Models Discover view: a sidebar search + list of HuggingFace GGUF
- * models and a detail view for the selected model, used as the body of the discovery
- * dialog. The list and detail trees live in their own subfolders; this barrel re-exports
- * them alongside the shared leaves.
+ * Components for browsing HuggingFace GGUF models on the models page: the suggested
+ * models carousel, the Hub search results and the details drawer a repo opens in. The
+ * list and detail trees live in their own subfolders; this barrel re-exports them.
  *
  */
 
-/** The whole view: sidebar list on the left, detail pane on the right. */
-export { default as ModelsDiscover } from './ModelsDiscover.svelte';
+/** Suggested catalog models, a horizontal row of cards above the installed models. */
+export { default as ModelsDiscoverCarousel } from './ModelsDiscoverCarousel.svelte';
+
+/** One Hub repo as a card: the carousel's, and the grid view's search results. */
+export { default as ModelsDiscoverCard } from './ModelsDiscoverCard.svelte';
 
 export * from './ModelsDiscoverList';
 export * from './ModelsDiscoverDetails';

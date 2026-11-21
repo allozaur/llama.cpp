@@ -197,7 +197,7 @@
 				: `${HuggingFaceService.formatDownloads(model.downloads)} downloads`,
 			// the model's own org, the way the model cards show it
 			org: orgOf(HuggingFaceService.getBaseModels(model)[0]) || orgOf(model.id),
-			run: () => close(() => uiStore.openModelsDiscover(model.id))
+			run: () => close(() => openHubModel(model.id))
 		};
 	}
 
@@ -321,6 +321,16 @@
 	const activeIndex = $derived(Math.min(highlighted, entries.length - 1));
 
 	const emptyMessage = $derived(needle ? 'No results found' : 'No chats yet');
+
+	/**
+	 * Shows a Hub model's details over the models page; a phone, which has no models
+	 * page in its navigation, opens them over the page it is on.
+	 */
+	function openHubModel(repo: string) {
+		if (!deviceStore.isMobile) uiStore.openModelsManager();
+
+		uiStore.openHubModelDetails(repo);
+	}
 
 	/** Closes the search first, so a dialog opened by `next` takes the focus. */
 	function close(next: () => void) {
