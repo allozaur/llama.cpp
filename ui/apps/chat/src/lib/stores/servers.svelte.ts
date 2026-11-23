@@ -7,7 +7,8 @@
  * store registers the resolved list with the api-base registry, which services
  * use to build request URLs, and tells the remote access store when a tunnel is
  * no longer wanted. A page published with servers (`llama-chat --server`)
- * lists them in `llama-chat.json`, and the store adds each of them once.
+ * lists them in `llama-chat.json`, and the store adds each of them once. A
+ * page with no server at all starts with llama-server's default address.
  */
 
 import {
@@ -18,6 +19,7 @@ import {
 	PRESET_SERVERS_META,
 	SETTINGS_KEYS
 } from '#lib/constants/index.ts';
+import { deviceStore } from '#lib/stores/device.svelte.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { remoteAccessStore } from '#lib/stores/remote-access.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
@@ -27,13 +29,14 @@ import {
 	createLocalServer,
 	createRemoteServer,
 	createUrlServer,
+	defaultServerToAdd,
 	isRemoteServer,
 	parsePresetServers,
 	parseServersSettings,
 	presetServersToAdd
 } from '#lib/utils/servers.ts';
 import { uuid } from '#lib/utils/uuid.ts';
-import { browser } from '$app/env';
+import { browser, dev } from '$app/env';
 
 function loadActiveServerId(): string {
 	if (!browser) return LOCAL_BACKEND_ID;
@@ -105,6 +108,31 @@ class ServersStore {
 	/** Servers a tunnel can be opened to, enabled or not. */
 	get remote(): Server[] {
 		return this.external.filter(isRemoteServer);
+	}
+
+	/**
+	 * Add llama-server's default address on this computer, for a page that has
+	 * no server of its own and none listed: a static build on another host then
+	 * finds a llama-server started with its defaults. Added once, like a preset,
+	 * so it stays removed when the user removes it.
+	 *
+	 * @returns the id of the server it added, if it added one
+	 */
+	addDefaultServer(): string | null {
+		// the dev server has its own local server, the one it proxies to, even while that one is down
+		if (!browser || dev || !serverStore.localServerMissing) return null;
+
+		const seen = loadSeenPresets();
+		const url = defaultServerToAdd(this.external, seen, deviceStore.isTouch);
+
+		if (!url) return null;
+
+		const server = createUrlServer(url, uuid());
+
+		this.saveExternal([...this.external, server]);
+		persistSeenPresets([...seen, url]);
+
+		return server.id;
 	}
 
 	/**

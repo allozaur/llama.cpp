@@ -17,6 +17,7 @@ import {
 	CODE_LENGTHS,
 	DEFAULT_SERVER_CHAT_PATH,
 	DEFAULT_SERVER_MODELS_PATH,
+	DEFAULT_SERVER_URL,
 	FAVICON_SERVICE_URL,
 	LOCAL_BACKEND_ID,
 	SERVER_ID_PREFIX,
@@ -327,6 +328,22 @@ export function presetServersToAdd(urls: string[], servers: Server[], seen: stri
 	const stored = new Set(servers.map((server) => server.baseUrl));
 
 	return urls.filter((url) => !stored.has(url) && !seen.includes(url));
+}
+
+/**
+ * The server a page with no server of its own starts with: llama-server's
+ * default address on this computer. Not once another server is listed, not
+ * again after it was added once, and not on a touch device, where "this
+ * computer" is the phone or tablet itself.
+ */
+export function defaultServerToAdd(
+	servers: Server[],
+	seen: string[],
+	isTouch: boolean
+): string | null {
+	if (isTouch || servers.length > 0) return null;
+
+	return presetServersToAdd([DEFAULT_SERVER_URL], servers, seen)[0] ?? null;
 }
 
 /**

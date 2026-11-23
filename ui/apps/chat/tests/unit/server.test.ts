@@ -11,6 +11,7 @@ import {
 	createLocalServer,
 	createRemoteServer,
 	createUrlServer,
+	defaultServerToAdd,
 	isLocalServer,
 	isReachableServer,
 	isRemoteServer,
@@ -286,5 +287,25 @@ describe('preset servers (llama-chat.json)', () => {
 		expect(presetServersToAdd(urls, stored, ['http://127.0.0.1:9933'])).toEqual([
 			'http://127.0.0.1:9932'
 		]);
+	});
+});
+
+describe('default server', () => {
+	it('is llama-server on this computer, for a page with no server listed', () => {
+		expect(defaultServerToAdd([], [], false)).toBe('http://localhost:9931');
+	});
+
+	it('is not added again once it was, so it stays removed', () => {
+		expect(defaultServerToAdd([], ['http://localhost:9931'], false)).toBeNull();
+	});
+
+	it('gives way to a server that is already listed', () => {
+		const stored = [createUrlServer('https://llm.example.com', 'a')];
+
+		expect(defaultServerToAdd(stored, [], false)).toBeNull();
+	});
+
+	it('is left out on a touch device, where this computer is the phone', () => {
+		expect(defaultServerToAdd([], [], true)).toBeNull();
 	});
 });

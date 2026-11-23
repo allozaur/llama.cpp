@@ -136,6 +136,12 @@ export function initStores(): Promise<void> {
 		// /tools exists at all, so probe it first and only then list the tools;
 		// otherwise they stay empty until the tools menu is opened
 		void Promise.all([serverStore.prefetchLocalState(), presets]).then(async () => {
+			// no server of its own and none published with the page: try the one
+			// llama-server starts by default on this computer
+			const defaultId = serversStore.addDefaultServer();
+
+			if (defaultId) await serversModelsStore.ensureLoaded(defaultId);
+
 			// a build served without a local server has no local server to fall
 			// back on, so the active server is only settled once that is known
 			connectActiveServer();

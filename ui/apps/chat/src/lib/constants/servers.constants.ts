@@ -25,3 +25,9 @@ export const PRESET_SERVERS_FILE = 'llama-chat.json';
  * there: pages served any other way, such as by llama-server, never ask for it.
  */
 export const PRESET_SERVERS_META = 'llama-chat-servers';
+
+/**
+ * Where llama-server listens by default on this computer. A page with no
+ * server of its own, such as a static build on another host, tries it first.
+ */
+export const DEFAULT_SERVER_URL = 'http://localhost:9931';
