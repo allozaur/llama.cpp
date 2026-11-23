@@ -14,7 +14,9 @@ let calls: Call[];
 function respond(routes: Record<string, () => Response>) {
 	vi.stubGlobal(
 		'fetch',
-		vi.fn(async (url: string, init?: RequestInit) => {
+		vi.fn(async (input: string | URL, init?: RequestInit) => {
+			const url = String(input);
+
 			calls.push({ init, url });
 
 			const route = Object.keys(routes).find((key) => url.endsWith(key));
@@ -69,6 +71,24 @@ describe('HfTracesService', () => {
 		respond({ '/api/whoami-v2': () => json({ error: 'Rate limited' }, 429) });
 
 		await expect(HfTracesService.whoAmI(TOKEN)).rejects.toThrow('Rate limited');
+	});
+
+	it('lists the account datasets, newest first, private ones marked', async () => {
+		respond({
+			'/api/datasets?author=me&sort=lastModified&direction=-1&limit=100': () =>
+				json([
+					{ id: 'me/llama-chat-traces', private: false },
+					{ id: 'me/secret', private: true }
+				])
+		});
+
+		const datasets = await HfTracesService.listDatasets(TOKEN, 'me');
+
+		expect(datasets).toEqual([
+			{ id: 'me/llama-chat-traces', isPrivate: false },
+			{ id: 'me/secret', isPrivate: true }
+		]);
+		expect(new Headers(calls[0].init?.headers).get('Authorization')).toBe(`Bearer ${TOKEN}`);
 	});
 
 	it('creates a missing dataset, then commits the trace as one regular file', async () => {

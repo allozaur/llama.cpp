@@ -6,12 +6,28 @@
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import * as RadioGroup from '@ggml-org/llama-ui/ui/radio-group';
-	import { Check, Copy, ExternalLink, Loader2, Share2, TriangleAlert } from '@lucide/svelte';
-	import { HF_NEW_TOKEN_URL, HF_REPO_ID_REGEX, HF_TRACES_DOCS_URL } from '#lib/constants/index.ts';
+	import * as Select from '@ggml-org/llama-ui/ui/select';
+	import {
+		Check,
+		Copy,
+		ExternalLink,
+		Loader2,
+		Lock,
+		Plus,
+		Share2,
+		TriangleAlert
+	} from '@lucide/svelte';
+	import {
+		HF_NEW_DATASET_VALUE,
+		HF_NEW_TOKEN_URL,
+		HF_REPO_ID_REGEX,
+		HF_TRACES_DEFAULT_DATASET_NAME,
+		HF_TRACES_DOCS_URL
+	} from '#lib/constants/index.ts';
 	import { TraceShareScope } from '#lib/enums/index.ts';
 	import { conversationsStore, huggingFaceStore, uiStore } from '#lib/stores/index.ts';
 	import { copyToClipboard, filterByLeafNodeId } from '#lib/utils/index.ts';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	let options = $derived(uiStore.conversationShare);
@@ -23,7 +39,10 @@
 	let token = $state('');
 	let signInError = $state<string | null>(null);
 	let scope = $state<TraceShareScope>(TraceShareScope.ALL);
-	let dataset = $state('');
+	/** A listed dataset's ID, or HF_NEW_DATASET_VALUE to name a new one. */
+	let datasetChoice = $state('');
+	let newDataset = $state('');
+	let newDatasetInput = $state<HTMLInputElement | null>(null);
 	let isPrivate = $state(false);
 	let includeAttachments = $state(false);
 	let isSharing = $state(false);
@@ -40,7 +59,8 @@
 			token = '';
 			signInError = null;
 			scope = messageId ? TraceShareScope.UP_TO_MESSAGE : TraceShareScope.ALL;
-			dataset = huggingFaceStore.suggestedDataset;
+			datasetChoice = '';
+			newDataset = '';
 			isPrivate = false;
 			includeAttachments = false;
 			shareError = null;
@@ -48,9 +68,8 @@
 			messages = [];
 		});
 
-		void huggingFaceStore.restoreSession().then(() => {
-			if (!dataset) dataset = huggingFaceStore.suggestedDataset;
-		});
+		// the list is fetched again on every open, so datasets made elsewhere show up
+		void huggingFaceStore.restoreSession().then(() => huggingFaceStore.loadDatasets());
 
 		void conversationsStore.getConversationMessages(conversationId).then((loaded) => {
 			if (uiStore.conversationShare?.conversationId === conversationId) messages = loaded;
@@ -74,11 +93,37 @@
 	let hasAttachments = $derived(tracePath.some((message) => !!message.extra?.length));
 
 	let user = $derived(huggingFaceStore.user);
+	let datasets = $derived(huggingFaceStore.datasets);
+	let isNewDataset = $derived(datasetChoice === HF_NEW_DATASET_VALUE);
+	let dataset = $derived(isNewDataset ? newDataset.trim() : datasetChoice);
+	let pickedDataset = $derived(datasets.find((entry) => entry.id === datasetChoice));
+
+	// once the account's datasets are in, pick the one traces went to last, else offer a new one
+	$effect(() => {
+		if (!options || !user || datasetChoice || huggingFaceStore.isLoadingDatasets) return;
+
+		const suggested = huggingFaceStore.suggestedDataset;
+		const isListed = datasets.some((entry) => entry.id === suggested);
+
+		untrack(() => {
+			datasetChoice = isListed ? suggested : HF_NEW_DATASET_VALUE;
+			newDataset = isListed ? `${user.name}/` : suggested;
+		});
+	});
 	let isReadOnlyToken = $derived(user?.tokenRole === 'read');
-	let isDatasetValid = $derived(HF_REPO_ID_REGEX.test(dataset.trim()));
+	let isDatasetValid = $derived(HF_REPO_ID_REGEX.test(dataset));
+	// the owner alone, as the field starts, is not a mistake yet
+	let isDatasetNameStarted = $derived(!!dataset && !dataset.endsWith('/'));
 	let canShare = $derived(
 		!!user && !isReadOnlyToken && isDatasetValid && tracePath.length > 0 && !isSharing
 	);
+
+	async function handleDatasetChoice(value: string) {
+		if (value !== HF_NEW_DATASET_VALUE) return;
+
+		await tick();
+		newDatasetInput?.focus();
+	}
 
 	function close() {
 		if (isSharing) return;
@@ -97,8 +142,6 @@
 			await huggingFaceStore.signIn(token);
 
 			token = '';
-
-			if (!dataset) dataset = huggingFaceStore.suggestedDataset;
 		} catch (error) {
 			signInError = error instanceof Error ? error.message : String(error);
 		}
@@ -120,8 +163,8 @@
 			sharedUrl = await huggingFaceStore.shareConversation({
 				conversationId: options.conversationId,
 				includeAttachments: hasAttachments && includeAttachments,
-				isPrivate,
-				repoId: dataset.trim(),
+				isPrivate: isNewDataset ? isPrivate : !!pickedDataset?.isPrivate,
+				repoId: dataset,
 				upToMessageId: scope === TraceShareScope.UP_TO_MESSAGE ? options.messageId : undefined
 			});
 			toast.success('Conversation shared to Hugging Face');
@@ -275,33 +318,88 @@
 					{/if}
 
 					<div class="flex flex-col gap-2">
-						<Label for="hf-dataset">Dataset</Label>
+						<Label for="hf-dataset-choice">Dataset</Label>
 
-						<Input
-							bind:value={dataset}
-							autocomplete="off"
-							disabled={isSharing}
-							id="hf-dataset"
-							placeholder="username/llama-chat-traces"
-						/>
+						<Select.Root
+							bind:value={datasetChoice}
+							disabled={isSharing || (!datasetChoice && huggingFaceStore.isLoadingDatasets)}
+							onValueChange={(value) => void handleDatasetChoice(value)}
+							type="single"
+						>
+							<Select.Trigger class="w-full" id="hf-dataset-choice">
+								<span class="flex min-w-0 items-center gap-2">
+									{#if !datasetChoice}
+										<Loader2 class="animate-spin" />
+
+										<span class="text-muted-foreground">Loading your datasets...</span>
+									{:else if isNewDataset}
+										<Plus />
+
+										<span>New dataset</span>
+									{:else}
+										<span class="truncate">{datasetChoice}</span>
+
+										{#if pickedDataset?.isPrivate}<Lock />{/if}
+									{/if}
+								</span>
+							</Select.Trigger>
+
+							<Select.Content class="max-h-72">
+								{#each datasets as entry (entry.id)}
+									<Select.Item label={entry.id} value={entry.id}>
+										<span class="min-w-0 truncate">{entry.id}</span>
+
+										{#if entry.isPrivate}<Lock aria-label="Private" />{/if}
+									</Select.Item>
+								{/each}
+
+								{#if datasets.length}
+									<Select.Separator />
+								{/if}
+
+								<Select.Item label="New dataset" value={HF_NEW_DATASET_VALUE}>
+									<Plus />
+
+									New dataset
+								</Select.Item>
+							</Select.Content>
+						</Select.Root>
+
+						{#if isNewDataset}
+							<Input
+								bind:ref={newDatasetInput}
+								bind:value={newDataset}
+								aria-label="New dataset name"
+								autocomplete="off"
+								disabled={isSharing}
+								id="hf-dataset"
+								placeholder="{user.name}/{HF_TRACES_DEFAULT_DATASET_NAME}"
+							/>
+						{/if}
 
 						<p class="text-xs text-muted-foreground">
-							{#if dataset.trim() && !isDatasetValid}
+							{#if isNewDataset && isDatasetNameStarted && !isDatasetValid}
 								<span class="text-destructive">Use the form owner/name.</span>
+							{:else if isNewDataset && datasets.some((entry) => entry.id === dataset)}
+								{dataset} already exists: the trace goes to it.
+							{:else if isNewDataset}
+								Created on Hugging Face when you share. Each share adds one file to it.
 							{:else}
-								Created if it does not exist yet. Each share adds one file to it.
+								Each share adds one file to it.
 							{/if}
 						</p>
 					</div>
 
 					<div class="flex flex-col gap-3">
-						<div class="flex items-center gap-2">
-							<Checkbox bind:checked={isPrivate} disabled={isSharing} id="hf-private" />
+						{#if isNewDataset}
+							<div class="flex items-center gap-2">
+								<Checkbox bind:checked={isPrivate} disabled={isSharing} id="hf-private" />
 
-							<Label class="cursor-pointer text-sm font-normal" for="hf-private">
-								Make a new dataset private
-							</Label>
-						</div>
+								<Label class="cursor-pointer text-sm font-normal" for="hf-private">
+									Make the new dataset private
+								</Label>
+							</div>
+						{/if}
 
 						{#if hasAttachments}
 							<div class="flex items-center gap-2">

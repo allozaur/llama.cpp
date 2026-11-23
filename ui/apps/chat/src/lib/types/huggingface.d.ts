@@ -251,6 +251,13 @@ export interface HfUser {
 	tokenRole?: string;
 }
 
+/** A dataset of the account, as the share dialog lists it. */
+export interface HfDataset {
+	/** `owner/name` */
+	id: string;
+	isPrivate: boolean;
+}
+
 export interface HfTraceUpload {
 	repoId: string;
 	path: string;

@@ -51,6 +51,7 @@ export type {
 	HfMmprojEncoders,
 	HfModelSibling,
 	HfModelSiblingRef,
+	HfDataset,
 	HfTraceUpload,
 	HfUser
 } from './huggingface';

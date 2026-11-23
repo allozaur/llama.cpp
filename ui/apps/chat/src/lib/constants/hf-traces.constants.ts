@@ -21,6 +21,10 @@ export const HF_HTTP_UNAUTHORIZED = 401;
 export const HF_REPO_TYPE_DATASET = 'dataset';
 export const HF_TRACES_REVISION = HF_MAIN_BRANCH;
 export const HF_TRACES_DEFAULT_DATASET_NAME = 'llama-chat-traces';
+/** Datasets the share dialog lists to pick from, most recently changed first. */
+export const HF_DATASETS_LIST_LIMIT = 100;
+/** Select value of the "New dataset" choice; repo IDs always hold a slash, so it never clashes. */
+export const HF_NEW_DATASET_VALUE = 'new';
 
 /** Commit API body: one JSON operation per line. */
 export const HF_COMMIT_CONTENT_TYPE = 'application/x-ndjson';

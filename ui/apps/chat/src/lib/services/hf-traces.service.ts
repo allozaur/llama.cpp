@@ -10,6 +10,7 @@ import {
 	HF_API_DATASETS_URL,
 	HF_API_WHOAMI_URL,
 	HF_COMMIT_CONTENT_TYPE,
+	HF_DATASETS_LIST_LIMIT,
 	HF_DATASETS_URL,
 	HF_HTTP_NOT_FOUND,
 	HF_HTTP_UNAUTHORIZED,
@@ -19,7 +20,7 @@ import {
 	HF_TRACES_REVISION,
 	HF_UPLOAD_MODE_LFS
 } from '#lib/constants/index.ts';
-import type { HfTraceUpload, HfUser } from '#lib/types/index.ts';
+import type { HfDataset, HfTraceUpload, HfUser } from '#lib/types/index.ts';
 
 const BASE64_CHUNK = 0x8000;
 
@@ -73,6 +74,31 @@ export class HfTracesService {
 		});
 
 		await ensureOk(response, 'Dataset creation');
+	}
+
+	/**
+	 * Lists the datasets of an account, most recently changed first; the token
+	 * brings in the private ones it may read.
+	 */
+	static async listDatasets(token: string, author: string): Promise<HfDataset[]> {
+		const url = new URL(HF_API_DATASETS_URL);
+
+		url.searchParams.set('author', author);
+		url.searchParams.set('sort', 'lastModified');
+		url.searchParams.set('direction', '-1');
+		url.searchParams.set('limit', String(HF_DATASETS_LIST_LIMIT));
+
+		const response = await fetch(url, { headers: authHeaders(token) });
+
+		await ensureOk(response, 'Dataset list');
+
+		const body: unknown = await response.json();
+
+		if (!Array.isArray(body)) return [];
+
+		return body
+			.filter((dataset) => typeof dataset?.id === 'string')
+			.map((dataset) => ({ id: dataset.id, isPrivate: dataset.private === true }));
 	}
 
 	/**

@@ -15,7 +15,7 @@ import { ConversationTransferService } from '#lib/services/conversation-transfer
 import { HfTracesService } from '#lib/services/hf-traces.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
-import type { HfUser } from '#lib/types/index.ts';
+import type { HfDataset, HfUser } from '#lib/types/index.ts';
 import { buildConversationTrace } from '#lib/utils/index.ts';
 import { browser } from '$app/env';
 
@@ -50,8 +50,14 @@ function writeStorage(key: string, value: string | null): void {
 }
 
 class HuggingFaceStore {
+	/** Datasets of the account a share can go to, most recently changed first. */
+	datasets = $state<HfDataset[]>([]);
+
 	/** Set while the token is being checked against the Hub. */
 	isCheckingToken = $state(false);
+
+	/** Set while the account's datasets are being listed. */
+	isLoadingDatasets = $state(false);
 
 	/** Dataset the last share went to, `owner/name`. */
 	lastDataset = $state<string | null>(readStorage(HF_TRACES_DATASET_LOCALSTORAGE_KEY));
@@ -74,6 +80,30 @@ class HuggingFaceStore {
 		if (this.lastDataset) return this.lastDataset;
 
 		return this.user ? `${this.user.name}/${HF_TRACES_DEFAULT_DATASET_NAME}` : '';
+	}
+
+	/**
+	 * Lists the account's datasets for the share dialog. A failed list leaves it empty,
+	 * so the dialog falls back to naming a new dataset.
+	 */
+	async loadDatasets(): Promise<void> {
+		const token = this.#token;
+		const user = this.user;
+
+		if (!token || !user || this.isLoadingDatasets) return;
+
+		this.isLoadingDatasets = true;
+
+		try {
+			const datasets = await HfTracesService.listDatasets(token, user.name);
+
+			// the account may have changed while the list was on its way
+			if (this.user === user) this.datasets = datasets;
+		} catch {
+			if (this.user === user) this.datasets = [];
+		} finally {
+			this.isLoadingDatasets = false;
+		}
 	}
 
 	/** Checks a remembered token once, so the dialog can show who is signed in. */
@@ -113,6 +143,10 @@ class HuggingFaceStore {
 			repoId: options.repoId
 		});
 
+		if (!this.datasets.some((dataset) => dataset.id === options.repoId)) {
+			this.datasets = [{ id: options.repoId, isPrivate: options.isPrivate }, ...this.datasets];
+		}
+
 		this.lastDataset = options.repoId;
 		writeStorage(HF_TRACES_DATASET_LOCALSTORAGE_KEY, options.repoId);
 
@@ -134,6 +168,7 @@ class HuggingFaceStore {
 			this.#token = trimmed;
 			this.user = user;
 			writeStorage(HF_TOKEN_LOCALSTORAGE_KEY, trimmed);
+			void this.loadDatasets();
 
 			return user;
 		} finally {
@@ -144,6 +179,7 @@ class HuggingFaceStore {
 	signOut(): void {
 		this.#token = null;
 		this.user = null;
+		this.datasets = [];
 		writeStorage(HF_TOKEN_LOCALSTORAGE_KEY, null);
 	}
 }
