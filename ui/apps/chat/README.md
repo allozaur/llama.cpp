@@ -48,7 +48,7 @@ The app reaches the llama-server on its own origin by default (llama-server serv
 
 `npx llama-chat build --server <url>` writes that file, and `npx llama-chat --server <url>` answers it without one. The app reads it on every start, past its caches, so a host can change it without a new build. That llama-server needs `--cors-origins` for the app's address when it restricts origins.
 
-With no server on its own origin and none added, the app starts with llama-server's default address on the same computer, `http://localhost:9931`, so a static build finds a llama-server started with its defaults. It adds it once: remove it in the app and it stays removed. A phone or tablet gets none, since the address would mean the device itself.
+With no server on its own origin and none added, the app starts with llama-server's default address on the same computer, `http://localhost:9931`, so a static build finds a llama-server started with its defaults. It adds it once: remove it in the app and it stays removed. A phone or tablet gets none, since the address would mean the device itself. A page llama-server serves (`llama serve`, on whatever `--port` it was started with) keeps its own origin as its server instead. When nothing answers, the app offers to open the Llama app or run `llama serve`, and to try again.
 
 ## Features
 

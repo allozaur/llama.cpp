@@ -2,6 +2,7 @@
 	import { PanelLeftClose, PanelLeftOpen, Search } from '@lucide/svelte';
 	import {
 		ActionIcon,
+		DialogConnectServer,
 		DialogConversationDelete,
 		DialogConversationRename,
 		DialogDiscoverModels,
@@ -800,9 +801,9 @@
 
 <ModelsManagerModelDrawer />
 
-
-
 <DialogServers bind:open={uiStore.serversOpen} />
+
+<DialogConnectServer />
 
 <style>
 	aside {

@@ -19,6 +19,7 @@ import {
 	DEFAULT_SERVER_MODELS_PATH,
 	DEFAULT_SERVER_URL,
 	FAVICON_SERVICE_URL,
+	LLAMA_SERVE_COMMAND,
 	LOCAL_BACKEND_ID,
 	SERVER_ID_PREFIX,
 	TUNNEL_HOST_SUFFIX
@@ -332,18 +333,49 @@ export function presetServersToAdd(urls: string[], servers: Server[], seen: stri
 
 /**
  * The server a page with no server of its own starts with: llama-server's
- * default address on this computer. Not once another server is listed, not
- * again after it was added once, and not on a touch device, where "this
+ * default address on this computer. Not on a page a llama-server serves, whose
+ * own origin and port are its server; not once another server is listed; not
+ * again after it was added once; and not on a touch device, where "this
  * computer" is the phone or tablet itself.
  */
 export function defaultServerToAdd(
 	servers: Server[],
 	seen: string[],
-	isTouch: boolean
+	device: { hasOwnServer: boolean; isTouch: boolean }
 ): string | null {
-	if (isTouch || servers.length > 0) return null;
+	if (device.hasOwnServer || device.isTouch || servers.length > 0) return null;
 
 	return presetServersToAdd([DEFAULT_SERVER_URL], servers, seen)[0] ?? null;
+}
+
+/** The command that starts llama-server at `address`: its port is only spelled out when it is not the default one. */
+export function llamaServeCommand(address: string): string {
+	const port = URL.canParse(address) ? new URL(address).port : '';
+	const defaultPort = new URL(DEFAULT_SERVER_URL).port;
+
+	return port && port !== defaultPort
+		? `${LLAMA_SERVE_COMMAND} --port ${port}`
+		: LLAMA_SERVE_COMMAND;
+}
+
+/**
+ * Whether the servers listed beside a missing own server leave nothing to talk
+ * to: none answered and none is still trying. A remote server counts as
+ * trying, since its tunnel opens on its own and its card reports a failure.
+ */
+export function isWithoutServer(
+	servers: Server[],
+	stateOf: (serverId: string) => { error: string | null; loaded: boolean; loading: boolean }
+): boolean {
+	return !servers.some((server) => {
+		if (isLocalServer(server)) return false;
+
+		if (isRemoteServer(server)) return true;
+
+		const state = stateOf(server.id);
+
+		return state.loading || (state.loaded && state.error === null);
+	});
 }
 
 /**

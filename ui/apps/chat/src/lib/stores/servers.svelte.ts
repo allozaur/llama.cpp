@@ -13,6 +13,7 @@
 
 import {
 	ACTIVE_SERVER_LOCALSTORAGE_KEY,
+	DEFAULT_SERVER_URL,
 	LOCAL_BACKEND_ID,
 	PRESET_SERVERS_FILE,
 	PRESET_SERVERS_LOCALSTORAGE_KEY,
@@ -78,11 +79,18 @@ function persistSeenPresets(urls: string[]): void {
 
 class ServersStore {
 	activeId = $state<string>(loadActiveServerId());
+	/** The startup has looked for a server: its own, the published ones and the default. */
+	startupChecked = $state(false);
 
 	get active(): Server {
 		const active = this.enabled.find((server) => server.id === this.activeId);
 
 		return active ?? this.enabled[0] ?? this.local;
+	}
+
+	/** Where the page looks for llama-server first: its own origin when one serves it, else the default port here. */
+	get defaultAddress(): string {
+		return browser && serverStore.servesThisPage ? window.location.origin : DEFAULT_SERVER_URL;
 	}
 
 	get enabled(): Server[] {
@@ -123,7 +131,10 @@ class ServersStore {
 		if (!browser || dev || !serverStore.localServerMissing) return null;
 
 		const seen = loadSeenPresets();
-		const url = defaultServerToAdd(this.external, seen, deviceStore.isTouch);
+		const url = defaultServerToAdd(this.external, seen, {
+			hasOwnServer: serverStore.servesThisPage,
+			isTouch: deviceStore.isTouch
+		});
 
 		if (!url) return null;
 

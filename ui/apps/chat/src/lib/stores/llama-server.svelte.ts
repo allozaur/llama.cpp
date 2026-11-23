@@ -6,13 +6,29 @@
  * PropsService for the /props fetch.
  */
 
-import { LOCAL_BACKEND_ID } from '#lib/constants/index.ts';
+import { LOCAL_BACKEND_ID, SERVED_BY_LLAMA_SERVER_LOCALSTORAGE_KEY } from '#lib/constants/index.ts';
 import { ServerRole } from '#lib/enums/index.ts';
 import { PropsService } from '#lib/services/props.service.ts';
 import { getServer } from '#lib/utils/api-base.ts';
 import { ApiError } from '#lib/utils/index.ts';
 
 const LOADING_RETRY_INTERVAL_MS = 1000;
+
+function rememberServedByLlamaServer(): void {
+	try {
+		localStorage.setItem(SERVED_BY_LLAMA_SERVER_LOCALSTORAGE_KEY, 'true');
+	} catch {
+		/* ignore */
+	}
+}
+
+function wasServedByLlamaServer(): boolean {
+	try {
+		return localStorage.getItem(SERVED_BY_LLAMA_SERVER_LOCALSTORAGE_KEY) === 'true';
+	} catch {
+		return false;
+	}
+}
 
 class ServerStore {
 	error = $state<string | null>(null);
@@ -85,6 +101,15 @@ class ServerStore {
 		return this.localAvailable === false;
 	}
 
+	/**
+	 * A llama-server serves this page, as `llama serve` serves its built-in UI:
+	 * its own origin, on the port it was started with, is the page's server even
+	 * while it is down. Remembered per origin, since a PWA can open without it.
+	 */
+	get servesThisPage(): boolean {
+		return this.localAvailable === true || wasServedByLlamaServer();
+	}
+
 	get uiSettings(): Record<string, string | number | boolean> | undefined {
 		return this.props?.ui_settings ?? this.props?.webui_settings;
 	}
@@ -151,6 +176,7 @@ class ServerStore {
 
 				if (serverId === LOCAL_BACKEND_ID) {
 					this.localAvailable = true;
+					rememberServedByLlamaServer();
 					// mirror the local facts as they arrive: a later clear() must not
 					// be able to wipe what the local server told us
 					this.localState = { props, role: this.role };
@@ -206,6 +232,7 @@ class ServerStore {
 				role: props?.role === ServerRole.ROUTER ? ServerRole.ROUTER : ServerRole.MODEL
 			};
 			this.localAvailable = true;
+			rememberServedByLlamaServer();
 		} catch {
 			// no local server in this deployment: mark it missing so the local
 			// server drops out of the enabled list

@@ -31,3 +31,12 @@ export const PRESET_SERVERS_META = 'llama-chat-servers';
  * server of its own, such as a static build on another host, tries it first.
  */
 export const DEFAULT_SERVER_URL = 'http://localhost:9931';
+
+/** Opens the Llama app, which registers the `llama://` scheme and runs llama-server on {@link DEFAULT_SERVER_URL}. */
+export const LLAMA_APP_LAUNCH_URL = 'llama://open';
+
+/** Where the Llama app is downloaded. */
+export const LLAMA_APP_DOWNLOAD_URL = 'https://llama.app';
+
+/** Starts llama-server on its default port. */
+export const LLAMA_SERVE_COMMAND = 'llama serve';

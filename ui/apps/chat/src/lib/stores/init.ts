@@ -145,6 +145,7 @@ export function initStores(): Promise<void> {
 			// a build served without a local server has no local server to fall
 			// back on, so the active server is only settled once that is known
 			connectActiveServer();
+			serversStore.startupChecked = true;
 
 			void toolsStore.fetchServerTools();
 

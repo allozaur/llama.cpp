@@ -15,6 +15,8 @@ import {
 	isLocalServer,
 	isReachableServer,
 	isRemoteServer,
+	isWithoutServer,
+	llamaServeCommand,
 	normalizeShareCode,
 	parsePresetServers,
 	parseServersSettings,
@@ -291,21 +293,67 @@ describe('preset servers (llama-chat.json)', () => {
 });
 
 describe('default server', () => {
+	const device = { hasOwnServer: false, isTouch: false };
+
 	it('is llama-server on this computer, for a page with no server listed', () => {
-		expect(defaultServerToAdd([], [], false)).toBe('http://localhost:9931');
+		expect(defaultServerToAdd([], [], device)).toBe('http://localhost:9931');
 	});
 
 	it('is not added again once it was, so it stays removed', () => {
-		expect(defaultServerToAdd([], ['http://localhost:9931'], false)).toBeNull();
+		expect(defaultServerToAdd([], ['http://localhost:9931'], device)).toBeNull();
 	});
 
 	it('gives way to a server that is already listed', () => {
 		const stored = [createUrlServer('https://llm.example.com', 'a')];
 
-		expect(defaultServerToAdd(stored, [], false)).toBeNull();
+		expect(defaultServerToAdd(stored, [], device)).toBeNull();
 	});
 
 	it('is left out on a touch device, where this computer is the phone', () => {
-		expect(defaultServerToAdd([], [], true)).toBeNull();
+		expect(defaultServerToAdd([], [], { ...device, isTouch: true })).toBeNull();
+	});
+
+	it('is the own origin on a page a llama-server serves, whatever port it was started on', () => {
+		expect(defaultServerToAdd([], [], { ...device, hasOwnServer: true })).toBeNull();
+	});
+});
+
+describe('without a server', () => {
+	const url = createUrlServer('http://localhost:9931', 'url');
+	const remote = createRemoteServer('ABCD-EFGH', 'remote');
+	const state = (
+		over: Partial<{ error: string | null; loaded: boolean; loading: boolean }> = {}
+	) => ({
+		error: null,
+		loaded: false,
+		loading: false,
+		...over
+	});
+
+	it('is so when no server is listed beside the missing own one', () => {
+		expect(isWithoutServer([createLocalServer()], () => state())).toBe(true);
+	});
+
+	it('is so when every listed server failed', () => {
+		expect(isWithoutServer([url], () => state({ error: 'Failed to fetch' }))).toBe(true);
+	});
+
+	it('is not while a server is still trying, or once one answered', () => {
+		expect(isWithoutServer([url], () => state({ loading: true }))).toBe(false);
+		expect(isWithoutServer([url], () => state({ loaded: true }))).toBe(false);
+	});
+
+	it('leaves a remote server to its tunnel and its card', () => {
+		expect(isWithoutServer([remote], () => state())).toBe(false);
+	});
+});
+
+describe('llama serve command', () => {
+	it('is the bare command on the default port', () => {
+		expect(llamaServeCommand('http://localhost:9931')).toBe('llama serve');
+	});
+
+	it('names the port a page was served on when it is another one', () => {
+		expect(llamaServeCommand('http://127.0.0.1:8080')).toBe('llama serve --port 8080');
 	});
 });

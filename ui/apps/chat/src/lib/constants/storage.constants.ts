@@ -25,6 +25,9 @@ export const ACTIVE_SERVER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.activeBackend
 /** Base URLs of the preset servers already added once, so one the user removed stays removed. */
 export const PRESET_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.presetServers`;
 
+/** Set once a llama-server answered on the page's own origin: that server, on its own port, is then the page's default. */
+export const SERVED_BY_LLAMA_SERVER_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.servedByLlamaServer`;
+
 export const CONFIG_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.config`;
 export const DISABLED_TOOLS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.disabledTools`;
 

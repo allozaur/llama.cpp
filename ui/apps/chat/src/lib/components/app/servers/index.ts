@@ -82,6 +82,7 @@ export { default as ServerLoadingSplash } from './ServerLoadingSplash.svelte';
 export { default as ServerCard } from './ServerCard.svelte';
 export { default as ServerForm } from './ServerForm.svelte';
 export { default as ServerIcon } from './ServerIcon.svelte';
+export { default as DialogConnectServer } from './DialogConnectServer.svelte';
 export { default as DialogServerCodeScanner } from './DialogServerCodeScanner.svelte';
 export { default as DialogServerForm } from './DialogServerForm.svelte';
 export { default as DialogServers } from './DialogServers.svelte';
