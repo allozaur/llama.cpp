@@ -17,6 +17,7 @@ export const HF_TRACES_DOCS_URL = `${HF_BASE_URL}/docs/hub/agent-traces`;
 export const HF_NEW_TOKEN_URL = `${HF_BASE_URL}/settings/tokens/new?tokenType=write`;
 
 export const HF_HTTP_UNAUTHORIZED = 401;
+export const HF_HTTP_FORBIDDEN = 403;
 
 export const HF_REPO_TYPE_DATASET = 'dataset';
 export const HF_TRACES_REVISION = HF_MAIN_BRANCH;
@@ -47,10 +48,13 @@ export const HF_TRACES_DATASET_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.huggingFa
 export const HF_OAUTH_AUTHORIZE_URL = `${HF_BASE_URL}/oauth/authorize`;
 export const HF_OAUTH_REGISTER_URL = `${HF_BASE_URL}/oauth/register`;
 export const HF_OAUTH_TOKEN_URL = `${HF_BASE_URL}/oauth/token`;
-/** Read the account, create datasets and commit traces to them. */
-export const HF_OAUTH_SCOPES = ['openid', 'profile', 'write-repos', 'manage-repos'] as const;
-/** The scope a share cannot do without: committing a trace. */
-export const HF_OAUTH_REQUIRED_SCOPE = 'write-repos';
+/**
+ * Read the account, then create datasets and commit traces to the ones the app created.
+ * `contribute-repos` reaches no other repository of the account.
+ */
+export const HF_OAUTH_SCOPES = ['openid', 'profile', 'contribute-repos'] as const;
+/** The scope a share cannot do without: creating a dataset and committing a trace. */
+export const HF_OAUTH_REQUIRED_SCOPE = 'contribute-repos';
 /** The name the app registers under, shown on the Hugging Face authorization page. */
 export const HF_OAUTH_CLIENT_NAME = 'Llama Chat';
 /** Query parameter that marks a page load as a Hugging Face sign-in coming back. */

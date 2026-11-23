@@ -20,6 +20,7 @@ import {
 	HF_OAUTH_EXPIRY_MARGIN_MS,
 	HF_OAUTH_LOCALSTORAGE_KEY,
 	HF_OAUTH_PENDING_TTL_MS,
+	HF_OAUTH_SCOPES,
 	HF_TOKEN_LOCALSTORAGE_KEY,
 	HF_TRACES_DATASET_LOCALSTORAGE_KEY,
 	HF_TRACES_DEFAULT_DATASET_NAME
@@ -330,11 +331,14 @@ class HuggingFaceStore {
 		this.isSigningInWithHf = true;
 
 		try {
-			// the client the app registered belongs to one redirect URL: a new origin registers again
-			const clientId =
-				record?.redirectUrl === redirectUrl && record.clientId
-					? record.clientId
-					: await HfOAuthService.register(redirectUrl);
+			// the client the app registered belongs to one redirect URL and one set of scopes:
+			// a new origin, or scopes the app asks for differently, registers again
+			const scope = HF_OAUTH_SCOPES.join(' ');
+			const isSameClient =
+				record?.redirectUrl === redirectUrl && record.scope === scope && !!record.clientId;
+			const clientId = isSameClient
+				? record!.clientId!
+				: await HfOAuthService.register(redirectUrl);
 			const { challenge, verifier } = await HfOAuthService.createPkce();
 			const state = HfOAuthService.createState();
 
@@ -348,7 +352,8 @@ class HuggingFaceStore {
 					state
 				},
 				redirectUrl,
-				tokens: record?.redirectUrl === redirectUrl ? record.tokens : undefined
+				scope,
+				tokens: isSameClient ? record!.tokens : undefined
 			});
 
 			const authorizationUrl = HfOAuthService.authorizationUrl({
