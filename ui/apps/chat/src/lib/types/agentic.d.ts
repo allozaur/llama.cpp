@@ -168,6 +168,22 @@ export interface AgenticToolPolicy {
 	disabledTools: string[];
 }
 
+/**
+ * An agentic turn that was persisted before the flow was interrupted (e.g. by a page reload).
+ * Its LLM call already ran, so the flow starts by executing the tool calls that have no
+ * persisted result yet, then carries on with the next turns.
+ */
+export interface AgenticFlowResume {
+	/** Persisted assistant content of the interrupted turn */
+	content: string;
+	reasoningContent?: string;
+	timings?: ChatMessageTimings;
+	/** Tool calls of the interrupted turn, the full list as persisted */
+	toolCalls: ApiChatCompletionToolCall[];
+	/** IDs of the tool calls whose result is already persisted, these are not executed again */
+	answeredToolCallIds: string[];
+}
+
 export interface AgenticFlowParams {
 	conversationId: string;
 	/** ID of the flow's first assistant message, used to keep its stats live */
@@ -177,6 +193,8 @@ export interface AgenticFlowParams {
 	callbacks: AgenticFlowCallbacks;
 	signal?: AbortSignal;
 	toolPolicy?: AgenticToolPolicy;
+	/** Set when the flow continues an interrupted turn instead of starting with an LLM call */
+	resume?: AgenticFlowResume;
 }
 
 /**
