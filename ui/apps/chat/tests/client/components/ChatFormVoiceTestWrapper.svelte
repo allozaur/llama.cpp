@@ -9,9 +9,11 @@
 		/** The form's message and files, kept in step with it for the test to read, and how often it sent. */
 		state: { files: ChatUploadedFile[]; sent?: number; value: string };
 		voiceRecorder: VoiceRecorderLike;
+		/** Offer voice mode, as the chat screen does. */
+		voiceMode?: boolean;
 	}
 
-	let { isLoading = false, state, voiceRecorder }: Props = $props();
+	let { isLoading = false, state, voiceMode = false, voiceRecorder }: Props = $props();
 </script>
 
 <Tooltip.Provider>
@@ -20,6 +22,7 @@
 		bind:value={state.value}
 		{isLoading}
 		onSubmit={() => (state.sent = (state.sent ?? 0) + 1)}
+		{voiceMode}
 		{voiceRecorder}
 	/>
 </Tooltip.Provider>
