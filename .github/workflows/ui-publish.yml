@@ -54,15 +54,11 @@ jobs:
           # Upload the built files to the Hugging Face bucket under the release version
           hf buckets sync ui/apps/chat/dist hf://buckets/ggml-org/${{ env.HF_BUCKET_NAME }}/${{ inputs.version_tag }} --delete --quiet
 
-      - name: Sync built files to Hugging Face bucket (latest)
-        run: |
-          # Also upload to the 'latest' directory for fallback downloads
-          hf buckets sync ui/apps/chat/dist hf://buckets/ggml-org/${{ env.HF_BUCKET_NAME }}/latest --delete --quiet
-
       - name: Sync built files to Hugging Face bucket (latest-v2)
         run: |
-          # The fallback channel of builds that accept the split SvelteKit layout. 'latest' is
-          # what releases up to v1.0.0 fall back to, and they only accept the single-bundle one.
+          # The fallback channel (HF_FALLBACK_CHANNEL in scripts/ui-assets.cmake). It is not
+          # 'latest': releases up to v1.0.0 fall back to that one and only accept the
+          # single-bundle layout, so it stays on the last archive they can use.
           hf buckets sync ui/apps/chat/dist hf://buckets/ggml-org/${{ env.HF_BUCKET_NAME }}/latest-v2 --delete --quiet
 
       - name: Verify upload

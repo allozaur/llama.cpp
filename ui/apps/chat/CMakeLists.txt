@@ -16,14 +16,22 @@ if(DEFINED LLAMA_WEBUI_HF_BUCKET)
     set(LLAMA_UI_HF_BUCKET ${LLAMA_WEBUI_HF_BUCKET})
     message(DEPRECATION "LLAMA_WEBUI_HF_BUCKET is deprecated, use LLAMA_UI_HF_BUCKET instead")
 endif()
+# The default was the bucket's name alone before its owner became part of it, and a
+# build directory configured back then still has that value cached
+if(NOT LLAMA_UI_HF_BUCKET MATCHES "/")
+    message(DEPRECATION "LLAMA_UI_HF_BUCKET='${LLAMA_UI_HF_BUCKET}' has no owner, using ggml-org/${LLAMA_UI_HF_BUCKET}")
+    set(LLAMA_UI_HF_BUCKET "ggml-org/${LLAMA_UI_HF_BUCKET}")
+endif()
 
-# Resolve HF asset version: explicit env var > derived from build number > unset
+# Resolve HF asset version: explicit env var > build number passed to CMake > unset,
+# which leaves it to scripts/ui-assets.cmake to resolve from git (a build number
+# counted from git is wrong in a shallow clone, so it is not a version on its own)
 if(DEFINED ENV{HF_WEBUI_VERSION})
     set(HF_UI_VERSION "$ENV{HF_WEBUI_VERSION}")
     message(DEPRECATION "HF_WEBUI_VERSION env var is deprecated, use HF_UI_VERSION instead")
 elseif(DEFINED ENV{HF_UI_VERSION})
     set(HF_UI_VERSION "$ENV{HF_UI_VERSION}")
-elseif(DEFINED LLAMA_BUILD_NUMBER)
+elseif(DEFINED LLAMA_BUILD_NUMBER AND NOT "${LLAMA_BUILD_NUMBER}" STREQUAL "${BUILD_NUMBER}")
     set(HF_UI_VERSION "b${LLAMA_BUILD_NUMBER}")
 else()
     set(HF_UI_VERSION "")
