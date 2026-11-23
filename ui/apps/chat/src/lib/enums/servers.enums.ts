@@ -50,3 +50,11 @@ export enum ServerCardState {
 	/** Channel up, or no channel to fail, and the server did not answer. */
 	UNREACHABLE = 'unreachable'
 }
+
+/** Where the dialog shown when no server answers looks for one. */
+export enum ServerSource {
+	/** A llama-server elsewhere, by its URL or paired by its access code. */
+	EXTERNAL = 'external',
+	/** llama-server on this computer: the Llama app or `llama serve`. */
+	LOCAL = 'local'
+}
