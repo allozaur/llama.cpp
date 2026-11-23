@@ -22,6 +22,7 @@
 		isWithoutServer,
 		llamaServeCommand
 	} from '#lib/utils/servers.ts';
+	import { browser } from '$app/env';
 
 	let dismissed = $state(false);
 	let retrying = $state(false);
@@ -40,7 +41,9 @@
 			serverStore.localServerMissing &&
 			(retrying || isWithoutServer(serversStore.enabled, (id) => serversModelsStore.get(id)))
 	);
-	let command = $derived(llamaServeCommand(serversStore.defaultAddress));
+	let command = $derived(
+		llamaServeCommand(serversStore.defaultAddress, browser ? window.location.origin : undefined)
+	);
 
 	function handleOpenChange(value: boolean) {
 		if (!value) dismissed = true;

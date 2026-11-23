@@ -348,14 +348,24 @@ export function defaultServerToAdd(
 	return presetServersToAdd([DEFAULT_SERVER_URL], servers, seen)[0] ?? null;
 }
 
-/** The command that starts llama-server at `address`: its port is only spelled out when it is not the default one. */
-export function llamaServeCommand(address: string): string {
-	const port = URL.canParse(address) ? new URL(address).port : '';
-	const defaultPort = new URL(DEFAULT_SERVER_URL).port;
+/**
+ * The command that starts llama-server at `address` for a page on `pageOrigin`: its port is
+ * only spelled out when it is not the default one, and the page's origin when the server is
+ * on another origin, so it answers the page even where it restricts origins (tools, MCP).
+ */
+export function llamaServeCommand(address: string, pageOrigin?: string): string {
+	const parts = [LLAMA_SERVE_COMMAND];
+	const server = URL.canParse(address) ? new URL(address) : null;
 
-	return port && port !== defaultPort
-		? `${LLAMA_SERVE_COMMAND} --port ${port}`
-		: LLAMA_SERVE_COMMAND;
+	if (server?.port && server.port !== new URL(DEFAULT_SERVER_URL).port) {
+		parts.push(`--port ${server.port}`);
+	}
+
+	if (pageOrigin && server && server.origin !== pageOrigin) {
+		parts.push(`--cors-origins ${pageOrigin}`);
+	}
+
+	return parts.join(' ');
 }
 
 /**

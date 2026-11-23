@@ -356,4 +356,16 @@ describe('llama serve command', () => {
 	it('names the port a page was served on when it is another one', () => {
 		expect(llamaServeCommand('http://127.0.0.1:8080')).toBe('llama serve --port 8080');
 	});
+
+	it('lets a page on another origin reach it', () => {
+		expect(llamaServeCommand('http://localhost:9931', 'https://chat.llama.app')).toBe(
+			'llama serve --cors-origins https://chat.llama.app'
+		);
+	});
+
+	it('needs no origin for the page it serves', () => {
+		expect(llamaServeCommand('http://127.0.0.1:8080', 'http://127.0.0.1:8080')).toBe(
+			'llama serve --port 8080'
+		);
+	});
 });
