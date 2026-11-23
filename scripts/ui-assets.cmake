@@ -4,7 +4,8 @@
 #   1. Pre-built assets in SRC_DIST_DIR (manually built by user)
 #   2. If BUILD_UI=ON: npm build
 #   3. If above did not produce assets and HF_ENABLED=ON: HF Bucket download
-#      of dist.tar.gz (verified against dist.tar.gz.sha256)
+#      of dist.tar.gz (verified against dist.tar.gz.sha256), of the version
+#      this checkout resolves to, then of HF_FALLBACK_CHANNEL
 
 cmake_minimum_required(VERSION 3.18)
 
@@ -13,6 +14,7 @@ set(UI_BINARY_DIR     "" CACHE STRING "UI binary directory (to store generated f
 set(LLAMA_SOURCE_DIR  "" CACHE STRING "Project source root (to resolve version from git)")
 set(HF_BUCKET         "" CACHE STRING "Hugging Face bucket name")
 set(HF_VERSION        "" CACHE STRING "Version to download (empty = resolve from git)")
+set(LLAMA_BUILD_NUMBER "" CACHE STRING "Build number counted at configure time (b<number> is its version)")
 set(HF_ENABLED        "" CACHE STRING "Whether to allow HF Bucket download (ON/OFF)")
 set(BUILD_UI          "" CACHE STRING "Build UI via npm (ON/OFF)")
 set(LLAMA_UI_GZIP     "" CACHE STRING "Apply gzip compress to assets to save bandwidth")
@@ -30,6 +32,11 @@ set(STAMP_FILE   "${UI_BINARY_DIR}/.ui-stamp")
 set(EMBED_STAMP  "${UI_BINARY_DIR}/.ui-embed.sha256")
 set(UI_CPP       "${UI_BINARY_DIR}/ui.cpp")
 set(UI_H         "${UI_BINARY_DIR}/ui.h")
+
+# What a build downloads when the bucket has no archive of its own version. It is
+# not 'latest': releases up to v1.0.0 fall back to that one and only accept the
+# single-bundle layout, so it stays on the last archive they can use.
+set(HF_FALLBACK_CHANNEL "latest-v2")
 
 function(mime_from_ext name out_var)
     string(FIND "${name}" "." ext REVERSE)
@@ -67,14 +74,8 @@ function(mime_from_ext name out_var)
     set(${out_var} "${m}" PARENT_SCOPE)
 endfunction()
 
-# Fail when a dist tree is present but is missing files the UI needs at
-# runtime; catches truncated/stale asset trees early with a useful message.
-function(ui_validate_assets files in_dir)
-    list(LENGTH files n_assets)
-    if(n_assets EQUAL 0)
-        return()
-    endif()
-
+# List in ${out_var} the files the UI needs at runtime that ${files} lacks.
+function(ui_missing_assets files out_var)
     set(found_index FALSE)
     set(found_manifest FALSE)
     set(found_sw FALSE)
@@ -135,6 +136,19 @@ function(ui_validate_assets files in_dir)
     if(NOT found_bundle_css)
         list(APPEND missing "_app/immutable/assets/[name][hash].css (or bundle[hash].css)")
     endif()
+
+    set(${out_var} "${missing}" PARENT_SCOPE)
+endfunction()
+
+# Fail when a dist tree is present but is missing files the UI needs at
+# runtime; catches truncated/stale asset trees early with a useful message.
+function(ui_validate_assets files in_dir)
+    list(LENGTH files n_assets)
+    if(n_assets EQUAL 0)
+        return()
+    endif()
+
+    ui_missing_assets("${files}" missing)
 
     if(missing)
         set(listing "")
@@ -448,21 +462,57 @@ function(npm_build out_var)
     set(${out_var} TRUE PARENT_SCOPE)
 endfunction()
 
+# The version of the UI this checkout needs: HF_VERSION when given, else a release
+# tag at HEAD, else b<build number>. Empty when none of them can be told.
 function(resolve_version out_var)
+    set(${out_var} "" PARENT_SCOPE)
+
     if(NOT "${HF_VERSION}" STREQUAL "")
         set(${out_var} "${HF_VERSION}" PARENT_SCOPE)
         return()
     endif()
 
-    if(EXISTS "${LLAMA_SOURCE_DIR}/cmake/build-info.cmake")
-        include("${LLAMA_SOURCE_DIR}/cmake/build-info.cmake")
-        if(NOT "${BUILD_NUMBER}" STREQUAL "" AND NOT BUILD_NUMBER EQUAL 0)
-            set(${out_var} "b${BUILD_NUMBER}" PARENT_SCOPE)
+    find_package(Git QUIET)
+    if(Git_FOUND AND EXISTS "${LLAMA_SOURCE_DIR}/.git")
+        # A tag names the archive whatever the depth of the clone: b<number> of a
+        # nightly, v<x.y.z> of a release (a shallow clone of one has only that tag).
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} tag --points-at HEAD
+            WORKING_DIRECTORY "${LLAMA_SOURCE_DIR}"
+            OUTPUT_VARIABLE tags
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+            RESULT_VARIABLE rc
+        )
+        if(rc EQUAL 0 AND NOT "${tags}" STREQUAL "")
+            string(REPLACE "\n" ";" tags "${tags}")
+            foreach(pattern "^b[0-9]+$" "^v[0-9]+\\.[0-9]+\\.[0-9]+$")
+                foreach(tag ${tags})
+                    if(tag MATCHES "${pattern}")
+                        set(${out_var} "${tag}" PARENT_SCOPE)
+                        return()
+                    endif()
+                endforeach()
+            endforeach()
+        endif()
+
+        # The build number is the commit count, which a shallow clone cannot tell
+        execute_process(
+            COMMAND ${GIT_EXECUTABLE} rev-parse --is-shallow-repository
+            WORKING_DIRECTORY "${LLAMA_SOURCE_DIR}"
+            OUTPUT_VARIABLE shallow
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+        )
+        if(shallow STREQUAL "true")
+            message(STATUS "UI: shallow clone with no release tag at HEAD, the UI version is unknown")
             return()
         endif()
     endif()
 
-    set(${out_var} "" PARENT_SCOPE)
+    if(NOT "${LLAMA_BUILD_NUMBER}" STREQUAL "" AND NOT LLAMA_BUILD_NUMBER EQUAL 0)
+        set(${out_var} "b${LLAMA_BUILD_NUMBER}" PARENT_SCOPE)
+    endif()
 endfunction()
 
 function(hf_download version out_var out_resolved)
@@ -481,7 +531,7 @@ function(hf_download version out_var out_resolved)
     if(NOT "${version}" STREQUAL "")
         list(APPEND candidates "${version}")
     endif()
-    list(APPEND candidates "latest")
+    list(APPEND candidates "${HF_FALLBACK_CHANNEL}")
 
     foreach(resolved ${candidates})
         set(base "https://huggingface.co/buckets/${HF_BUCKET}/resolve/${resolved}")
@@ -544,6 +594,20 @@ function(hf_download version out_var out_resolved)
 
         if(NOT EXISTS "${DIST_DIR}/index.html")
             message(STATUS "UI: archive from ${resolved} is missing required assets")
+            continue()
+        endif()
+
+        # An archive of another version can have a layout this build does not
+        # know: try the next one instead of failing the build on it.
+        file(GLOB_RECURSE extracted
+            LIST_DIRECTORIES false
+            RELATIVE "${DIST_DIR}"
+            "${DIST_DIR}/*")
+        ui_missing_assets("${extracted}" missing)
+        if(missing)
+            string(REPLACE ";" ", " missing "${missing}")
+            message(STATUS "UI: archive from ${resolved} does not match this build (missing: ${missing})")
+            file(REMOVE_RECURSE "${DIST_DIR}")
             continue()
         endif()
 
