@@ -288,6 +288,8 @@ export interface HfOAuthPendingFlow {
  */
 export interface HfOAuthRecord {
 	clientId?: string;
+	/** The scopes the client was registered for, space-separated: other scopes register again. */
+	scope?: string;
 	pending?: HfOAuthPendingFlow;
 	redirectUrl: string;
 	tokens?: HfOAuthTokens;

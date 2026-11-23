@@ -4,7 +4,7 @@ import { HfOAuthService } from '#lib/services/hf-oauth.service.ts';
 import { huggingFaceStore } from '#lib/stores/huggingface.svelte.ts';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const FULL_SCOPE = 'openid profile write-repos manage-repos';
+const FULL_SCOPE = 'openid profile contribute-repos';
 
 interface HubMock {
 	register?: () => Response;

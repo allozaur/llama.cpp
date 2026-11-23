@@ -63,7 +63,7 @@ describe('HfOAuthService', () => {
 		expect(body).toMatchObject({
 			redirect_uris: [REDIRECT],
 			response_types: ['code'],
-			scope: 'openid profile write-repos manage-repos',
+			scope: 'openid profile contribute-repos',
 			token_endpoint_auth_method: 'none'
 		});
 	});
@@ -99,7 +99,7 @@ describe('HfOAuthService', () => {
 			code_challenge_method: 'S256',
 			redirect_uri: REDIRECT,
 			response_type: 'code',
-			scope: 'openid profile write-repos manage-repos',
+			scope: 'openid profile contribute-repos',
 			state: 'state-1'
 		});
 	});
@@ -111,7 +111,7 @@ describe('HfOAuthService', () => {
 				access_token: 'hf_oauth_a',
 				expires_in: 3600,
 				refresh_token: 'r1',
-				scope: 'openid profile write-repos manage-repos',
+				scope: 'openid profile contribute-repos',
 				token_type: 'bearer'
 			})
 		);
@@ -136,7 +136,7 @@ describe('HfOAuthService', () => {
 			accessToken: 'hf_oauth_a',
 			expiresAt: 1_000_000 + 3_600_000,
 			refreshToken: 'r1',
-			scope: 'openid profile write-repos manage-repos'
+			scope: 'openid profile contribute-repos'
 		});
 	});
 
@@ -165,7 +165,7 @@ describe('HfOAuthService', () => {
 	});
 
 	it('tells whether tokens can commit to repositories', () => {
-		expect(HfOAuthService.canWrite({ accessToken: 'a', scope: 'openid write-repos' })).toBe(true);
+		expect(HfOAuthService.canWrite({ accessToken: 'a', scope: 'openid contribute-repos' })).toBe(true);
 		expect(HfOAuthService.canWrite({ accessToken: 'a', scope: 'openid profile' })).toBe(false);
 		expect(HfOAuthService.canWrite({ accessToken: 'a' })).toBe(true);
 	});

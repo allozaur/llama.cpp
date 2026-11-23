@@ -124,6 +124,17 @@ describe('HfTracesService', () => {
 		await expect(HfTracesService.uploadTrace(TOKEN, upload)).rejects.toThrow('LFS');
 	});
 
+	it('explains a dataset the sign-in may not write to', async () => {
+		respond({
+			'/api/datasets/me/llama-chat-traces': () => json({}),
+			'/preupload/main': () => json({ error: 'Forbidden' }, 403)
+		});
+
+		await expect(HfTracesService.uploadTrace(TOKEN, upload)).rejects.toThrow(
+			'datasets it created'
+		);
+	});
+
 	it('refuses a trace too large for a regular commit before any request', async () => {
 		respond({});
 

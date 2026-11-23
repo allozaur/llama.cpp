@@ -11,6 +11,7 @@ import {
 	HF_API_WHOAMI_URL,
 	HF_COMMIT_CONTENT_TYPE,
 	HF_DATASETS_URL,
+	HF_HTTP_FORBIDDEN,
 	HF_HTTP_NOT_FOUND,
 	HF_HTTP_UNAUTHORIZED,
 	HF_PREUPLOAD_SAMPLE_BYTES,
@@ -52,6 +53,18 @@ async function ensureOk(response: Response, action: string): Promise<void> {
 	}
 
 	throw new Error(`${action} failed (${response.status}): ${detail}`);
+}
+
+/**
+ * A sign-in with Hugging Face reaches only the datasets the app created, so the Hub
+ * turns down a share to any other dataset.
+ */
+function ensureWritable(response: Response, repoId: string): void {
+	if (response.status !== HF_HTTP_FORBIDDEN) return;
+
+	throw new Error(
+		`You cannot add traces to ${repoId}. Signing in with Hugging Face lets the app write only to datasets it created: pick a new dataset name, or sign in with an access token that has write access.`
+	);
 }
 
 export class HfTracesService {
@@ -107,6 +120,7 @@ export class HfTracesService {
 			method: 'POST'
 		});
 
+		ensureWritable(preupload, repoId);
 		await ensureOk(preupload, 'Upload check');
 
 		const { files } = await preupload.json();
@@ -129,6 +143,7 @@ export class HfTracesService {
 			method: 'POST'
 		});
 
+		ensureWritable(commit, repoId);
 		await ensureOk(commit, 'Upload');
 
 		return `${HF_DATASETS_URL}/${repoId}/blob/${HF_TRACES_REVISION}/${encodeURIComponent(path)}`;
