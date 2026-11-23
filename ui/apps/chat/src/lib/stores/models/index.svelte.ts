@@ -26,6 +26,7 @@ import { serverStore } from '#lib/stores/llama-server.svelte.ts';
 import { type ModelPropsHost, ModelPropsManager } from '#lib/stores/models/props.svelte.ts';
 import { type ModelStatusHost, ModelStatusManager } from '#lib/stores/models/status.svelte.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
+import { remoteAccessStore } from '#lib/stores/remote-access.svelte.ts';
 import { serversStore } from '#lib/stores/servers.svelte.ts';
 import { serversModelsStore } from '#lib/stores/serversModels.svelte.ts';
 import type { ApiModelDataEntry } from '#lib/types/index.ts';
@@ -33,7 +34,7 @@ import type { ParsedModelId } from '#lib/types/models.js';
 import { getConversationModel } from '#lib/utils/conversation-utils.ts';
 import { repoOf } from '#lib/utils/model-names.ts';
 import { qualifyModelId, rawModelId, serverIdFromModelId } from '#lib/utils/model-option-id.ts';
-import { readModelContextLength } from '#lib/utils/servers.ts';
+import { isRemoteServer, readModelContextLength } from '#lib/utils/servers.ts';
 import { browser } from '$app/env';
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { toast } from 'svelte-sonner';
@@ -745,6 +746,12 @@ class ModelsStore implements ModelPropsHost, ModelStatusHost {
 		} else {
 			serverStore.cacheLocalState();
 			serverStore.clear();
+
+			// every server is a llama.cpp server: its own props say whether it runs one
+			// model or a router, which model loading, chat and voice all branch on
+			if (!isRemoteServer(server) || remoteAccessStore.isConnected(server.id)) {
+				await serverStore.fetch({ background: true });
+			}
 		}
 
 		const cached = serversModelsStore.get(server.id);
