@@ -26,7 +26,9 @@
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		MODALITY_ICONS,
-		SHEET_HEADER_BUTTON_CLASS
+		SHEET_CONTENT_CLASS,
+		SHEET_HEADER_BUTTON_CLASS,
+		SHEET_HEADER_CLASS
 	} from '#lib/constants/index.ts';
 	import { getChatFormActionsContext } from '#lib/contexts/index.ts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
@@ -175,8 +177,10 @@
 	<Drawer.Root bind:open={drawerOpen}>
 		{@render trigger({ disabled: chatFormActions.disabled, onclick: open })}
 
-		<Drawer.Content class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh]">
-			<header class="grid shrink-0 grid-cols-[5.5rem_1fr_5.5rem] items-center px-3 pt-0.5 pb-3">
+		<Drawer.Content
+			class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh] {SHEET_CONTENT_CLASS}"
+		>
+			<header class="{SHEET_HEADER_CLASS} grid-cols-[5.5rem_1fr_5.5rem]">
 				{#if pages.canGoBack}
 					<button
 						aria-label={ATTACHMENT_MENU_TEXT.BACK}
