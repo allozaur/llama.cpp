@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SearchInput } from '@ggml-org/llama-ui/app/forms';
 	import { Checkbox } from '@ggml-org/llama-ui/ui/checkbox';
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
@@ -9,7 +10,8 @@
 		File,
 		Folder,
 		MessageSquare,
-		PencilRuler
+		PencilRuler,
+		Plus
 	} from '@lucide/svelte';
 	import {
 		ATTACHMENT_FILE_ITEMS,
@@ -23,6 +25,7 @@
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
 	import { ModelModality } from '#lib/enums/index.ts';
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
+	import { useSystemMessagePrompts } from '#lib/hooks/use-system-message-prompts.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
 	import { conversationsStore, projectsStore, uiStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
@@ -38,6 +41,7 @@
 	const chatFormActions = getChatFormActionsContext();
 
 	let drawerOpen = $state(false);
+	let promptsExpanded = $state(false);
 	let toolsExpanded = $state(false);
 
 	const attachmentMenu = useAttachmentMenu(
@@ -77,6 +81,21 @@
 	);
 
 	const toolsPanel = useToolsPanel();
+
+	const systemPrompts = useSystemMessagePrompts({
+		onPromptArguments: (source, entry) => {
+			drawerOpen = false;
+			chatFormActions.onPromptArguments?.(source, entry);
+		},
+		onPromptSelect: (content, promptId, title) => {
+			drawerOpen = false;
+			chatFormActions.onSystemPromptWithContent?.(content, promptId, title);
+		}
+	});
+
+	$effect(() => {
+		if (promptsExpanded) void systemPrompts.loadSourcePrompts();
+	});
 
 	const itemClass =
 		'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-body-sm transition-colors hover:bg-accent active:bg-accent disabled:cursor-not-allowed disabled:opacity-50';
@@ -148,15 +167,110 @@
 					<span>{ATTACHMENT_MENU_TEXT.ADD_TO_PROJECT}</span>
 				</button>
 
-				<button
-					class={itemClass}
-					onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
-					type="button"
-				>
-					<MessageSquare class="{ICON_CLASS_DEFAULT} shrink-0" />
+				<Collapsible.Root onOpenChange={(open) => (promptsExpanded = open)} open={promptsExpanded}>
+					<Collapsible.Trigger class={itemClass}>
+						{#if promptsExpanded}
+							<ChevronDown class="{ICON_CLASS_DEFAULT} shrink-0" />
+						{:else}
+							<ChevronRight class="{ICON_CLASS_DEFAULT} shrink-0" />
+						{/if}
 
-					<span>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
-				</button>
+						<MessageSquare class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+						<span class="flex-1">{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
+					</Collapsible.Trigger>
+
+					<Collapsible.Content>
+						<div class="flex flex-col gap-0.5 pl-4">
+							{#if systemPrompts.hasPrompts}
+								<div class="mb-1">
+									<SearchInput
+										bind:value={systemPrompts.searchQuery}
+										placeholder="Search by name, content, or server..."
+										size="sm"
+									/>
+								</div>
+							{/if}
+
+							<button
+								class={itemClass}
+								onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
+								type="button"
+							>
+								<Plus class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+								<span>Write new</span>
+							</button>
+
+							{#each systemPrompts.libraryPrompts as prompt (prompt.id)}
+								<button
+									class="{itemClass} flex-col items-start gap-0.5 py-2"
+									onclick={() => systemPrompts.selectLibraryPrompt(prompt.id)}
+									type="button"
+								>
+									<span class="line-clamp-1 text-sm font-medium">{prompt.name}</span>
+
+									{#if prompt.description}
+										<span class="line-clamp-1 w-full text-xs text-muted-foreground">
+											{prompt.description}
+										</span>
+									{/if}
+
+									<span class="line-clamp-3 w-full text-xs text-muted-foreground">
+										{prompt.content}
+									</span>
+								</button>
+							{/each}
+
+							{#each systemPrompts.sourceGroups as group (group.source.id)}
+								{#each group.entries as entry (entry.id)}
+									<button
+										class="{itemClass} flex-col items-start gap-0.5 py-2"
+										onclick={() => systemPrompts.selectSourcePrompt(group.source, entry)}
+										type="button"
+									>
+										<span class="flex w-full items-center gap-1.5">
+											{#if entry.iconUrl}
+												<img
+													alt=""
+													class="{ICON_CLASS_DEFAULT} shrink-0 rounded-sm"
+													onerror={(e) => {
+														(e.currentTarget as HTMLImageElement).style.display = 'none';
+													}}
+													src={entry.iconUrl}
+												/>
+											{:else}
+												<group.source.icon class="{ICON_CLASS_DEFAULT} shrink-0" />
+											{/if}
+
+											<span class="truncate text-xs text-muted-foreground">{entry.origin}</span>
+
+											{#if entry.argumentCount > 0}
+												<span class="ml-auto shrink-0 text-xs text-muted-foreground">
+													{entry.argumentCount} arg{entry.argumentCount > 1 ? 's' : ''}
+												</span>
+											{/if}
+										</span>
+
+										<span class="line-clamp-1 text-sm font-medium">
+											{entry.title}
+										</span>
+
+										{#if entry.description}
+											<span class="line-clamp-2 w-full text-xs text-muted-foreground">
+												{entry.description}
+											</span>
+										{/if}
+									</button>
+								{/each}
+							{/each}
+
+							{#if systemPrompts.hasNoMatches}
+								<div class="px-3 py-2 text-xs text-muted-foreground">No matches</div>
+							{/if}
+						</div>
+					</Collapsible.Content>
+				</Collapsible.Root>
 
 				{#if chatFormActions.onWorkingDirectoryClick}
 					<button

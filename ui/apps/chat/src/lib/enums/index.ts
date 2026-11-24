@@ -138,3 +138,5 @@ export { SplashOrientation } from './splash.enums';
 export { ChatFormVoiceState, VoiceInputMode, VoiceMode, VoiceModelRole } from './voice.enums';
 
 export { ContextSegment } from './context.enums';
+export { LibraryItemKind, LibraryTab, LibraryView } from './library.enums';
+export { PromptDrift } from './prompt.enums';
