@@ -240,13 +240,21 @@
 	}
 </script>
 
-<!-- full width over the sidebar, so it does not read as part of the page slid aside; its top
-     corners round as the screen's do -->
+<!-- full width over the sidebar, so it does not read as part of the page slid aside -->
 <Drawer.Root bind:open shouldScaleBackground={false}>
 	<Drawer.Content
-		class="gap-0 overflow-hidden data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-var(--corner-control-top))] data-[vaul-drawer-direction=bottom]:max-h-none data-[vaul-drawer-direction=bottom]:rounded-t-[2.5rem]"
+		class="gap-0 overflow-hidden data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-var(--corner-control-top))] data-[vaul-drawer-direction=bottom]:max-h-none [&>div:first-child]:relative [&>div:first-child]:z-20"
 	>
-		<header class="grid shrink-0 grid-cols-[3rem_1fr_3rem] items-center px-3 pt-2 pb-3">
+		<!-- over the page, which scrolls under it; the drag handle stays above it -->
+		<header
+			class="pointer-events-none absolute inset-x-0 top-0 isolate z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-3 pt-5.5 pb-8 *:pointer-events-auto"
+		>
+			<!-- the sheet's surface, blurred over what scrolls beneath, fading out below the title -->
+			<div
+				aria-hidden="true"
+				class="pointer-events-none! absolute inset-0 -z-10 bg-(--float-panel-background) backdrop-blur-xl mask-[linear-gradient(to_bottom,black_60%,transparent)]"
+			></div>
+
 			{#if pages.canGoBack}
 				<button aria-label="Back" class={SHEET_HEADER_BUTTON_CLASS} onclick={goBack} type="button">
 					<ChevronLeft class="size-5" />
@@ -257,7 +265,9 @@
 				</Drawer.Close>
 			{/if}
 
-			<Drawer.Title class="truncate text-center text-body font-semibold">{title}</Drawer.Title>
+			<Drawer.Title class="col-start-2 truncate text-center text-body font-semibold"
+				>{title}</Drawer.Title
+			>
 		</header>
 
 		<Drawer.Description class="sr-only"
@@ -272,7 +282,7 @@
 				<div
 					in:pageTransition={{ incoming: true }}
 					out:pageTransition={{ incoming: false }}
-					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-1 pb-[max(1.5rem,var(--safe-area-bottom))]"
+					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-10 pb-[max(1.5rem,var(--safe-area-bottom))]"
 				>
 					{#if page.id === 'root'}
 						{@render rootPage()}
