@@ -6,7 +6,8 @@
 <script lang="ts">
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
-	import { Check, FlaskConical, RotateCcw } from '@lucide/svelte';
+	import { Check, ChevronRight, FlaskConical, RotateCcw } from '@lucide/svelte';
+	import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
 	import NativeSelect from '#lib/components/app/misc/NativeSelect.svelte';
 	import {
 		INSET_GROUP_CAPTION_CLASS,
@@ -19,7 +20,7 @@
 		SETTINGS_KEYS
 	} from '#lib/constants/index.ts';
 	import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
-	import { modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
+	import { modelsStore, serverStore, settingsStore, uiStore } from '#lib/stores/index.ts';
 	import { normalizeFloatingPoint } from '#lib/utils/precision.ts';
 
 	interface Props {
@@ -28,10 +29,13 @@
 		fields: SettingsFieldConfig[];
 		localConfig: SettingsConfigType;
 		onConfigChange: (key: string, value: string | boolean) => void;
+		/** Opens the MCP servers as a page of the sheet; without it, they open in their dialog */
+		onManageMcpServers?: () => void;
 		onThemeChange?: (theme: string) => void;
 	}
 
-	let { fields, localConfig, onConfigChange, onThemeChange, title }: Props = $props();
+	let { fields, localConfig, onConfigChange, onManageMcpServers, onThemeChange, title }: Props =
+		$props();
 
 	/** Rows share a group; a prompt or a choice of one gets a group of its own. */
 	type Block =
@@ -148,6 +152,23 @@
 								{@render selectRow(field)}
 							{:else}
 								{@render numberRow(field)}
+							{/if}
+
+							{#if field.key === SETTINGS_KEYS.ENABLE_MCP && Boolean(localConfig[field.key])}
+								<button
+									class={INSET_ROW_CLASS}
+									onclick={() =>
+										onManageMcpServers ? onManageMcpServers() : uiStore.openMcpServers()}
+									type="button"
+								>
+									<McpLogo class="size-icon-md shrink-0" />
+
+									<span class={INSET_ROW_BODY_CLASS}>
+										<span class="flex-1">Manage MCP servers</span>
+
+										<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
+									</span>
+								</button>
 							{/if}
 						{/each}
 					</section>
