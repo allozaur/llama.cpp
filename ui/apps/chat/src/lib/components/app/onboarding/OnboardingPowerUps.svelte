@@ -38,11 +38,11 @@
 	}
 </script>
 
-<ul class="space-y-2">
+<ul class="space-y-3">
 	{#each ONBOARDING_MCP_SERVERS as server (server.id)}
 		{@const id = `onboarding-mcp-${server.id}`}
 
-		<li class="flex items-center gap-3 rounded-lg border border-border/60 p-3">
+		<li class="flex items-center gap-4 rounded-lg border border-border/60 p-4">
 			{#if server.iconUrl}
 				<img alt="" class="size-5 shrink-0 rounded" decoding="async" src={server.iconUrl} />
 			{/if}

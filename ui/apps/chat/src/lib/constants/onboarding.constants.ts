@@ -25,36 +25,24 @@ export const ONBOARDING_INTRO_STEPS: OnboardingStep[] = [
 	OnboardingStep.INTRO_VOICE
 ];
 
-/** Stages of the flow, one segment each in the pager under the buttons. */
-export const ONBOARDING_PHASE_LABELS = ['What it can do', 'Setup', 'First task'] as const;
-
 /** What the app says on each step, as a message in the onboarding's conversation. */
-export const ONBOARDING_STEP_COPY: Record<OnboardingStep, { heading?: string; text: string }> = {
-	[OnboardingStep.CONNECTION]: {
-		text: 'This server asks for an API key. Enter it and I will connect. The key stays in this browser.'
-	},
-	[OnboardingStep.DONE]: {
-		text: 'You are all set. Start with a simple task to see how it works, or write your own.'
-	},
-	[OnboardingStep.INTRO_CHAT]: {
-		heading: 'Welcome to Llama Chat',
-		text: 'Here you chat with models that run on your own machine, privately. A quick look at what that means, then we set things up.'
-	},
-	[OnboardingStep.INTRO_TOOLS]: {
-		text: 'Give the model tools and it can do things: read and edit files, run shell commands, search the web, or use any MCP server.'
-	},
-	[OnboardingStep.INTRO_VOICE]: {
-		text: 'You can also talk to it: send a voice message or dictate your text.'
-	},
-	[OnboardingStep.MODEL]: {
-		text: 'The server has no models yet. Pick a first one to download, or do it later.'
-	},
-	[OnboardingStep.POWER_UPS]: {
-		text: 'Want more tools? These MCP servers add web search and docs. Turn on the ones you like, you can change them later.'
-	},
-	[OnboardingStep.VOICE]: {
-		text: 'None of your models takes audio. Add one that does and you can dictate, send voice messages and use the coming voice mode.'
-	}
+export const ONBOARDING_STEP_COPY: Record<OnboardingStep, string> = {
+	[OnboardingStep.CONNECTION]:
+		'This server asks for an API key. Enter it and I will connect. The key stays in this browser.',
+	[OnboardingStep.DONE]:
+		'You are all set. Start with a simple task to see how it works, or write your own.',
+	[OnboardingStep.INTRO_CHAT]:
+		'Here you chat with models that run on your own machine, privately. A quick look at what that means, then we set things up.',
+	[OnboardingStep.INTRO_TOOLS]:
+		'Give the model tools and it can do things: read and edit files, run shell commands, search the web, or use any MCP server.',
+	[OnboardingStep.INTRO_VOICE]:
+		'You can also talk to it: send a voice message or dictate your text.',
+	[OnboardingStep.MODEL]:
+		'The server has no models yet. Pick a first one to download, or do it later.',
+	[OnboardingStep.POWER_UPS]:
+		'Want more tools? These MCP servers add web search and docs. Turn on the ones you like, you can change them later.',
+	[OnboardingStep.VOICE]:
+		'None of your models takes audio. Add one that does and you can dictate, send voice messages and use the coming voice mode.'
 };
 
 /** What stands in for the user's answer when a setup step is passed without one. */

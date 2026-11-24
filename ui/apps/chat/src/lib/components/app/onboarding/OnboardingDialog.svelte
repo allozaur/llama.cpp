@@ -6,8 +6,8 @@
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Dialog from '@ggml-org/llama-ui/ui/dialog';
-	import { ArrowLeft, X } from '@lucide/svelte';
-	import { ChatMessageUserBubble, Logo } from '#lib/components/app/index.ts';
+	import { ArrowLeft } from '@lucide/svelte';
+	import { ChatMessageUserBubble } from '#lib/components/app/index.ts';
 	import {
 		OnboardingConnection,
 		OnboardingDone,
@@ -18,13 +18,11 @@
 	import {
 		ONBOARDING_INTRO_STEPS,
 		ONBOARDING_NO_ANSWER,
-		ONBOARDING_PHASE_LABELS,
 		ONBOARDING_STEP_COPY,
-		type OnboardingTask,
-		PANEL_CLOSE_MOBILE_CLASS
+		type OnboardingTask
 	} from '#lib/constants/index.ts';
 	import { OnboardingStep } from '#lib/enums/index.ts';
-	import { firstSetupStep, onboardingPhase } from '#lib/utils/onboarding.ts';
+	import { firstSetupStep } from '#lib/utils/onboarding.ts';
 
 	interface Props {
 		/** The steps to show, in order. */
@@ -64,9 +62,7 @@
 			.slice(0, index + 1)
 			.filter((step, i) => i === 0 || step === current || seen.includes(step))
 	);
-	let phase = $derived(onboardingPhase(current));
-	let phases = $derived([...new Set(steps.map(onboardingPhase))]);
-	let isIntro = $derived(phase === 0);
+	let isIntro = $derived(ONBOARDING_INTRO_STEPS.includes(current));
 	let isLast = $derived(index === steps.length - 1);
 	let skipTarget = $derived(isIntro ? firstSetupStep(steps) : OnboardingStep.DONE);
 
@@ -112,60 +108,34 @@
 <Dialog.Root onOpenChange={handleOpenChange} {open}>
 	<!-- a click beside the dialog must not end a first run by accident; Escape and the close button do -->
 	<Dialog.Content
-		class="flex flex-col gap-0 overflow-hidden p-0 md:h-168! md:max-h-[calc(100dvh-4rem)]! md:w-184! md:max-w-[calc(100vw-4rem)]!"
+		class="flex flex-col gap-6 overflow-hidden p-4 md:h-176! md:max-h-[calc(100dvh-4rem)]! md:w-192! md:max-w-[calc(100vw-4rem)]! md:gap-8 md:p-8"
 		data-testid="onboarding"
 		interactOutsideBehavior="ignore"
 		onOpenAutoFocus={(event) => event.preventDefault()}
 	>
-		<Dialog.Header
-			class="grid grid-cols-[2.5rem_1fr_2.5rem] items-center p-3"
-			showCloseButton={false}
-		>
-			<div>
-				{#if index > 0}
-					<Button
-						aria-label="Back"
-						class="text-muted-foreground"
-						onclick={() => goTo(steps[index - 1])}
-						size="icon"
-						variant="ghost"
-					>
-						<ArrowLeft class="size-icon-md" />
-					</Button>
-				{/if}
-			</div>
+		<Dialog.Header>
+			<!-- the icon as Llama Sans's cap-height glyph, U+E000, which sits quietly in a heading -->
+			<Dialog.Title>
+				Welcome to <span class="whitespace-nowrap">&#xE000; Llama Chat</span>
+			</Dialog.Title>
 
-			<Logo class="justify-self-center" style="--size: 1.5rem" />
-
-			<Dialog.Close
-				class="grid size-9 place-items-center justify-self-end rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden {PANEL_CLOSE_MOBILE_CLASS}"
-			>
-				<X class="size-icon-md" />
-
-				<span class="sr-only">Close</span>
-			</Dialog.Close>
+			<Dialog.Description class="sr-only">
+				Step {index + 1} of {steps.length}
+			</Dialog.Description>
 		</Dialog.Header>
 
-		<Dialog.Title class="sr-only">Welcome to Llama Chat</Dialog.Title>
-
-		<Dialog.Description class="sr-only">
-			Step {index + 1} of {steps.length}: {ONBOARDING_PHASE_LABELS[phase]}
-		</Dialog.Description>
-
-		<div bind:this={scroller} class="relative min-h-0 flex-1 overflow-y-auto">
-			<div class="mx-auto flex w-full max-w-136 flex-col gap-8 px-6 pt-2 pb-8">
+		<!-- bleeds to the dialog's edges, so the scrollbar sits there and not beside the text -->
+		<div
+			bind:this={scroller}
+			class="relative -mx-4 min-h-0 flex-1 overflow-y-auto px-4 md:-mx-8 md:px-8"
+		>
+			<div class="flex flex-col gap-10 pb-2 md:gap-12">
 				{#each shownSteps as step (step)}
-					{@const copy = ONBOARDING_STEP_COPY[step]}
-
 					<section
 						{@attach reveal}
-						class="flex flex-col gap-4 motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in motion-safe:slide-in-from-bottom-2"
+						class="flex flex-col gap-5 motion-safe:animate-in motion-safe:duration-300 motion-safe:fade-in motion-safe:slide-in-from-bottom-2"
 					>
-						{#if copy.heading}
-							<h2 class="text-heading">{copy.heading}</h2>
-						{/if}
-
-						<p class="text-pretty">{copy.text}</p>
+						<p class="text-pretty">{ONBOARDING_STEP_COPY[step]}</p>
 
 						{#if ONBOARDING_INTRO_STEPS.includes(step)}
 							<OnboardingIntro {step} />
@@ -189,35 +159,27 @@
 			</div>
 		</div>
 
-		<Dialog.Footer class="flex-col items-center gap-1 p-4 sm:flex-col sm:items-center">
+		<Dialog.Footer class="flex-row items-center gap-2">
+			{#if index > 0}
+				<Button onclick={() => goTo(steps[index - 1])} variant="ghost">
+					<ArrowLeft class="size-icon-md" />
+
+					Back
+				</Button>
+			{/if}
+
+			<div class="flex-1"></div>
+
+			{#if !isLast}
+				<Button onclick={() => goTo(skipTarget)} variant="ghost">
+					{isIntro ? 'Skip intro' : 'Skip setup'}
+				</Button>
+			{/if}
+
 			<!-- one button for every step, so focus stays on it from the first to the last -->
-			<Button
-				bind:ref={nextButton}
-				class="w-56 rounded-full"
-				onclick={() => (isLast ? finish() : goTo(steps[index + 1]))}
-			>
+			<Button bind:ref={nextButton} onclick={() => (isLast ? finish() : goTo(steps[index + 1]))}>
 				{isLast ? 'Start chatting' : 'Continue'}
 			</Button>
-
-			<Button
-				class={['text-muted-foreground', isLast && 'invisible']}
-				onclick={() => goTo(skipTarget)}
-				size="sm"
-				variant="ghost"
-			>
-				{isIntro ? 'Skip intro' : 'Skip setup'}
-			</Button>
-
-			<ol aria-hidden="true" class="flex items-center gap-1">
-				{#each phases as item (item)}
-					<li
-						class={[
-							'h-0.5 w-4 rounded-full transition-colors',
-							item === phase ? 'bg-foreground' : 'bg-muted-foreground/30'
-						]}
-					></li>
-				{/each}
-			</ol>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

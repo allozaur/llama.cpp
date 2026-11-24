@@ -51,13 +51,6 @@ export function firstSetupStep(steps: OnboardingStep[]): OnboardingStep | undefi
 	return steps.find((step) => !ONBOARDING_INTRO_STEPS.includes(step));
 }
 
-/** Stage of a step, an index into ONBOARDING_PHASE_LABELS: the intro, the setup, the first task. */
-export function onboardingPhase(step: OnboardingStep): number {
-	if (ONBOARDING_INTRO_STEPS.includes(step)) return 0;
-
-	return step === OnboardingStep.DONE ? 2 : 1;
-}
-
 /** The first tasks to offer: the ones whose tools are there, up to ONBOARDING_TASK_COUNT. */
 export function resolveOnboardingTasks(available: {
 	serverTools: boolean;
