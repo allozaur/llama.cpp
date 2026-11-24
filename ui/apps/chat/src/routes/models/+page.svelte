@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import ModelsDiscoverButton from '#lib/components/app/models/ModelsDiscoverButton.svelte';
 	import ModelsManager from '#lib/components/app/models/ModelsManager/ModelsManager.svelte';
-	import { APP_NAME, DISCOVER_ICON } from '#lib/constants/index.ts';
-	import { modelsStore, uiStore } from '#lib/stores/index.ts';
+	import { APP_NAME } from '#lib/constants/index.ts';
+	import { modelsStore, serverStore, uiStore } from '#lib/stores/index.ts';
 	import { onMount } from 'svelte';
 
 	// a direct load lands here before any chat has listed the models, and the root
@@ -35,17 +35,9 @@
 			</p>
 		</div>
 
-		{#if uiStore.isDiscoverEnabled}
-			<Button
-				class="ml-auto shrink-0 gap-1.5"
-				onclick={() => uiStore.openModelsDiscover()}
-				size="sm"
-				variant="tertiary"
-			>
-				<DISCOVER_ICON class="size-icon-md" />
-
-				Discover Models
-			</Button>
+		<!-- downloads need a router, so a single-model server shows it only once turned on -->
+		{#if uiStore.isDiscoverEnabled || serverStore.isRouterMode}
+			<ModelsDiscoverButton class="ml-auto shrink-0" />
 		{/if}
 	</div>
 

@@ -30,6 +30,7 @@
 		ModelAvatar,
 		ModelsSection
 	} from '#lib/components/app/index.ts';
+	import ModelsDiscoverButton from '#lib/components/app/models/ModelsDiscoverButton.svelte';
 	import {
 		FAMILY_ROW_WINDOW,
 		type ModalityKey,
@@ -47,7 +48,7 @@
 		ModelsTableGroupKind,
 		ModelsTableSortKey
 	} from '#lib/enums/index.ts';
-	import { modelsStore, settingsStore } from '#lib/stores/index.ts';
+	import { modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
 	import type { ModelOption } from '#lib/types/models.js';
 	import { groupModelFamilies, type ModelFamilyGroup } from '#lib/utils/model-families.ts';
 	import type { Snippet } from 'svelte';
@@ -435,6 +436,12 @@
 							: 'Models the server can run show up here.'}
 					</Empty.Description>
 				</Empty.Header>
+
+				{#if !hasFilters && serverStore.isRouterMode}
+					<Empty.Content>
+						<ModelsDiscoverButton />
+					</Empty.Content>
+				{/if}
 			</Empty.Root>
 		{/if}
 	</div>
