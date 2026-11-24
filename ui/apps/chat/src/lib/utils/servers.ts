@@ -299,29 +299,6 @@ function parseServerHeaders(raw: unknown): Record<string, string> | undefined {
 }
 
 /**
- * The server URLs a `llama-chat.json` lists, without a trailing slash; entries
- * that are not http(s) URLs, or squat on the tunnel host, are dropped. An entry
- * is `{ "url": "..." }` or the URL itself.
- */
-export function parsePresetServers(raw: unknown): string[] {
-	const list = (raw as { servers?: unknown } | null)?.servers;
-
-	if (!Array.isArray(list)) return [];
-
-	const urls = list.flatMap((entry) => {
-		const value = typeof entry === 'string' ? entry : (entry as { url?: unknown } | null)?.url;
-
-		if (typeof value !== 'string') return [];
-
-		const url = value.trim().replace(/\/+$/, '');
-
-		return isHttpUrl(url) && !isTunnelHost(hostOf(url)) ? [url] : [];
-	});
-
-	return [...new Set(urls)];
-}
-
-/**
  * The preset URLs to add: those no stored server points at already, and that
  * were not added before, so a preset server the user removed stays removed.
  */

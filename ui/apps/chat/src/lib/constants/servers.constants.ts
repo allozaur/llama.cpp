@@ -14,19 +14,6 @@ export const LOCAL_BACKEND_ID = 'local';
 export const FAVICON_SERVICE_URL = 'https://www.google.com/s2/favicons?domain=';
 
 /**
- * File next to index.html listing servers the app adds on startup, as
- * `{ "servers": [{ "url": "http://127.0.0.1:9931" }] }`. `llama-chat --server`
- * serves it, and `llama-chat build --server` writes it.
- */
-export const PRESET_SERVERS_FILE = 'llama-chat.json';
-
-/**
- * Name of the meta tag in index.html that says {@link PRESET_SERVERS_FILE} is
- * there: pages served any other way, such as by llama-server, never ask for it.
- */
-export const PRESET_SERVERS_META = 'llama-chat-servers';
-
-/**
  * Where llama-server listens by default on this computer. A page with no
  * server of its own, such as a static build on another host, tries it first.
  */

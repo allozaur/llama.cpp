@@ -119,12 +119,6 @@ export function initStores(): Promise<void> {
 
 		void requestPersistentStorage();
 
-		// the servers the page was published with, asked for alongside the rest of
-		// the startup rather than ahead of it, and loaded as they join the list
-		const presets = serversStore
-			.addPresetServers()
-			.then((ids) => Promise.all(ids.map((id) => serversModelsStore.ensureLoaded(id))));
-
 		// prefetch every server's model list in the background; failures are
 		// per-server and never block startup
 		void serversModelsStore.loadAll().then(() => modelsStore.warmHubDetails());
@@ -135,8 +129,8 @@ export function initStores(): Promise<void> {
 		// the local server state backs the installation facts and decides whether
 		// /tools exists at all, so probe it first and only then list the tools;
 		// otherwise they stay empty until the tools menu is opened
-		void Promise.all([serverStore.prefetchLocalState(), presets]).then(async () => {
-			// no server of its own and none published with the page: try the one
+		void serverStore.prefetchLocalState().then(async () => {
+			// no server of its own: try the one
 			// llama-server starts by default on this computer
 			const defaultId = serversStore.addDefaultServer();
 

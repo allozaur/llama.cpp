@@ -42,7 +42,6 @@ export {
 	isReachableServer,
 	isRemoteServer,
 	normalizeShareCode,
-	parsePresetServers,
 	parseServersSettings,
 	parseTunnelOrigin,
 	presetServersToAdd,

@@ -4,7 +4,7 @@
 // allowed to route. A regression here silently sends a request to the wrong
 // server, so these are cheap to check and expensive to lose.
 
-import { CODE_CHARS, CODE_LENGTHS, TUNNEL_HOST_SUFFIX } from '#lib/constants/index.ts';
+import { CODE_CHARS, CODE_LENGTHS } from '#lib/constants/index.ts';
 import { ServerCardState, ServerKind, TunnelStatus } from '#lib/enums/index.ts';
 import { type ServerCardFacts, serverCardStatusOf } from '#lib/utils/server-status.ts';
 import {
@@ -18,7 +18,6 @@ import {
 	isWithoutServer,
 	llamaServeCommand,
 	normalizeShareCode,
-	parsePresetServers,
 	parseServersSettings,
 	parseTunnelOrigin,
 	presetServersToAdd,
@@ -252,36 +251,7 @@ describe('card status', () => {
 	});
 });
 
-describe('preset servers (llama-chat.json)', () => {
-	it('reads URLs and objects, trims the trailing slash and drops duplicates', () => {
-		expect(
-			parsePresetServers({
-				servers: [
-					{ url: 'http://127.0.0.1:9931/' },
-					'https://llm.example.com/api',
-					{ url: 'http://127.0.0.1:9931' }
-				]
-			})
-		).toEqual(['http://127.0.0.1:9931', 'https://llm.example.com/api']);
-	});
-
-	it('drops what is not an http(s) URL, and anything but a servers list', () => {
-		expect(
-			parsePresetServers({
-				servers: [
-					{ url: 'ftp://x' },
-					{ url: 42 },
-					null,
-					'not a url',
-					`https://a.${TUNNEL_HOST_SUFFIX}`
-				]
-			})
-		).toEqual([]);
-		expect(parsePresetServers(null)).toEqual([]);
-		expect(parsePresetServers('<!doctype html>')).toEqual([]);
-		expect(parsePresetServers({ servers: 'http://127.0.0.1:9931' })).toEqual([]);
-	});
-
+describe('preset servers', () => {
 	it('adds only servers that are not stored and were not added before', () => {
 		const stored = [createUrlServer('http://127.0.0.1:9931', 'a')];
 		const urls = ['http://127.0.0.1:9931', 'http://127.0.0.1:9932', 'http://127.0.0.1:9933'];
