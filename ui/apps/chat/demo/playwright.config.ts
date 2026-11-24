@@ -18,6 +18,7 @@ if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
  *   DEMO_COLOR_SCHEME   light | dark (default: light)
  *   DEMO_STORYBOOK      ui | chat: also start that Storybook (Llama UI's or Llama Chat's), for story demos
  *   DEMO_STORYBOOK_PORT port for it (default: 6007)
+ *   DEMO_HEADED         1: record in a visible browser window, for demos with a manual step
  */
 
 // Playwright clears outputDir when a run starts, so concurrent recordings each get
@@ -39,6 +40,8 @@ process.env.DEMO_STORYBOOK_PORT ??= '6007';
 export const VIEWPORT = { height: 900, width: 1440 };
 /** Device pixel ratio the demos render and record at. */
 const SCALE = Number(process.env.DEMO_SCALE ?? 2);
+/** A visible window, for a demo that hands a step to the person at the keyboard (`demo.manual`). */
+const HEADED = !!process.env.DEMO_HEADED;
 
 export default defineConfig({
 	expect: {
@@ -56,11 +59,13 @@ export default defineConfig({
 	retries: 0,
 	testDir: '.',
 	testMatch: ['**/*.demo.ts'],
-	timeout: 120000,
+	// a manual step waits for a person
+	timeout: HEADED ? 15 * 60 * 1000 : 120000,
 	use: {
 		actionTimeout: 10000,
 		baseURL: `http://localhost:${UI_PORT}`,
 		colorScheme: process.env.DEMO_COLOR_SCHEME === 'dark' ? 'dark' : 'light',
+		headless: !HEADED,
 		// headless Chromium screencasts at 1x unless the scale is forced at launch; the sandbox
 		// is on since a PR demo runs that PR's code (Playwright turns it off by default). Not the
 		// installed Chrome: its headless mode screencasts a window that ignores the viewport

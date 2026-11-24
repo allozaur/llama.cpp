@@ -40,6 +40,7 @@ Also `ffmpeg`, and `npm ci` in `ui/lib/ui` for Llama UI stories. `demo:pr` needs
 Scripts get `test` and `expect` from `helpers.ts`. Drive the page with `demo.*` (visible cursor, human timing), assert with `expect`, set the scene with `test.use`:
 
 - `demo.click`, `demo.hover`, `demo.type`, `demo.press`, `demo.scroll`, `demo.pause`, `demo.caption(text)`, `demo.zoom(target)` (pinch onto a small detail).
+- `demo.manual(instruction, done)` hands the browser to the person at the keyboard for a step a script must not do (signing in to a real account, approving access) and goes on once the `done` locator is visible; `demo.visit(url, ready)` opens another site in the recorded tab. Both cut the wait from the video. See "A step only a person can do" below.
 - `test.use({ settings: {...} })` seeds UI settings, `startPath: '/#/...'` starts on a route.
 - Fixtures, so no real data or third-party server is needed:
     - **MCP servers:** two fixture servers (Weather, Notes) are always configured; see `demo/fixtures/demo-config.ts`.
@@ -91,6 +92,29 @@ npm run demo:pr -- <number>
 - Each `test()` becomes its own video, shown in a table under its title. Group tests with their own `test.use` in `test.describe(() => { ... })`.
 - In a PR block, the helpers import is replaced with `test` and `expect`, so reach fixtures through `test.use` options only.
 - A PR on a fork: `DEMO_GITHUB_REPO=<owner>/llama.cpp`. A PR by someone else: read its diff and demo block, then pass `--trust <sha>`.
+
+### A step only a person can do
+
+Never type someone's password or token in a script. When a flow needs a real account, record with a visible window and let the person do that step:
+
+```bash
+DEMO_HEADED=1 npm run demo:record -- demo/<name>
+```
+
+```ts
+await demo.click(
+    dialog.getByRole("button", { name: "Sign in with Hugging Face" }),
+);
+await demo.manual(
+    "sign in and authorize in the popup",
+    dialog.getByText("Signed in as"),
+);
+```
+
+- The person must be at that machine: tell them before you start, and what the demo does with their account (anything it creates or publishes there is real).
+- A sign-in popup is its own window, so it is not in the video. A step done in the recorded tab itself is cut, but the frames just before and after it are not: keep secrets out of the recorded tab.
+- A link the app opens in a new tab is not recorded. Read its `href` and `demo.visit(href, ready)`.
+- Without `DEMO_HEADED`, `demo.manual` fails at once instead of waiting for nobody. `demo:pr` takes the same variable.
 
 ## 2. Test
 
