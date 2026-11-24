@@ -11,6 +11,14 @@
 export const SHEET_HEADER_BUTTON_CLASS =
 	'matte-key absolute top-4 left-4 z-10 flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
 
+/**
+ * A sheet with a corner key: its drag handle sits 0.5rem from the top, leaving the title, centered
+ * on the key, clear of it. Its in-flow header takes SHEET_HEADER_CLASS, whose padding puts the
+ * title's row there and the content 1.25rem below the title.
+ */
+export const SHEET_CONTENT_CLASS = '[&>div:first-child]:mt-2';
+export const SHEET_HEADER_CLASS = 'grid shrink-0 items-center px-3 pt-2.5 pb-5';
+
 /** A rounded group of rows. */
 export const INSET_GROUP_CLASS = 'inset-group-surface flex flex-col overflow-hidden';
 
