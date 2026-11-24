@@ -185,6 +185,7 @@
 												checked={Boolean(localConfig.showSystemMessage)}
 												onCheckedChange={(checked) =>
 													onConfigChange(SETTINGS_KEYS.SHOW_SYSTEM_MESSAGE, checked)}
+												size="lg"
 											/>
 										</span>
 									</label>
@@ -274,6 +275,7 @@
 				checked={Boolean(localConfig[field.key])}
 				disabled={locked}
 				onCheckedChange={(checked) => onConfigChange(field.key, checked)}
+				size="lg"
 			/>
 		</span>
 	</label>

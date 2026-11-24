@@ -162,6 +162,7 @@
 								aria-label="{group.label} tools"
 								checked={conversationsStore.preferences.isGroupChecked(group)}
 								onCheckedChange={() => void conversationsStore.preferences.toggleGroup(group)}
+								size="lg"
 							/>
 						</span>
 					</div>
@@ -182,6 +183,7 @@
 				<Switch
 					checked={conversationsStore.preferences.isGroupChecked(group)}
 					onCheckedChange={() => void conversationsStore.preferences.toggleGroup(group)}
+					size="lg"
 				/>
 			</span>
 		</label>
@@ -220,6 +222,7 @@
 							aria-label={display.label}
 							checked={conversationsStore.preferences.isToolEnabled(entry.key)}
 							onCheckedChange={() => void conversationsStore.preferences.toggleTool(entry.key)}
+							size="lg"
 						/>
 					</span>
 				</div>
@@ -242,6 +245,7 @@
 					<Switch
 						checked={conversationsStore.preferences.isToolEnabled(entry.key)}
 						onCheckedChange={() => void conversationsStore.preferences.toggleTool(entry.key)}
+						size="lg"
 					/>
 				</span>
 			</label>
@@ -256,6 +260,7 @@
 							checked
 								? permissionsStore.allowTool(entry.key)
 								: permissionsStore.revokeTool(entry.key)}
+						size="lg"
 					/>
 				</span>
 			</label>
