@@ -7,7 +7,7 @@
 		DialogExportSettings
 	} from '#lib/components/app/index.ts';
 	import SettingsGroup from '#lib/components/app/settings/SettingsGroup.svelte';
-	import { INSET_GROUP_CAPTION_CLASS, INSET_GROUP_CLASS } from '#lib/constants/index.ts';
+	import { INSET_GROUP_CLASS, INSET_GROUP_TITLE_CLASS } from '#lib/constants/index.ts';
 	import { ConversationSelectionMode, FileExtensionText, HtmlInputType } from '#lib/enums/index.ts';
 	import { ConversationTransferService } from '#lib/services/index.ts';
 	import { conversationsStore, groupsStore, settingsStore } from '#lib/stores/index.ts';
@@ -272,7 +272,7 @@
 {#snippet group(title: string, children: Snippet)}
 	{#if inset}
 		<div class="flex flex-col gap-1.5">
-			<h3 class={INSET_GROUP_CAPTION_CLASS}>{title}</h3>
+			<h3 class={INSET_GROUP_TITLE_CLASS}>{title}</h3>
 
 			<section class={INSET_GROUP_CLASS}>{@render children()}</section>
 		</div>
@@ -301,7 +301,6 @@
 		summary={{ items: importedConversations, show: showImportSummary, verb: 'Imported' }}
 		title="Import"
 	/>
-
 
 	<SettingsChatImportExportSection
 		IconComponent={Trash2}
