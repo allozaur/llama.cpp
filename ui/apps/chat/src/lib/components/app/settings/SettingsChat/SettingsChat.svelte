@@ -69,12 +69,17 @@
 		return false;
 	});
 
+	// Snapshot used to persist only the fields edited in this dialog. Config keys
+	// that other surfaces write directly (servers, MCP servers) must not be
+	// clobbered by the dialog's save.
+	let baseline: SettingsConfigType = $state({ ...settingsStore.config });
+
 	let mobileHeader: { updateCarousel: () => void } | undefined;
 
 	let fetchInitiated = false;
 
 	$effect(() => {
-		if (serverStore.isRouterMode && currentSection.fields?.length && !fetchInitiated) {
+		if (serverStore.localIsRouter && currentSection.fields?.length && !fetchInitiated) {
 			fetchInitiated = true;
 
 			void modelsStore
@@ -106,6 +111,7 @@
 
 	function handleReset() {
 		localConfig = { ...settingsStore.config };
+		baseline = { ...settingsStore.config };
 		setMode(localConfig.theme as ColorMode);
 		mobileHeader?.updateCarousel();
 	}
@@ -126,7 +132,13 @@
 			}
 		}
 
-		const processedConfig = { ...localConfig };
+		const processedConfig: SettingsConfigType = {};
+
+		for (const [key, value] of Object.entries(localConfig)) {
+			if (value !== baseline[key]) {
+				processedConfig[key] = value;
+			}
+		}
 
 		for (const field of NUMERIC_FIELDS) {
 			if (processedConfig[field] !== undefined && processedConfig[field] !== '') {
@@ -158,6 +170,7 @@
 
 	export function reset() {
 		localConfig = { ...settingsStore.config };
+		baseline = { ...settingsStore.config };
 	}
 </script>
 

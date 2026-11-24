@@ -20,6 +20,14 @@
  */
 
 /**
+ * **ServersService** - Server connectivity checks
+ *
+ * Probes an external server's models endpoint to validate its URL and
+ * credentials before it is saved. Stateless.
+ */
+export { ServersService } from './servers.service';
+
+/**
  * **ChatService** - Chat Completions API communication layer
  *
  * Handles direct communication with the llama-server's `/v1/chat/completions` endpoint.

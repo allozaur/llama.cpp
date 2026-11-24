@@ -404,7 +404,7 @@ export class HuggingFaceService {
 	 * exist, so callers should provide a fallback.
 	 */
 	static getAvatarUrl(author: string): string {
-		// OpenRouter-style model ids prefix the provider with a tilde
+		// OpenRouter-style model ids prefix the server with a tilde
 		// (`~openai/gpt-...`); the avatars endpoint only resolves bare names
 		return `${HF_AVATARS_URL}${PATH_SEPARATOR}${author.replace(/^~/, '')}`;
 	}
@@ -534,7 +534,7 @@ export class HuggingFaceService {
 
 				if (!response.ok) throw new Error(`Failed to fetch model details: ${response.status}`);
 
-				// the hub answers with a list of provider entries for one repo; the gguf and
+				// the hub answers with a list of server entries for one repo; the gguf and
 				// card data sit on the entry that carries them
 				const payload = (await response.json()) as HfModelDetailInfo | HfModelDetailInfo[];
 				const entries = Array.isArray(payload) ? payload : [payload];

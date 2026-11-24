@@ -37,6 +37,8 @@
 	// the picker sits right after the Voice input field
 	let splitAt = $derived(fields.findIndex((f) => f.key === SETTINGS_KEYS.VOICE_INPUT_MODE) + 1);
 	let isRouter = $derived(serverStore.isRouterMode);
+	// the role arrives with the server's props; until then it is not one model, it is unknown
+	let isRoleKnown = $derived(serverStore.role !== null);
 	let current = $derived(String(localConfig[KEY] ?? VOICE_TRANSCRIPTION_MODEL_AUTO));
 
 	let audioModels = $derived.by(() => {
@@ -206,6 +208,12 @@
 				A model you pick here is loaded on the server when you dictate, alongside the chat model, if
 				it isn't loaded already. A server that keeps one model at a time (<code>--models-max 1</code
 				>) unloads the chat model to do it.
+			</p>
+		{:else if !isRoleKnown}
+			<p class="text-body-sm text-muted-foreground">
+				{serverStore.error
+					? 'No server answered, so the models it runs are not known yet.'
+					: 'Checking which models this server runs...'}
 			</p>
 		{:else}
 			<p class="text-body-sm text-muted-foreground">

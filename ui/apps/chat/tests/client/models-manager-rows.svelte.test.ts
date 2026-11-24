@@ -4,8 +4,10 @@
 import ModelsManagerRowWrapper from './components/ModelsManagerRowWrapper.svelte';
 import ModelsManagerRepoRow from '#lib/components/app/models/ModelsManager/ModelsManagerRepoRow.svelte';
 import type { ModelQuantGroup } from '#lib/components/app/models/ModelsManager/utils.ts';
+import { LOCAL_BACKEND_ID } from '#lib/constants/index.ts';
 import { ModelGroupKind, ServerRole } from '#lib/enums/index.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
+import { serversStore } from '#lib/stores/servers.svelte.ts';
 import type { ModelOption } from '#lib/types/models.js';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
@@ -15,7 +17,8 @@ const option: ModelOption = {
 	capabilities: [],
 	id: 'org/Qwen3-8B:Q4_K_M',
 	model: 'org/Qwen3-8B:Q4_K_M',
-	name: 'Qwen3-8B'
+	name: 'Qwen3-8B',
+	serverId: LOCAL_BACKEND_ID
 };
 const entry: ModelQuantGroup = {
 	base: option,
@@ -34,7 +37,9 @@ describe('manager model row', () => {
 
 	beforeEach(() => {
 		selected = [];
-		// the row only offers a load control on a router server
+		// the row resolves the server that serves it, and only offers a load control on
+		// a router server
+		serversStore.initialize();
 		serverStore.role = ServerRole.ROUTER;
 	});
 

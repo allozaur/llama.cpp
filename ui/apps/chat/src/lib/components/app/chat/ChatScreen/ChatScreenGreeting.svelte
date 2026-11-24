@@ -63,8 +63,9 @@
 		<h1 class="mb-2 text-heading tracking-tight md:text-display">Hello there</h1>
 
 		<p class="text-muted-foreground md:text-title md:font-normal">
-			{serverStore.props?.modalities?.audio ? 'Record audio, type a message ' : 'Type a message'} or upload
-			files to get started
+			{serverStore.localProps?.modalities?.audio
+				? 'Record audio, type a message '
+				: 'Type a message'} or upload files to get started
 		</p>
 	</div>
 </div>

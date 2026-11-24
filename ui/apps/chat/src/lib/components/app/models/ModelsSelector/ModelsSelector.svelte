@@ -13,8 +13,10 @@
 		ModelsSelectorOption,
 		ModelsSelectorTriggerIcon
 	} from '#lib/components/app/index.ts';
+	import { DialogServerForm } from '#lib/components/app/servers/index.ts';
 	import {
 		DROPDOWN_MENU_CONTENT_SEARCH_SELECTOR,
+		LOCAL_BACKEND_ID,
 		MODEL_ICON,
 		SETTINGS_KEYS
 	} from '#lib/constants/index.ts';
@@ -24,11 +26,14 @@
 	import {
 		deviceStore,
 		modelsStore,
+		serversModelsStore,
+		serversStore,
 		serverStore,
 		settingsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
 	import { type ModelItem, modelLoadFraction } from '#lib/utils/index.ts';
+	import { rawModelId } from '#lib/utils/model-option-id.ts';
 	import { untrack } from 'svelte';
 
 	interface Props {
@@ -60,10 +65,18 @@
 		(settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME] ?? true) &&
 			(!isMobile || settingsStore.config[SETTINGS_KEYS.SHOW_MODEL_ORG_NAME_ON_MOBILE] === true)
 	);
-	let isOffline = $derived(!!serverStore.error);
+	// the server this selector is pointed at, which is the one its colours report
+	let selectorError = $derived.by(() => {
+		const serverId = serversStore.active.id;
+
+		return serverId === LOCAL_BACKEND_ID
+			? Boolean(serverStore.error)
+			: serversModelsStore.get(serverId).error !== null;
+	});
 
 	let isOpen = $state(false);
 	let highlightedId = $state<string | null>(null);
+	let showAddServer = $state(false);
 
 	const formModel = useChatFormModel();
 
@@ -125,6 +138,9 @@
 		for (const group of ms.groupedFilteredOptions.available) {
 			for (const item of group.items) order.push(item.option.id);
 		}
+		for (const server of ms.groupedFilteredOptions.servers) {
+			for (const item of server.items) order.push(item.option.id);
+		}
 
 		return order;
 	});
@@ -159,11 +175,20 @@
 			return;
 		}
 
-		const status = modelsStore.getModelStatus(modelId);
+		// an option id is server-qualified, the router lists the raw model id
+		const rawId = rawModelId(modelId);
+		const status = modelsStore.getModelStatus(rawId);
 
 		if (status === ServerModelStatus.LOADING) return;
 
-		await modelsStore.status.unload(modelId);
+		await modelsStore.status.unload(rawId);
+	}
+
+	function handleAddServer() {
+		isOpen = false;
+
+		// let the menu finish closing before the dialog takes focus
+		setTimeout(() => (showAddServer = true), 0);
 	}
 
 	function handleSearchKeyDown(event: KeyboardEvent) {
@@ -307,7 +332,17 @@
 		{/if}
 
 		{#if ms.isEmpty}
-			<p class="px-4 py-3 text-body-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{#if ms.searchTerm}
+				<p class="px-4 py-3 text-body-sm text-muted-foreground">{ms.emptyMessage}</p>
+			{:else}
+				<button
+					class="cursor-pointer px-4 py-3 text-left text-body-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+					onclick={handleAddServer}
+					type="button"
+				>
+					No models yet. Add a server to get started.
+				</button>
+			{/if}
 		{/if}
 
 		<ModelsSelectorList
@@ -317,6 +352,8 @@
 			groups={ms.groupedFilteredOptions}
 			loaded={ms.loadedItems}
 			onSelect={ms.handleSelect}
+			onServerBack={ms.isServerView ? ms.closeServer : undefined}
+			onServerOpen={ms.openServer}
 			renderOption={modelOption}
 			sectionHeaderClass="[&:not(:first-child)]:mt-2 mb-1 px-2 py-2.5 text-body-sm font-semibold text-foreground/80 select-none"
 			{showOrgName}
@@ -369,9 +406,11 @@
 		<ModelsSelectorDropdown
 			bind:open={isOpen}
 			currentModel={displayModel}
-			disabled={disabled || isOffline}
+			{disabled}
+			error={selectorError}
 			{highlightedId}
 			{ms}
+			onAddServer={handleAddServer}
 			onHighlight={(id) => (highlightedId = id)}
 			onModelKeyAction={(id, unload) => void handleModelKeyAction(id, unload)}
 			onSearchKeyDown={handleSearchKeyDown}
@@ -458,3 +497,8 @@
 		<ChatFormActionReasoning />
 	{/if}
 {/if}
+
+<DialogServerForm
+	bind:open={showAddServer}
+	onSaved={(server) => void ms.showServerModels(server.id)}
+/>
