@@ -12,7 +12,7 @@
 		VOICE_MICROPHONE_AUTO,
 		VOICE_MICROPHONE_DEFAULT
 	} from '@ggml-org/llama-voice';
-	import { ChevronsUpDown } from '@lucide/svelte';
+	import NativeSelect from '#lib/components/app/misc/NativeSelect.svelte';
 	import {
 		SettingsChatFields,
 		SettingsChatFieldsInset,
@@ -260,33 +260,15 @@
 			<span class="{INSET_ROW_BODY_CLASS} gap-4">
 				<span class="flex-1 py-3">{label}</span>
 
-				<Select.Root onValueChange={pick} type="single" {value}>
-					<Select.Trigger
-						aria-label={label}
-						class="h-auto max-w-[60%] gap-1 border-0 bg-transparent px-0 text-body-sm text-muted-foreground shadow-none dark:bg-transparent [&>svg:last-child]:hidden"
-					>
-						<span class="truncate">{valueLabel}</span>
-
-						<ChevronsUpDown class="size-3.5 shrink-0" />
-					</Select.Trigger>
-
-					<Select.Content align="end">
-						{#each items as option (option.value)}
-							<Select.Item label={option.label} value={option.value}>{option.label}</Select.Item>
-						{/each}
-
-						{#each itemGroups as group (group.heading)}
-							<Select.Group>
-								<Select.GroupHeading>{group.heading}</Select.GroupHeading>
-
-								{#each group.items as option (option.value)}
-									<Select.Item label={option.label} value={option.value}>{option.label}</Select.Item
-									>
-								{/each}
-							</Select.Group>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				<NativeSelect
+					displayLabel={valueLabel}
+					groups={itemGroups.map((group) => ({ heading: group.heading, options: group.items }))}
+					{label}
+					onValueChange={pick}
+					options={items}
+					{value}
+					variant="inset"
+				/>
 			</span>
 		</div>
 	</section>
