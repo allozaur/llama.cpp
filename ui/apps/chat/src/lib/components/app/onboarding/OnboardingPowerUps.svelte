@@ -6,6 +6,13 @@
 	import type { RecommendedMCPServer } from '#lib/types/index.ts';
 	import { canonicalizeServerUrl } from '#lib/utils/index.ts';
 
+	interface Props {
+		/** Says what is turned on, for the conversation to keep as the user's answer. */
+		onAnswer?: (answer: string | undefined) => void;
+	}
+
+	let { onAnswer }: Props = $props();
+
 	/** The server entry a recommendation was added as, if it was. */
 	function addedEntry(server: RecommendedMCPServer) {
 		const url = canonicalizeServerUrl(server.url);
@@ -16,18 +23,18 @@
 	function handleToggle(server: RecommendedMCPServer, checked: boolean) {
 		const entry = addedEntry(server);
 
-		if (!checked) {
-			if (entry) mcpStore.removeServer(entry.id);
+		if (checked && !entry) {
+			mcpStore.addServer({ enabled: true, url: server.url });
 
-			return;
+			// MCP waits behind its setting; with a server added, show where to manage it
+			settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);
+		} else if (!checked && entry) {
+			mcpStore.removeServer(entry.id);
 		}
 
-		if (entry) return;
+		const names = ONBOARDING_MCP_SERVERS.filter(addedEntry).map((item) => item.name);
 
-		mcpStore.addServer({ enabled: true, url: server.url });
-
-		// MCP waits behind its setting; with a server added, show where to manage it
-		settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);
+		onAnswer?.(names.length > 0 ? `Turn on ${names.join(', ')}` : undefined);
 	}
 </script>
 

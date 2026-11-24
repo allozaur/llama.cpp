@@ -9,6 +9,13 @@
 	import { withBase } from '#lib/utils/base-path.ts';
 	import { goto } from '$app/navigation';
 
+	interface Props {
+		/** Says what was done, for the conversation to keep as the user's answer. */
+		onAnswer?: (answer: string) => void;
+	}
+
+	let { onAnswer }: Props = $props();
+
 	let apiKey = $state('');
 	let status = $state<'idle' | 'validating' | 'connected'>('idle');
 	let error = $state('');
@@ -44,6 +51,7 @@
 			// stored only once the server took it
 			settingsStore.updateConfig(SETTINGS_KEYS.API_KEY, key);
 			status = 'connected';
+			onAnswer?.('Connected with my API key');
 
 			// leaves the access-denied page under the dialog, and loads what the key unlocks
 			await goto(ROUTES.START, { invalidateAll: true });

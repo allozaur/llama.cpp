@@ -2,8 +2,10 @@ import { ONBOARDING_INTRO_STEPS } from '#lib/constants/index.ts';
 import { OnboardingStep } from '#lib/enums/index.ts';
 import {
 	firstSetupStep,
+	onboardingPhase,
 	type OnboardingStepsInput,
-	resolveOnboardingSteps
+	resolveOnboardingSteps,
+	resolveOnboardingTasks
 } from '#lib/utils/onboarding.ts';
 import { describe, expect, it } from 'vitest';
 
@@ -89,5 +91,43 @@ describe('firstSetupStep', () => {
 			OnboardingStep.POWER_UPS
 		);
 		expect(firstSetupStep(resolveOnboardingSteps(SETTLED))).toBe(OnboardingStep.DONE);
+	});
+});
+
+describe('onboardingPhase', () => {
+	it('puts the intro, the setup steps and the last step in three stages', () => {
+		expect(onboardingPhase(OnboardingStep.INTRO_VOICE)).toBe(0);
+		expect(onboardingPhase(OnboardingStep.CONNECTION)).toBe(1);
+		expect(onboardingPhase(OnboardingStep.POWER_UPS)).toBe(1);
+		expect(onboardingPhase(OnboardingStep.DONE)).toBe(2);
+	});
+});
+
+describe('resolveOnboardingTasks', () => {
+	const ids = (available: { serverTools: boolean; webSearch: boolean }) =>
+		resolveOnboardingTasks(available).map((task) => task.id);
+
+	it('offers only tasks that need no tool when none is there', () => {
+		expect(ids({ serverTools: false, webSearch: false })).toEqual([
+			'date',
+			'explain',
+			'help',
+			'poem'
+		]);
+	});
+
+	it('leads with the tasks whose tools are there, four at most', () => {
+		expect(ids({ serverTools: true, webSearch: false })).toEqual([
+			'files',
+			'date',
+			'explain',
+			'help'
+		]);
+		expect(ids({ serverTools: true, webSearch: true })).toEqual([
+			'files',
+			'search',
+			'date',
+			'explain'
+		]);
 	});
 });

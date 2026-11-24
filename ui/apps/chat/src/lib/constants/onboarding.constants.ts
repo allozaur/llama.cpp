@@ -1,8 +1,10 @@
 import { RECOMMENDED_MCP_SERVERS } from './recommended-mcp-servers.constants';
+import { CalendarDays, FolderOpen, Globe, Lightbulb, MessageCircle, PenLine } from '@lucide/svelte';
 import { AgenticSectionType } from '#lib/enums/agentic.enums.ts';
 import { OnboardingStep } from '#lib/enums/onboarding.enums.ts';
 import { BuiltInTool } from '#lib/enums/tools.enums.ts';
 import type { AgenticSection } from '#lib/types/index.ts';
+import type { Component } from 'svelte';
 
 /** Every onboarding step, in the order the flow shows them. */
 export const ONBOARDING_STEP_ORDER: OnboardingStep[] = [
@@ -23,48 +25,100 @@ export const ONBOARDING_INTRO_STEPS: OnboardingStep[] = [
 	OnboardingStep.INTRO_VOICE
 ];
 
-/** Heading and supporting line of each step. An intro slide is its heading alone. */
-export const ONBOARDING_STEP_COPY: Record<OnboardingStep, { description?: string; title: string }> =
-	{
-		[OnboardingStep.CONNECTION]: {
-			description: 'This server asks for an API key. It is kept in this browser only.',
-			title: 'Connect to the server'
-		},
-		[OnboardingStep.DONE]: {
-			description: 'You can open this guide again from Settings, under Data.',
-			title: 'You are all set'
-		},
-		[OnboardingStep.INTRO_CHAT]: {
-			title: 'Chat with models that run on your own machine, privately.'
-		},
-		[OnboardingStep.INTRO_TOOLS]: {
-			title: 'Give the model tools: files, shell, web search and MCP servers.'
-		},
-		[OnboardingStep.INTRO_VOICE]: {
-			title: 'Talk to it: send voice messages or dictate your text.'
-		},
-		[OnboardingStep.MODEL]: {
-			description: 'Pick a first model for the server to download, or do it later.',
-			title: 'Get a model'
-		},
-		[OnboardingStep.POWER_UPS]: {
-			description:
-				'MCP servers give the model more tools. Turn on the ones you want, you can change them later.',
-			title: 'Power-ups'
-		},
-		[OnboardingStep.VOICE]: {
-			description:
-				'None of your models takes audio. Add one that does to dictate, send voice messages and use the coming voice mode.',
-			title: 'Add a model that hears'
-		}
-	};
+/** Stages of the flow, one segment each in the pager under the buttons. */
+export const ONBOARDING_PHASE_LABELS = ['What it can do', 'Setup', 'First task'] as const;
 
-/** First messages offered on the last step. */
-export const ONBOARDING_EXAMPLE_PROMPTS: string[] = [
-	'What can you help me with?',
-	'Explain how a language model works in simple words.',
-	'Write a short poem about running AI on my own computer.'
+/** What the app says on each step, as a message in the onboarding's conversation. */
+export const ONBOARDING_STEP_COPY: Record<OnboardingStep, { heading?: string; text: string }> = {
+	[OnboardingStep.CONNECTION]: {
+		text: 'This server asks for an API key. Enter it and I will connect. The key stays in this browser.'
+	},
+	[OnboardingStep.DONE]: {
+		text: 'You are all set. Start with a simple task to see how it works, or write your own.'
+	},
+	[OnboardingStep.INTRO_CHAT]: {
+		heading: 'Welcome to Llama Chat',
+		text: 'Here you chat with models that run on your own machine, privately. A quick look at what that means, then we set things up.'
+	},
+	[OnboardingStep.INTRO_TOOLS]: {
+		text: 'Give the model tools and it can do things: read and edit files, run shell commands, search the web, or use any MCP server.'
+	},
+	[OnboardingStep.INTRO_VOICE]: {
+		text: 'You can also talk to it: send a voice message or dictate your text.'
+	},
+	[OnboardingStep.MODEL]: {
+		text: 'The server has no models yet. Pick a first one to download, or do it later.'
+	},
+	[OnboardingStep.POWER_UPS]: {
+		text: 'Want more tools? These MCP servers add web search and docs. Turn on the ones you like, you can change them later.'
+	},
+	[OnboardingStep.VOICE]: {
+		text: 'None of your models takes audio. Add one that does and you can dictate, send voice messages and use the coming voice mode.'
+	}
+};
+
+/** What stands in for the user's answer when a setup step is passed without one. */
+export const ONBOARDING_NO_ANSWER = 'Not now';
+
+/** What a first task needs before it is offered. */
+export interface OnboardingTask {
+	icon: Component;
+	id: string;
+	label: string;
+	prompt: string;
+	/** Offered only with the server's file and shell tools. */
+	needsServerTools?: boolean;
+	/** Offered only with a web search MCP server added. */
+	needsWebSearch?: boolean;
+}
+
+/** How many first tasks the last step shows. */
+export const ONBOARDING_TASK_COUNT = 4;
+
+/** First tasks, most telling first: the ones that use a tool show what the app can reach. */
+export const ONBOARDING_TASKS: OnboardingTask[] = [
+	{
+		icon: FolderOpen,
+		id: 'files',
+		label: 'Look around my working folder',
+		needsServerTools: true,
+		prompt: 'List the files in your working folder and tell me what you see.'
+	},
+	{
+		icon: Globe,
+		id: 'search',
+		label: 'Find the latest llama.cpp news',
+		needsWebSearch: true,
+		prompt: 'Search the web for the latest llama.cpp news and sum it up in a few points.'
+	},
+	{
+		icon: CalendarDays,
+		id: 'date',
+		label: 'What day is it today?',
+		prompt: 'What day is it today?'
+	},
+	{
+		icon: Lightbulb,
+		id: 'explain',
+		label: 'Explain how a language model works',
+		prompt: 'Explain how a language model works in simple words.'
+	},
+	{
+		icon: MessageCircle,
+		id: 'help',
+		label: 'What can you help me with?',
+		prompt: 'What can you help me with?'
+	},
+	{
+		icon: PenLine,
+		id: 'poem',
+		label: 'Write a poem about local AI',
+		prompt: 'Write a short poem about running AI on my own computer.'
+	}
 ];
+
+/** The recommended MCP server that brings web search. */
+export const ONBOARDING_WEB_SEARCH_SERVER_ID = 'exa';
 
 /** Recommended MCP servers a single switch can add: the ones that need no token. */
 export const ONBOARDING_MCP_SERVERS = RECOMMENDED_MCP_SERVERS.filter(

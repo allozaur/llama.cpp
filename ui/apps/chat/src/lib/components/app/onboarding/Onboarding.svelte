@@ -4,7 +4,11 @@
 -->
 <script lang="ts">
 	import { OnboardingDialog } from '#lib/components/app/onboarding/index.ts';
-	import { ONBOARDING_MCP_SERVERS, ROUTES } from '#lib/constants/index.ts';
+	import {
+		ONBOARDING_MCP_SERVERS,
+		ONBOARDING_WEB_SEARCH_SERVER_ID,
+		ROUTES
+	} from '#lib/constants/index.ts';
 	import type { OnboardingStep } from '#lib/enums/index.ts';
 	import {
 		chatStore,
@@ -12,10 +16,11 @@
 		mcpStore,
 		modelsStore,
 		serverStore,
+		toolsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
 	import { canonicalizeServerUrl } from '#lib/utils/index.ts';
-	import { resolveOnboardingSteps } from '#lib/utils/onboarding.ts';
+	import { resolveOnboardingSteps, resolveOnboardingTasks } from '#lib/utils/onboarding.ts';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
@@ -30,12 +35,24 @@
 		return modelsStore.models.some((model) => modelsStore.props.modelSupportsAudio(model.model));
 	});
 
-	let mcpSuggestionCount = $derived.by(() => {
+	// recommended MCP servers that are added, by id
+	let addedMcpIds = $derived.by(() => {
 		const added = new Set(mcpStore.getServers().map((server) => canonicalizeServerUrl(server.url)));
 
-		return ONBOARDING_MCP_SERVERS.filter((server) => !added.has(canonicalizeServerUrl(server.url)))
-			.length;
+		return ONBOARDING_MCP_SERVERS.filter((server) =>
+			added.has(canonicalizeServerUrl(server.url))
+		).map((server) => server.id);
 	});
+
+	// no first task without a model to answer it
+	let tasks = $derived(
+		modelsStore.models.length > 0
+			? resolveOnboardingTasks({
+					serverTools: toolsStore.serverTools.length > 0,
+					webSearch: addedMcpIds.includes(ONBOARDING_WEB_SEARCH_SERVER_ID)
+				})
+			: []
+	);
 
 	let steps = $derived(
 		resolveOnboardingSteps(
@@ -43,7 +60,7 @@
 				apiKeyRequired: page.status === 401 || page.status === 403,
 				hasAudioModel,
 				isRouter: serverStore.isRouterMode,
-				mcpSuggestionCount,
+				mcpSuggestionCount: ONBOARDING_MCP_SERVERS.length - addedMcpIds.length,
 				modelCount: modelsStore.models.length,
 				serverReady: serverStore.props !== null && modelsFetched
 			},
@@ -74,10 +91,10 @@
 </script>
 
 <OnboardingDialog
-	canChat={modelsStore.models.length > 0}
 	onFinish={handleFinish}
 	onPrompt={handlePrompt}
 	onStepChange={(step) => (visited = [...visited, step])}
 	open={uiStore.onboardingOpen}
 	{steps}
+	{tasks}
 />
