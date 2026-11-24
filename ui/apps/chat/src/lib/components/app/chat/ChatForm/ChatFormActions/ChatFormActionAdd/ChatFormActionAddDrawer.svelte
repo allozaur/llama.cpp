@@ -21,18 +21,21 @@
 		ATTACHMENT_MENU_TEXT,
 		ATTACHMENT_MODALITY_TEXT,
 		ICON_CLASS_DEFAULT,
-		MODALITY_ICONS
+		INSET_GROUP_CLASS,
+		INSET_ROW_BODY_CLASS,
+		INSET_ROW_CLASS,
+		MODALITY_ICONS,
+		SHEET_HEADER_BUTTON_CLASS
 	} from '#lib/constants/index.ts';
 	import { getChatFormActionsContext } from '#lib/contexts/index.ts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
 	import { ModelModality, ToolSource } from '#lib/enums/index.ts';
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
+	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
 	import { toolsStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
 	import type { Component, Snippet } from 'svelte';
-	import { prefersReducedMotion } from 'svelte/motion';
-	import { fly } from 'svelte/transition';
 
 	interface Props {
 		class?: string;
@@ -47,11 +50,9 @@
 	type Page = { id: 'root' } | { id: 'tools' } | { groupKey: string; id: 'group' };
 
 	let drawerOpen = $state(false);
-	let stack = $state<Page[]>([{ id: 'root' }]);
-	// 1 slides the next page in from the right, -1 brings the previous one back from the left
-	let direction = $state(1);
-
-	const page = $derived(stack[stack.length - 1]);
+	const pages = useSheetPages<Page>({ id: 'root' });
+	const { transition: pageTransition } = pages;
+	const page = $derived(pages.page);
 	const pageKey = $derived(page.id === 'group' ? `group:${page.groupKey}` : page.id);
 
 	// the root page's height, kept as the floor for the pages pushed over it so the sheet does not jump
@@ -125,20 +126,14 @@
 	});
 
 	function open() {
-		stack = [{ id: 'root' }];
+		pages.reset();
 		drawerOpen = true;
 	}
 
 	function push(next: Page) {
 		if (next.id === 'tools') toolsPanel.handleOpen();
 
-		direction = 1;
-		stack = [...stack, next];
-	}
-
-	function pop() {
-		direction = -1;
-		stack = stack.slice(0, -1);
+		pages.push(next);
 	}
 
 	function handleAddFiles() {
@@ -161,22 +156,6 @@
 		drawerOpen = false;
 		chatFormActions.onFilesSelect?.(files);
 	}
-
-	function pageTransition(node: Element, { incoming }: { incoming: boolean }) {
-		const offset = prefersReducedMotion.current ? 0 : 32;
-		const sign = incoming ? direction : -direction;
-
-		return fly(node, { duration: 220, opacity: 0, x: sign * offset });
-	}
-
-	const headerButtonClass =
-		'matte-key flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
-	const groupClass = 'inset-group-surface flex flex-col overflow-hidden';
-	const rowClass =
-		'group/row flex min-h-12 w-full items-center gap-3 pl-4 text-left text-body transition-colors active:bg-(--surface-pressed) disabled:pointer-events-none disabled:opacity-50';
-	// the divider starts at the label, as in a native inset list, and is dropped on the first row
-	const rowBodyClass =
-		'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 pr-4 group-first/row:border-t-0';
 </script>
 
 <!-- hidden pickers: capture opens the camera on phones, the plain input the system file picker -->
@@ -197,17 +176,17 @@
 
 		<Drawer.Content class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh]">
 			<header class="grid shrink-0 grid-cols-[5.5rem_1fr_5.5rem] items-center px-3 pt-2 pb-3">
-				{#if stack.length > 1}
+				{#if pages.canGoBack}
 					<button
 						aria-label={ATTACHMENT_MENU_TEXT.BACK}
-						class={headerButtonClass}
-						onclick={pop}
+						class={SHEET_HEADER_BUTTON_CLASS}
+						onclick={pages.pop}
 						type="button"
 					>
 						<ChevronLeft class="size-5" />
 					</button>
 				{:else}
-					<Drawer.Close aria-label={ATTACHMENT_MENU_TEXT.CLOSE} class={headerButtonClass}>
+					<Drawer.Close aria-label={ATTACHMENT_MENU_TEXT.CLOSE} class={SHEET_HEADER_BUTTON_CLASS}>
 						<X class={ICON_CLASS_DEFAULT} />
 					</Drawer.Close>
 				{/if}
@@ -248,19 +227,19 @@
 </div>
 
 {#snippet rootPage()}
-	<section class={groupClass}>
+	<section class={INSET_GROUP_CLASS}>
 		{#if canUseCamera}
-			<button class={rowClass} onclick={() => cameraInput?.click()} type="button">
+			<button class={INSET_ROW_CLASS} onclick={() => cameraInput?.click()} type="button">
 				<Camera class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-				<span class={rowBodyClass}>{ATTACHMENT_MENU_TEXT.CAMERA}</span>
+				<span class={INSET_ROW_BODY_CLASS}>{ATTACHMENT_MENU_TEXT.CAMERA}</span>
 			</button>
 		{/if}
 
-		<button class={rowClass} onclick={handleAddFiles} type="button">
+		<button class={INSET_ROW_CLASS} onclick={handleAddFiles} type="button">
 			<File class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-			<span class={rowBodyClass}>
+			<span class={INSET_ROW_BODY_CLASS}>
 				<span class="flex-1">{ATTACHMENT_MENU_TEXT.ADD_FILES}</span>
 
 				{#if supportedModalities.length > 0}
@@ -274,20 +253,20 @@
 		</button>
 	</section>
 
-	<section class={groupClass}>
+	<section class={INSET_GROUP_CLASS}>
 		<button
-			class={rowClass}
+			class={INSET_ROW_CLASS}
 			onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
 			type="button"
 		>
 			<MessageSquare class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-			<span class={rowBodyClass}>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
+			<span class={INSET_ROW_BODY_CLASS}>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
 		</button>
 
 		{#if chatFormActions.onWorkingDirectoryClick}
 			<button
-				class={rowClass}
+				class={INSET_ROW_CLASS}
 				onclick={() => {
 					drawerOpen = false;
 					chatFormActions.onWorkingDirectoryClick?.();
@@ -296,7 +275,7 @@
 			>
 				<Folder class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-				<span class={rowBodyClass}>
+				<span class={INSET_ROW_BODY_CLASS}>
 					<span class="shrink-0">{ATTACHMENT_MENU_TEXT.WORKING_DIRECTORY}</span>
 
 					<span class="min-w-0 flex-1 truncate text-right text-body-sm text-muted-foreground">
@@ -308,10 +287,10 @@
 			</button>
 		{/if}
 
-		<button class={rowClass} onclick={() => push({ id: 'tools' })} type="button">
+		<button class={INSET_ROW_CLASS} onclick={() => push({ id: 'tools' })} type="button">
 			<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-			<span class={rowBodyClass}>
+			<span class={INSET_ROW_BODY_CLASS}>
 				<span class="flex-1">{ATTACHMENT_MENU_TEXT.TOOLS}</span>
 
 				{#if toolsPanel.totalToolCount > 0}
@@ -328,7 +307,7 @@
 
 {#snippet toolsPage()}
 	{#if toolsPanel.totalToolCount === 0}
-		<section class="{groupClass} px-4 py-4 text-body-sm text-muted-foreground">
+		<section class="{INSET_GROUP_CLASS} px-4 py-4 text-body-sm text-muted-foreground">
 			{#if toolsStore.loading}
 				<span class="flex items-center justify-center gap-2">
 					<Loader2 class="{ICON_CLASS_DEFAULT} animate-spin" />
@@ -347,7 +326,7 @@
 		</section>
 	{:else}
 		{#if toolsPanel.categoryGroups.length > 0}
-			<section class={groupClass}>
+			<section class={INSET_GROUP_CLASS}>
 				{#each toolsPanel.categoryGroups as group (group.key)}
 					{@render groupRow(group)}
 				{/each}
@@ -360,7 +339,7 @@
 					{ATTACHMENT_MENU_TEXT.MCP_SERVERS}
 				</h3>
 
-				<section class={groupClass}>
+				<section class={INSET_GROUP_CLASS}>
 					{#each toolsPanel.mcpGroups as group (group.key)}
 						{@render groupRow(group)}
 					{/each}
@@ -375,7 +354,7 @@
 	{@const favicon = toolsPanel.getFavicon(group)}
 	{@const groupDisabled = toolsPanel.isGroupDisabled(group)}
 
-	<div class="group/row flex min-h-12 items-center pl-4 {groupDisabled ? 'opacity-50' : ''}">
+	<div class="group/row flex min-h-12 items-center px-4 {groupDisabled ? 'opacity-50' : ''}">
 		<button
 			class="flex min-h-12 min-w-0 flex-1 items-center gap-3 self-stretch text-left text-body"
 			onclick={() => push({ groupKey: group.key, id: 'group' })}
@@ -409,7 +388,7 @@
 		</button>
 
 		<span
-			class="flex items-center self-stretch border-t border-border/60 pr-4 pl-3 group-first/row:border-t-0"
+			class="flex items-center self-stretch border-t border-border/60 pl-3 group-first/row:border-t-0"
 		>
 			<Switch
 				aria-label="{checkState.checked ? 'Disable' : 'Enable'} {group.label}"
@@ -425,11 +404,11 @@
 	{@const checkState = toolsPanel.getGroupCheckState(group)}
 	{@const groupDisabled = toolsPanel.isGroupDisabled(group)}
 
-	<section class="{groupClass} {groupDisabled ? 'opacity-50' : ''}">
-		<label class="{rowClass} cursor-pointer">
+	<section class="{INSET_GROUP_CLASS} {groupDisabled ? 'opacity-50' : ''}">
+		<label class="{INSET_ROW_CLASS} cursor-pointer">
 			<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-			<span class={rowBodyClass}>
+			<span class={INSET_ROW_BODY_CLASS}>
 				<span class="flex-1">{ATTACHMENT_MENU_TEXT.ALL_TOOLS}</span>
 
 				<Switch
@@ -441,12 +420,12 @@
 		</label>
 	</section>
 
-	<section class={groupClass}>
+	<section class={INSET_GROUP_CLASS}>
 		{#each group.tools as entry (entry.key)}
 			{@const parentDisabled = toolsPanel.isToolParentDisabled(entry)}
 
-			<label class="{rowClass} cursor-pointer {parentDisabled ? 'opacity-50' : ''}">
-				<span class={rowBodyClass}>
+			<label class="{INSET_ROW_CLASS} cursor-pointer {parentDisabled ? 'opacity-50' : ''}">
+				<span class={INSET_ROW_BODY_CLASS}>
 					<span class="min-w-0 flex-1 truncate font-mono text-body-sm">
 						{entry.definition.function.name}
 					</span>
