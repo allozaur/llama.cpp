@@ -31,9 +31,11 @@
 	interface Props {
 		/** List only the catalog models that take audio input, with no search. */
 		audioOnly?: boolean;
+		/** Says what was started, for the conversation to keep as the user's answer. */
+		onAnswer?: (answer: string | undefined) => void;
 	}
 
-	let { audioOnly = false }: Props = $props();
+	let { audioOnly = false, onAnswer }: Props = $props();
 
 	let selectedId = $state<string | null>(null);
 	let searchQuery = $state('');
@@ -104,6 +106,13 @@
 		);
 	}
 
+	// a download started from the details pane is the answer; the pane has no callback for it
+	$effect(() => {
+		const names = downloadEntries.map((entry) => entry.repoWithTag);
+
+		untrack(() => onAnswer?.(names.length > 0 ? `Download ${names.join(', ')}` : undefined));
+	});
+
 	// untracked: fetch() flips its loading flag, which must not run this again
 	$effect(() => {
 		if (!isOnline) return;
@@ -145,7 +154,7 @@
 		</Button>
 
 		<!-- the pane pads itself for Discover's two columns; here it sits flush -->
-		<div class="-mx-6 -mt-2 pr-6 [&_[data-slot=dialog-header]]:static">
+		<div class="-ml-6 -mt-2">
 			<ModelsDiscoverDetailsContainer modelId={selectedId} />
 		</div>
 	</div>

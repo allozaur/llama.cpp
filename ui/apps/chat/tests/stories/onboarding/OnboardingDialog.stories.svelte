@@ -3,12 +3,16 @@
 	import OnboardingDialog from '#lib/components/app/onboarding/OnboardingDialog.svelte';
 	import { ONBOARDING_STEP_ORDER } from '#lib/constants/index.ts';
 	import { OnboardingStep } from '#lib/enums/index.ts';
+	import { resolveOnboardingTasks } from '#lib/utils/onboarding.ts';
+
+	const tasks = resolveOnboardingTasks({ serverTools: true, webSearch: true });
 
 	// the dialog with a given list of steps; the app decides the list with resolveOnboardingSteps
 	const { Story } = defineMeta({
 		args: {
 			open: true,
-			steps: ONBOARDING_STEP_ORDER
+			steps: ONBOARDING_STEP_ORDER,
+			tasks
 		},
 		component: OnboardingDialog,
 		parameters: {
@@ -30,13 +34,13 @@
 <!-- a server that needs nothing set up: the intro, then the last step -->
 <Story
 	args={{
-		canChat: true,
 		steps: [
 			OnboardingStep.INTRO_CHAT,
 			OnboardingStep.INTRO_TOOLS,
 			OnboardingStep.INTRO_VOICE,
 			OnboardingStep.DONE
-		]
+		],
+		tasks
 	}}
 	globals={DESKTOP}
 	name="Nothing To Set Up"
@@ -66,4 +70,4 @@
 	name="Power-ups Mobile"
 />
 
-<Story args={{ canChat: true, steps: [OnboardingStep.DONE] }} globals={DESKTOP} name="Done" />
+<Story args={{ steps: [OnboardingStep.DONE], tasks }} globals={DESKTOP} name="Done" />

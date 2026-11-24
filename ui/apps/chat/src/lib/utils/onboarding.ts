@@ -1,6 +1,9 @@
 import {
 	ONBOARDING_INTRO_STEPS,
-	ONBOARDING_STEP_ORDER
+	ONBOARDING_STEP_ORDER,
+	ONBOARDING_TASK_COUNT,
+	ONBOARDING_TASKS,
+	type OnboardingTask
 } from '#lib/constants/onboarding.constants.ts';
 import { OnboardingStep } from '#lib/enums/onboarding.enums.ts';
 
@@ -46,4 +49,23 @@ export function resolveOnboardingSteps(
 /** The first step after the intro slides, where "Skip intro" lands. */
 export function firstSetupStep(steps: OnboardingStep[]): OnboardingStep | undefined {
 	return steps.find((step) => !ONBOARDING_INTRO_STEPS.includes(step));
+}
+
+/** Stage of a step, an index into ONBOARDING_PHASE_LABELS: the intro, the setup, the first task. */
+export function onboardingPhase(step: OnboardingStep): number {
+	if (ONBOARDING_INTRO_STEPS.includes(step)) return 0;
+
+	return step === OnboardingStep.DONE ? 2 : 1;
+}
+
+/** The first tasks to offer: the ones whose tools are there, up to ONBOARDING_TASK_COUNT. */
+export function resolveOnboardingTasks(available: {
+	serverTools: boolean;
+	webSearch: boolean;
+}): OnboardingTask[] {
+	return ONBOARDING_TASKS.filter(
+		(task) =>
+			(!task.needsServerTools || available.serverTools) &&
+			(!task.needsWebSearch || available.webSearch)
+	).slice(0, ONBOARDING_TASK_COUNT);
 }
