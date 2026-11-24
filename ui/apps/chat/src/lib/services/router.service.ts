@@ -14,8 +14,32 @@ export class RouterService {
 		return resolve(ROUTES.CHAT, { id });
 	}
 
+	/**
+	 * Where a conversation opens: inside its project when it is in one, so a
+	 * project chat always has its project's tabs and breadcrumb around it.
+	 */
+	static conversation(conversation: { id: string; projectId?: string | null }): ResolvedPathname {
+		return conversation.projectId
+			? RouterService.projectChat(conversation.projectId, conversation.id)
+			: RouterService.chat(conversation.id);
+	}
+
 	/** Route of the page an extension contributes at `path`. */
 	static extensionPage(path: string): ResolvedPathname {
 		return resolve(ROUTES.EXTENSION_PAGE, { extensionPage: path });
+	}
+
+	static project(id: string): ResolvedPathname {
+		return resolve(ROUTES.PROJECT, { projectId: id });
+	}
+
+	/** A chat opened inside its project, with the project's tabs. */
+	static projectChat(projectId: string, id: string): ResolvedPathname {
+		return resolve(ROUTES.PROJECT_CHAT, { id, projectId });
+	}
+
+	/** The new-chat screen of a project; the chat it starts joins the project. */
+	static projectNewChat(projectId: string): ResolvedPathname {
+		return resolve(ROUTES.PROJECT_NEW_CHAT, { projectId });
 	}
 }

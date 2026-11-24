@@ -16,13 +16,15 @@
 		ATTACHMENT_MENU_TEXT,
 		ATTACHMENT_MODALITY_TEXT,
 		ICON_CLASS_DEFAULT,
-		MODALITY_ICONS
+		MODALITY_ICONS,
+		PROJECT_ICON
 	} from '#lib/constants/index.ts';
 	import { getChatFormActionsContext } from '#lib/contexts/index.ts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
 	import { ModelModality } from '#lib/enums/index.ts';
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
+	import { conversationsStore, projectsStore, uiStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
 	import type { Component, Snippet } from 'svelte';
 
@@ -123,6 +125,27 @@
 							</span>
 						{/if}
 					</span>
+				</button>
+
+				<button
+					class={itemClass}
+					onclick={() => {
+						drawerOpen = false;
+						uiStore.openProjectPicker({
+							currentProjectId:
+								conversationsStore.activeConversation?.projectId ??
+								conversationsStore.preferences.pendingProjectId,
+							onSelect: (projectId) =>
+								void conversationsStore.assignActiveConversationProject(
+									projectsStore.get(projectId) ?? null
+								)
+						});
+					}}
+					type="button"
+				>
+					<PROJECT_ICON class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+					<span>{ATTACHMENT_MENU_TEXT.ADD_TO_PROJECT}</span>
 				</button>
 
 				<button

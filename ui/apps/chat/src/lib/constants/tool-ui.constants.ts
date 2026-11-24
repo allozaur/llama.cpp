@@ -7,6 +7,7 @@
 // (see ChatMessageToolCallBlockGetDatetime and
 // ChatMessageToolCallBlockSearchResults for prior art).
 
+import { PROJECT_ICON } from './icons.constants';
 import Braces from '@lucide/svelte/icons/braces';
 import Clock from '@lucide/svelte/icons/clock';
 import Eye from '@lucide/svelte/icons/eye';
@@ -15,7 +16,9 @@ import FilePlus from '@lucide/svelte/icons/file-plus';
 import FileSearch from '@lucide/svelte/icons/file-search';
 import FileText from '@lucide/svelte/icons/file-text';
 import Info from '@lucide/svelte/icons/info';
+import List from '@lucide/svelte/icons/list';
 import MessagesSquare from '@lucide/svelte/icons/messages-square';
+import Paperclip from '@lucide/svelte/icons/paperclip';
 import SearchCode from '@lucide/svelte/icons/search-code';
 import SquareTerminal from '@lucide/svelte/icons/square-terminal';
 import Terminal from '@lucide/svelte/icons/terminal';
@@ -23,9 +26,24 @@ import { BuiltInTool, ToolSource } from '#lib/enums/index.ts';
 import type { ToolUiEntry } from '#lib/types/index.ts';
 
 export const TOOL_UI: Readonly<Record<BuiltInTool, ToolUiEntry>> = {
+	[BuiltInTool.BROWSER_ADD_PROJECT_CONTEXT]: {
+		icon: Paperclip,
+		label: 'Add project context',
+		source: ToolSource.BROWSER
+	},
 	[BuiltInTool.BROWSER_GET_DATETIME]: {
 		icon: Clock,
 		label: 'Current time',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_GET_PROJECT]: {
+		icon: PROJECT_ICON,
+		label: 'Read project',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_LIST_PROJECTS]: {
+		icon: List,
+		label: 'List projects',
 		source: ToolSource.BROWSER
 	},
 	[BuiltInTool.BROWSER_READ_MEDIA]: { icon: Eye, label: 'Read media', source: ToolSource.BROWSER },
@@ -37,6 +55,11 @@ export const TOOL_UI: Readonly<Record<BuiltInTool, ToolUiEntry>> = {
 	[BuiltInTool.BROWSER_SEARCH_CHATS]: {
 		icon: MessagesSquare,
 		label: 'Search chats',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_UPDATE_PROJECT]: {
+		icon: FilePen,
+		label: 'Update project',
 		source: ToolSource.BROWSER
 	},
 	[BuiltInTool.SERVER_EDIT_FILE]: { icon: FilePen, label: 'Edit file', source: ToolSource.SERVER },

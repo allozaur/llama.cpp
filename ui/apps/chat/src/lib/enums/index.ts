@@ -107,6 +107,7 @@ export {
 	MenuKind,
 	MouseButton,
 	PointerType,
+	ProjectContextKind,
 	ScrollCarouselVariant,
 	SidebarAction,
 	SidebarSectionKind,

@@ -8,6 +8,8 @@
 		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
+		DialogProject,
+		DialogProjectPicker,
 		DialogSearch,
 		DialogServers,
 		DialogSettingsChat,
@@ -310,7 +312,11 @@
 	}
 
 	function selectConversation(id: string) {
-		navigateBehind(() => goto(RouterService.chat(id)));
+		const conversation = conversationsStore.conversations.find((conv) => conv.id === id);
+
+		navigateBehind(() =>
+			goto(conversation ? RouterService.conversation(conversation) : RouterService.chat(id))
+		);
 	}
 
 	async function handleEditConversation(id: string) {
@@ -537,6 +543,10 @@
 				break;
 			case SidebarAction.SEARCH:
 				openSearch();
+
+				break;
+			case SidebarAction.PROJECTS:
+				navigateBehind(() => goto(resolve(ROUTES.PROJECTS)));
 
 				break;
 			case SidebarAction.MANAGE_MODELS:
@@ -800,6 +810,10 @@
 <DialogGroupPicker />
 
 <ModelsManagerModelDrawer />
+
+<DialogProject />
+
+<DialogProjectPicker />
 
 <DialogServers bind:open={uiStore.serversOpen} />
 
