@@ -22,7 +22,8 @@
 	import {
 		SettingsChatFieldsInset,
 		SettingsChatImportExportTab,
-		SettingsChatVoiceTab
+		SettingsChatVoiceTab,
+		SettingsMcpServers
 	} from '#lib/components/app/settings/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
@@ -65,6 +66,7 @@
 		| { id: 'root' }
 		| { id: 'section'; slug: string }
 		| { id: 'advanced'; slug: string }
+		| { id: 'mcp-servers' }
 		| SettingsToolsView;
 
 	const pages = useSheetPages<Page>({ id: 'root' });
@@ -117,6 +119,8 @@
 				return section?.title ?? 'Settings';
 			case 'advanced':
 				return 'Advanced';
+			case 'mcp-servers':
+				return 'MCP servers';
 			case 'tools':
 				return 'Tools';
 			case 'tool-group':
@@ -291,6 +295,8 @@
 						{@render sectionPage()}
 					{:else if page.id === 'advanced'}
 						{@render fieldGroups(advancedFields)}
+					{:else if page.id === 'mcp-servers'}
+						<SettingsMcpServers />
 					{:else if page.id === 'tools' || page.id === 'tool-group' || page.id === 'tool'}
 						<SettingsSheetTools onOpen={openPage} view={page} />
 					{/if}
@@ -401,6 +407,7 @@
 			fields={group.fields}
 			localConfig={config}
 			onConfigChange={commit}
+			onManageMcpServers={() => openPage({ id: 'mcp-servers' })}
 			onThemeChange={setTheme}
 			title={group.title}
 		/>
