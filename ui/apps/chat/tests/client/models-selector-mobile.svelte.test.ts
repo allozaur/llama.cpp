@@ -1,5 +1,5 @@
-// Guards the phone model picker: the selector serves a phone a bottom drawer
-// with the same search and sections the desktop menu shows.
+// Guards the phone model picker: the selector serves a phone a bottom sheet with the
+// desktop menu's search and sections, opening on the models in reach when there are any.
 
 import ModelsSelector from '#lib/components/app/models/ModelsSelector/ModelsSelector.svelte';
 import { ServerRole } from '#lib/enums/index.ts';
@@ -41,16 +41,33 @@ describe('model picker drawer on a phone', () => {
 
 	afterEach(async () => {
 		modelsStore.models = [];
+		modelsStore.recentModelIds = [];
 		vi.restoreAllMocks();
 		await page.viewport(DESKTOP.width, DESKTOP.height);
 	});
 
-	it('opens the picker in a drawer', async () => {
+	it('opens the full list in a sheet when no model is in reach', async () => {
 		const screen = render(ModelsSelector);
 
 		await screen.getByRole('button').click();
 
-		await expect.element(screen.getByPlaceholder('Search models...')).toBeVisible();
+		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
+		await expect.element(screen.getByText('Local models')).toBeVisible();
+	});
+
+	it('opens on a recent model and grows to all of them', async () => {
+		modelsStore.recentModelIds = [other.id];
+
+		const screen = render(ModelsSelector);
+
+		await screen.getByRole('button').click();
+
+		await expect.element(screen.getByRole('button', { name: 'All models' })).toBeVisible();
+		await expect.element(screen.getByText('Local models')).not.toBeInTheDocument();
+		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
+
+		await screen.getByRole('button', { name: 'All models' }).click();
+
 		await expect.element(screen.getByText('Local models')).toBeVisible();
 	});
 });
