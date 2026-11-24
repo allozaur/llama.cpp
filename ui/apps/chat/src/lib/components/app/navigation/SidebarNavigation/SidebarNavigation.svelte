@@ -173,7 +173,6 @@
 
 	let renameDialogOpen = $state(false);
 	let settingsDialogOpen = $state(false);
-	let mcpDialogOpen = $state(false);
 	// a phone's settings: a sheet over the page, where a desktop or tablet opens the dialog
 	let settingsSheetOpen = $state(false);
 	let renameTargetConversationId = $state<string | null>(null);
@@ -544,12 +543,7 @@
 				openDialog(() => uiStore.openModelsManager());
 
 				break;
-			// dialogs on a desktop or tablet; on a phone, pages of their own
-			case SidebarAction.MCP:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.MCP_SERVERS));
-				else openDialog(() => (mcpDialogOpen = true));
-
-				break;
+			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
 				// the sheet rises over the sidebar, which stays open behind it
 				if (isOnMobile) settingsSheetOpen = true;
@@ -796,7 +790,7 @@
 
 <DialogSearch bind:open={searchOpen} onAction={handleSidebarAction} />
 
-<DialogMcpServers bind:open={mcpDialogOpen} />
+<DialogMcpServers bind:open={uiStore.mcpServersOpen} />
 
 <DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
 

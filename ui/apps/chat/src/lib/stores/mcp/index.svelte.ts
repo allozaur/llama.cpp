@@ -96,6 +96,11 @@ class MCPStore implements McpHealthHost {
 		);
 	}
 
+	/** Whether the Enable MCP setting is on. */
+	get isFeatureEnabled(): boolean {
+		return Boolean(settingsStore.config[SETTINGS_KEYS.ENABLE_MCP]);
+	}
+
 	get isInitialized(): boolean {
 		return this.connections.size > 0;
 	}
@@ -811,6 +816,8 @@ class MCPStore implements McpHealthHost {
 	}
 
 	hasAvailableServers(): boolean {
+		if (!this.isFeatureEnabled) return false;
+
 		return parseMcpServerSettings(settingsStore.config.mcpServers).some(
 			(s) => s.enabled && s.url.trim()
 		);
@@ -1093,6 +1100,8 @@ class MCPStore implements McpHealthHost {
 	 * Builds MCP client configuration from settings.
 	 */
 	private buildMcpClientConfig(cfg: SettingsConfigType): MCPClientConfig | undefined {
+		if (!cfg[SETTINGS_KEYS.ENABLE_MCP]) return undefined;
+
 		const rawServers = parseMcpServerSettings(cfg.mcpServers);
 
 		if (!rawServers.length) {
@@ -1270,6 +1279,8 @@ class MCPStore implements McpHealthHost {
 
 	/** Server ids that are usable right now: globally enabled ones. */
 	private globalEnabledServerIds(): Set<string> {
+		if (!this.isFeatureEnabled) return new Set();
+
 		return new Set(
 			this.getServers()
 				.filter((s) => s.enabled)

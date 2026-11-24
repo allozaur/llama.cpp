@@ -749,15 +749,15 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 			{
 				defaultValue: false,
 				group: 'MCP',
-				help: 'Show MCP in the sidebar, to add and manage MCP servers. Servers already added keep working while it is hidden.',
-				key: SETTINGS_KEYS.SHOW_MCP,
-				label: 'Show MCP',
+				help: 'Let chats use the tools, prompts and resources of MCP servers. While it is off, no MCP server is connected.',
+				key: SETTINGS_KEYS.ENABLE_MCP,
+				label: 'Enable MCP',
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
 				defaultValue: '[]',
 				group: 'MCP',
-				help: 'Configure MCP servers as a JSON list. Edit them on the MCP page.',
+				help: 'Configure MCP servers as a JSON list. Edit them with Manage MCP servers.',
 				key: SETTINGS_KEYS.MCP_SERVERS,
 				label: 'MCP servers',
 				standaloneField: false,
