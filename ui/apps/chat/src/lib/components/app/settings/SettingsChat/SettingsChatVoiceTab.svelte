@@ -21,6 +21,7 @@
 	import {
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		SETTING_CONFIG_INFO,
@@ -298,7 +299,7 @@
 
 			<div class="flex flex-col gap-1.5">
 				{#if group.title}
-					<h3 class={INSET_GROUP_CAPTION_CLASS}>{group.title}</h3>
+					<h3 class={INSET_GROUP_TITLE_CLASS}>{group.title}</h3>
 				{/if}
 
 				<div class="flex flex-col gap-6">

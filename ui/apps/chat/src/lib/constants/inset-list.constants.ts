@@ -10,7 +10,10 @@ export const SHEET_HEADER_BUTTON_CLASS =
 /** A rounded group of rows. */
 export const INSET_GROUP_CLASS = 'inset-group-surface flex flex-col overflow-hidden';
 
-/** A group's caption above it, or a note below it. */
+/** A group's title above it, set as the sidebar's section headings are on a phone. */
+export const INSET_GROUP_TITLE_CLASS = 'px-4 text-body font-medium text-muted-foreground';
+
+/** A note below a group. */
 export const INSET_GROUP_CAPTION_CLASS = 'px-4 text-caption text-muted-foreground';
 
 /** A row: tappable as a whole, its icon outside the divider, which stops short of both edges. */

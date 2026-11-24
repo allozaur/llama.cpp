@@ -31,6 +31,7 @@
 		ICON_CLASS_DEFAULT,
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		SETTINGS_KEYS,
@@ -272,7 +273,7 @@
 	</div>
 
 	<div class="flex flex-col gap-1.5">
-		<h3 class={INSET_GROUP_CAPTION_CLASS}>Shown argument</h3>
+		<h3 class={INSET_GROUP_TITLE_CLASS}>Shown argument</h3>
 
 		<section class={INSET_GROUP_CLASS}>
 			{#each [SHOWN_ARG_DEFAULT, SHOWN_ARG_NONE, ...argNames(entry.definition)] as option (option)}
