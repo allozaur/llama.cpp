@@ -395,6 +395,7 @@
 				checked={checkState.checked}
 				disabled={groupDisabled}
 				onCheckedChange={() => toolsPanel.toggleGroupByKey(group.key)}
+				size="lg"
 			/>
 		</span>
 	</div>
@@ -415,6 +416,7 @@
 					checked={checkState.checked}
 					disabled={groupDisabled}
 					onCheckedChange={() => toolsPanel.toggleGroupByKey(group.key)}
+					size="lg"
 				/>
 			</span>
 		</label>
@@ -433,6 +435,7 @@
 					<Switch
 						checked={toolsPanel.isToolEnabled(entry)}
 						onCheckedChange={() => toolsPanel.toggleTool(entry)}
+						size="lg"
 					/>
 				</span>
 			</label>
