@@ -40,9 +40,12 @@ export const SIDEBAR_SECTION_PREVIEW_COUNT = 6;
 /**
  * The "Show less" row of an opened section stays at the bottom of the sidebar
  * while the section scrolls under it, with room below it and a fade above
- * (see app.css). "Show more" is a plain row.
+ * (see app.css). "Show more" is a plain row. A phone's list keeps 1.5rem clear at
+ * its end for the fade above the pinned keys, which a sticky row stops short of, so
+ * there the row sticks into it and its surface fills it to the edge.
  */
-export const SIDEBAR_SHOW_MORE_ROW_CLASS = 'sidebar-show-more sticky bottom-0 z-10 pb-2';
+export const SIDEBAR_SHOW_MORE_ROW_CLASS =
+	'sidebar-show-more sticky bottom-0 z-10 pb-2 max-md:-bottom-6 max-md:pb-6';
 
 /** Ids of the sidebar's conversation sections, for their folded state. */
 export const SIDEBAR_SECTION_IDS = {
