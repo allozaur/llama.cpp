@@ -18,6 +18,13 @@ export interface ExtensionManifest {
 	/** Stays off until the user switches it on. */
 	disabledByDefault?: boolean;
 	/**
+	 * Whether the app can use the extension right now, read reactively: unless it returns true
+	 * the extension's contributions are left out, as if it were switched off, and they come back
+	 * when it does. Undefined says it is not known yet. For an extension that depends on what
+	 * the server offers.
+	 */
+	available?: () => boolean | undefined;
+	/**
 	 * Imports the extension's code. Called only when the extension is activated, so none of it
 	 * runs while the extension is off, and a build that splits chunks fetches it only then.
 	 */

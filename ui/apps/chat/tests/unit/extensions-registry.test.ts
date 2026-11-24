@@ -80,6 +80,37 @@ describe('ExtensionRegistry', () => {
 		expect(registry.isActive('test')).toBe(true);
 	});
 
+	it('leaves out the contributions of an extension that is not available', async () => {
+		const registry = new ExtensionRegistry();
+		const provider = makeProvider();
+
+		let available: boolean | undefined;
+
+		registry.register(
+			makeManifest(
+				{
+					activate(ctx) {
+						ctx.contribute('tools', provider);
+					}
+				},
+				{ available: () => available }
+			)
+		);
+		await registry.activateEnabled();
+
+		// not known yet: left out
+		expect(registry.contributions('tools')).toEqual([]);
+
+		available = false;
+
+		expect(registry.contributions('tools')).toEqual([]);
+
+		available = true;
+
+		expect(registry.contributions('tools')).toEqual([provider]);
+		expect(registry.isActive('test')).toBe(true);
+	});
+
 	it('does not load the code of an extension that is off', async () => {
 		const registry = new ExtensionRegistry();
 		const load = vi.fn(async () => ({ default: { activate() {} } }));

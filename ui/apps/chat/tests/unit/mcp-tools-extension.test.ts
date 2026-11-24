@@ -22,6 +22,7 @@ import {
 	enableAllToolsForServer,
 	policyEnabledServerIds
 } from '#lib/extensions/mcp/tools.ts';
+import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
@@ -58,6 +59,8 @@ function mockConnections(connections: Record<string, MCPConnection>) {
 }
 
 beforeEach(() => {
+	// as against a llama-server started with --agent
+	agenticMode.serverHasTools = true;
 	vi.restoreAllMocks();
 	// MCP is off until enabled: switch it on, so the empty tools panel can point at its servers
 	settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);

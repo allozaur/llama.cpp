@@ -11,6 +11,7 @@ vi.mock('#lib/services/database.service.ts', () => ({
 import { BuiltInTool, ToolSource } from '#lib/enums/index.ts';
 import type { Extension, ToolProvider } from '#lib/extensions/index.ts';
 import { extensions } from '#lib/extensions/index.ts';
+import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type { OpenAIToolDefinition, ToolEntry, ToolGroup } from '#lib/types/index.ts';
@@ -70,6 +71,8 @@ function group(serverId: string): ToolGroup {
 }
 
 beforeEach(() => {
+	// as against a llama-server started with --agent
+	agenticMode.serverHasTools = true;
 	vi.restoreAllMocks();
 	(toolsStore as unknown as { _serverTools: OpenAIToolDefinition[] })._serverTools = [
 		definition(BuiltInTool.SERVER_READ_FILE)

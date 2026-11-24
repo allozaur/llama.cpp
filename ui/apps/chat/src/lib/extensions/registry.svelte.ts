@@ -74,12 +74,20 @@ class ExtensionRegistry {
 			options.storageKey === undefined ? EXTENSIONS_LOCALSTORAGE_KEY : options.storageKey;
 	}
 
-	/** What the active extensions contribute to a point, in activation order. Reactive. */
+	/**
+	 * What the active extensions contribute to a point, in activation order. Reactive. Those of
+	 * an extension that is not available right now (see ExtensionManifest.available) are left out.
+	 */
 	contributions<P extends ExtensionPoint>(point: P): ExtensionPoints[P][] {
 		const result: ExtensionPoints[P][] = [];
+		const available: Record<string, boolean> = {};
 
 		for (const contribution of this._contributions) {
-			if (contribution.point === point) result.push(contribution.value as ExtensionPoints[P]);
+			if (contribution.point !== point) continue;
+
+			available[contribution.owner] ??= this.availability(contribution.owner) === true;
+
+			if (available[contribution.owner]) result.push(contribution.value as ExtensionPoints[P]);
 		}
 
 		return result;
@@ -163,6 +171,12 @@ class ExtensionRegistry {
 			this._errors.set(id, error instanceof Error ? error.message : String(error));
 			this._states.set(id, 'failed');
 		}
+	}
+
+	private availability(id: string): boolean | undefined {
+		const manifest = this._manifests.find((m) => m.id === id);
+
+		return manifest?.available ? manifest.available() : true;
 	}
 
 	private async deactivate(id: string): Promise<void> {

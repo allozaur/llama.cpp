@@ -19,11 +19,55 @@ afterEach(() => {
 	vi.resetModules();
 });
 
-describe('chat-only build', () => {
+// each case loads the modules again, which takes a while
+describe('chat-only build', { timeout: 30_000 }, () => {
 	it('is off unless the build sets the flag to false', async () => {
-		expect((await loadConstants()).AGENTIC_ENABLED).toBe(true);
-		expect((await loadConstants('true')).AGENTIC_ENABLED).toBe(true);
-		expect((await loadConstants('false')).AGENTIC_ENABLED).toBe(false);
+		const flag = async (agentic?: string) => {
+			vi.resetModules();
+
+			if (agentic !== undefined) vi.stubEnv('VITE_PUBLIC_AGENTIC', agentic);
+
+			return (await import('#lib/constants/app.constants.ts')).AGENTIC_ENABLED;
+		};
+
+		expect(await flag()).toBe(true);
+		expect(await flag('true')).toBe(true);
+		expect(await flag('false')).toBe(false);
+	});
+
+	it('is composed without the MCP extension', async () => {
+		vi.resetModules();
+
+		const full = await import('#lib/extensions/builtin.ts');
+
+		expect(full.BUILT_IN_EXTENSIONS.map((extension) => extension.id)).toContain('mcp');
+
+		vi.resetModules();
+		vi.stubEnv('VITE_PUBLIC_AGENTIC', 'false');
+
+		const chatOnly = await import('#lib/extensions/builtin.ts');
+
+		expect(chatOnly.BUILT_IN_EXTENSIONS).toEqual([]);
+	});
+
+	it('has MCP available only in agent mode, once the server has answered', async () => {
+		vi.resetModules();
+
+		const { agenticMode } = await import('#lib/stores/agentic-mode.svelte.ts');
+		const { serverStore } = await import('#lib/stores/llama-server.svelte.ts');
+		const { BUILT_IN_EXTENSIONS } = await import('#lib/extensions/builtin.ts');
+		const mcp = BUILT_IN_EXTENSIONS.find((extension) => extension.id === 'mcp');
+
+		expect(mcp?.available?.()).toBeUndefined();
+
+		serverStore.props = {} as typeof serverStore.props;
+		agenticMode.serverToolsKnown = true;
+
+		expect(mcp?.available?.()).toBe(false);
+
+		agenticMode.serverHasTools = true;
+
+		expect(mcp?.available?.()).toBe(true);
 	});
 
 	it('gives the tools store no tools', async () => {
@@ -42,7 +86,7 @@ describe('chat-only build', () => {
 	});
 });
 
-describe('agentic mode', () => {
+describe('agentic mode', { timeout: 30_000 }, () => {
 	it('is on only for a server that offers its tools or its proxy', async () => {
 		vi.resetModules();
 
