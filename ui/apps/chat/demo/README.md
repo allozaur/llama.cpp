@@ -32,6 +32,19 @@ demo/
 
 Videos are recorded through Chromium's screencast at `DEMO_SCALE` (2x by default, so 2880x1800) and 60 fps, starting once the page has settled.
 
+### A step only a person can do
+
+Some flows need a person: signing in to a third-party account, approving access. `DEMO_HEADED=1` records in a visible browser window, and `demo.manual(instruction, done)` hands that window over: the terminal prints the instruction, the script waits (up to 10 minutes) until the `done` locator is visible, then goes on. The wait is cut from the video, and a popup the step happens in is a window of its own that the recording never shows, so a password typed there stays out of it.
+
+```ts
+await demo.click(dialog.getByRole('button', { name: 'Sign in with Hugging Face' }));
+await demo.manual('sign in and authorize in the popup', dialog.getByText('Signed in as'));
+```
+
+`demo.visit(url, ready)` then opens another site in the recorded tab, with the load cut the same way: a link the app opens in a new tab is not recorded, so read its `href` and visit it.
+
+Such a demo uses the real account and whatever it does there is real. `demo:pr` records it the same way: `DEMO_HEADED=1 npm run demo:pr -- <number>`.
+
 ### Hugging Face bucket (videos, previews, scripts)
 
 The bucket must be public, since GitHub loads the preview from it:

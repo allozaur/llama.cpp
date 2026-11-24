@@ -23,6 +23,10 @@ interface Frame {
 export class ScreencastRecorder {
 	private readonly dir: string;
 	private readonly frames: Frame[] = [];
+	/** When the current pause began, in seconds; 0 while recording. */
+	private pausedAt = 0;
+	/** Seconds cut out by the pauses so far. */
+	private pausedFor = 0;
 	private readonly pending: Promise<void>[] = [];
 	private session: CDPSession | undefined;
 	private stoppedAt = 0;
@@ -75,6 +79,18 @@ export class ScreencastRecorder {
 		rmSync(this.dir, { force: true, recursive: true });
 	}
 
+	/** Leaves out what happens on the page until `resume()`: the video cuts straight across. */
+	pause(): void {
+		if (!this.pausedAt) this.pausedAt = Date.now() / 1000;
+	}
+
+	resume(): void {
+		if (!this.pausedAt) return;
+
+		this.pausedFor += Date.now() / 1000 - this.pausedAt;
+		this.pausedAt = 0;
+	}
+
 	async start(page: Page): Promise<void> {
 		const size = page.viewportSize();
 		const scale = await page.evaluate(() => window.devicePixelRatio);
@@ -88,7 +104,14 @@ export class ScreencastRecorder {
 
 			// acknowledged first: Chromium sends the next frame only after the ack
 			this.session?.send('Page.screencastFrameAck', { sessionId }).catch(() => {});
-			this.frames.push({ file, time: metadata.timestamp ?? Date.now() / 1000 });
+
+			if (this.pausedAt) return;
+
+			// times run on a clock with the pauses taken out, so the frames around one meet
+			this.frames.push({
+				file,
+				time: (metadata.timestamp ?? Date.now() / 1000) - this.pausedFor
+			});
 			this.pending.push(writeFile(file, Buffer.from(data, 'base64')));
 		});
 		await this.session.send('Page.startScreencast', {
@@ -101,7 +124,8 @@ export class ScreencastRecorder {
 	}
 
 	async stop(): Promise<void> {
-		this.stoppedAt = Date.now() / 1000;
+		this.resume();
+		this.stoppedAt = Date.now() / 1000 - this.pausedFor;
 		await this.session?.send('Page.stopScreencast').catch(() => {});
 		await this.session?.detach().catch(() => {});
 		await Promise.all(this.pending);

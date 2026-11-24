@@ -18,6 +18,10 @@ const VIDEOS_DIR = resolve(import.meta.dirname, 'videos');
 const APP_READY_TIMEOUT_MS = 90000;
 /** How far below the viewport's top a pinch has to start for Chromium to zoom at all. */
 const ZOOM_TOP_INSET_PX = 64;
+/** How long `demo.manual` waits for the person at the keyboard. */
+const MANUAL_STEP_TIMEOUT_MS = 10 * 60 * 1000;
+/** The recorder of each page, so a demo can pause it. */
+const recorders = new WeakMap<Page, ScreencastRecorder>();
 
 /**
  * Draws a fake cursor and click ripples, since recorded videos don't include
@@ -189,6 +193,33 @@ export class Demo {
 		await this.pause(ms);
 	}
 
+	/**
+	 * Hands the browser to the person at the keyboard for a step a script cannot do, such as
+	 * signing in to a third-party account, and goes on once `done` is visible. The wait is cut
+	 * from the video, and another window the step happens in (a sign-in popup) is never in it.
+	 * Needs a visible browser: `DEMO_HEADED=1`.
+	 */
+	async manual(instruction: string, done: Locator): Promise<void> {
+		if (!process.env.DEMO_HEADED) {
+			throw new Error(`demo: "${instruction}" is a manual step, record with DEMO_HEADED=1`);
+		}
+
+		const recorder = recorders.get(this.page);
+
+		// let the last action's frames in before the cut
+		await this.page.waitForTimeout(300);
+		recorder?.pause();
+		console.log(`\ndemo: your turn in the browser window: ${instruction}\n`);
+
+		try {
+			await done.waitFor({ timeout: MANUAL_STEP_TIMEOUT_MS });
+		} finally {
+			recorder?.resume();
+		}
+
+		await this.pause(600);
+	}
+
 	/** Glides the cursor to a point near the center of `target`. */
 	async moveTo(target: Locator): Promise<void> {
 		await target.scrollIntoViewIfNeeded();
@@ -256,6 +287,26 @@ export class Demo {
 			await this.page.waitForTimeout(
 				this.between(15, 45) + (/[\s.,!?]/.test(char) ? this.between(20, 60) : 0)
 			);
+		}
+
+		await this.pause(ms);
+	}
+
+	/**
+	 * Opens another page in the recorded tab, such as the site a link in the app leads to. The
+	 * load is cut from the video, which goes on once `ready` is visible.
+	 */
+	async visit(url: string, ready: Locator, ms = 1200): Promise<void> {
+		const recorder = recorders.get(this.page);
+
+		await this.page.waitForTimeout(300);
+		recorder?.pause();
+
+		try {
+			await this.page.goto(url);
+			await ready.waitFor({ timeout: APP_READY_TIMEOUT_MS });
+		} finally {
+			recorder?.resume();
 		}
 
 		await this.pause(ms);
@@ -514,6 +565,7 @@ export const test = base.extend<DemoOptions & { demo: Demo }>({
 
 		const recorder = new ScreencastRecorder(testInfo.outputPath('frames'));
 
+		recorders.set(page, recorder);
 		await recorder.start(page);
 		await use(page);
 		await recorder.stop();
