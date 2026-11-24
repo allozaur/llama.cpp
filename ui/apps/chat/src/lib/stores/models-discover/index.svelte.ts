@@ -73,6 +73,13 @@ class ModelsDiscoverStore {
 		return this.catalogSizeRanges.get(modelId);
 	}
 
+	/** Whether the catalog lists this repo as taking audio input. */
+	catalogSupportsAudio(modelId: string): boolean {
+		return this.catalog.some((entry) =>
+			entry.sizes.some((size) => size.audio && size.builds.some((build) => build.repo === modelId))
+		);
+	}
+
 	/** Catalog family description; undefined for a repo outside the curated catalog. */
 	descriptionFor(modelId: string): string | undefined {
 		return this.catalog.find((entry) =>

@@ -10,6 +10,7 @@
 		DropImportOverlay,
 		GlassKey,
 		MenuIcon,
+		Onboarding,
 		SidebarNavigation
 	} from '#lib/components/app/index.ts';
 	import { PwaMetaTags, PwaRefreshAlert } from '#lib/components/pwa/index.ts';
@@ -211,8 +212,23 @@
 		});
 	}
 
+	// Opens the onboarding on a first launch. Someone with chats is not new here, so for them
+	// it counts as done and never opens by itself.
+	async function startOnboardingOnFirstLaunch() {
+		if (uiStore.isOnboardingCompleted) return;
+
+		if (!conversationsStore.isInitialized) await conversationsStore.initialize();
+
+		if (conversationsStore.conversations.length > 0) {
+			uiStore.finishOnboarding();
+		} else {
+			uiStore.openOnboarding();
+		}
+	}
+
 	onMount(() => {
 		updateFavicon();
+		void startOnboardingOnFirstLaunch();
 		// snapshot of every backend running stream on first load, populates the sidebar spinners
 		// so the user sees each conv that has a live inference, even ones not opened yet
 		void chatStore.syncRemoteRunningStreams();
@@ -464,6 +480,8 @@
 			</div>
 		{/if}
 	</div>
+
+	<Onboarding />
 
 	<ModeWatcher />
 
