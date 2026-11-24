@@ -227,11 +227,6 @@
 		return () => cancelAnimationFrame(handle);
 	});
 
-	// a phone opens a tapped model's details over the picker; their chat actions put it to use
-	function openDetails(modelId: string) {
-		uiStore.openModelDetails(modelId);
-	}
-
 	export function open() {
 		ms.handleOpenChange(true);
 	}
@@ -313,7 +308,7 @@
 			onOpenChange={ms.handleOpenChange}
 			onSearchChange={(v) => ms.setSearchTerm(v)}
 			onSearchKeyDown={handleSearchKeyDown}
-			onSelect={openDetails}
+			onSelect={ms.handleSelect}
 			{quickItems}
 			searchTerm={ms.searchTerm}
 			{showReasoning}
@@ -357,7 +352,7 @@
 		onOpenChange={ms.handleOpenChange}
 		onSearchChange={(v) => ms.setSearchTerm(v)}
 		onSearchKeyDown={handleSearchKeyDown}
-		onSelect={openDetails}
+		onSelect={ms.handleSelect}
 		{quickItems}
 		searchTerm={ms.searchTerm}
 		{showReasoning}
