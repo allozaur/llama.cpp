@@ -858,6 +858,7 @@
 						isVoiceRefining={voice.isRefining}
 						micWarning={micUnavailableReason ?? micError}
 						onFileUpload={handleFileUpload}
+						onFilesSelect={handleFileSelect}
 						onMicClick={handleMicClick}
 						{onStop}
 						onSystemPromptClick={() =>

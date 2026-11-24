@@ -1,15 +1,20 @@
 <script lang="ts">
-	import { Checkbox } from '@ggml-org/llama-ui/ui/checkbox';
-	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
-	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
+	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 	import {
-		ChevronDown,
+		Braces,
+		Camera,
+		ChevronLeft,
 		ChevronRight,
 		File,
 		Folder,
+		Globe,
+		Info,
+		Loader2,
 		MessageSquare,
-		PencilRuler
+		PencilRuler,
+		Server,
+		X
 	} from '@lucide/svelte';
 	import {
 		ATTACHMENT_FILE_ITEMS,
@@ -20,11 +25,14 @@
 	} from '#lib/constants/index.ts';
 	import { getChatFormActionsContext } from '#lib/contexts/index.ts';
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
-	import { ModelModality } from '#lib/enums/index.ts';
+	import { ModelModality, ToolSource } from '#lib/enums/index.ts';
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
+	import { toolsStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
 	import type { Component, Snippet } from 'svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { fly } from 'svelte/transition';
 
 	interface Props {
 		class?: string;
@@ -35,8 +43,28 @@
 
 	const chatFormActions = getChatFormActionsContext();
 
+	/** The sheet's pages: the root menu, the tools list, and one tool group's tools. */
+	type Page = { id: 'root' } | { id: 'tools' } | { groupKey: string; id: 'group' };
+
 	let drawerOpen = $state(false);
-	let toolsExpanded = $state(false);
+	let stack = $state<Page[]>([{ id: 'root' }]);
+	// 1 slides the next page in from the right, -1 brings the previous one back from the left
+	let direction = $state(1);
+
+	const page = $derived(stack[stack.length - 1]);
+	const pageKey = $derived(page.id === 'group' ? `group:${page.groupKey}` : page.id);
+
+	// the root page's height, kept as the floor for the pages pushed over it so the sheet does not jump
+	let rootHeight = $state(0);
+
+	const TOOL_SOURCE_ICONS: Partial<Record<ToolSource, Component>> = {
+		[ToolSource.BROWSER]: Globe,
+		[ToolSource.CUSTOM]: Braces,
+		[ToolSource.SERVER]: Server
+	};
+
+	let cameraInput: HTMLInputElement | undefined = $state();
+	let photosInput: HTMLInputElement | undefined = $state();
 
 	const attachmentMenu = useAttachmentMenu(
 		() => ({
@@ -74,148 +102,375 @@
 			.filter((modality) => modality !== undefined)
 	);
 
+	// the camera and the photo library only make sense for a model that can see what they give
+	const canAddMedia = $derived(
+		chatFormActions.hasVisionModality && !!chatFormActions.onFilesSelect
+	);
+	const photosAccept = $derived(chatFormActions.hasVideoModality ? 'image/*,video/*' : 'image/*');
+
 	const toolsPanel = useToolsPanel();
+	const allGroups = $derived([...toolsPanel.categoryGroups, ...toolsPanel.mcpGroups]);
+	const enabledToolCount = $derived(
+		allGroups.reduce((n, group) => n + toolsPanel.getEnabledToolCount(group), 0)
+	);
+	const currentGroup = $derived(
+		page.id === 'group' ? allGroups.find((group) => group.key === page.groupKey) : undefined
+	);
 
-	const itemClass =
-		'flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-body-sm transition-colors hover:bg-accent active:bg-accent disabled:cursor-not-allowed disabled:opacity-50';
+	const title = $derived.by(() => {
+		if (page.id === 'tools') return ATTACHMENT_MENU_TEXT.TOOLS;
 
-	const itemRowClass =
-		'flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-body-sm transition-colors hover:bg-accent';
+		if (page.id === 'group') return currentGroup?.label ?? ATTACHMENT_MENU_TEXT.TOOLS;
+
+		return ATTACHMENT_MENU_TEXT.ADD_TO_CHAT;
+	});
+
+	function open() {
+		stack = [{ id: 'root' }];
+		drawerOpen = true;
+	}
+
+	function push(next: Page) {
+		if (next.id === 'tools') toolsPanel.handleOpen();
+
+		direction = 1;
+		stack = [...stack, next];
+	}
+
+	function pop() {
+		direction = -1;
+		stack = stack.slice(0, -1);
+	}
+
+	function handleMediaSelect(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const files = input.files ? Array.from(input.files) : [];
+
+		// cleared so the same photo can be picked again
+		input.value = '';
+
+		if (files.length === 0) return;
+
+		drawerOpen = false;
+		chatFormActions.onFilesSelect?.(files);
+	}
+
+	function pageTransition(node: Element, { incoming }: { incoming: boolean }) {
+		const offset = prefersReducedMotion.current ? 0 : 32;
+		const sign = incoming ? direction : -direction;
+
+		return fly(node, { duration: 220, opacity: 0, x: sign * offset });
+	}
+
+	const headerButtonClass =
+		'matte-key flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
+	const groupClass = 'inset-group-surface flex flex-col overflow-hidden';
+	const rowClass =
+		'group/row flex min-h-12 w-full items-center gap-3 pl-4 text-left text-body transition-colors active:bg-(--surface-pressed) disabled:pointer-events-none disabled:opacity-50';
+	// the divider starts at the label, as in a native inset list, and is dropped on the first row
+	const rowBodyClass =
+		'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 pr-4 group-first/row:border-t-0';
 </script>
+
+<!-- hidden pickers: capture opens the camera on phones, the plain image input the photo library -->
+<input
+	bind:this={cameraInput}
+	accept="image/*"
+	capture="environment"
+	class="hidden"
+	onchange={handleMediaSelect}
+	type="file"
+/>
+
+<input
+	bind:this={photosInput}
+	accept={photosAccept}
+	class="hidden"
+	multiple
+	onchange={handleMediaSelect}
+	type="file"
+/>
 
 <div class="flex items-center gap-1 {className}">
 	<Drawer.Root bind:open={drawerOpen}>
-		{@render trigger({ disabled: chatFormActions.disabled, onclick: () => (drawerOpen = true) })}
+		{@render trigger({ disabled: chatFormActions.disabled, onclick: open })}
 
-		<Drawer.Content class="gap-0 overflow-y-auto">
-			<Drawer.Header>
-				<Drawer.Title>{ATTACHMENT_MENU_TEXT.ADD_TO_CHAT}</Drawer.Title>
-
-				<Drawer.Description class="sr-only">
-					{ATTACHMENT_MENU_TEXT.DESCRIPTION}
-				</Drawer.Description>
-			</Drawer.Header>
-
-			<div class="flex flex-col gap-1 px-1.5 pb-2">
-				<button
-					class={itemClass}
-					onclick={() => attachmentMenu.callbacks[AttachmentAction.FILE_UPLOAD]()}
-					type="button"
-				>
-					<File class="{ICON_CLASS_DEFAULT} shrink-0" />
-
-					<span class="flex min-w-0 items-center gap-2">
-						<span>{ATTACHMENT_MENU_TEXT.ADD_FILES}</span>
-
-						{#if supportedModalities.length > 0}
-							<span class="flex items-center gap-0.75 text-muted-foreground">
-								{#each supportedModalities as modality (modality.label)}
-									<Tooltip.Root>
-										<Tooltip.Trigger>
-											<modality.icon class="size-2.75" />
-										</Tooltip.Trigger>
-
-										<Tooltip.Content>
-											<p>{modality.label}</p>
-										</Tooltip.Content>
-									</Tooltip.Root>
-								{/each}
-							</span>
-						{/if}
-					</span>
-				</button>
-
-				<button
-					class={itemClass}
-					onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
-					type="button"
-				>
-					<MessageSquare class="{ICON_CLASS_DEFAULT} shrink-0" />
-
-					<span>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
-				</button>
-
-				{#if chatFormActions.onWorkingDirectoryClick}
+		<Drawer.Content class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh]">
+			<header class="grid shrink-0 grid-cols-[5.5rem_1fr_5.5rem] items-center px-3 pt-2 pb-3">
+				{#if stack.length > 1}
 					<button
-						class={itemClass}
-						onclick={() => {
-							drawerOpen = false;
-							chatFormActions.onWorkingDirectoryClick?.();
-						}}
+						aria-label={ATTACHMENT_MENU_TEXT.BACK}
+						class={headerButtonClass}
+						onclick={pop}
 						type="button"
 					>
-						<Folder class="{ICON_CLASS_DEFAULT} shrink-0" />
+						<ChevronLeft class="size-5" />
+					</button>
+				{:else}
+					<Drawer.Close aria-label={ATTACHMENT_MENU_TEXT.CLOSE} class={headerButtonClass}>
+						<X class={ICON_CLASS_DEFAULT} />
+					</Drawer.Close>
+				{/if}
 
-						<span class="truncate">{chatFormActions.workingDirectoryLabel}</span>
+				<Drawer.Title class="truncate text-center text-body font-semibold">{title}</Drawer.Title>
+
+				{#if page.id === 'root' && canAddMedia}
+					<button
+						class="justify-self-end rounded-full px-2 py-1.5 text-body text-muted-foreground transition-colors active:text-foreground"
+						onclick={() => photosInput?.click()}
+						type="button"
+					>
+						{ATTACHMENT_MENU_TEXT.PHOTOS}
 					</button>
 				{/if}
+			</header>
 
-				{#if toolsPanel.totalToolCount > 0}
-					<Collapsible.Root onOpenChange={(open) => (toolsExpanded = open)} open={toolsExpanded}>
-						<Collapsible.Trigger class={itemClass}>
-							{#if toolsExpanded}
-								<ChevronDown class="{ICON_CLASS_DEFAULT} shrink-0" />
-							{:else}
-								<ChevronRight class="{ICON_CLASS_DEFAULT} shrink-0" />
-							{/if}
+			<Drawer.Description class="sr-only">{ATTACHMENT_MENU_TEXT.DESCRIPTION}</Drawer.Description>
 
-							<PencilRuler class="inline {ICON_CLASS_DEFAULT} shrink-0" />
-
-							<span class="flex-1">{ATTACHMENT_MENU_TEXT.TOOLS}</span>
-						</Collapsible.Trigger>
-
-						<Collapsible.Content>
-							<div class="flex flex-col gap-0.5 pl-4">
-								{#each toolsPanel.categoryGroups as group (group.key)}
-									{@render groupRow(group)}
-								{/each}
-
-								{#each toolsPanel.mcpGroups as group (group.key)}
-									{@render groupRow(group)}
-								{/each}
-							</div>
-						</Collapsible.Content>
-					</Collapsible.Root>
-				{/if}
+			<div
+				style:min-height={page.id !== 'root' && rootHeight ? `${rootHeight}px` : undefined}
+				class="grid min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+			>
+				{#key pageKey}
+					<div
+						bind:clientHeight={
+							() => rootHeight,
+							(height) => {
+								if (page.id === 'root' && height) rootHeight = height;
+							}
+						}
+						in:pageTransition={{ incoming: true }}
+						out:pageTransition={{ incoming: false }}
+						class="col-start-1 row-start-1 flex flex-col gap-4 px-3 pb-[max(1rem,env(safe-area-inset-bottom))]"
+					>
+						{#if page.id === 'root'}
+							{@render rootPage()}
+						{:else if page.id === 'tools'}
+							{@render toolsPage()}
+						{:else if currentGroup}
+							{@render groupPage(currentGroup)}
+						{/if}
+					</div>
+				{/key}
 			</div>
 		</Drawer.Content>
 	</Drawer.Root>
 </div>
 
+{#snippet rootPage()}
+	<section class={groupClass}>
+		{#if canAddMedia}
+			<button class={rowClass} onclick={() => cameraInput?.click()} type="button">
+				<Camera class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+				<span class={rowBodyClass}>{ATTACHMENT_MENU_TEXT.CAMERA}</span>
+			</button>
+		{/if}
+
+		<button
+			class={rowClass}
+			onclick={() => attachmentMenu.callbacks[AttachmentAction.FILE_UPLOAD]()}
+			type="button"
+		>
+			<File class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+			<span class={rowBodyClass}>
+				<span class="flex-1">{ATTACHMENT_MENU_TEXT.ADD_FILES}</span>
+
+				{#if supportedModalities.length > 0}
+					<span class="flex items-center gap-1 text-muted-foreground">
+						{#each supportedModalities as modality (modality.label)}
+							<modality.icon aria-label={modality.label} class="size-3" />
+						{/each}
+					</span>
+				{/if}
+			</span>
+		</button>
+	</section>
+
+	<section class={groupClass}>
+		<button
+			class={rowClass}
+			onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
+			type="button"
+		>
+			<MessageSquare class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+			<span class={rowBodyClass}>{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
+		</button>
+
+		{#if chatFormActions.onWorkingDirectoryClick}
+			<button
+				class={rowClass}
+				onclick={() => {
+					drawerOpen = false;
+					chatFormActions.onWorkingDirectoryClick?.();
+				}}
+				type="button"
+			>
+				<Folder class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+				<span class={rowBodyClass}>
+					<span class="shrink-0">{ATTACHMENT_MENU_TEXT.WORKING_DIRECTORY}</span>
+
+					<span class="min-w-0 flex-1 truncate text-right text-body-sm text-muted-foreground">
+						{chatFormActions.workingDirectory ?? ATTACHMENT_MENU_TEXT.NONE}
+					</span>
+
+					<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
+				</span>
+			</button>
+		{/if}
+
+		<button class={rowClass} onclick={() => push({ id: 'tools' })} type="button">
+			<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+			<span class={rowBodyClass}>
+				<span class="flex-1">{ATTACHMENT_MENU_TEXT.TOOLS}</span>
+
+				{#if toolsPanel.totalToolCount > 0}
+					<span class="text-body-sm text-muted-foreground tabular-nums">
+						{enabledToolCount}/{toolsPanel.totalToolCount}
+					</span>
+				{/if}
+
+				<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
+			</span>
+		</button>
+	</section>
+{/snippet}
+
+{#snippet toolsPage()}
+	{#if toolsPanel.totalToolCount === 0}
+		<section class="{groupClass} px-4 py-4 text-body-sm text-muted-foreground">
+			{#if toolsStore.loading}
+				<span class="flex items-center justify-center gap-2">
+					<Loader2 class="{ICON_CLASS_DEFAULT} animate-spin" />
+
+					Loading tools...
+				</span>
+			{:else if toolsStore.error && !toolsStore.isToolsEndpointUnreachable}
+				<span class="text-center">Failed to load tools</span>
+			{:else}
+				<span class="flex gap-2">
+					<Info class="mt-0.5 {ICON_CLASS_DEFAULT} shrink-0" />
+
+					<span>{toolsPanel.noToolsInfoMessage ?? 'No tools available'}</span>
+				</span>
+			{/if}
+		</section>
+	{:else}
+		{#if toolsPanel.categoryGroups.length > 0}
+			<section class={groupClass}>
+				{#each toolsPanel.categoryGroups as group (group.key)}
+					{@render groupRow(group)}
+				{/each}
+			</section>
+		{/if}
+
+		{#if toolsPanel.mcpGroups.length > 0}
+			<div class="flex flex-col gap-1.5">
+				<h3 class="px-4 text-caption text-muted-foreground uppercase">
+					{ATTACHMENT_MENU_TEXT.MCP_SERVERS}
+				</h3>
+
+				<section class={groupClass}>
+					{#each toolsPanel.mcpGroups as group (group.key)}
+						{@render groupRow(group)}
+					{/each}
+				</section>
+			</div>
+		{/if}
+	{/if}
+{/snippet}
+
 {#snippet groupRow(group: ToolGroup)}
 	{@const checkState = toolsPanel.getGroupCheckState(group)}
-	{@const enabledCount = toolsPanel.getEnabledToolCount(group)}
 	{@const favicon = toolsPanel.getFavicon(group)}
 	{@const groupDisabled = toolsPanel.isGroupDisabled(group)}
 
-	<button
-		class="{itemRowClass} {groupDisabled ? 'pointer-events-none opacity-50' : ''}"
-		onclick={() => toolsPanel.toggleGroupByKey(group.key)}
-		type="button"
-	>
-		{#if favicon}
-			<img
-				alt=""
-				class="{ICON_CLASS_DEFAULT} shrink-0 rounded-sm"
-				onerror={(e) => {
-					(e.currentTarget as HTMLImageElement).style.display = 'none';
-				}}
-				src={favicon}
+	<div class="group/row flex min-h-12 items-center pl-4 {groupDisabled ? 'opacity-50' : ''}">
+		<button
+			class="flex min-h-12 min-w-0 flex-1 items-center gap-3 self-stretch text-left text-body"
+			onclick={() => push({ groupKey: group.key, id: 'group' })}
+			type="button"
+		>
+			{#if favicon}
+				<img
+					alt=""
+					class="{ICON_CLASS_DEFAULT} shrink-0 rounded-sm"
+					onerror={(e) => {
+						(e.currentTarget as HTMLImageElement).style.display = 'none';
+					}}
+					src={favicon}
+				/>
+			{:else}
+				{@const SourceIcon = TOOL_SOURCE_ICONS[group.source] ?? Server}
+				<SourceIcon class="{ICON_CLASS_DEFAULT} shrink-0" />
+			{/if}
+
+			<span
+				class="flex min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 group-first/row:border-t-0"
+			>
+				<span class="min-w-0 flex-1 truncate">{group.label}</span>
+
+				<span class="text-body-sm text-muted-foreground tabular-nums">
+					{toolsPanel.getEnabledToolCount(group)}/{group.tools.length}
+				</span>
+
+				<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
+			</span>
+		</button>
+
+		<span
+			class="flex items-center self-stretch border-t border-border/60 pr-4 pl-3 group-first/row:border-t-0"
+		>
+			<Switch
+				aria-label="{checkState.checked ? 'Disable' : 'Enable'} {group.label}"
+				checked={checkState.checked}
+				disabled={groupDisabled}
+				onCheckedChange={() => toolsPanel.toggleGroupByKey(group.key)}
 			/>
-		{/if}
-
-		<span class="min-w-0 flex-1 truncate text-label">{group.label}</span>
-
-		<span class="shrink-0 text-caption text-muted-foreground">
-			{enabledCount}/{group.tools.length}
 		</span>
+	</div>
+{/snippet}
 
-		<Checkbox
-			checked={checkState.checked}
-			class="{ICON_CLASS_DEFAULT} shrink-0"
-			indeterminate={checkState.indeterminate}
-			onCheckedChange={() => toolsPanel.toggleGroupByKey(group.key)}
-			onclick={(e) => e.stopPropagation()}
-		/>
-	</button>
+{#snippet groupPage(group: ToolGroup)}
+	{@const checkState = toolsPanel.getGroupCheckState(group)}
+	{@const groupDisabled = toolsPanel.isGroupDisabled(group)}
+
+	<section class="{groupClass} {groupDisabled ? 'opacity-50' : ''}">
+		<label class="{rowClass} cursor-pointer">
+			<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
+
+			<span class={rowBodyClass}>
+				<span class="flex-1">{ATTACHMENT_MENU_TEXT.ALL_TOOLS}</span>
+
+				<Switch
+					checked={checkState.checked}
+					disabled={groupDisabled}
+					onCheckedChange={() => toolsPanel.toggleGroupByKey(group.key)}
+				/>
+			</span>
+		</label>
+	</section>
+
+	<section class={groupClass}>
+		{#each group.tools as entry (entry.key)}
+			{@const parentDisabled = toolsPanel.isToolParentDisabled(entry)}
+
+			<label class="{rowClass} cursor-pointer {parentDisabled ? 'opacity-50' : ''}">
+				<span class={rowBodyClass}>
+					<span class="min-w-0 flex-1 truncate font-mono text-body-sm">
+						{entry.definition.function.name}
+					</span>
+
+					<Switch
+						checked={toolsPanel.isToolEnabled(entry)}
+						onCheckedChange={() => toolsPanel.toggleTool(entry)}
+					/>
+				</span>
+			</label>
+		{/each}
+	</section>
 {/snippet}
