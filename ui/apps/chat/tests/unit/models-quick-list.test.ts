@@ -21,6 +21,34 @@ describe('pickQuickModels', () => {
 		).toEqual(['b', 'd', 'e']);
 	});
 
+	it("leads with the chat's model and the dictation model", () => {
+		expect(
+			ids(
+				pickQuickModels({
+					activeId: 'c',
+					dictationModel: 'e',
+					favoriteIds: new Set(['d']),
+					limit: 6,
+					loadedIds: new Set(['b', 'c']),
+					options,
+					recentIds: ['a']
+				})
+			)
+		).toEqual(['c', 'e', 'b', 'd', 'a']);
+	});
+
+	it('is empty when nothing is in reach', () => {
+		expect(
+			pickQuickModels({
+				favoriteIds: new Set(),
+				limit: 6,
+				loadedIds: new Set(),
+				options,
+				recentIds: []
+			})
+		).toEqual([]);
+	});
+
 	it('stops at the limit', () => {
 		expect(
 			ids(

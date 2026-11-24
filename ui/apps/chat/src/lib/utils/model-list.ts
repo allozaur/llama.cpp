@@ -49,21 +49,27 @@ export function filterModelOptions(options: ModelOption[], searchTerm: string): 
 }
 
 /**
- * The few models a phone's picker shows before its full list: the loaded ones, then favorites,
- * then the recently picked, each once and in that order, up to `limit`. Recent ids are option ids.
+ * The few models a phone's picker opens with: the chat's model, the one that transcribes
+ * dictation, the loaded ones, then favorites, then the recently picked, each once and in that
+ * order, up to `limit`. The active and recent ids are option ids, the dictation model's a model.
  */
 export function pickQuickModels(input: {
+	activeId?: string | null;
+	dictationModel?: string | null;
 	favoriteIds: Set<string>;
 	limit: number;
 	loadedIds: Set<string>;
 	options: ModelOption[];
 	recentIds: string[];
 }): ModelItem[] {
-	const { favoriteIds, limit, loadedIds, options, recentIds } = input;
+	const { activeId, dictationModel, favoriteIds, limit, loadedIds, options, recentIds } = input;
 	const picked: ModelOption[] = [];
 	const add = (option: ModelOption | undefined) => {
 		if (option && picked.length < limit && !picked.includes(option)) picked.push(option);
 	};
+
+	add(options.find((option) => option.id === activeId));
+	add(options.find((option) => option.model === dictationModel));
 
 	for (const option of options) if (loadedIds.has(option.id)) add(option);
 	for (const option of options) if (favoriteIds.has(option.model)) add(option);

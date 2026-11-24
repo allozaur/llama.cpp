@@ -77,7 +77,7 @@
 		/** A tapped model: switches the chat to it, loading it if need be. */
 		onSelect?: (modelId: string) => void;
 		open?: boolean;
-		/** The few models the sheet opens with; none leaves it to the full list. */
+		/** The few models the sheet opens with: the chat's, the dictation's, and those in reach. */
 		quickItems?: ModelItem[];
 		searchTerm?: string;
 		/** The chat's reasoning effort, as a row that opens its levels. */
@@ -113,8 +113,9 @@
 	let scrollEl = $state<HTMLDivElement>();
 
 	let isSearching = $derived(searchTerm.trim().length > 0);
-	// the full list: its own page, a search's results, or all there is with no quick rows
-	let showFull = $derived(page.id === 'all' || isSearching || quickItems.length === 0);
+	// the full list: its own page or a search's results; the sheet opens on the short view even
+	// when no model is in reach, with the reasoning effort and the way to all of them
+	let showFull = $derived(page.id === 'all' || isSearching);
 	let hasEffort = $derived(showReasoning && reasoning.levels.length > 0);
 	let effortLabel = $derived(REASONING_EFFORT_LABELS[reasoning.currentEffort] ?? '');
 
@@ -393,11 +394,15 @@
 						{/if}
 					{:else}
 						<!-- plain rows in one rounded group, as the add sheet's -->
-						<section class={INSET_GROUP_CLASS}>
-							{#each quickItems as item (item.option.id)}
-								{@render modelRow(item)}
-							{/each}
-						</section>
+						{#if quickItems.length > 0}
+							<section class={INSET_GROUP_CLASS}>
+								{#each quickItems as item (item.option.id)}
+									{@render modelRow(item)}
+								{/each}
+							</section>
+						{:else if isEmpty}
+							<p class="px-4 text-body-sm text-muted-foreground">{emptyMessage}</p>
+						{/if}
 
 						{#if hasEffort}
 							{@render effortRow()}

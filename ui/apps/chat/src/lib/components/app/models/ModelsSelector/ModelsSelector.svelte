@@ -23,7 +23,8 @@
 		modelsStore,
 		serverStore,
 		settingsStore,
-		uiStore
+		uiStore,
+		voiceStore
 	} from '#lib/stores/index.ts';
 	import { modelLoadFraction, pickQuickModels } from '#lib/utils/index.ts';
 	import { untrack } from 'svelte';
@@ -95,9 +96,12 @@
 	/** How many models a phone's picker opens with, before its full list. */
 	const QUICK_MODEL_COUNT = 6;
 
-	// the models in reach on a phone: the loaded ones, favorites, then the recently picked
+	// the models in reach on a phone: the chat's, the dictation's, the loaded ones, favorites,
+	// then the recently picked
 	let quickItems = $derived(
 		pickQuickModels({
+			activeId: ms.activeId,
+			dictationModel: voiceStore.dictationModel,
 			favoriteIds: modelsStore.favoriteModelIds,
 			limit: QUICK_MODEL_COUNT,
 			loadedIds: new Set(ms.loadedItems.map((item) => item.option.id)),

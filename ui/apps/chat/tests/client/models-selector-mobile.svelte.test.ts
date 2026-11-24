@@ -46,30 +46,31 @@ describe('model picker drawer on a phone', () => {
 		await page.viewport(DESKTOP.width, DESKTOP.height);
 	});
 
-	it('opens the full list in a sheet when no model is in reach', async () => {
+	it("opens on the short view with the chat's model, even with no other in reach", async () => {
 		const screen = render(ModelsSelector);
 
 		await screen.getByRole('button').click();
 
-		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
+		await expect.element(screen.getByRole('button', { name: 'All models' })).toBeVisible();
 		await expect.element(screen.getByText('Q4_K_M')).toBeVisible();
-		await expect.element(screen.getByText('Q8_0')).toBeVisible();
+		await expect.element(screen.getByText('Q8_0')).not.toBeInTheDocument();
+		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
 	});
 
-	it('opens on a recent model and lists them all on their page', async () => {
+	it("lists the chat's model and a recent one, and all of them on their page", async () => {
 		modelsStore.recentModelIds = [other.id];
 
 		const screen = render(ModelsSelector);
 
 		await screen.getByRole('button').click();
 
-		await expect.element(screen.getByRole('button', { name: 'All models' })).toBeVisible();
+		await expect.element(screen.getByText('Q4_K_M')).toBeVisible();
 		await expect.element(screen.getByText('Q8_0')).toBeVisible();
-		await expect.element(screen.getByText('Q4_K_M')).not.toBeInTheDocument();
 		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
 
 		await screen.getByRole('button', { name: 'All models' }).click();
 
+		await expect.element(screen.getByRole('heading', { name: 'All models' })).toBeVisible();
 		await expect.element(screen.getByText('Q4_K_M')).toBeVisible();
 	});
 });
