@@ -351,10 +351,11 @@
 				</button>
 			{/if}
 
+			<!-- 16px at least, or iOS zooms the page in on focus -->
 			<input
 				aria-label={field.label}
 				autocomplete="off"
-				class="h-9 w-20 shrink-0 rounded-lg border-0 bg-(--surface-muted) px-2.5 text-right text-body-sm tabular-nums shadow-none outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-(--line-focus) {custom
+				class="h-9 w-20 shrink-0 rounded-lg border-0 bg-(--surface-muted) px-2.5 text-right text-body tabular-nums shadow-none outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-(--line-focus) {custom
 					? 'text-foreground'
 					: ''}"
 				inputmode="decimal"
