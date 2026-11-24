@@ -11,6 +11,7 @@
  */
 
 import {
+	type Authorization,
 	type ContentPart,
 	createHarness,
 	type InferenceClient,
@@ -21,7 +22,7 @@ import {
 	type ToolContext,
 	type ToolResult
 } from '@ggml-org/llama-harness';
-import { DEFAULT_AGENTIC_CONFIG, NEWLINE } from '#lib/constants/index.ts';
+import { DEFAULT_AGENTIC_CONFIG, NEWLINE, TOOL_DENIED_RESULT } from '#lib/constants/index.ts';
 import {
 	AUDIO_MIME_TO_EXTENSION,
 	DATA_URI_BASE64_REGEX,
@@ -413,6 +414,34 @@ class AgenticStore {
 		}
 	}
 
+	/**
+	 * The permission gate as the harness's authorize: the user's answer, or
+	 * the end of the run when it is stopped while the prompt is open.
+	 */
+	private async authorizeTool(
+		conversationId: string,
+		toolCall: ToolCall,
+		signal?: AbortSignal
+	): Promise<Authorization> {
+		const toolName = toolCall.function.name;
+		const permission = await this.gates.requestPermission(
+			conversationId,
+			toolName,
+			toolsStore.getToolServerLabel(toolName),
+			toolCall.id,
+			signal
+		);
+
+		// Yield to allow Svelte to flush the UI update (hide permission dialog)
+		await new Promise((r) => setTimeout(r, 0));
+
+		throwIfAborted(signal);
+
+		return permission === ToolPermissionDecision.DENY
+			? { reason: TOOL_DENIED_RESULT, type: 'deny' }
+			: { type: 'allow' };
+	}
+
 	private buildAttachmentName(mimeType: string, index: number): string {
 		const extension = mimeType.startsWith(MimeTypePrefix.AUDIO)
 			? (AUDIO_MIME_TO_EXTENSION[mimeType] ?? DEFAULT_AUDIO_EXTENSION)
@@ -596,6 +625,7 @@ class AgenticStore {
 		// result messages of streaming tools, created while the tool runs, by tool call id
 		const streamedResults = new SvelteMap<string, { content: string; messageId: string }>();
 		const events = harness.run(toAgenticMessages(messages) as Message[], harnessTools, signal, {
+			authorize: (toolCall, runSignal) => this.authorizeTool(conversationId, toolCall, runSignal),
 			interrupted: () => this.gates.hasPendingSteeringMessage(conversationId),
 			maxTurns: agenticConfig.maxTurns,
 			onTurnLimit: async () => {
@@ -765,8 +795,8 @@ class AgenticStore {
 	}
 
 	/**
-	 * A tool of the harness: the permission gate, then the call, then the
-	 * result with its media taken out of the text.
+	 * A tool of the harness, run once authorize allowed it: the call, then the
+	 * attachments of its result.
 	 */
 	private async executeTool(params: {
 		callbacks: AgenticFlowCallbacks;
@@ -776,24 +806,6 @@ class AgenticStore {
 		toolCall: ToolCall;
 	}): Promise<ToolResult> {
 		const { callbacks, context, conversationId, effectiveModel, toolCall } = params;
-		const toolName = toolCall.function.name;
-		const serverLabel = toolsStore.getToolServerLabel(toolName);
-		// Ask for permission before executing the tool
-		const permission = await this.gates.requestPermission(
-			conversationId,
-			toolName,
-			serverLabel,
-			toolCall.id,
-			context.signal
-		);
-
-		// Yield to allow Svelte to flush the UI update (hide permission dialog)
-		await new Promise((r) => setTimeout(r, 0));
-
-		throwIfAborted(context.signal);
-
-		// the time waiting for permission does not count
-		const toolStartTime = performance.now();
 
 		let execution: ToolExecutionResult;
 
@@ -802,16 +814,13 @@ class AgenticStore {
 		this.updateSession(conversationId, { executingToolCallId: toolCall.id });
 
 		try {
-			execution =
-				permission === ToolPermissionDecision.DENY
-					? { content: 'Tool execution was denied by the user.', isError: true }
-					: await this.dispatchTool({
-							callbacks,
-							context,
-							conversationId,
-							effectiveModel,
-							toolCall
-						});
+			execution = await this.dispatchTool({
+				callbacks,
+				context,
+				conversationId,
+				effectiveModel,
+				toolCall
+			});
 		} catch (error) {
 			if (isAbortError(error)) throw error;
 
@@ -823,13 +832,11 @@ class AgenticStore {
 			this.updateSession(conversationId, { executingToolCallId: null });
 		}
 
-		const durationMs = performance.now() - toolStartTime;
 		const { attachments, cleanedResult } = this.extractBase64Attachments(execution.content);
 
 		return {
 			content: cleanedResult,
 			details: attachments,
-			durationMs,
 			isError: execution.isError,
 			parts: this.buildContentParts(attachments, effectiveModel)
 		};

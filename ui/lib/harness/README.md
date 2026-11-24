@@ -37,12 +37,13 @@ interface Harness {
 ```
 
 - **Messages and tools** use the OpenAI shapes. A tool is its definition plus an `execute` function.
-- **Events:** `turn_start`, `text`, `reasoning`, `tool_call_delta`, `timings`, `model`, `completion_id`, `message` (a turn's assistant message), `tool_call`, `tool_update` (a streaming tool's output so far), `tool_result`, `turn_end`, and last `done` or `error`. `run` never throws.
+- **Events:** `turn_start`, `request`, `text`, `reasoning`, `tool_call_delta`, `timings`, `model`, `completion_id`, `message` (a turn's assistant message), `tool_call`, `tool_update` (a streaming tool's output so far), `tool_result`, `turn_end`, and last `done` or `error`. `run` never throws.
 - **The loop waits for you.** It does not go on until you ask for the next event, so you can store each message before the next step runs.
 - **It keeps nothing.** No conversation state, no storage: the app owns the history and passes it in.
+- **Hooks:** `options.authorize` decides whether each tool call runs, e.g. by asking the user; a denial reaches the model as the call's error result. `options.prepareTurn` runs before each request and may replace the tools (e.g. to add tools loaded on demand) or the history (e.g. a compacted one). The `request` event shows what each turn sends.
 - **Stopping:** `signal` stops at once. `options.interrupted` ends the run at the next safe point, e.g. when the user sent a new message. `options.maxTurns` with `options.onTurnLimit` asks before it goes past a turn limit.
 
-An app can put another loop behind the same `Harness` interface. What sits above the loop is the same for every loop: the tools, and whatever an app wraps around `execute`, such as a permission prompt.
+An app can put another loop behind the same `Harness` interface. What sits above the loop is the same for every loop: the tools and the hooks, such as a permission prompt behind `authorize`.
 
 ## Traces
 
@@ -68,7 +69,8 @@ describeToolActivity(steps, true);                                            //
 Llama Chat (`ui/apps/chat`) is the first app on it. Its agentic store gives the harness:
 
 - **An inference client:** its own chat service, which knows the servers, the settings and how to resume a stream.
-- **The tools:** built-in tools, llama-server tools and MCP tools, each behind the permission gate.
+- **The tools:** built-in tools, llama-server tools and MCP tools.
+- **Permission:** `authorize` asks the user through its permission gate before a tool runs.
 - **Storage:** it turns the events into messages in its database.
 
 ## Develop
