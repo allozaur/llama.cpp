@@ -11,6 +11,7 @@
 	import ModelAvatar from '../ModelAvatar.svelte';
 	import ModelId from '../ModelId.svelte';
 	import ModelVoiceRole from '../ModelVoiceRole.svelte';
+	import { SearchInput } from '@ggml-org/llama-ui/app/forms';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
 	import {
 		Check,
@@ -22,7 +23,6 @@
 		Mic,
 		MoreHorizontal,
 		PowerOff,
-		Search,
 		X
 	} from '@lucide/svelte';
 	import DropdownMenuActions from '#lib/components/app/navigation/DropdownMenuActions.svelte';
@@ -418,24 +418,16 @@
 		</div>
 
 		{#if page.id !== 'effort'}
-			<!-- the search stays at the sheet's foot; 16px, or iOS zooms in on it -->
-			<div
-				class="shrink-0 border-t border-border/60 px-4 pt-3 pb-[max(0.75rem,var(--safe-area-bottom))]"
-			>
-				<label class="flex h-11 items-center gap-2 rounded-full bg-(--surface-muted) px-4">
-					<Search class="size-4 shrink-0 text-muted-foreground" />
-
-					<input
-						autocomplete="off"
-						class="min-w-0 flex-1 border-0 bg-transparent p-0 text-body shadow-none outline-none placeholder:text-muted-foreground focus:ring-0"
-						enterkeyhint="search"
-						oninput={(event) => onSearchChange?.(event.currentTarget.value)}
-						onkeydown={onSearchKeyDown}
-						placeholder="Search models"
-						type="search"
-						value={searchTerm}
-					/>
-				</label>
+			<!-- the search stays at the sheet's foot, in the chat form's own surface and shape -->
+			<div class="shrink-0 px-2 pt-2 pb-[max(0.5rem,var(--safe-area-bottom))]">
+				<SearchInput
+					class="chat-form-surface overflow-hidden rounded-(--chat-form-single-row-radius)"
+					inputClass="h-12 max-md:h-12 border-0 bg-transparent shadow-none focus-visible:border-0 focus-visible:ring-0 dark:bg-transparent"
+					onInput={(value) => onSearchChange?.(value)}
+					onKeyDown={onSearchKeyDown}
+					placeholder="Search models"
+					value={searchTerm}
+				/>
 			</div>
 		{/if}
 	</Drawer.Content>
