@@ -37,12 +37,14 @@
 		SETTINGS_CHAT_SECTIONS,
 		SETTINGS_KEYS,
 		SETTINGS_SECTION_SLUGS,
+		settingsChatSections,
 		SHEET_CONTENT_CLASS,
 		SHEET_HEADER_BUTTON_CLASS
 	} from '#lib/constants/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
+	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import {
 		deviceStore,
 		modelsStore,
@@ -75,6 +77,9 @@
 	const pageKey = $derived(JSON.stringify(page));
 
 	const toolsPanel = useToolsPanel();
+
+	// a plain chat has no Agent section, as in the settings dialog
+	const sections = $derived(settingsChatSections(agenticMode.enabled));
 
 	let config = $derived(settingsStore.config);
 	let showResetDialog = $state(false);
@@ -381,7 +386,7 @@
 	</div>
 
 	<section class={INSET_GROUP_CLASS}>
-		{#each SETTINGS_CHAT_SECTIONS as entry (entry.slug)}
+		{#each sections as entry (entry.slug)}
 			<button
 				class={INSET_ROW_CLASS}
 				onclick={() => openPage({ id: 'section', slug: entry.slug })}
