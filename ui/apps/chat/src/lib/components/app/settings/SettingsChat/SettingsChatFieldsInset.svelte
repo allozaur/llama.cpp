@@ -178,6 +178,7 @@
 									aria-label={field.label}
 									class="min-h-32 resize-none rounded-none border-0! bg-transparent! px-4 py-3 text-body shadow-none! focus-visible:ring-0 dark:bg-transparent!"
 									onchange={(e) => onConfigChange(field.key, e.currentTarget.value)}
+									placeholder={field.placeholder ?? ''}
 									value={String(localConfig[field.key] ?? '')}
 								/>
 
@@ -233,7 +234,7 @@
 								<input
 									aria-label={field.label}
 									autocomplete={field.isPrivate ? 'new-password' : 'off'}
-									class="min-h-12 w-full bg-transparent px-4 text-body outline-none placeholder:text-muted-foreground"
+									class="min-h-12 w-full border-0 bg-transparent px-4 text-body shadow-none outline-none placeholder:text-muted-foreground focus:ring-0"
 									onchange={(e) => onConfigChange(field.key, e.currentTarget.value)}
 									placeholder={field.placeholder ?? ''}
 									type={field.isPrivate ? 'password' : 'text'}
@@ -352,7 +353,8 @@
 
 			<input
 				aria-label={field.label}
-				class="h-9 w-20 shrink-0 rounded-lg bg-(--surface-muted) px-2.5 text-right text-body-sm tabular-nums outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50 {custom
+				autocomplete="off"
+				class="h-9 w-20 shrink-0 rounded-lg border-0 bg-(--surface-muted) px-2.5 text-right text-body-sm tabular-nums shadow-none outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-(--line-focus) {custom
 					? 'text-foreground'
 					: ''}"
 				inputmode="decimal"

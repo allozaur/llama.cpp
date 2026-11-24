@@ -23,3 +23,7 @@ export const INSET_ROW_CLASS =
 /** A row's body: the divider starts here, as in a native inset list, and is dropped on the first row. */
 export const INSET_ROW_BODY_CLASS =
 	'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 group-first/row:border-t-0';
+
+/** A phone sheet that floats inset from the screen's edges, rounded as the chat form and the slid page are. */
+export const SHEET_FLOATING_CLASS =
+	'overflow-hidden data-[vaul-drawer-direction=bottom]:inset-x-2 data-[vaul-drawer-direction=bottom]:bottom-[max(0.5rem,var(--safe-area-bottom))] data-[vaul-drawer-direction=bottom]:rounded-4xl data-[vaul-drawer-direction=bottom]:border';
