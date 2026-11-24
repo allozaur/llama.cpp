@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ModelsSelectorDownloadItem from './ModelsSelectorDownloadItem.svelte';
-	import { Logo } from '@ggml-org/llama-ui/app/misc';
 	import { Heart, Power } from '@lucide/svelte';
 	import { DialogConfirmDownload } from '#lib/components/app/dialogs/index.ts';
 	import {
@@ -10,7 +9,6 @@
 		ModelsSelectorOption
 	} from '#lib/components/app/index.ts';
 	import {
-		LOCAL_BACKEND_ID,
 		MODEL_ROW_WINDOW,
 		SELECTOR_GROUP_STICKY_OFFSET,
 		SETTINGS_KEYS
@@ -245,14 +243,10 @@
 	{/if}
 {/snippet}
 
+<!-- the server's own models, listed as they are: there is no other provider yet for a section
+     of their own to tell them from -->
 {#if groups.available.length > 0}
-	<ModelsSection label="Local models" persistKey={LOCAL_BACKEND_ID} revealChevronOnHover sticky>
-		{#snippet icon()}
-			<Logo class="shrink-0" style="--size: 0.875rem" />
-		{/snippet}
-
-		{@render localRows()}
-	</ModelsSection>
+	{@render localRows()}
 {/if}
 
 <DialogConfirmDownload
