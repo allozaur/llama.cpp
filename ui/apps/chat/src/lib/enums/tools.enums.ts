@@ -75,7 +75,22 @@ export enum BuiltInTool {
 	SERVER_GET_INFO = 'get_info',
 	SERVER_GREP_SEARCH = 'grep_search',
 	SERVER_READ_FILE = 'read_file',
+	SERVER_SHELL_TASK = 'shell_task',
 	SERVER_WRITE_FILE = 'write_file'
+}
+
+/** Wire values of the `shell_task` `action` parameter */
+export enum ShellTaskAction {
+	LIST = 'list',
+	OUTPUT = 'output',
+	STOP = 'stop'
+}
+
+/** Status of a background shell task, as llama-server reports it */
+export enum BackgroundTaskStatus {
+	EXITED = 'exited',
+	RUNNING = 'running',
+	STOPPED = 'stopped'
 }
 
 /** Wire values of the `search_chats` `message_selection` parameter */

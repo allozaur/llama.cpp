@@ -114,8 +114,10 @@ export {
 export { KeyboardKey } from './keyboard.enums';
 
 export {
+	BackgroundTaskStatus,
 	BuiltInTool,
 	GlobSearchType,
+	ShellTaskAction,
 	SearchChatsMessageSelection,
 	SearchChatsOrder,
 	ServerToolType,

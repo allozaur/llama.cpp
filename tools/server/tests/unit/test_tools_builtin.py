@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 import pytest
 from utils import *
@@ -519,3 +520,136 @@ def test_tools_builtin_cwd_relative_paths(tmp_path):
     (other / "abs.txt").write_text("absolute-content")
     res = call_tool("read_file", {"path": str(other / "abs.txt")}, headers=headers)
     assert "absolute-content" in res["plain_text_response"]
+
+
+def _task_pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+@pytest.mark.skipif(os.name == "nt", reason="needs a POSIX shell")
+def test_tools_builtin_exec_shell_command_timeout_with_background_child():
+    global server
+    server.start()
+
+    # the child keeps the output pipe open after the shell is killed; the call must still end near its timeout
+    started = time.time()
+    res = call_tool("exec_shell_command", {"command": "(sleep 30; echo late) & echo started", "timeout": 2})
+    assert time.time() - started < 10
+    text = res["plain_text_response"]
+    assert "started" in text
+    assert "late" not in text
+    assert "[exit due to timed out]" in text
+
+
+@pytest.mark.skipif(os.name == "nt", reason="needs a POSIX shell")
+def test_tools_builtin_shell_task_lifecycle(tmp_path):
+    global server
+    server.start()
+
+    pid_file = tmp_path / "child.pid"
+    command = f"echo ready; (sleep 60 & echo $! > {pid_file}; wait) & while true; do echo tick; sleep 0.2; done"
+
+    started = time.time()
+    res = call_tool("exec_shell_command", {"command": command, "run_in_background": True},
+                    headers={"x-tool-cwd": str(tmp_path)})
+    assert time.time() - started < 10
+    text = res["plain_text_response"]
+    assert text.startswith("ready\n")
+    assert "llama-task-pgid" not in text
+    assert "[background task: " in text and "[running" in text
+    task_id = int(text.split("[background task: ")[1].split("]")[0])
+
+    tasks = call_tool("shell_task", {"action": "list"})["tasks"]
+    task = next(t for t in tasks if t["task_id"] == task_id)
+    assert task["status"] == "running"
+    assert task["exit_code"] is None
+    assert task["cwd"] == str(tmp_path)
+    assert task["command"] == command
+
+    first = call_tool("shell_task", {"action": "output", "task_id": task_id})
+    assert first["output"].startswith("ready\n")
+    assert first["offset"] == 0
+    time.sleep(0.5)
+    more = call_tool("shell_task", {"action": "output", "task_id": task_id, "offset": first["next_offset"]})
+    assert more["offset"] == first["next_offset"]
+    assert "tick" in more["output"]
+
+    tail = call_tool("shell_task", {"action": "output", "task_id": task_id, "max_output_size": 5})
+    assert tail["output"] == "tick\n"
+    assert tail["skipped"] > 0
+
+    child_pid = int(pid_file.read_text().strip())
+    assert _task_pid_alive(child_pid)
+
+    stopped = call_tool("shell_task", {"action": "stop", "task_id": task_id})
+    assert stopped["status"] == "stopped"
+    assert stopped["exit_code"] is not None
+
+    # stop reaches every process the command started, not only the shell
+    deadline = time.time() + 5
+    while _task_pid_alive(child_pid) and time.time() < deadline:
+        time.sleep(0.1)
+    assert not _task_pid_alive(child_pid)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="needs a POSIX shell")
+def test_tools_builtin_shell_task_quick_exit():
+    global server
+    server.start()
+
+    res = call_tool("exec_shell_command", {"command": "echo done; exit 3", "run_in_background": True})
+    text = res["plain_text_response"]
+    assert text.startswith("done\n")
+    assert text.endswith("[exit code: 3]")
+
+    task_id = int(text.split("[background task: ")[1].split("]")[0])
+    out = call_tool("shell_task", {"action": "output", "task_id": task_id})
+    assert out["status"] == "exited"
+    assert out["exit_code"] == 3
+    assert out["output"] == "done\n"
+
+
+def test_tools_builtin_shell_task_errors():
+    global server
+    server.start()
+
+    assert "task_id" in call_tool_expect_error("shell_task", {"action": "output"})
+    assert "unknown task_id" in call_tool_expect_error("shell_task", {"action": "stop", "task_id": 999})
+    assert "action" in call_tool_expect_error("shell_task", {"action": "restart", "task_id": 1})
+
+
+def test_tools_builtin_shell_task_enabled_with_shell():
+    global server
+    server.server_tools = "exec_shell_command"
+    server.start()
+
+    res = server.make_request("GET", "/tools")
+    names = [t["tool"] for t in res.body]
+    assert names == ["exec_shell_command", "shell_task"]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="needs a POSIX shell")
+def test_tools_builtin_shell_task_stopped_on_server_exit(tmp_path):
+    global server
+    server.start()
+
+    pid_file = tmp_path / "child.pid"
+    call_tool("exec_shell_command", {"command": f"sleep 60 & echo $! > {pid_file}; wait", "run_in_background": True})
+    deadline = time.time() + 5
+    while not pid_file.exists() and time.time() < deadline:
+        time.sleep(0.1)
+    child_pid = int(pid_file.read_text().strip())
+    assert _task_pid_alive(child_pid)
+
+    server.stop()
+
+    deadline = time.time() + 5
+    while _task_pid_alive(child_pid) and time.time() < deadline:
+        time.sleep(0.1)
+    assert not _task_pid_alive(child_pid)

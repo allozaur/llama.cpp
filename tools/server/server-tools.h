@@ -34,6 +34,7 @@ struct server_tool {
 };
 
 struct server_tools_runtime; // impl detail, defined in server-tools.cpp
+struct server_shell_tasks;   // impl detail, defined in server-tools.cpp
 
 struct server_tools {
     std::vector<std::unique_ptr<server_tool>> tools;
@@ -44,6 +45,9 @@ struct server_tools {
 
     // set when --tools-runtime is configured; routes every tool call through an isolate
     std::unique_ptr<server_tools_runtime> runtime;
+
+    // commands started with exec_shell_command run_in_background; declared after runtime, so they stop first
+    std::unique_ptr<server_shell_tasks> shell_tasks;
 
     void setup(const std::vector<std::string> & enabled_tools,
                server_mcp & mcp_mgr,

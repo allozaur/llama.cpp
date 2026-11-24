@@ -1,5 +1,5 @@
 import type { OpenAIToolDefinition } from './mcp';
-import type { ToolSource } from '#lib/enums/index.ts';
+import type { BackgroundTaskStatus, ToolSource } from '#lib/enums/index.ts';
 import type { Component } from 'svelte';
 
 /**
@@ -80,4 +80,44 @@ export interface EditFileTitleMeta {
 	resultMessage?: string;
 	editsApplied?: number;
 	errorMessage?: string;
+}
+
+/** One background task in the `shell_task` `list` reply, as llama-server sends it */
+export interface ShellTaskInfo {
+	task_id: number;
+	command: string;
+	cwd: string;
+	status: BackgroundTaskStatus;
+	exit_code: number | null;
+	/** Unix time in ms */
+	started_at: number;
+	ended_at: number | null;
+	output_size: number;
+}
+
+/** The `shell_task` `output` reply: the task, plus its output from an offset on */
+export interface ShellTaskOutput extends ShellTaskInfo {
+	output: string;
+	offset: number;
+	next_offset: number;
+	skipped: number;
+}
+
+/** A background shell task as Llama Chat keeps it */
+export interface BackgroundTask {
+	/** Stable across llama-server restarts, which reuse task ids: `<startedAt>-<id>` */
+	key: string;
+	id: number;
+	command: string;
+	cwd: string;
+	/** The conversation whose tool call started it, when this app started it */
+	conversationId: string | null;
+	status: BackgroundTaskStatus;
+	exitCode: number | null;
+	startedAt: number;
+	endedAt: number | null;
+	/** The newest output read so far, trimmed at the front past a size cap */
+	output: string;
+	/** Server byte offset to read on from */
+	nextOffset: number;
 }
