@@ -7,6 +7,7 @@ import type {
 	ParameterSource,
 	ReasoningEffort,
 	SettingsFieldType,
+	SettingsPlatform,
 	StreamConnectionState,
 	SyncableParameterType
 } from '#lib/enums/index.ts';
@@ -28,6 +29,8 @@ export interface SettingsEntry {
 	group?: string;
 	/** When true, the field is listed in the section's collapsed Advanced block. */
 	advanced?: boolean;
+	/** Where the setting applies, and so where it is listed; every device when not set. */
+	platform?: SettingsPlatform;
 	type: SettingsFieldType;
 	options?: Array<{ value: string; label: string; icon: Component }>;
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
@@ -69,6 +72,7 @@ export interface SettingsFieldConfig {
 	advanced?: boolean;
 	dependsOn?: string;
 	group?: string;
+	platform?: SettingsPlatform;
 	help?: string;
 	options?: Array<{ value: string; label: string; icon?: typeof Icon }>;
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */

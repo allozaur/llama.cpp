@@ -40,8 +40,14 @@
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
-	import { modelsStore, serverStore, settingsStore, toolsStore } from '#lib/stores/index.ts';
-	import { groupSettingsFields, isApiKeyFieldShown } from '#lib/utils/index.ts';
+	import {
+		deviceStore,
+		modelsStore,
+		serverStore,
+		settingsStore,
+		toolsStore
+	} from '#lib/stores/index.ts';
+	import { groupSettingsFields, isApiKeyFieldShown, isSettingShownOn } from '#lib/utils/index.ts';
 	import { page as appPage } from '$app/state';
 	import { setMode } from 'mode-watcher';
 	import { toast } from 'svelte-sonner';
@@ -92,7 +98,9 @@
 	let sectionFields = $derived(
 		(section?.fields ?? []).filter(
 			(field) =>
-				field.key !== SETTINGS_KEYS.THEME && (field.key !== SETTINGS_KEYS.API_KEY || showApiKey)
+				field.key !== SETTINGS_KEYS.THEME &&
+				(field.key !== SETTINGS_KEYS.API_KEY || showApiKey) &&
+				isSettingShownOn(field, deviceStore.isMobile)
 		)
 	);
 	let basicFields = $derived(sectionFields.filter((field) => !field.advanced));
