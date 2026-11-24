@@ -63,6 +63,7 @@ export const SETTINGS_SHEET_TEXT = {
 	RESET_FIELD: (label: string) => `Reset ${label} to default`,
 	RESET_TITLE: 'Reset Settings to Default',
 	SAVED_NOTE: 'Settings are saved in this browser.',
+	SHOW_ONBOARDING: 'Show onboarding',
 	SHOW_SYSTEM_MESSAGE: 'Show system message in conversations',
 	TITLE: 'Settings',
 	TOOL: 'Tool',

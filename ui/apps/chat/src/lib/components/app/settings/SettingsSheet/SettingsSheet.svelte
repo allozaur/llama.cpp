@@ -15,7 +15,13 @@
 	import { SHEET_CONTENT_CLASS } from '@ggml-org/llama-ui/constants';
 	import * as AlertDialog from '@ggml-org/llama-ui/ui/alert-dialog';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
-	import { PencilRuler, RefreshCw, RotateCcw, SlidersHorizontal } from '@lucide/svelte';
+	import {
+		GraduationCap,
+		PencilRuler,
+		RefreshCw,
+		RotateCcw,
+		SlidersHorizontal
+	} from '@lucide/svelte';
 	import {
 		SettingsChatFieldsInset,
 		SettingsChatImportExportTab,
@@ -42,7 +48,8 @@
 		modelsStore,
 		serverStore,
 		settingsStore,
-		toolsStore
+		toolsStore,
+		uiStore
 	} from '#lib/stores/index.ts';
 	import {
 		getToolDisplay,
@@ -70,6 +77,9 @@
 
 	/** The smallest value a positive whole number setting takes when its field names none. */
 	const POSITIVE_INTEGER_MIN = 1;
+
+	/** How long the sheet takes to slide away, before a dialog opens in its place. */
+	const SHEET_CLOSE_MS = 300;
 
 	const pages = useSheetPages<Page>({ id: SettingsSheetPage.ROOT });
 	const page = $derived(pages.page);
@@ -235,6 +245,12 @@
 		showResetDialog = false;
 		toast.success(SETTINGS_SHEET_TEXT.RESET_DONE);
 	}
+
+	// a dialog of its own opens once the sheet is out of the way
+	function closeThen(run: () => void) {
+		open = false;
+		setTimeout(run, SHEET_CLOSE_MS);
+	}
 </script>
 
 <!-- full width over the sidebar, so it does not read as part of the page slid aside; the drag
@@ -383,6 +399,10 @@
 		<InsetList title={SETTINGS_SHEET_TEXT.APP}>
 			<InsetListRow icon={RefreshCw} onclick={() => window.location.reload()}>
 				{SETTINGS_SHEET_TEXT.RELOAD_APP}
+			</InsetListRow>
+
+			<InsetListRow icon={GraduationCap} onclick={() => closeThen(() => uiStore.openOnboarding())}>
+				{SETTINGS_SHEET_TEXT.SHOW_ONBOARDING}
 			</InsetListRow>
 
 			{#if settingsStore.hasCustomSettings}
