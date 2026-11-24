@@ -51,6 +51,7 @@
 	import { groupSettingsFields, isApiKeyFieldShown, isSettingShownOn } from '#lib/utils/index.ts';
 	import { page as appPage } from '$app/state';
 	import { setMode } from 'mode-watcher';
+	import { tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 
 	interface Props {
@@ -144,15 +145,34 @@
 		}
 	});
 
+	let scrollEl = $state<HTMLDivElement>();
+	// where each page below the top one was scrolled, to come back to it
+	let scrollStack: number[] = [];
+
 	// each opening starts on the first page
 	$effect(() => {
-		if (open) pages.reset();
+		if (open) {
+			pages.reset();
+			scrollStack = [];
+		}
 	});
 
+	function scrollTo(top: number) {
+		void tick().then(() => scrollEl?.scrollTo({ top }));
+	}
+
+	// a pushed page starts at its top, and back returns to where the page below was left
 	function openPage(next: Page) {
 		if (next.id === 'tools') toolsPanel.handleOpen();
 
+		scrollStack.push(scrollEl?.scrollTop ?? 0);
 		pages.push(next);
+		scrollTo(0);
+	}
+
+	function goBack() {
+		pages.pop();
+		scrollTo(scrollStack.pop() ?? 0);
 	}
 
 	function labelOf(key: string): string {
@@ -220,18 +240,15 @@
 	}
 </script>
 
-<Drawer.Root bind:open>
+<!-- full width over the sidebar, so it does not read as part of the page slid aside; its top
+     corners round as the screen's do -->
+<Drawer.Root bind:open shouldScaleBackground={false}>
 	<Drawer.Content
-		class="gap-0 data-[vaul-drawer-direction=bottom]:h-[94dvh] data-[vaul-drawer-direction=bottom]:max-h-[94dvh]"
+		class="gap-0 overflow-hidden data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-var(--corner-control-top))] data-[vaul-drawer-direction=bottom]:max-h-none data-[vaul-drawer-direction=bottom]:rounded-t-[2.5rem]"
 	>
 		<header class="grid shrink-0 grid-cols-[3rem_1fr_3rem] items-center px-3 pt-2 pb-3">
 			{#if pages.canGoBack}
-				<button
-					aria-label="Back"
-					class={SHEET_HEADER_BUTTON_CLASS}
-					onclick={pages.pop}
-					type="button"
-				>
+				<button aria-label="Back" class={SHEET_HEADER_BUTTON_CLASS} onclick={goBack} type="button">
 					<ChevronLeft class="size-5" />
 				</button>
 			{:else}
@@ -247,12 +264,15 @@
 			>How the app looks, chats and talks to the server.</Drawer.Description
 		>
 
-		<div class="grid min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
+		<div
+			bind:this={scrollEl}
+			class="grid min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
+		>
 			{#key pageKey}
 				<div
 					in:pageTransition={{ incoming: true }}
 					out:pageTransition={{ incoming: false }}
-					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-1 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-1 pb-[max(1.5rem,var(--safe-area-bottom))]"
 				>
 					{#if page.id === 'root'}
 						{@render rootPage()}
