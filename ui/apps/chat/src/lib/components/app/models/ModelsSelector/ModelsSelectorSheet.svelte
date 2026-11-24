@@ -2,7 +2,8 @@
 	A phone's model picker: a sheet in the settings sheet's patterns. It opens partway with the
 	few models in reach (loaded, favorite, recent), each marked when it is the chat's or the
 	dictation's, the reasoning effort and a row that opens all models as a page, in groups of the
-	same rows. Tapping a model opens its details over the sheet, where it is put to use. A search
+	same rows. Tapping a model opens its menu: use it in the chat, load or unload it, or open its
+	details over the sheet. A search
 	shows its results in place; it stays at the sheet's foot.
 -->
 <script lang="ts">
@@ -10,7 +11,21 @@
 	import ModelId from '../ModelId.svelte';
 	import ModelVoiceRole from '../ModelVoiceRole.svelte';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
-	import { Check, ChevronLeft, ChevronRight, Lightbulb, Mic, Search, X } from '@lucide/svelte';
+	import {
+		Check,
+		ChevronLeft,
+		ChevronRight,
+		Info,
+		Lightbulb,
+		Loader2,
+		Mic,
+		MoreHorizontal,
+		Power,
+		PowerOff,
+		Search,
+		X
+	} from '@lucide/svelte';
+	import DropdownMenuActions from '#lib/components/app/navigation/DropdownMenuActions.svelte';
 	import {
 		ICON_CLASS_DEFAULT,
 		INSET_GROUP_CAPTION_CLASS,
@@ -26,7 +41,14 @@
 	} from '#lib/constants/index.ts';
 	import { useReasoningMenu } from '#lib/hooks/use-reasoning-menu.svelte.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
-	import { settingsStore, uiStore, voiceStore } from '#lib/stores/index.ts';
+	import {
+		modelsStore,
+		serverStore,
+		settingsStore,
+		uiStore,
+		voiceStore
+	} from '#lib/stores/index.ts';
+	import type { MenuAction } from '#lib/types/index.ts';
 	import {
 		type GroupedModelOptions,
 		groupModelFamilies,
@@ -50,7 +72,7 @@
 		onOpenChange?: (open: boolean) => void;
 		onSearchChange?: (value: string) => void;
 		onSearchKeyDown?: (event: KeyboardEvent) => void;
-		/** A tapped row: a phone opens the model's details over the sheet. */
+		/** Puts a model to use in the chat, from its row's menu. */
 		onSelect?: (modelId: string) => void;
 		open?: boolean;
 		/** The few models the sheet opens with; none leaves it to the full list. */
@@ -118,6 +140,65 @@
 		...otherGroups
 	]);
 
+	// a tapped row's menu, anchored to the row
+	let menuItem = $state<ModelItem | null>(null);
+	let menuAnchor = $state<HTMLElement | null>(null);
+	let menuOpen = $state(false);
+
+	function openMenu(item: ModelItem, row: HTMLElement) {
+		menuItem = item;
+		menuAnchor = row;
+		menuOpen = true;
+	}
+
+	let menuActions = $derived.by((): MenuAction[] => {
+		const item = menuItem;
+
+		if (!item) return [];
+
+		const { id, model } = item.option;
+		const actions: MenuAction[] = [
+			{
+				disabled: activeId === id,
+				icon: Check,
+				label: activeId === id ? 'In use in this chat' : 'Use in chat',
+				onclick: () => onSelect?.(id)
+			}
+		];
+
+		// a router loads and unloads its models; a lone server has its one model loaded
+		if (serverStore.isRouterMode) {
+			if (modelsStore.isModelLoading(model)) {
+				actions.push({
+					icon: Loader2,
+					label: 'Cancel loading',
+					onclick: () => void modelsStore.status.cancelLoad(model)
+				});
+			} else if (modelsStore.isModelLoaded(model)) {
+				actions.push({
+					icon: PowerOff,
+					label: 'Unload',
+					onclick: () => void modelsStore.status.unload(model)
+				});
+			} else {
+				actions.push({
+					icon: Power,
+					label: 'Load',
+					onclick: () => void modelsStore.status.load(model)
+				});
+			}
+		}
+
+		actions.push({
+			icon: Info,
+			label: 'Model details',
+			onclick: () => uiStore.openModelDetails(id),
+			separator: true
+		});
+
+		return actions;
+	});
+
 	// each opening starts on the first page
 	$effect(() => {
 		if (open) pages.reset();
@@ -134,8 +215,9 @@
 	{@const dictates = !inChat && voiceStore.isDictationModel(item.option.model)}
 
 	<button
+		aria-haspopup="menu"
 		class="{INSET_ROW_CLASS} [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
-		onclick={() => onSelect?.(item.option.id)}
+		onclick={(event) => openMenu(item, event.currentTarget)}
 		type="button"
 	>
 		<ModelAvatar class="shrink-0" option={item.option} size="size-6" />
@@ -186,6 +268,18 @@
 		</button>
 	</section>
 {/snippet}
+
+<!-- a tapped row's menu: it shows no trigger, anchored to the row as a held chat row's is -->
+<div hidden>
+	<DropdownMenuActions
+		bind:open={menuOpen}
+		actions={menuActions}
+		align="center"
+		anchor={menuAnchor}
+		triggerIcon={MoreHorizontal}
+		triggerTooltip="Model actions"
+	/>
+</div>
 
 <!-- the details drawer opens over the picker: the picker stays open under its backdrop -->
 <Drawer.Root bind:open {onOpenChange} shouldScaleBackground={false}>
