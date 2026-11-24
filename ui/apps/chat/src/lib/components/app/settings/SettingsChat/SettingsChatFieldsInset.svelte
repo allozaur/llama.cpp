@@ -12,6 +12,7 @@
 		ICON_CLASS_SM,
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		NUMERIC_FIELDS,
@@ -134,7 +135,7 @@
 {#if blocks.length > 0}
 	<div class="flex flex-col gap-1.5">
 		{#if title}
-			<h3 class={INSET_GROUP_CAPTION_CLASS}>{title}</h3>
+			<h3 class={INSET_GROUP_TITLE_CLASS}>{title}</h3>
 		{/if}
 
 		<div class="flex flex-col gap-6">
@@ -158,7 +159,11 @@
 
 					<div class="flex flex-col gap-1.5">
 						{#if showCaption}
-							<h3 class="{INSET_GROUP_CAPTION_CLASS} flex items-center gap-1.5">
+							<h3
+								class="{title
+									? INSET_GROUP_CAPTION_CLASS
+									: INSET_GROUP_TITLE_CLASS} flex items-center gap-1.5"
+							>
 								{field.label}
 
 								{#if field.isExperimental}
@@ -207,8 +212,9 @@
 										}}
 										type="button"
 									>
-										<span class={INSET_ROW_BODY_CLASS}>
-											<span class="flex flex-1 items-center gap-1.5">
+										<!-- an option's name can run to two lines, so the row grows with it -->
+										<span class="{INSET_ROW_BODY_CLASS} gap-4 py-3">
+											<span class="flex flex-1 items-center gap-1.5 leading-snug">
 												{option.label}
 
 												{#if option.isExperimental}

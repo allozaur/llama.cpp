@@ -28,6 +28,7 @@
 		ICON_CLASS_DEFAULT,
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		NUMERIC_FIELDS,
@@ -289,7 +290,7 @@
 
 {#snippet rootPage()}
 	<div class="flex flex-col gap-1.5">
-		<h3 class={INSET_GROUP_CAPTION_CLASS}>Appearance</h3>
+		<h3 class={INSET_GROUP_TITLE_CLASS}>Appearance</h3>
 
 		<section class="{INSET_GROUP_CLASS} grid grid-cols-3 gap-3 p-3">
 			{#each THEMES as theme (theme.value)}
@@ -394,7 +395,7 @@
 		<SettingsChatImportExportTab inset />
 
 		<div class="flex flex-col gap-1.5">
-			<h3 class={INSET_GROUP_CAPTION_CLASS}>App</h3>
+			<h3 class={INSET_GROUP_TITLE_CLASS}>App</h3>
 
 			<section class={INSET_GROUP_CLASS}>
 				<button class={INSET_ROW_CLASS} onclick={() => window.location.reload()} type="button">
