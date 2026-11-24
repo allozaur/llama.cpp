@@ -722,13 +722,13 @@
 							size="lg"
 						/>
 
+						<!-- the sidebar's main action, so the one primary key on it -->
 						<Button
-							class="matte-key h-12 gap-2 rounded-full bg-card px-5 text-body hover:bg-card dark:bg-muted-foreground/15 dark:hover:bg-muted-foreground/15"
+							class="h-12 gap-2 rounded-full px-5 text-body"
 							onclick={() => {
 								hapticTap();
 								handleSidebarAction(SidebarAction.NEW_CHAT);
 							}}
-							variant="ghost"
 						>
 							<SquarePen class="size-5" />
 
