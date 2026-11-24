@@ -36,6 +36,7 @@
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
+	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import { toolsStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
 	import type { Component, Snippet } from 'svelte';
@@ -294,21 +295,24 @@
 			</button>
 		{/if}
 
-		<button class={INSET_ROW_CLASS} onclick={() => push({ id: 'tools' })} type="button">
-			<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
+		<!-- a plain chat has no tools to pick -->
+		{#if agenticMode.enabled}
+			<button class={INSET_ROW_CLASS} onclick={() => push({ id: 'tools' })} type="button">
+				<PencilRuler class="{ICON_CLASS_DEFAULT} shrink-0" />
 
-			<span class={INSET_ROW_BODY_CLASS}>
-				<span class="flex-1">{ATTACHMENT_MENU_TEXT.TOOLS}</span>
+				<span class={INSET_ROW_BODY_CLASS}>
+					<span class="flex-1">{ATTACHMENT_MENU_TEXT.TOOLS}</span>
 
-				{#if toolsPanel.totalToolCount > 0}
-					<span class="text-body-sm text-muted-foreground tabular-nums">
-						{enabledToolCount}/{toolsPanel.totalToolCount}
-					</span>
-				{/if}
+					{#if toolsPanel.totalToolCount > 0}
+						<span class="text-body-sm text-muted-foreground tabular-nums">
+							{enabledToolCount}/{toolsPanel.totalToolCount}
+						</span>
+					{/if}
 
-				<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
-			</span>
-		</button>
+					<ChevronRight class="size-4 shrink-0 text-muted-foreground" />
+				</span>
+			</button>
+		{/if}
 	</section>
 {/snippet}
 
