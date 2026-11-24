@@ -1,5 +1,5 @@
 <!--
-	Voice section of the settings: the registry's fields, with the microphone and the transcription model between them.
+	Voice section of the settings: the registry's fields in their subgroups, with the microphone and the transcription model pickers.
 	Those list this device's microphones and the server's models with audio input, which a static field cannot, so they
 	are drawn here.
 -->
@@ -12,15 +12,17 @@
 		VOICE_MICROPHONE_AUTO,
 		VOICE_MICROPHONE_DEFAULT
 	} from '@ggml-org/llama-voice';
-	import { SettingsChatFields } from '#lib/components/app/settings/index.ts';
+	import { SettingsChatFields, SettingsGroup } from '#lib/components/app/settings/index.ts';
 	import {
 		SETTING_CONFIG_INFO,
 		SETTINGS_KEYS,
+		SETTINGS_REGISTRY,
 		VOICE_GGUF_EXTENSION_PATTERN,
 		VOICE_SETTINGS_LABEL,
 		VOICE_TRANSCRIPTION_MODEL_AUTO
 	} from '#lib/constants/index.ts';
 	import { modelsStore, serverStore } from '#lib/stores/index.ts';
+	import { groupSettingsFields } from '#lib/utils/index.ts';
 	import { isTranscriptionOnlyModel } from '#lib/utils/voice-mode.ts';
 	import { onMount } from 'svelte';
 
@@ -34,8 +36,18 @@
 
 	const KEY = SETTINGS_KEYS.VOICE_TRANSCRIPTION_MODEL;
 
-	// the picker sits right after the Voice input field
-	let splitAt = $derived(fields.findIndex((f) => f.key === SETTINGS_KEYS.VOICE_INPUT_MODE) + 1);
+	let groups = $derived(groupSettingsFields(fields));
+
+	// the pickers have no standalone field, so their registry entries say which subgroup they go in
+	function groupOf(key: string): string | undefined {
+		return SETTINGS_REGISTRY.flatMap((section) => section.settings).find((s) => s.key === key)
+			?.group;
+	}
+
+	// the model picker goes right after Voice input, the microphone picker opens its subgroup
+	function splitAt(group: SettingsFieldConfig[]): number {
+		return group.findIndex((f) => f.key === SETTINGS_KEYS.VOICE_INPUT_MODE) + 1;
+	}
 	let isRouter = $derived(serverStore.isRouterMode);
 	let current = $derived(String(localConfig[KEY] ?? VOICE_TRANSCRIPTION_MODEL_AUTO));
 
@@ -137,9 +149,7 @@
 	);
 </script>
 
-<div class="space-y-6">
-	<SettingsChatFields fields={fields.slice(0, splitAt)} {localConfig} {onConfigChange} />
-
+{#snippet microphonePicker()}
 	<div class="space-y-2" data-slot="voice-microphone">
 		<Label class="text-label" for={MIC_KEY}>Microphone</Label>
 
@@ -166,7 +176,9 @@
 			</p>
 		{/if}
 	</div>
+{/snippet}
 
+{#snippet transcriptionModelPicker()}
 	<div class="space-y-2" data-slot="voice-transcription-model">
 		<Label class="text-label" for={KEY}>Transcription model</Label>
 
@@ -221,6 +233,26 @@
 			</p>
 		{/if}
 	</div>
+{/snippet}
 
-	<SettingsChatFields fields={fields.slice(splitAt)} {localConfig} {onConfigChange} />
+<div class="space-y-12">
+	{#each groups as group (group.title)}
+		{@const split = splitAt(group.fields)}
+
+		<SettingsGroup title={group.title}>
+			<div class="space-y-6">
+				{#if group.title === groupOf(MIC_KEY)}
+					{@render microphonePicker()}
+				{/if}
+
+				<SettingsChatFields fields={group.fields.slice(0, split)} {localConfig} {onConfigChange} />
+
+				{#if group.title === groupOf(KEY)}
+					{@render transcriptionModelPicker()}
+				{/if}
+
+				<SettingsChatFields fields={group.fields.slice(split)} {localConfig} {onConfigChange} />
+			</div>
+		</SettingsGroup>
+	{/each}
 </div>

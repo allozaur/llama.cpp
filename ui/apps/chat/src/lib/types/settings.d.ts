@@ -24,6 +24,10 @@ export interface SettingsEntry {
 	label: string;
 	help: string;
 	defaultValue: SettingsConfigValue;
+	/** Subgroup title the field is listed under within its section. */
+	group?: string;
+	/** When true, the field is listed in the section's collapsed Advanced block. */
+	advanced?: boolean;
 	type: SettingsFieldType;
 	options?: Array<{ value: string; label: string; icon: Component }>;
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
@@ -62,7 +66,9 @@ export interface SettingsFieldConfig {
 	placeholder?: string;
 	min?: number;
 	max?: number;
+	advanced?: boolean;
 	dependsOn?: string;
+	group?: string;
 	help?: string;
 	options?: Array<{ value: string; label: string; icon?: typeof Icon }>;
 	/** Options rendered for RADIO fields. Each entry maps a `value` (the radio's selected value) to the underlying config `key` whose boolean state mirrors it. */
