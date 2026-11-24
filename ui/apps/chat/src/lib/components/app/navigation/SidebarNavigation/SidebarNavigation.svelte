@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { PanelLeftClose, PanelLeftOpen, Search } from '@lucide/svelte';
+	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import { PanelLeftClose, PanelLeftOpen, Search, Settings, SquarePen } from '@lucide/svelte';
 	import {
 		ActionIcon,
 		DialogConversationDelete,
@@ -19,11 +20,9 @@
 	} from '#lib/components/app/index.ts';
 	import {
 		ROUTES,
-		SIDEBAR_ACTIONS_ITEMS,
 		SIDEBAR_COLLAPSE_WIDTH,
 		SIDEBAR_COLLAPSED_WIDTH,
 		SIDEBAR_CONTENT_FADE_MS,
-		SIDEBAR_FOOTER_ITEMS,
 		SIDEBAR_MAX_WIDTH,
 		SIDEBAR_MIN_WIDTH,
 		SIDEBAR_OVERSTRETCH_PX,
@@ -42,7 +41,7 @@
 		settingsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
-	import { buildConversationTree, remToPx } from '#lib/utils/index.ts';
+	import { buildConversationTree, hapticTap, remToPx } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { tick } from 'svelte';
@@ -662,16 +661,18 @@
 					: ''}"
 				inert={isStripHidden}
 			>
-				<!-- a phone has no footer: its items join these -->
-				<SidebarNavigationActions
-					class="px-2 md:my-3"
-					items={isOnMobile ? [...SIDEBAR_ACTIONS_ITEMS, ...SIDEBAR_FOOTER_ITEMS] : undefined}
-					onAction={handleSidebarAction}
-					onNavigate={navigateBehind}
-				/>
+				<!-- a phone has New chat and Settings pinned under the conversations instead -->
+				{#if !isOnMobile}
+					<SidebarNavigationActions
+						class="px-2 md:my-3"
+						onAction={handleSidebarAction}
+						onNavigate={navigateBehind}
+					/>
+				{/if}
 
+				<!-- on a phone only the conversations scroll, fading out above the pinned keys -->
 				<div
-					class="flex min-h-0 flex-1 flex-col overflow-y-auto opacity-(--sidebar-fade) max-md:pb-safe-2"
+					class="flex min-h-0 flex-1 flex-col overflow-y-auto opacity-(--sidebar-fade) max-md:pb-6 max-md:mask-[linear-gradient(to_bottom,black_calc(100%-1.5rem),transparent)]"
 				>
 					<SidebarNavigationConversationList
 						{allSelectedArePinned}
@@ -702,10 +703,37 @@
 					/>
 				</div>
 
-				<!-- the footer, at the bottom of the sidebar and of its collapsed strip alike (a
-				     phone lists its items with the actions above) -->
+				<!-- the footer, at the bottom of the sidebar and of its collapsed strip alike; a
+				     phone pins Settings to its left corner and New chat to its right -->
 				{#if !isOnMobile}
 					<SidebarNavigationFooter onAction={handleSidebarAction} />
+				{:else}
+					<div class="flex shrink-0 items-center justify-between px-2 pb-safe-3">
+						<ActionIcon
+							ariaLabel="Settings"
+							class="matte-key size-12 rounded-full! bg-card! hover:bg-card! dark:bg-muted-foreground/15! dark:hover:bg-muted-foreground/15!"
+							icon={Settings}
+							iconSize="size-5"
+							onclick={() => {
+								hapticTap();
+								handleSidebarAction(SidebarAction.SETTINGS);
+							}}
+							size="lg"
+						/>
+
+						<Button
+							class="matte-key h-12 gap-2 rounded-full bg-card px-5 text-body hover:bg-card dark:bg-muted-foreground/15 dark:hover:bg-muted-foreground/15"
+							onclick={() => {
+								hapticTap();
+								handleSidebarAction(SidebarAction.NEW_CHAT);
+							}}
+							variant="ghost"
+						>
+							<SquarePen class="size-5" />
+
+							New chat
+						</Button>
+					</div>
 				{/if}
 			</div>
 		</div>
