@@ -3,7 +3,8 @@
 	import AgentImportSources from './AgentImportSources.svelte';
 	import {
 		AGENT_IMPORT_BATCH_SIZE,
-		AGENT_IMPORT_SOURCE_ORDER
+		AGENT_IMPORT_SOURCE_ORDER,
+		AGENT_IMPORT_SOURCES
 	} from '#lib/constants/agent-import.constants.ts';
 	import {
 		type AgentImportSource,
@@ -18,6 +19,7 @@
 	} from '#lib/types/agent-import.d.ts';
 	import type { ExportedConversation } from '#lib/types/index.ts';
 	import {
+		agentImportCountText,
 		type AgentImportFile,
 		groupAgentImportFiles,
 		parseAgentImportFile
@@ -26,14 +28,20 @@
 
 	let {
 		class: className,
+		embedded = false,
+		onAnswer,
 		onDone,
 		onSkip
 	}: {
 		class?: string;
+		/** Inside another flow that has its own heading and buttons: no heading, Skip or Done. */
+		embedded?: boolean;
+		/** What the import did, as a sentence the user could have said; undefined when nothing came in. */
+		onAnswer?: (answer: string | undefined) => void;
 		/** The import ran and the user closed its result. */
-		onDone: () => void;
+		onDone?: () => void;
 		/** The user left without importing. */
-		onSkip: () => void;
+		onSkip?: () => void;
 	} = $props();
 
 	let step = $state(AgentImportStep.SOURCES);
@@ -165,14 +173,20 @@
 			if (row.checked && row.status === AgentImportStatus.IDLE) await importRow(row);
 		}
 
-		// an import adds the group of each source
 		await groupsStore.reload();
+
+		const done = items.filter((row) => row.result && row.result.imported > 0);
+		const count = done.reduce((sum, row) => sum + row.result!.imported, 0);
+		const names = done.map((row) => AGENT_IMPORT_SOURCES[row.source].name).join(', ');
+
+		onAnswer?.(count > 0 ? `Import ${agentImportCountText(count)} from ${names}` : undefined);
 	}
 </script>
 
 <div class={className}>
 	{#if step === AgentImportStep.SOURCES}
 		<AgentImportSources
+			{embedded}
 			{isReading}
 			onAddFiles={handleAddFiles}
 			onContinue={handleContinue}
@@ -182,6 +196,7 @@
 		/>
 	{:else}
 		<AgentImportItems
+			{embedded}
 			{items}
 			onBack={() => (step = AgentImportStep.SOURCES)}
 			{onDone}

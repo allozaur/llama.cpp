@@ -13,11 +13,13 @@
 	import {
 		agentImportCountText,
 		type AgentImportFile,
+		canPickFolder as browserCanPickFolder,
 		filesFromDrop,
 		filesFromInput
 	} from '#lib/utils/agent-import-files.ts';
 
 	let {
+		embedded = false,
 		isReading = false,
 		onAddFiles,
 		onContinue,
@@ -25,11 +27,13 @@
 		onToggle,
 		sources
 	}: {
+		/** Inside another flow that has its own heading and buttons. */
+		embedded?: boolean;
 		/** Picked files are being sorted by source. */
 		isReading?: boolean;
 		onAddFiles: (files: AgentImportFile[]) => void;
 		onContinue: () => void;
-		onSkip: () => void;
+		onSkip?: () => void;
 		onToggle: (source: AgentImportSource, enabled: boolean) => void;
 		/** The sources found in the picked files. */
 		sources: AgentImportSourceRow[];
@@ -39,8 +43,7 @@
 	let canContinue = $derived(sources.some((row) => row.enabled));
 
 	// iOS and Android cannot pick a folder
-	const canPickFolder =
-		typeof HTMLInputElement !== 'undefined' && 'webkitdirectory' in HTMLInputElement.prototype;
+	const canPickFolder = browserCanPickFolder();
 
 	function pick(folder: boolean) {
 		const input = document.createElement('input');
@@ -60,21 +63,23 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<div class="flex flex-col gap-2">
-		<h2 class="text-heading">Import chats from other AI apps</h2>
+	{#if !embedded}
+		<div class="flex flex-col gap-2">
+			<h2 class="text-heading">Import chats from other AI apps</h2>
 
-		<p class="text-body-sm text-pretty text-muted-foreground">
-			Bring your chat sessions into Llama Chat. The files are read in this browser and stay on this
-			device.
-		</p>
-	</div>
+			<p class="text-body-sm text-pretty text-muted-foreground">
+				Bring your chat sessions into Llama Chat. The files are read in this browser and stay on
+				this device.
+			</p>
+		</div>
+	{/if}
 
 	{#if sources.length > 0}
 		<ul class="space-y-2">
 			{#each sources as row (row.source)}
 				{@const id = `agent-import-source-${row.source}`}
 
-				<li class="flex items-center gap-3 rounded-lg border border-border/60 p-3">
+				<li class="flex items-center gap-4 rounded-lg border border-border/60 p-4">
 					<div class="min-w-0 flex-1">
 						<Label class="font-medium" for={id}>{AGENT_IMPORT_SOURCES[row.source].name}</Label>
 
@@ -148,8 +153,14 @@
 	</div>
 
 	<div class="flex items-center justify-between gap-2">
-		<Button class="text-muted-foreground" onclick={onSkip} variant="ghost">Skip</Button>
+		{#if onSkip}
+			<Button onclick={onSkip} variant="ghost">Skip</Button>
+		{:else}
+			<span></span>
+		{/if}
 
-		<Button disabled={!canContinue} onclick={onContinue}>Continue</Button>
+		<Button disabled={!canContinue} onclick={onContinue} variant={embedded ? 'outline' : 'default'}>
+			{embedded ? 'Select chats' : 'Continue'}
+		</Button>
 	</div>
 </div>

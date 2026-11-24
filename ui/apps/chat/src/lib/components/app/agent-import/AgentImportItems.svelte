@@ -9,6 +9,7 @@
 	import { agentImportCountText } from '#lib/utils/agent-import-files.ts';
 
 	let {
+		embedded = false,
 		items,
 		onBack,
 		onDone,
@@ -16,12 +17,14 @@
 		onSkip,
 		onToggle
 	}: {
+		/** Inside another flow that has its own heading and buttons. */
+		embedded?: boolean;
 		/** One row per source: its chat sessions. */
 		items: AgentImportItemRow[];
 		onBack: () => void;
-		onDone: () => void;
+		onDone?: () => void;
 		onImport: () => void;
-		onSkip: () => void;
+		onSkip?: () => void;
 		onToggle: (source: AgentImportSource, checked: boolean) => void;
 	} = $props();
 
@@ -44,19 +47,21 @@
 </script>
 
 <div class="flex flex-col gap-6">
-	<div class="flex flex-col gap-2">
-		<h2 class="text-heading">Select items to import</h2>
+	{#if !embedded}
+		<div class="flex flex-col gap-2">
+			<h2 class="text-heading">Select items to import</h2>
 
-		<p class="text-body-sm text-pretty text-muted-foreground">
-			Each session becomes a conversation. A session that is already in your library is skipped.
-		</p>
-	</div>
+			<p class="text-body-sm text-pretty text-muted-foreground">
+				Each session becomes a conversation. A session that is already in your library is skipped.
+			</p>
+		</div>
+	{/if}
 
 	<ul class="space-y-2">
 		{#each items as row (row.source)}
 			{@const id = `agent-import-item-${row.source}`}
 
-			<li class="flex flex-col gap-2 rounded-lg border border-border/60 p-3">
+			<li class="flex flex-col gap-2 rounded-lg border border-border/60 p-4">
 				<div class="flex items-center gap-3">
 					<Checkbox
 						checked={row.checked}
@@ -111,16 +116,16 @@
 		{#if isDone}
 			<span></span>
 
-			<Button onclick={onDone}>Done</Button>
+			{#if onDone}
+				<Button onclick={onDone}>Done</Button>
+			{/if}
 		{:else}
 			<div class="flex items-center gap-1">
-				<Button class="text-muted-foreground" disabled={isRunning} onclick={onBack} variant="ghost">
-					Back
-				</Button>
+				<Button disabled={isRunning} onclick={onBack} variant="ghost">Back</Button>
 
-				<Button class="text-muted-foreground" disabled={isRunning} onclick={onSkip} variant="ghost">
-					Skip
-				</Button>
+				{#if onSkip}
+					<Button disabled={isRunning} onclick={onSkip} variant="ghost">Skip</Button>
+				{/if}
 			</div>
 
 			<Button disabled={!canImport || isRunning} onclick={onImport}>
