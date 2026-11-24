@@ -65,9 +65,17 @@ export function attachmentTooltipText(agentic: boolean): string {
 export const ATTACHMENT_MENU_TEXT = {
 	ADD_FILES: 'Add files',
 	ADD_TO_CHAT: 'Add to chat',
+	ALL_TOOLS: 'All tools',
+	BACK: 'Back',
+	CAMERA: 'Camera',
+	CLOSE: 'Close',
 	DESCRIPTION: 'Add files, system prompt or pick the tools the model may call',
+	MCP_SERVERS: 'MCP Servers',
+	NONE: 'None',
+	PHOTOS: 'Photos',
 	SYSTEM_MESSAGE: 'System Message',
-	TOOLS: 'Tools'
+	TOOLS: 'Tools',
+	WORKING_DIRECTORY: 'Working directory'
 } as const;
 
 /** Modality labels behind the file-upload row's enabled-when flags, both surfaces. */
