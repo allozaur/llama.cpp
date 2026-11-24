@@ -173,7 +173,7 @@
 		hasPrompts: () => {
 			const prefs = conversationsStore.preferences;
 
-			if (!prefs.isCategoryEnabled(ToolSource.MCP)) return false;
+			if (!mcpStore.isFeatureEnabled || !prefs.isCategoryEnabled(ToolSource.MCP)) return false;
 
 			return mcpStore
 				.getServers()

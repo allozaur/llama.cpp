@@ -40,8 +40,8 @@
 						</span>
 					</span>
 
-					<!-- only while MCP shows: with it hidden, there is nowhere to add a server -->
-					{#if uiStore.isMcpShown}
+					<!-- only while MCP is on -->
+					{#if uiStore.isMcpEnabled}
 						<span class="flex gap-2">
 							<Info class="mt-0.5 {ICON_CLASS_DEFAULT} shrink-0" />
 
