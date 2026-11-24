@@ -16,6 +16,16 @@ export enum SyncableParameterType {
 }
 
 /**
+ * Where a setting applies: every device, or only a desktop or tablet layout, or only a phone's.
+ * A setting is listed only where it applies.
+ */
+export enum SettingsPlatform {
+	ALL = 'all',
+	DESKTOP = 'desktop',
+	MOBILE = 'mobile'
+}
+
+/**
  * Settings field type - defines the input type for settings fields
  */
 export enum SettingsFieldType {

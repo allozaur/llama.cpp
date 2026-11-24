@@ -21,9 +21,9 @@
 		SETTINGS_SECTION_SLUGS
 	} from '#lib/constants/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
-	import { modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
+	import { deviceStore, modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
 	import type { SettingsSection, SettingsSectionTitle } from '#lib/types/index.ts';
-	import { groupSettingsFields, isApiKeyFieldShown } from '#lib/utils/index.ts';
+	import { groupSettingsFields, isApiKeyFieldShown, isSettingShownOn } from '#lib/utils/index.ts';
 	import { page } from '$app/state';
 	import { setMode } from 'mode-watcher';
 	import { tick } from 'svelte';
@@ -87,7 +87,9 @@
 
 	let sectionFields = $derived(
 		(currentSection.fields ?? []).filter(
-			(field) => field.key !== SETTINGS_KEYS.API_KEY || showApiKey
+			(field) =>
+				(field.key !== SETTINGS_KEYS.API_KEY || showApiKey) &&
+				isSettingShownOn(field, deviceStore.isMobile)
 		)
 	);
 	let basicFields = $derived(sectionFields.filter((field) => !field.advanced));

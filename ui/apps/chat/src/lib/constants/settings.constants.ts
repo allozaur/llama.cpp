@@ -19,7 +19,7 @@ import Settings from '@lucide/svelte/icons/settings';
 import SlidersVertical from '@lucide/svelte/icons/sliders-vertical';
 import Sun from '@lucide/svelte/icons/sun';
 import TextCursorInput from '@lucide/svelte/icons/text-cursor-input';
-import { SyncableParameterType, VoiceInputMode } from '#lib/enums/index.ts';
+import { SettingsPlatform, SyncableParameterType, VoiceInputMode } from '#lib/enums/index.ts';
 import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
 import { ColorMode } from '#lib/enums/ui.enums.ts';
 import type {
@@ -90,6 +90,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				help: 'Always keep the sidebar visible on desktop instead of auto-hiding it.',
 				key: SETTINGS_KEYS.ALWAYS_SHOW_SIDEBAR_ON_DESKTOP,
 				label: 'Always show sidebar on desktop',
+				platform: SettingsPlatform.DESKTOP,
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
@@ -98,6 +99,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				help: 'Show open chats as browser-style tabs above the conversation, one per open chat. When disabled, only one chat is shown at a time.',
 				key: SETTINGS_KEYS.CONVERSATION_TABS,
 				label: 'Conversation tabs',
+				platform: SettingsPlatform.DESKTOP,
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
@@ -106,6 +108,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				help: 'On desktop, keep a one-line message on the same row as the + button, the model selector and the send button. A second line, or a line too long for the row, brings back the two-row form.',
 				key: SETTINGS_KEYS.SINGLE_ROW_CHAT_FORM,
 				label: 'Single-row chat form for short messages',
+				platform: SettingsPlatform.DESKTOP,
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
@@ -184,6 +187,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				help: 'Keep the organization name on a phone too, where the model selector is narrow. Applies only while the organization name is shown.',
 				key: SETTINGS_KEYS.SHOW_MODEL_ORG_NAME_ON_MOBILE,
 				label: 'Show organization name on mobile',
+				platform: SettingsPlatform.MOBILE,
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
@@ -226,6 +230,7 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 				help: 'Use Enter to send messages, and Shift + Enter or Ctrl/Cmd + Enter for new lines. When disabled, and always on a touch screen, Enter adds a line and Ctrl/Cmd + Enter sends.',
 				key: SETTINGS_KEYS.SEND_ON_ENTER,
 				label: 'Send message on Enter',
+				platform: SettingsPlatform.DESKTOP,
 				type: SettingsFieldType.CHECKBOX
 			},
 			{
@@ -978,6 +983,7 @@ function toSettingsSection(section: SettingsSectionEntry): SettingsSection {
 				min: s.min,
 				options: s.options as SettingsFieldConfig['options'],
 				placeholder: s.placeholder,
+				platform: s.platform,
 				radioOptions: s.radioOptions,
 				type: s.type
 			})),

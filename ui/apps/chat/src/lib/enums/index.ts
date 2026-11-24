@@ -92,7 +92,12 @@ export {
 	ServerModelsSseEventType
 } from './llama-server.enums';
 
-export { ParameterSource, SyncableParameterType, SettingsFieldType } from './settings.enums';
+export {
+	ParameterSource,
+	SettingsFieldType,
+	SettingsPlatform,
+	SyncableParameterType
+} from './settings.enums';
 
 export {
 	ColorLevel,
