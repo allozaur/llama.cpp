@@ -26,7 +26,6 @@
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		MODALITY_ICONS,
-		SHEET_FLOATING_CLASS,
 		SHEET_HEADER_BUTTON_CLASS
 	} from '#lib/constants/index.ts';
 	import { getChatFormActionsContext } from '#lib/contexts/index.ts';
@@ -176,10 +175,8 @@
 	<Drawer.Root bind:open={drawerOpen}>
 		{@render trigger({ disabled: chatFormActions.disabled, onclick: open })}
 
-		<Drawer.Content
-			class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh] {SHEET_FLOATING_CLASS}"
-		>
-			<header class="grid shrink-0 grid-cols-[5.5rem_1fr_5.5rem] items-center px-3 pt-2 pb-3">
+		<Drawer.Content class="gap-0 data-[vaul-drawer-direction=bottom]:max-h-[85dvh]">
+			<header class="grid shrink-0 grid-cols-[5.5rem_1fr_5.5rem] items-center px-3 pt-0.5 pb-3">
 				{#if pages.canGoBack}
 					<button
 						aria-label={ATTACHMENT_MENU_TEXT.BACK}
@@ -195,7 +192,9 @@
 					</Drawer.Close>
 				{/if}
 
-				<Drawer.Title class="truncate text-center text-body font-semibold">{title}</Drawer.Title>
+				<Drawer.Title class="col-start-2 truncate text-center text-body font-semibold"
+					>{title}</Drawer.Title
+				>
 			</header>
 
 			<Drawer.Description class="sr-only">{ATTACHMENT_MENU_TEXT.DESCRIPTION}</Drawer.Description>
@@ -214,7 +213,7 @@
 						}
 						in:pageTransition={{ incoming: true }}
 						out:pageTransition={{ incoming: false }}
-						class="col-start-1 row-start-1 flex flex-col gap-4 px-3 pb-4"
+						class="col-start-1 row-start-1 flex flex-col gap-4 px-3 pb-[max(1rem,var(--safe-area-bottom))]"
 					>
 						{#if page.id === 'root'}
 							{@render rootPage()}

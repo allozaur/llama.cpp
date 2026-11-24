@@ -3,9 +3,13 @@
  * rounded groups of rows, each row an icon and a body whose divider starts at the label.
  */
 
-/** A round key in a sheet's header: close on the first page, back on the pages pushed over it. */
+/**
+ * A round key in a sheet's top-left corner: close on the first page, back on the pages pushed over
+ * it. It sits outside the header's flow, 1rem from the top edge and from the side, and a sheet's
+ * title row lines up with its middle.
+ */
 export const SHEET_HEADER_BUTTON_CLASS =
-	'matte-key flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
+	'matte-key absolute top-4 left-4 z-10 flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
 
 /** A rounded group of rows. */
 export const INSET_GROUP_CLASS = 'inset-group-surface flex flex-col overflow-hidden';
@@ -23,7 +27,3 @@ export const INSET_ROW_CLASS =
 /** A row's body: the divider starts here, as in a native inset list, and is dropped on the first row. */
 export const INSET_ROW_BODY_CLASS =
 	'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 group-first/row:border-t-0';
-
-/** A phone sheet that floats inset from the screen's edges, rounded as the chat form and the slid page are. */
-export const SHEET_FLOATING_CLASS =
-	'overflow-hidden data-[vaul-drawer-direction=bottom]:inset-x-2 data-[vaul-drawer-direction=bottom]:bottom-[max(0.5rem,var(--safe-area-bottom))] data-[vaul-drawer-direction=bottom]:rounded-4xl data-[vaul-drawer-direction=bottom]:border';
