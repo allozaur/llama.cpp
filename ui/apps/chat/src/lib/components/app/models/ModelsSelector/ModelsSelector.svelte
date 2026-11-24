@@ -7,8 +7,6 @@
 		ChatFormActionReasoning,
 		ModelId,
 		ModelsSelectorDropdown,
-		ModelsSelectorList,
-		ModelsSelectorOption,
 		ModelsSelectorSheet,
 		ModelsSelectorTriggerIcon
 	} from '#lib/components/app/index.ts';
@@ -27,7 +25,7 @@
 		settingsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
-	import { type ModelItem, modelLoadFraction, pickQuickModels } from '#lib/utils/index.ts';
+	import { modelLoadFraction, pickQuickModels } from '#lib/utils/index.ts';
 	import { untrack } from 'svelte';
 
 	interface Props {
@@ -229,6 +227,11 @@
 		return () => cancelAnimationFrame(handle);
 	});
 
+	// a phone opens a tapped model's details over the picker; their chat actions put it to use
+	function openDetails(modelId: string) {
+		uiStore.openModelDetails(modelId);
+	}
+
 	export function open() {
 		ms.handleOpenChange(true);
 	}
@@ -269,70 +272,6 @@
 	{/if}
 {/snippet}
 
-{#snippet modelOption(item: ModelItem, hideOrgName: boolean)}
-	{@const { option } = item}
-	{@const isSelected = ms.activeId === option.id}
-	{@const isHighlighted = option.id === highlightedId}
-	{@const isFav = ms.isFavorite(option.model)}
-
-	<ModelsSelectorOption
-		{hideOrgName}
-		{isFav}
-		{isHighlighted}
-		{isSelected}
-		onKeyDown={(event) => {
-			if (event.key === KeyboardKey.ENTER || event.key === KeyboardKey.SPACE) {
-				event.preventDefault();
-				void handleModelKeyAction(option.id, event.altKey);
-			}
-		}}
-		onMouseEnter={() => (highlightedId = option.id)}
-		onSelect={ms.handleSelect}
-		{option}
-	/>
-{/snippet}
-
-{#snippet pickerList(listClass: string)}
-	<div class={['models-list', listClass]}>
-		{#if !ms.isCurrentModelInCache && displayModel}
-			<!-- Show unavailable model as first option (disabled) -->
-			<button
-				aria-disabled="true"
-				aria-selected="true"
-				class="flex w-full cursor-not-allowed items-center bg-surface-danger p-2 text-left text-body-sm text-fg-danger"
-				disabled
-				role="option"
-				type="button"
-			>
-				<ModelId
-					class="flex-1"
-					hideOrgName={!showOrgName}
-					hideQuantization
-					modelId={displayModel}
-				/>
-
-				<span class="ml-2 text-caption whitespace-nowrap opacity-70">(not available)</span>
-			</button>
-		{/if}
-
-		{#if ms.isEmpty}
-			<p class="px-4 py-3 text-body-sm text-muted-foreground">{ms.emptyMessage}</p>
-		{/if}
-
-		<ModelsSelectorList
-			activeId={ms.activeId}
-			currentModel={displayModel}
-			favorites={ms.favoriteItems}
-			groups={ms.groupedFilteredOptions}
-			loaded={ms.loadedItems}
-			onSelect={ms.handleSelect}
-			renderOption={modelOption}
-			sectionHeaderClass="[&:not(:first-child)]:mt-2 mb-1 px-2 py-2.5 text-body-sm font-semibold text-foreground/80 select-none"
-			{showOrgName}
-		/>
-	</div>
-{/snippet}
-
 {#if ms.loading && ms.options.length === 0 && ms.isMultiModel}
 	<div class="flex items-center gap-2 text-caption text-muted-foreground">
 		<Loader2 class="size-icon-sm animate-spin" />
@@ -366,18 +305,19 @@
 			bind:open={isOpen}
 			activeId={ms.activeId}
 			emptyMessage={ms.emptyMessage}
+			favoriteItems={ms.favoriteItems}
+			groups={ms.groupedFilteredOptions}
 			hideOrgName={!showOrgName}
-			isEmpty={ms.isEmpty && ms.isCurrentModelInCache}
+			isEmpty={ms.isEmpty}
+			loadedItems={ms.loadedItems}
 			onOpenChange={ms.handleOpenChange}
 			onSearchChange={(v) => ms.setSearchTerm(v)}
 			onSearchKeyDown={handleSearchKeyDown}
-			onSelect={ms.handleSelect}
+			onSelect={openDetails}
 			{quickItems}
 			searchTerm={ms.searchTerm}
 			{showReasoning}
-		>
-			{@render pickerList('px-2.5')}
-		</ModelsSelectorSheet>
+		/>
 	{:else}
 		<ModelsSelectorDropdown
 			bind:open={isOpen}
@@ -409,18 +349,19 @@
 		bind:open={isOpen}
 		activeId={ms.activeId}
 		emptyMessage={ms.emptyMessage}
+		favoriteItems={ms.favoriteItems}
+		groups={ms.groupedFilteredOptions}
 		hideOrgName={!showOrgName}
-		isEmpty={ms.isEmpty && ms.isCurrentModelInCache}
+		isEmpty={ms.isEmpty}
+		loadedItems={ms.loadedItems}
 		onOpenChange={ms.handleOpenChange}
 		onSearchChange={(v) => ms.setSearchTerm(v)}
 		onSearchKeyDown={handleSearchKeyDown}
-		onSelect={ms.handleSelect}
+		onSelect={openDetails}
 		{quickItems}
 		searchTerm={ms.searchTerm}
 		{showReasoning}
-	>
-		{@render pickerList('px-2.5')}
-	</ModelsSelectorSheet>
+	/>
 {:else}
 	<!-- a lone llama.cpp server has nothing to choose from: the trigger opens the
 	     manager instead, so the button is its own affordance. With the manager hidden
