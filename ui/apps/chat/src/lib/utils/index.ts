@@ -50,7 +50,13 @@ export {
 } from './code';
 
 // Config helpers
-export { setConfigValue, getConfigValue, configToParameterRecord } from './config-helpers';
+export {
+	setConfigValue,
+	getConfigValue,
+	configToParameterRecord,
+	groupSettingsFields,
+	isApiKeyFieldShown
+} from './config-helpers';
 
 // CORS Proxy
 export { buildProxiedIconUrl, buildProxiedUrl, buildProxiedHeaders } from './cors-proxy';
