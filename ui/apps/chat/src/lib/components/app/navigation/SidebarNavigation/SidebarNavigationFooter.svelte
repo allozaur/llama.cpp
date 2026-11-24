@@ -1,8 +1,7 @@
 <script lang="ts">
 	import SidebarNavigationActions from './SidebarNavigationActions.svelte';
-	import { sidebarFooterItems } from '#lib/constants/index.ts';
+	import { SIDEBAR_FOOTER_ITEMS } from '#lib/constants/index.ts';
 	import type { SidebarAction } from '#lib/enums/index.ts';
-	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import { uiStore } from '#lib/stores/index.ts';
 
 	interface Props {
@@ -11,10 +10,9 @@
 
 	let { onAction }: Props = $props();
 
-	let items = $derived(sidebarFooterItems(agenticMode.enabled));
 	// a lone row needs no group around it
 	let isGrouped = $derived(
-		items.filter((item) => uiStore.isSidebarActionShown(item.action)).length > 1
+		SIDEBAR_FOOTER_ITEMS.filter((item) => uiStore.isSidebarActionShown(item.action)).length > 1
 	);
 </script>
 
@@ -23,6 +21,6 @@
      on the sidebar as the top actions do -->
 <SidebarNavigationActions
 	class={isGrouped ? 'inset-group-surface mx-2 mb-2 p-(--surface-group-padding)' : 'mb-2 px-2'}
-	{items}
+	items={SIDEBAR_FOOTER_ITEMS}
 	{onAction}
 />

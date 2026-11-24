@@ -22,19 +22,18 @@
 		SIDEBAR_COLLAPSE_WIDTH,
 		SIDEBAR_COLLAPSED_WIDTH,
 		SIDEBAR_CONTENT_FADE_MS,
+		SIDEBAR_FOOTER_ITEMS,
 		SIDEBAR_MAX_WIDTH,
 		SIDEBAR_MIN_WIDTH,
 		SIDEBAR_OVERSTRETCH_PX,
 		SIDEBAR_REVEAL_ACTION_DELAY_MS,
 		SIDEBAR_SETTLE_MS,
-		SIDEBAR_TOGGLE_MS,
-		sidebarFooterItems
+		SIDEBAR_TOGGLE_MS
 	} from '#lib/constants/index.ts';
 	import { SidebarAction, TooltipSide } from '#lib/enums/index.ts';
 	import { useKeyboardShortcuts } from '#lib/hooks/use-keyboard-shortcuts.svelte.ts';
 	import { useMarqueeSelection } from '#lib/hooks/use-marquee-selection.svelte.ts';
 	import { RouterService } from '#lib/services/router.service.ts';
-	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import {
 		chatStore,
 		conversationsStore,
@@ -174,7 +173,6 @@
 
 	let renameDialogOpen = $state(false);
 	let settingsDialogOpen = $state(false);
-	let mcpDialogOpen = $state(false);
 	let renameTargetConversationId = $state<string | null>(null);
 	let renameDraft = $state('');
 	let renameOriginalTitle = $state('');
@@ -543,12 +541,7 @@
 				openDialog(() => uiStore.openModelsManager());
 
 				break;
-			// dialogs on a desktop or tablet; on a phone, pages of their own
-			case SidebarAction.MCP:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.MCP_SERVERS));
-				else openDialog(() => (mcpDialogOpen = true));
-
-				break;
+			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
 				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
 				else openDialog(() => (settingsDialogOpen = true));
@@ -669,9 +662,7 @@
 				<!-- a phone has no footer: its items join these -->
 				<SidebarNavigationActions
 					class="px-2 md:my-3"
-					items={isOnMobile
-						? [...SIDEBAR_ACTIONS_ITEMS, ...sidebarFooterItems(agenticMode.enabled)]
-						: undefined}
+					items={isOnMobile ? [...SIDEBAR_ACTIONS_ITEMS, ...SIDEBAR_FOOTER_ITEMS] : undefined}
 					onAction={handleSidebarAction}
 					onNavigate={navigateBehind}
 				/>
@@ -763,7 +754,7 @@
 
 <DialogSearch bind:open={searchOpen} onAction={handleSidebarAction} />
 
-<DialogMcpServers bind:open={mcpDialogOpen} />
+<DialogMcpServers bind:open={uiStore.mcpServersOpen} />
 
 <DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
 

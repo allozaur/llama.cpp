@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Checkbox } from '@ggml-org/llama-ui/ui/checkbox';
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Label } from '@ggml-org/llama-ui/ui/label';
@@ -6,6 +7,7 @@
 	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
 	import { FlaskConical, RotateCcw } from '@lucide/svelte';
+	import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
 	import { SettingsChatParameterSourceIndicator } from '#lib/components/app/settings/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
@@ -14,7 +16,7 @@
 		SETTINGS_KEYS
 	} from '#lib/constants/index.ts';
 	import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
-	import { modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
+	import { modelsStore, serverStore, settingsStore, uiStore } from '#lib/stores/index.ts';
 	import { normalizeFloatingPoint } from '#lib/utils/precision.ts';
 	import type { Component } from 'svelte';
 
@@ -342,6 +344,19 @@
 							<p class="text-caption text-muted-foreground">
 								{field.help || SETTING_CONFIG_INFO[field.key]}
 							</p>
+						{/if}
+
+						{#if field.key === SETTINGS_KEYS.ENABLE_MCP && Boolean(localConfig[field.key])}
+							<Button
+								class="mt-2"
+								onclick={() => uiStore.openMcpServers()}
+								size="sm"
+								variant="outline"
+							>
+								<McpLogo class="size-icon-md" />
+
+								Manage MCP servers
+							</Button>
 						{/if}
 					</div>
 				</div>

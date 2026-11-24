@@ -5,11 +5,10 @@ import {
 	SHORTCUT_SEARCH,
 	SHORTCUT_SETTINGS
 } from './keyboard-shortcuts.constants';
-import { MCP_SERVERS_ROUTE_ID, MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
+import { MODELS_ROUTE_ID, SETTINGS_ROUTE_ID } from './routes.constants';
 import Search from '@lucide/svelte/icons/search';
 import Settings from '@lucide/svelte/icons/settings';
 import SquarePen from '@lucide/svelte/icons/square-pen';
-import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
 import { SidebarAction, ToolSource } from '#lib/enums/index.ts';
 import type { DesktopIconStripItem } from '#lib/types/index.ts';
 
@@ -174,12 +173,6 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		tooltip: 'Models'
 	},
 	{
-		action: SidebarAction.MCP,
-		activeRouteId: MCP_SERVERS_ROUTE_ID,
-		icon: McpLogo,
-		tooltip: 'MCP'
-	},
-	{
 		action: SidebarAction.SETTINGS,
 		activeRouteId: SETTINGS_ROUTE_ID,
 		icon: Settings,
@@ -187,13 +180,6 @@ export const SIDEBAR_FOOTER_ITEMS: DesktopIconStripItem[] = [
 		tooltip: 'Settings'
 	}
 ];
-
-/** The footer items to show: without the agentic features there is no MCP. */
-export function sidebarFooterItems(agentic: boolean): DesktopIconStripItem[] {
-	return agentic
-		? SIDEBAR_FOOTER_ITEMS
-		: SIDEBAR_FOOTER_ITEMS.filter((item) => item.action !== SidebarAction.MCP);
-}
 
 /** A light haptic tap's length where the browser vibrates (Android): a click, not a buzz. */
 export const HAPTIC_TAP_MS = 8;
