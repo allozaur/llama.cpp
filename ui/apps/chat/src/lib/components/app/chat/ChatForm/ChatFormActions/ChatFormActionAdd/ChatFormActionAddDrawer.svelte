@@ -22,6 +22,7 @@
 		ATTACHMENT_MODALITY_TEXT,
 		ICON_CLASS_DEFAULT,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		MODALITY_ICONS,
@@ -335,7 +336,7 @@
 
 		{#if toolsPanel.mcpGroups.length > 0}
 			<div class="flex flex-col gap-1.5">
-				<h3 class="px-4 text-caption text-muted-foreground uppercase">
+				<h3 class={INSET_GROUP_TITLE_CLASS}>
 					{ATTACHMENT_MENU_TEXT.MCP_SERVERS}
 				</h3>
 
