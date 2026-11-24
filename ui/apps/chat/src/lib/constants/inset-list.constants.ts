@@ -1,6 +1,7 @@
 /**
- * Classes for the phone sheets' native-style inset lists (the add sheet, the settings sheet):
- * rounded groups of rows, each row an icon and a body whose divider starts at the label.
+ * Names of the design system's utilities for the phone sheets' native-style inset lists (the
+ * add sheet, the settings sheet, the model picker): rounded groups of rows, each row an icon and
+ * a body whose divider starts at the label. They are defined in @ggml-org/llama-ui's surfaces.css.
  */
 
 /**
@@ -8,8 +9,7 @@
  * it. It sits outside the header's flow, 1rem from the top edge and from the side, and a sheet's
  * title row lines up with its middle.
  */
-export const SHEET_HEADER_BUTTON_CLASS =
-	'matte-key absolute top-4 left-4 z-10 flex size-9 items-center justify-center rounded-full bg-background shadow-(--elevation-key) dark:bg-muted-foreground/15';
+export const SHEET_HEADER_BUTTON_CLASS = 'sheet-key';
 
 /**
  * A sheet with a corner key: its drag handle sits 0.5rem from the top, leaving the title, centered
@@ -20,18 +20,16 @@ export const SHEET_CONTENT_CLASS = '[&>div:first-child]:mt-2';
 export const SHEET_HEADER_CLASS = 'grid shrink-0 items-center px-3 pt-2.5 pb-7';
 
 /** A rounded group of rows. */
-export const INSET_GROUP_CLASS = 'inset-group-surface flex flex-col overflow-hidden';
+export const INSET_GROUP_CLASS = 'inset-list';
 
 /** A group's title above it, set as the sidebar's section headings are on a phone. */
-export const INSET_GROUP_TITLE_CLASS = 'px-4 text-body font-medium text-muted-foreground';
+export const INSET_GROUP_TITLE_CLASS = 'inset-list-title';
 
 /** A note below a group. */
-export const INSET_GROUP_CAPTION_CLASS = 'px-4 text-caption text-muted-foreground';
+export const INSET_GROUP_CAPTION_CLASS = 'inset-list-caption';
 
 /** A row: tappable as a whole, its icon outside the divider, which stops short of both edges. */
-export const INSET_ROW_CLASS =
-	'group/row flex min-h-12 w-full items-center gap-3 px-4 text-left text-body transition-colors active:bg-(--surface-pressed) disabled:pointer-events-none disabled:opacity-50';
+export const INSET_ROW_CLASS = 'inset-list-row';
 
 /** A row's body: the divider starts here, as in a native inset list, and is dropped on the first row. */
-export const INSET_ROW_BODY_CLASS =
-	'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 group-first/row:border-t-0';
+export const INSET_ROW_BODY_CLASS = 'inset-list-row-body';
