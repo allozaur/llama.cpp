@@ -551,7 +551,8 @@
 
 				break;
 			case SidebarAction.SETTINGS:
-				if (isOnMobile) openDialog(() => (settingsSheetOpen = true));
+				// the sheet rises over the sidebar, which stays open behind it
+				if (isOnMobile) settingsSheetOpen = true;
 				else openDialog(() => (settingsDialogOpen = true));
 
 				break;
