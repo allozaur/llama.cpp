@@ -1,16 +1,15 @@
 <script lang="ts">
 	import ModelLoadHighlight from '../ModelLoadHighlight.svelte';
-	import ModelsSelectorReasoning from './ModelsSelectorReasoning.svelte';
 	import ModelsSelectorReasoningBadge from './ModelsSelectorReasoningBadge.svelte';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { ChevronDown, Loader2 } from '@lucide/svelte';
 	import {
 		ChatFormActionReasoning,
 		ModelId,
-		ModelsSelectorDrawer,
 		ModelsSelectorDropdown,
 		ModelsSelectorList,
 		ModelsSelectorOption,
+		ModelsSelectorSheet,
 		ModelsSelectorTriggerIcon
 	} from '#lib/components/app/index.ts';
 	import {
@@ -28,7 +27,7 @@
 		settingsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
-	import { type ModelItem, modelLoadFraction } from '#lib/utils/index.ts';
+	import { type ModelItem, modelLoadFraction, pickQuickModels } from '#lib/utils/index.ts';
 	import { untrack } from 'svelte';
 
 	interface Props {
@@ -94,6 +93,20 @@
 	});
 
 	const selectedOption = $derived(ms.getDisplayOption());
+
+	/** How many models a phone's picker opens with, before its full list. */
+	const QUICK_MODEL_COUNT = 6;
+
+	// the models in reach on a phone: the loaded ones, favorites, then the recently picked
+	let quickItems = $derived(
+		pickQuickModels({
+			favoriteIds: modelsStore.favoriteModelIds,
+			limit: QUICK_MODEL_COUNT,
+			loadedIds: new Set(ms.loadedItems.map((item) => item.option.id)),
+			options: ms.options.filter((option) => !modelsStore.isHidden(option.id)),
+			recentIds: modelsStore.recentModelIds
+		})
+	);
 	const triggerModel = $derived(selectedOption?.model ?? null);
 
 	let triggerStatus = $derived(
@@ -279,10 +292,6 @@
 	/>
 {/snippet}
 
-{#snippet reasoningFooter()}
-	<ModelsSelectorReasoning variant="list" />
-{/snippet}
-
 {#snippet pickerList(listClass: string)}
 	<div class={['models-list', listClass]}>
 		{#if !ms.isCurrentModelInCache && displayModel}
@@ -353,18 +362,22 @@
 			{@render selectorTriggerInner()}
 		</button>
 
-		<ModelsSelectorDrawer
+		<ModelsSelectorSheet
 			bind:open={isOpen}
+			activeId={ms.activeId}
 			emptyMessage={ms.emptyMessage}
-			footer={showReasoning ? reasoningFooter : undefined}
+			hideOrgName={!showOrgName}
 			isEmpty={ms.isEmpty && ms.isCurrentModelInCache}
 			onOpenChange={ms.handleOpenChange}
 			onSearchChange={(v) => ms.setSearchTerm(v)}
 			onSearchKeyDown={handleSearchKeyDown}
+			onSelect={ms.handleSelect}
+			{quickItems}
 			searchTerm={ms.searchTerm}
+			{showReasoning}
 		>
 			{@render pickerList('px-2.5')}
-		</ModelsSelectorDrawer>
+		</ModelsSelectorSheet>
 	{:else}
 		<ModelsSelectorDropdown
 			bind:open={isOpen}
@@ -392,18 +405,22 @@
 		{@render selectorTriggerInner()}
 	</button>
 
-	<ModelsSelectorDrawer
+	<ModelsSelectorSheet
 		bind:open={isOpen}
+		activeId={ms.activeId}
 		emptyMessage={ms.emptyMessage}
-		footer={showReasoning ? reasoningFooter : undefined}
+		hideOrgName={!showOrgName}
 		isEmpty={ms.isEmpty && ms.isCurrentModelInCache}
 		onOpenChange={ms.handleOpenChange}
 		onSearchChange={(v) => ms.setSearchTerm(v)}
 		onSearchKeyDown={handleSearchKeyDown}
+		onSelect={ms.handleSelect}
+		{quickItems}
 		searchTerm={ms.searchTerm}
+		{showReasoning}
 	>
 		{@render pickerList('px-2.5')}
-	</ModelsSelectorDrawer>
+	</ModelsSelectorSheet>
 {:else}
 	<!-- a lone llama.cpp server has nothing to choose from: the trigger opens the
 	     manager instead, so the button is its own affordance. With the manager hidden
