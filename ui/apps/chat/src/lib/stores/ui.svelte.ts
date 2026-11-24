@@ -8,6 +8,7 @@
 
 import {
 	MODELS_ROUTE_ID,
+	ONBOARDING_COMPLETED_LOCALSTORAGE_KEY,
 	ROUTES,
 	SETTINGS_KEYS,
 	SIDEBAR_COLLAPSED_SECTIONS_LOCALSTORAGE_KEY,
@@ -17,7 +18,7 @@ import {
 	SIDEBAR_SECTION_ORDER_LOCALSTORAGE_KEY,
 	SIDEBAR_WIDTH_LOCALSTORAGE_KEY
 } from '#lib/constants/index.ts';
-import { SidebarAction } from '#lib/enums/index.ts';
+import { BooleanString, SidebarAction } from '#lib/enums/index.ts';
 import { deviceStore } from '#lib/stores/device.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type { Group } from '#lib/types/groups.js';
@@ -105,6 +106,9 @@ class UiStore {
 	modelsReturnRoute: string = ROUTES.START;
 	/** Bumped to close every open models selector; a counter, so no selector has to reset it. */
 	modelsSelectorCloseSignal = $state(0);
+	/** Open state of the onboarding dialog. */
+	onboardingOpen = $state(false);
+
 	/** Section ids in the order the user dragged them into, kept across reloads. */
 	sidebarSectionOrder = $state<string[]>(loadSidebarSectionOrder());
 	/** Expanded desktop sidebar width in px; null keeps the stylesheet default. */
@@ -141,6 +145,13 @@ class UiStore {
 		return page.route.id === MODELS_ROUTE_ID;
 	}
 
+	/** Whether the onboarding was finished or dismissed before, on this browser. */
+	get isOnboardingCompleted(): boolean {
+		if (!browser) return true;
+
+		return localStorage.getItem(ONBOARDING_COMPLETED_LOCALSTORAGE_KEY) === BooleanString.TRUE;
+	}
+
 	/** Whether the desktop sidebar is expanded (open); remembered across reloads on desktop. */
 	get isSidebarExpanded(): boolean {
 		return this.#isSidebarExpanded;
@@ -170,6 +181,17 @@ class UiStore {
 	/** Close any open models selector. */
 	closeModelsSelector(): void {
 		this.modelsSelectorCloseSignal++;
+	}
+
+	/** Close the onboarding and remember it, so it does not open by itself again. */
+	finishOnboarding(): void {
+		this.onboardingOpen = false;
+
+		try {
+			localStorage.setItem(ONBOARDING_COMPLETED_LOCALSTORAGE_KEY, BooleanString.TRUE);
+		} catch {
+			// it stays closed for this session
+		}
 	}
 
 	/** Drop a removed section, e.g. a deleted group's, from the remembered order and folds. */
@@ -231,6 +253,11 @@ class UiStore {
 		if (!this.isModelsManagerShown || this.isModelsPageOpen) return;
 
 		void goto(ROUTES.MODELS);
+	}
+
+	/** Open the onboarding, from its first step. */
+	openOnboarding(): void {
+		this.onboardingOpen = true;
 	}
 
 	/**

@@ -223,6 +223,8 @@ export interface HfCatalogBuild {
 export interface HfCatalogSize {
 	name: string;
 	params: string;
+	/** The size takes audio input. */
+	audio?: boolean;
 	builds: HfCatalogBuild[];
 }
 
