@@ -64,7 +64,7 @@
 	};
 
 	let cameraInput: HTMLInputElement | undefined = $state();
-	let photosInput: HTMLInputElement | undefined = $state();
+	let filesInput: HTMLInputElement | undefined = $state();
 
 	const attachmentMenu = useAttachmentMenu(
 		() => ({
@@ -102,11 +102,10 @@
 			.filter((modality) => modality !== undefined)
 	);
 
-	// the camera and the photo library only make sense for a model that can see what they give
-	const canAddMedia = $derived(
-		chatFormActions.hasVisionModality && !!chatFormActions.onFilesSelect
-	);
-	const photosAccept = $derived(chatFormActions.hasVideoModality ? 'image/*,video/*' : 'image/*');
+	// the sheet's own pickers keep it open while the native picker is up; it closes once files arrive
+	const canPickFiles = $derived(!!chatFormActions.onFilesSelect);
+	// the camera only makes sense for a model that can see what it gives
+	const canUseCamera = $derived(chatFormActions.hasVisionModality && canPickFiles);
 
 	const toolsPanel = useToolsPanel();
 	const allGroups = $derived([...toolsPanel.categoryGroups, ...toolsPanel.mcpGroups]);
@@ -142,11 +141,19 @@
 		stack = stack.slice(0, -1);
 	}
 
-	function handleMediaSelect(event: Event) {
+	function handleAddFiles() {
+		if (canPickFiles) {
+			filesInput?.click();
+		} else {
+			attachmentMenu.callbacks[AttachmentAction.FILE_UPLOAD]();
+		}
+	}
+
+	function handleFilesSelect(event: Event) {
 		const input = event.currentTarget as HTMLInputElement;
 		const files = input.files ? Array.from(input.files) : [];
 
-		// cleared so the same photo can be picked again
+		// cleared so the same file can be picked again
 		input.value = '';
 
 		if (files.length === 0) return;
@@ -172,24 +179,17 @@
 		'flex min-h-12 min-w-0 flex-1 items-center gap-2 self-stretch border-t border-border/60 pr-4 group-first/row:border-t-0';
 </script>
 
-<!-- hidden pickers: capture opens the camera on phones, the plain image input the photo library -->
+<!-- hidden pickers: capture opens the camera on phones, the plain input the system file picker -->
 <input
 	bind:this={cameraInput}
 	accept="image/*"
 	capture="environment"
 	class="hidden"
-	onchange={handleMediaSelect}
+	onchange={handleFilesSelect}
 	type="file"
 />
 
-<input
-	bind:this={photosInput}
-	accept={photosAccept}
-	class="hidden"
-	multiple
-	onchange={handleMediaSelect}
-	type="file"
-/>
+<input bind:this={filesInput} class="hidden" multiple onchange={handleFilesSelect} type="file" />
 
 <div class="flex items-center gap-1 {className}">
 	<Drawer.Root bind:open={drawerOpen}>
@@ -213,16 +213,6 @@
 				{/if}
 
 				<Drawer.Title class="truncate text-center text-body font-semibold">{title}</Drawer.Title>
-
-				{#if page.id === 'root' && canAddMedia}
-					<button
-						class="justify-self-end rounded-full px-2 py-1.5 text-body text-muted-foreground transition-colors active:text-foreground"
-						onclick={() => photosInput?.click()}
-						type="button"
-					>
-						{ATTACHMENT_MENU_TEXT.PHOTOS}
-					</button>
-				{/if}
 			</header>
 
 			<Drawer.Description class="sr-only">{ATTACHMENT_MENU_TEXT.DESCRIPTION}</Drawer.Description>
@@ -259,7 +249,7 @@
 
 {#snippet rootPage()}
 	<section class={groupClass}>
-		{#if canAddMedia}
+		{#if canUseCamera}
 			<button class={rowClass} onclick={() => cameraInput?.click()} type="button">
 				<Camera class="{ICON_CLASS_DEFAULT} shrink-0" />
 
@@ -267,11 +257,7 @@
 			</button>
 		{/if}
 
-		<button
-			class={rowClass}
-			onclick={() => attachmentMenu.callbacks[AttachmentAction.FILE_UPLOAD]()}
-			type="button"
-		>
+		<button class={rowClass} onclick={handleAddFiles} type="button">
 			<File class="{ICON_CLASS_DEFAULT} shrink-0" />
 
 			<span class={rowBodyClass}>
