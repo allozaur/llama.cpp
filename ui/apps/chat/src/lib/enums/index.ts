@@ -120,6 +120,7 @@ export {
 	SearchChatsOrder,
 	ServerToolType,
 	ToolSource,
+	ToolLoadingMode,
 	ToolPermissionDecision,
 	ToolResponseField
 } from './tools.enums';

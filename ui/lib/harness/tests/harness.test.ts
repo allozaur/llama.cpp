@@ -456,4 +456,24 @@ describe("createHarness", () => {
     expect(requests).toHaveLength(0);
     expect(types(events)).toEqual(["turn_start", "error"]);
   });
+
+  it("runs a call to a tool that resolveTool finds, without listing it", async () => {
+    const { client, requests } = scriptedClient([[callEvent("hidden")], []]);
+    const asked: string[] = [];
+    const events = await collect(client, [tool("search")], {
+      authorize: async (call) => (asked.push(call.function.name), { type: "allow" }),
+      resolveTool: (name) => (name === "hidden" ? tool("hidden") : undefined),
+    });
+
+    expect(results(events)[0]).toMatchObject({ result: { content: "hidden ran" } });
+    expect(asked).toEqual(["hidden"]);
+    expect(requests[1].tools?.map((t) => t.function.name)).toEqual(["search"]);
+  });
+
+  it("still reports an unknown tool when resolveTool finds nothing", async () => {
+    const { client } = scriptedClient([[callEvent("ghost")], []]);
+    const events = await collect(client, [], { resolveTool: () => undefined });
+
+    expect(results(events)[0]).toMatchObject({ result: { content: "Error: Unknown tool: ghost" } });
+  });
 });

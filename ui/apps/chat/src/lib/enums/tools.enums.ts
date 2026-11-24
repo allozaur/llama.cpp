@@ -25,6 +25,16 @@ export enum ToolPermissionDecision {
 	SESSION = 'session'
 }
 
+/** How tool definitions reach the model. */
+export enum ToolLoadingMode {
+	/** On demand once the definitions take a large share of the context. */
+	AUTO = 'auto',
+	/** MCP and custom tools as a list to load from, always. */
+	ON_DEMAND = 'on_demand',
+	/** Every enabled tool in every request. */
+	UP_FRONT = 'up_front'
+}
+
 export enum ToolResponseField {
 	ERROR = 'error',
 	PLAIN_TEXT = 'plain_text_response'
