@@ -2,8 +2,9 @@
 	A phone's model picker: a sheet in the settings sheet's patterns. It opens partway with the
 	few models in reach (loaded, favorite, recent), each marked when it is the chat's or the
 	dictation's, the reasoning effort and a row that opens all models as a page, in groups of the
-	same rows. Tapping a model opens its menu: use it in the chat, load or unload it, or open its
-	details over the sheet. A search
+	same rows. Tapping a model switches the chat to it, loading it if need be, as on a desktop;
+	holding it opens its menu, as a held chat row does: unload it, or open its details over the
+	sheet. A search
 	shows its results in place; it stays at the sheet's foot.
 -->
 <script lang="ts">
@@ -20,7 +21,6 @@
 		Loader2,
 		Mic,
 		MoreHorizontal,
-		Power,
 		PowerOff,
 		Search,
 		X
@@ -34,11 +34,13 @@
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		REASONING_EFFORT_LABELS,
+		ROW_LONG_PRESS_MS,
 		SETTINGS_KEYS,
 		SHEET_CONTENT_CLASS,
 		SHEET_HEADER_BUTTON_CLASS,
 		SHEET_HEADER_CLASS
 	} from '#lib/constants/index.ts';
+	import { useLongPress } from '#lib/hooks/use-long-press.svelte.ts';
 	import { useReasoningMenu } from '#lib/hooks/use-reasoning-menu.svelte.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
 	import {
@@ -72,7 +74,7 @@
 		onOpenChange?: (open: boolean) => void;
 		onSearchChange?: (value: string) => void;
 		onSearchKeyDown?: (event: KeyboardEvent) => void;
-		/** Puts a model to use in the chat, from its row's menu. */
+		/** A tapped model: switches the chat to it, loading it if need be. */
 		onSelect?: (modelId: string) => void;
 		open?: boolean;
 		/** The few models the sheet opens with; none leaves it to the full list. */
@@ -140,16 +142,23 @@
 		...otherGroups
 	]);
 
-	// a tapped row's menu, anchored to the row
+	// a held row's menu, anchored to the row
 	let menuItem = $state<ModelItem | null>(null);
 	let menuAnchor = $state<HTMLElement | null>(null);
 	let menuOpen = $state(false);
+	// the row under the finger, for the hold to open its menu
+	let pressed = $state<{ item: ModelItem; row: HTMLElement } | null>(null);
 
-	function openMenu(item: ModelItem, row: HTMLElement) {
-		menuItem = item;
-		menuAnchor = row;
-		menuOpen = true;
-	}
+	const longPress = useLongPress({
+		enabled: () => true,
+		onLongPress: () => {
+			if (!pressed) return;
+
+			menuItem = pressed.item;
+			menuAnchor = pressed.row;
+			menuOpen = true;
+		}
+	});
 
 	let menuActions = $derived.by((): MenuAction[] => {
 		const item = menuItem;
@@ -157,16 +166,9 @@
 		if (!item) return [];
 
 		const { id, model } = item.option;
-		const actions: MenuAction[] = [
-			{
-				disabled: activeId === id,
-				icon: Check,
-				label: activeId === id ? 'In use in this chat' : 'Use in chat',
-				onclick: () => onSelect?.(id)
-			}
-		];
+		const actions: MenuAction[] = [];
 
-		// a router loads and unloads its models; a lone server has its one model loaded
+		// a router unloads its models; a lone server keeps its one model loaded
 		if (serverStore.isRouterMode) {
 			if (modelsStore.isModelLoading(model)) {
 				actions.push({
@@ -180,20 +182,13 @@
 					label: 'Unload',
 					onclick: () => void modelsStore.status.unload(model)
 				});
-			} else {
-				actions.push({
-					icon: Power,
-					label: 'Load',
-					onclick: () => void modelsStore.status.load(model)
-				});
 			}
 		}
 
 		actions.push({
 			icon: Info,
-			label: 'Model details',
-			onclick: () => uiStore.openModelDetails(id),
-			separator: true
+			label: 'More details',
+			onclick: () => uiStore.openModelDetails(id)
 		});
 
 		return actions;
@@ -215,9 +210,26 @@
 	{@const dictates = !inChat && voiceStore.isDictationModel(item.option.model)}
 
 	<button
-		aria-haspopup="menu"
-		class="{INSET_ROW_CLASS} [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
-		onclick={(event) => openMenu(item, event.currentTarget)}
+		style:--row-hold-ms="{ROW_LONG_PRESS_MS}ms"
+		class={[
+			INSET_ROW_CLASS,
+			'select-none [-webkit-touch-callout:none] [content-visibility:auto] [contain-intrinsic-size:auto_3rem]',
+			// the row sinks while a finger holds it, and stays lit while its menu is open
+			longPress.isPressing &&
+				pressed?.item === item &&
+				'bg-(--surface-pressed) duration-(--row-hold-ms) ease-out',
+			menuOpen && menuItem === item && 'bg-(--surface-pressed)'
+		]}
+		onclick={() => onSelect?.(item.option.id)}
+		onclickcapture={longPress.handleClickCapture}
+		oncontextmenu={longPress.handleContextMenu}
+		onpointercancel={longPress.handlePointerEnd}
+		onpointerdown={(event) => {
+			pressed = { item, row: event.currentTarget };
+			longPress.handlePointerDown(event);
+		}}
+		onpointermove={longPress.handlePointerMove}
+		onpointerup={longPress.handlePointerEnd}
 		type="button"
 	>
 		<ModelAvatar class="shrink-0" option={item.option} size="size-6" />
@@ -269,7 +281,7 @@
 	</section>
 {/snippet}
 
-<!-- a tapped row's menu: it shows no trigger, anchored to the row as a held chat row's is -->
+<!-- a held row's menu: it shows no trigger, anchored to the row as a held chat row's is -->
 <div hidden>
 	<DropdownMenuActions
 		bind:open={menuOpen}
