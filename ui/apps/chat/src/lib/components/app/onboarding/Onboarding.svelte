@@ -19,6 +19,7 @@
 		toolsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
+	import { canPickFolder } from '#lib/utils/agent-import-files.ts';
 	import { canonicalizeServerUrl } from '#lib/utils/index.ts';
 	import { resolveOnboardingSteps, resolveOnboardingTasks } from '#lib/utils/onboarding.ts';
 	import { goto } from '$app/navigation';
@@ -58,6 +59,7 @@
 		resolveOnboardingSteps(
 			{
 				apiKeyRequired: page.status === 401 || page.status === 403,
+				canImportChats: canPickFolder(),
 				hasAudioModel,
 				isRouter: serverStore.isRouterMode,
 				mcpSuggestionCount: ONBOARDING_MCP_SERVERS.length - addedMcpIds.length,

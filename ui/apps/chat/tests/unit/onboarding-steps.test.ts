@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 // a router with a chat model that hears and every recommended MCP server added
 const SETTLED: OnboardingStepsInput = {
 	apiKeyRequired: false,
+	canImportChats: false,
 	hasAudioModel: true,
 	isRouter: true,
 	mcpSuggestionCount: 0,
@@ -71,6 +72,18 @@ describe('resolveOnboardingSteps', () => {
 	it('offers MCP servers while some are not added', () => {
 		expect(setupSteps({ mcpSuggestionCount: 2 })).toEqual([
 			OnboardingStep.POWER_UPS,
+			OnboardingStep.DONE
+		]);
+	});
+
+	it('offers the chat import where a folder can be picked, after the MCP servers', () => {
+		expect(setupSteps({ canImportChats: true })).toEqual([
+			OnboardingStep.IMPORT,
+			OnboardingStep.DONE
+		]);
+		expect(setupSteps({ canImportChats: true, mcpSuggestionCount: 1 })).toEqual([
+			OnboardingStep.POWER_UPS,
+			OnboardingStep.IMPORT,
 			OnboardingStep.DONE
 		]);
 	});

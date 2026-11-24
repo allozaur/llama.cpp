@@ -41,6 +41,11 @@ export function parseAgentImportFile(text: string, fileName = ''): ExportedConve
 	return conversation ? [conversation] : [];
 }
 
+/** The browser can pick a folder. A phone browser cannot. */
+export function canPickFolder(): boolean {
+	return typeof HTMLInputElement !== 'undefined' && 'webkitdirectory' in HTMLInputElement.prototype;
+}
+
 /** The files of a file or folder input. */
 export function filesFromInput(list: FileList | null): AgentImportFile[] {
 	return Array.from(list ?? []).map((file) => ({
