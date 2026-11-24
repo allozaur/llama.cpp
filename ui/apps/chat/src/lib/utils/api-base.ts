@@ -7,7 +7,7 @@
  * store, which keeps URL resolution free of store dependencies.
  */
 
-import { withBase } from './base-path';
+import { serverUrl } from './server-config';
 import { isLocalServer, serverChatUrl, serverModelsUrl, serverOrigin } from './servers';
 import { API_ABSOLUTE_URL_PROTOCOLS, API_CHAT, API_MODELS } from '#lib/constants/index.ts';
 import type { Server } from '#lib/types/index.ts';
@@ -89,8 +89,8 @@ export function apiModelsUrl(serverId?: string): string {
 /**
  * Absolute URL for an API path on a server.
  *
- * Absolute URLs pass through untouched. Paths on the local server keep the
- * existing base-path-relative form, so serving under a subpath still works.
+ * Absolute URLs pass through untouched. Paths on the local server go to the
+ * server config.json names, else keep the base-path-relative form.
  * Paths on external servers resolve against the server's API root.
  */
 export function apiUrl(path: string, serverId?: string): string {
@@ -101,7 +101,8 @@ export function apiUrl(path: string, serverId?: string): string {
 	const baseUrl = getServerBaseUrl(serverId);
 
 	if (!baseUrl) {
-		return withBase(path);
+		// the built-in server: the app's own origin, or the one config.json names
+		return serverUrl(path);
 	}
 
 	const root = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
