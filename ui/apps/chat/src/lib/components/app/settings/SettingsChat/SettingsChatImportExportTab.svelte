@@ -7,7 +7,8 @@
 	import { Label } from '@ggml-org/llama-ui/ui/label';
 	import * as RadioGroup from '@ggml-org/llama-ui/ui/radio-group';
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
-	import { Check, Download, Trash2 } from '@lucide/svelte';
+	import { Check, Download, MessagesSquare, Trash2 } from '@lucide/svelte';
+	import { AgentImportDialog } from '#lib/components/app/agent-import/index.ts';
 	import { DialogConfirmation, DialogConversationSelection } from '#lib/components/app/index.ts';
 	import SettingsGroup from '#lib/components/app/settings/SettingsGroup.svelte';
 	import { ICON_CLASS_DEFAULT } from '#lib/constants/index.ts';
@@ -35,6 +36,10 @@
 		DELETE_ALL_TITLE: 'Delete All',
 		EXPORT: 'Export',
 		IMPORT: 'Import',
+		IMPORT_FROM_APPS: 'Import from other apps',
+		IMPORT_FROM_APPS_NOTE:
+			'Bring your chat sessions from Claude Code into your conversations. The session files are read in this browser.',
+		IMPORT_FROM_APPS_TITLE: 'Import from other AI apps',
 		IMPORT_NOTE:
 			'Bring in one or more conversations, your settings, or both at once. You see what each file holds before anything changes; conversations already in your library are left as they are.',
 		IMPORT_NOTE_SHORT:
@@ -70,6 +75,8 @@
 	let showExportDialog = $state(false);
 	let availableConversations = $state<DatabaseConversation[]>([]);
 	let messageCountMap = $state<Map<string, number>>(new Map());
+
+	let showAgentImportDialog = $state(false);
 
 	let showDeleteDialog = $state(false);
 
@@ -167,6 +174,17 @@
 	}
 </script>
 
+{#snippet agentImport()}
+	<SettingsChatImportExportSection
+		IconComponent={MessagesSquare}
+		buttonText={TEXT.IMPORT_FROM_APPS}
+		description={TEXT.IMPORT_FROM_APPS_NOTE}
+		{inset}
+		onclick={() => (showAgentImportDialog = true)}
+		title={TEXT.IMPORT_FROM_APPS_TITLE}
+	/>
+{/snippet}
+
 {#snippet sensitiveNote()}
 	{includeSensitiveData ? TEXT.SENSITIVE_INCLUDED : TEXT.SENSITIVE_LEFT_OUT}
 {/snippet}
@@ -180,6 +198,10 @@
 			<SettingsChatImportDropZone />
 
 			<p class="inset-list-caption">{TEXT.IMPORT_NOTE_SHORT}</p>
+
+			<InsetList class="mt-2">
+				{@render agentImport()}
+			</InsetList>
 		</div>
 
 		<div class="flex flex-col gap-6">
@@ -249,6 +271,8 @@
 			</p>
 
 			<SettingsChatImportDropZone />
+
+			{@render agentImport()}
 		</SettingsGroup>
 
 		<SettingsGroup title={TEXT.EXPORT}>
@@ -324,6 +348,8 @@
 	onCancel={() => (showExportDialog = false)}
 	onConfirm={handleExportConfirm}
 />
+
+<AgentImportDialog bind:open={showAgentImportDialog} />
 
 <DialogConfirmation
 	bind:open={showDeleteDialog}
