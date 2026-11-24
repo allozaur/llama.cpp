@@ -20,6 +20,7 @@ import { llamaServerMcpServers } from '#lib/extensions/mcp/llama-server.ts';
 import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { contributeTools } from '#lib/extensions/mcp/tools.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
+import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
 import type { OpenAIToolDefinition, ServerToolInfo } from '#lib/types/index.ts';
 
@@ -87,6 +88,8 @@ extensions.register({
 });
 
 beforeEach(() => {
+	// as against a llama-server started with --agent
+	agenticMode.serverHasTools = true;
 	vi.restoreAllMocks();
 	vi.spyOn(mcpStore, 'getServers').mockReturnValue([]);
 	vi.spyOn(mcpStore, 'getConnections').mockReturnValue(new Map());

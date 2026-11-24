@@ -66,6 +66,19 @@ class ExtensionRegistry {
 	}
 
 	/**
+	 * Whether the extension behind a contribution is available right now, undefined while that
+	 * is not known yet (see ExtensionManifest.available). True for a contribution nobody made.
+	 */
+	availabilityOf<P extends ExtensionPoint>(
+		point: P,
+		value: ExtensionPoints[P]
+	): boolean | undefined {
+		const contribution = this._contributions.find((c) => c.point === point && c.value === value);
+
+		return contribution ? this.availability(contribution.owner) : true;
+	}
+
+	/**
 	 * @param options.storageKey - Where the on/off choices are kept in localStorage.
 	 *   Null keeps them in memory only, for a registry that is not the app's.
 	 */
@@ -74,12 +87,26 @@ class ExtensionRegistry {
 			options.storageKey === undefined ? EXTENSIONS_LOCALSTORAGE_KEY : options.storageKey;
 	}
 
-	/** What the active extensions contribute to a point, in activation order. Reactive. */
-	contributions<P extends ExtensionPoint>(point: P): ExtensionPoints[P][] {
+	/**
+	 * What the active extensions contribute to a point, in activation order. Reactive.
+	 *
+	 * @param options.unavailable - Also those of an extension that is not available right now
+	 *   (see ExtensionManifest.available), which are left out otherwise.
+	 */
+	contributions<P extends ExtensionPoint>(
+		point: P,
+		options: { unavailable?: boolean } = {}
+	): ExtensionPoints[P][] {
 		const result: ExtensionPoints[P][] = [];
+		const available: Record<string, boolean> = {};
 
 		for (const contribution of this._contributions) {
-			if (contribution.point === point) result.push(contribution.value as ExtensionPoints[P]);
+			if (contribution.point !== point) continue;
+
+			available[contribution.owner] ??=
+				options.unavailable === true || this.availability(contribution.owner) === true;
+
+			if (available[contribution.owner]) result.push(contribution.value as ExtensionPoints[P]);
 		}
 
 		return result;
@@ -163,6 +190,12 @@ class ExtensionRegistry {
 			this._errors.set(id, error instanceof Error ? error.message : String(error));
 			this._states.set(id, 'failed');
 		}
+	}
+
+	private availability(id: string): boolean | undefined {
+		const manifest = this._manifests.find((m) => m.id === id);
+
+		return manifest?.available ? manifest.available() : true;
 	}
 
 	private async deactivate(id: string): Promise<void> {

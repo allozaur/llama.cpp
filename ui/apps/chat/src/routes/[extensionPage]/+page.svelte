@@ -1,16 +1,23 @@
 <script lang="ts">
-	import { APP_NAME } from '#lib/constants/index.ts';
+	import { APP_NAME, ROUTES } from '#lib/constants/index.ts';
 	import { extensions } from '#lib/extensions/index.ts';
-	import { refreshAll } from '$app/navigation';
+	import { goto, refreshAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
-	const contributed = $derived(
-		extensions.contributions('pages').find((p) => p.path === page.params.extensionPage)
+	const registered = $derived(
+		extensions
+			.contributions('pages', { unavailable: true })
+			.find((p) => p.path === page.params.extensionPage)
 	);
+	const availability = $derived(registered && extensions.availabilityOf('pages', registered));
+	const contributed = $derived(availability === true ? registered : undefined);
 
-	// its extension was switched off while the page is shown: the load runs again and ends in the 404
 	$effect(() => {
-		if (!contributed) void refreshAll();
+		// its extension was switched off while the page is shown: the load runs again and ends in the 404
+		if (!registered) void refreshAll();
+		// its extension is not available, as MCP on a server without the agentic features
+		else if (availability === false) void goto(resolve(ROUTES.START));
 	});
 </script>
 
