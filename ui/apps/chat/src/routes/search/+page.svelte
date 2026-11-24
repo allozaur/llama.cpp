@@ -9,6 +9,7 @@
 	import { chatStore, conversationsStore, deviceStore } from '#lib/stores/index.ts';
 	import { browser } from '$app/env';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
 	let searchQuery = $state('');
@@ -28,7 +29,7 @@
 	// in-place search, so bounce back to a new-chat tab without a history entry.
 	$effect(() => {
 		if (browser && !deviceStore.isMobile) {
-			goto(ROUTES.START, { replace: true });
+			goto(resolve(ROUTES.START), { replace: true });
 		}
 	});
 

@@ -266,7 +266,6 @@ export default ts.config(
 			'simple-import-sort/imports': ['error', { groups: [['.*']] }],
 			'svelte/no-at-html-tags': 'off',
 			// This app uses hash-based routing (#/) where resolve() from $app/paths does not apply
-			'svelte/no-navigation-without-resolve': 'off',
 
 			// Sort HTML attributes alphabetically in the markup. The Svelte directives
 			// (bind:/use:/animate:/style:/in:/out:/transition:/class:) sort first,
@@ -320,6 +319,12 @@ export default ts.config(
 				svelteConfig
 			}
 		}
+	},
+	{
+		// type information for the app's own modules too, so svelte/no-navigation-without-resolve
+		// accepts a URL typed as ResolvedPathname, such as RouterService.chat(id)
+		files: ['src/**/*.ts'],
+		languageOptions: { parserOptions: { projectService: true } }
 	},
 	{
 		// Exclude generated build output and Storybook files from ESLint
