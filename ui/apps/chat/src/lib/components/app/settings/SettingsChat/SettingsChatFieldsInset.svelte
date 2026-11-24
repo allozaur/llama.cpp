@@ -4,12 +4,11 @@
 	A change is handed on when it is made: a switch or a pick at once, typed text once it is left.
 -->
 <script lang="ts">
-	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
-	import { Check, ChevronsUpDown, FlaskConical, RotateCcw } from '@lucide/svelte';
+	import { Check, FlaskConical, RotateCcw } from '@lucide/svelte';
+	import NativeSelect from '#lib/components/app/misc/NativeSelect.svelte';
 	import {
-		ICON_CLASS_SM,
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
 		INSET_GROUP_TITLE_CLASS,
@@ -289,45 +288,23 @@
 {/snippet}
 
 {#snippet selectRow(field: SettingsFieldConfig)}
-	{@const selected = field.options?.find(
-		(option: { value: string; label: string }) => option.value === localConfig[field.key]
-	)}
-
 	<div class={INSET_ROW_CLASS}>
 		<span class="{INSET_ROW_BODY_CLASS} gap-4">
 			{@render rowLabel(field, helpOf(field))}
 
-			<Select.Root
+			<NativeSelect
+				label={field.label}
 				onValueChange={(value) => {
 					if (field.key === SETTINGS_KEYS.THEME && value && onThemeChange) onThemeChange(value);
 					else onConfigChange(field.key, value);
 				}}
-				type="single"
+				options={(field.options ?? []).map((option: { value: string; label: string }) => ({
+					label: option.label,
+					value: option.value
+				}))}
 				value={String(localConfig[field.key] ?? '')}
-			>
-				<Select.Trigger
-					aria-label={field.label}
-					class="h-auto max-w-[55%] gap-1 border-0 bg-transparent px-0 text-body-sm text-muted-foreground shadow-none dark:bg-transparent [&>svg:last-child]:hidden"
-				>
-					<span class="truncate">{selected?.label ?? 'Select'}</span>
-
-					<ChevronsUpDown class="size-3.5 shrink-0" />
-				</Select.Trigger>
-
-				<Select.Content align="end">
-					{#each field.options ?? [] as option (option.value)}
-						<Select.Item label={option.label} value={option.value}>
-							<span class="flex items-center gap-2">
-								{#if option.icon}
-									<option.icon class={ICON_CLASS_SM} />
-								{/if}
-
-								{option.label}
-							</span>
-						</Select.Item>
-					{/each}
-				</Select.Content>
-			</Select.Root>
+				variant="inset"
+			/>
 		</span>
 	</div>
 {/snippet}

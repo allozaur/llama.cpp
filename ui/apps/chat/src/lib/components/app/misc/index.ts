@@ -70,3 +70,11 @@ export {
 	type GroupedListGroup,
 	GroupedListUnit
 } from './GroupedList.svelte';
+
+/**
+ * **NativeSelect** - Select that opens the OS's own picker
+ *
+ * A trigger styled like the app's select, with an invisible native select over it, so a phone
+ * shows its wheel or sheet. Used by the phone settings sheet.
+ */
+export { default as NativeSelect } from './NativeSelect.svelte';
