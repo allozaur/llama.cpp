@@ -56,7 +56,8 @@ export {
 	getConfigValue,
 	configToParameterRecord,
 	groupSettingsFields,
-	isApiKeyFieldShown
+	isApiKeyFieldShown,
+	isSettingShownOn
 } from './config-helpers';
 
 // CORS Proxy
