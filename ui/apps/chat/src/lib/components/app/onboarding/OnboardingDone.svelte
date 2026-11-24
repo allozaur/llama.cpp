@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import type { OnboardingTask } from '#lib/constants/index.ts';
 
 	interface Props {
@@ -11,18 +12,18 @@
 </script>
 
 {#if tasks.length > 0}
-	<ul class="grid grid-cols-2 gap-2 md:grid-cols-4">
+	<ul class="grid grid-cols-2 gap-3 md:grid-cols-4">
 		{#each tasks as task (task.id)}
 			<li class="contents">
-				<button
-					class="flex cursor-pointer flex-col items-start gap-3 rounded-lg border border-border/60 p-3 text-left text-body-sm transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+				<Button
+					class="h-auto flex-col items-start justify-start gap-3 p-4 text-left whitespace-normal"
 					onclick={() => onPrompt?.(task.prompt)}
-					type="button"
+					variant="outline"
 				>
 					<task.icon class="size-icon-lg text-muted-foreground" />
 
 					{task.label}
-				</button>
+				</Button>
 			</li>
 		{/each}
 	</ul>

@@ -2,7 +2,6 @@ import { ONBOARDING_INTRO_STEPS } from '#lib/constants/index.ts';
 import { OnboardingStep } from '#lib/enums/index.ts';
 import {
 	firstSetupStep,
-	onboardingPhase,
 	type OnboardingStepsInput,
 	resolveOnboardingSteps,
 	resolveOnboardingTasks
@@ -91,15 +90,6 @@ describe('firstSetupStep', () => {
 			OnboardingStep.POWER_UPS
 		);
 		expect(firstSetupStep(resolveOnboardingSteps(SETTLED))).toBe(OnboardingStep.DONE);
-	});
-});
-
-describe('onboardingPhase', () => {
-	it('puts the intro, the setup steps and the last step in three stages', () => {
-		expect(onboardingPhase(OnboardingStep.INTRO_VOICE)).toBe(0);
-		expect(onboardingPhase(OnboardingStep.CONNECTION)).toBe(1);
-		expect(onboardingPhase(OnboardingStep.POWER_UPS)).toBe(1);
-		expect(onboardingPhase(OnboardingStep.DONE)).toBe(2);
 	});
 });
 

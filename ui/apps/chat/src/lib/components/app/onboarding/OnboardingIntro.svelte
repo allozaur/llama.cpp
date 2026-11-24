@@ -46,7 +46,7 @@
 	}
 </script>
 
-<div class="rounded-xl border border-border/60 bg-background p-4 md:p-6">
+<div class="rounded-xl border border-border/60 bg-background p-5 md:p-8">
 	<div aria-hidden="true" class="flex flex-col gap-4" inert>
 		{#if step === OnboardingStep.INTRO_CHAT}
 			<div class="flex flex-col items-end">
