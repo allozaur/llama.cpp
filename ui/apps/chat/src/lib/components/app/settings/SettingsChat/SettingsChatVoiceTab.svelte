@@ -12,8 +12,17 @@
 		VOICE_MICROPHONE_AUTO,
 		VOICE_MICROPHONE_DEFAULT
 	} from '@ggml-org/llama-voice';
-	import { SettingsChatFields, SettingsGroup } from '#lib/components/app/settings/index.ts';
+	import { ChevronsUpDown } from '@lucide/svelte';
 	import {
+		SettingsChatFields,
+		SettingsChatFieldsInset,
+		SettingsGroup
+	} from '#lib/components/app/settings/index.ts';
+	import {
+		INSET_GROUP_CAPTION_CLASS,
+		INSET_GROUP_CLASS,
+		INSET_ROW_BODY_CLASS,
+		INSET_ROW_CLASS,
 		SETTING_CONFIG_INFO,
 		SETTINGS_KEYS,
 		SETTINGS_REGISTRY,
@@ -28,11 +37,13 @@
 
 	interface Props {
 		fields: SettingsFieldConfig[];
+		/** Draw the section as a phone's inset list, for the settings sheet. */
+		inset?: boolean;
 		localConfig: SettingsConfigType;
 		onConfigChange: (key: string, value: string | boolean) => void;
 	}
 
-	let { fields, localConfig, onConfigChange }: Props = $props();
+	let { fields, inset = false, localConfig, onConfigChange }: Props = $props();
 
 	const KEY = SETTINGS_KEYS.VOICE_TRANSCRIPTION_MODEL;
 
@@ -235,24 +246,157 @@
 	</div>
 {/snippet}
 
-<div class="space-y-12">
-	{#each groups as group (group.title)}
-		{@const split = splitAt(group.fields)}
+{#snippet insetPicker(
+	label: string,
+	value: string,
+	valueLabel: string,
+	pick: (value: string) => void,
+	items: Array<{ label: string; value: string }>,
+	itemGroups: Array<{ heading: string; items: Array<{ label: string; value: string }> }>
+)}
+	<section class={INSET_GROUP_CLASS}>
+		<div class={INSET_ROW_CLASS}>
+			<span class="{INSET_ROW_BODY_CLASS} gap-4">
+				<span class="flex-1 py-3">{label}</span>
 
-		<SettingsGroup title={group.title}>
-			<div class="space-y-6">
-				{#if group.title === groupOf(MIC_KEY)}
-					{@render microphonePicker()}
+				<Select.Root onValueChange={pick} type="single" {value}>
+					<Select.Trigger
+						aria-label={label}
+						class="h-auto max-w-[60%] gap-1 border-0 bg-transparent px-0 text-body-sm text-muted-foreground shadow-none dark:bg-transparent [&>svg:last-child]:hidden"
+					>
+						<span class="truncate">{valueLabel}</span>
+
+						<ChevronsUpDown class="size-3.5 shrink-0" />
+					</Select.Trigger>
+
+					<Select.Content align="end">
+						{#each items as option (option.value)}
+							<Select.Item label={option.label} value={option.value}>{option.label}</Select.Item>
+						{/each}
+
+						{#each itemGroups as group (group.heading)}
+							<Select.Group>
+								<Select.GroupHeading>{group.heading}</Select.GroupHeading>
+
+								{#each group.items as option (option.value)}
+									<Select.Item label={option.label} value={option.value}>{option.label}</Select.Item
+									>
+								{/each}
+							</Select.Group>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</span>
+		</div>
+	</section>
+{/snippet}
+
+{#if inset}
+	<div class="flex flex-col gap-8">
+		{#each groups as group (group.title)}
+			{@const split = splitAt(group.fields)}
+
+			<div class="flex flex-col gap-1.5">
+				{#if group.title}
+					<h3 class={INSET_GROUP_CAPTION_CLASS}>{group.title}</h3>
 				{/if}
 
-				<SettingsChatFields fields={group.fields.slice(0, split)} {localConfig} {onConfigChange} />
+				<div class="flex flex-col gap-6">
+					{#if group.title === groupOf(MIC_KEY)}
+						<div class="flex flex-col gap-1.5" data-slot="voice-microphone">
+							{@render insetPicker(
+								'Microphone',
+								micCurrent,
+								micLabel,
+								(value) => onConfigChange(MIC_KEY, value),
+								micOptions,
+								[]
+							)}
 
-				{#if group.title === groupOf(KEY)}
-					{@render transcriptionModelPicker()}
-				{/if}
+							<p class={INSET_GROUP_CAPTION_CLASS}>
+								{SETTING_CONFIG_INFO[MIC_KEY]}
 
-				<SettingsChatFields fields={group.fields.slice(split)} {localConfig} {onConfigChange} />
+								{#if micNamesHidden}
+									The browser names your microphones once you have allowed one, e.g. after your
+									first recording.
+								{/if}
+							</p>
+						</div>
+					{/if}
+
+					<SettingsChatFieldsInset
+						fields={group.fields.slice(0, split)}
+						{localConfig}
+						{onConfigChange}
+					/>
+
+					{#if group.title === groupOf(KEY)}
+						<div class="flex flex-col gap-1.5" data-slot="voice-transcription-model">
+							{#if isRouter}
+								{@render insetPicker(
+									'Transcription model',
+									current,
+									selectedLabel,
+									(value) => onConfigChange(KEY, value),
+									[
+										{ label: VOICE_SETTINGS_LABEL.automatic, value: VOICE_TRANSCRIPTION_MODEL_AUTO }
+									],
+									optionGroups
+								)}
+
+								<p class={INSET_GROUP_CAPTION_CLASS}>
+									{SETTING_CONFIG_INFO[KEY]} Only models with audio input are listed. A model you pick
+									here is loaded on the server when you dictate, if it isn't loaded already.
+								</p>
+							{:else}
+								<p class={INSET_GROUP_CAPTION_CLASS}>
+									{#if singleModel}
+										This server runs one model, {singleModel}.
+										{singleModelHasAudio
+											? 'It has audio input, so it transcribes your voice.'
+											: 'It has no audio input, so voice input is not available on this server.'}
+									{:else}
+										This server runs one model, which transcribes your voice when it has audio
+										input.
+									{/if}
+								</p>
+							{/if}
+						</div>
+					{/if}
+
+					<SettingsChatFieldsInset
+						fields={group.fields.slice(split)}
+						{localConfig}
+						{onConfigChange}
+					/>
+				</div>
 			</div>
-		</SettingsGroup>
-	{/each}
-</div>
+		{/each}
+	</div>
+{:else}
+	<div class="space-y-12">
+		{#each groups as group (group.title)}
+			{@const split = splitAt(group.fields)}
+
+			<SettingsGroup title={group.title}>
+				<div class="space-y-6">
+					{#if group.title === groupOf(MIC_KEY)}
+						{@render microphonePicker()}
+					{/if}
+
+					<SettingsChatFields
+						fields={group.fields.slice(0, split)}
+						{localConfig}
+						{onConfigChange}
+					/>
+
+					{#if group.title === groupOf(KEY)}
+						{@render transcriptionModelPicker()}
+					{/if}
+
+					<SettingsChatFields fields={group.fields.slice(split)} {localConfig} {onConfigChange} />
+				</div>
+			</SettingsGroup>
+		{/each}
+	</div>
+{/if}

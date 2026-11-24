@@ -7,10 +7,19 @@
 		DialogExportSettings
 	} from '#lib/components/app/index.ts';
 	import SettingsGroup from '#lib/components/app/settings/SettingsGroup.svelte';
+	import { INSET_GROUP_CAPTION_CLASS, INSET_GROUP_CLASS } from '#lib/constants/index.ts';
 	import { ConversationSelectionMode, FileExtensionText, HtmlInputType } from '#lib/enums/index.ts';
 	import { ConversationTransferService } from '#lib/services/index.ts';
 	import { conversationsStore, groupsStore, settingsStore } from '#lib/stores/index.ts';
 	import { createMessageCountMap } from '#lib/utils/index.ts';
+	import type { Snippet } from 'svelte';
+
+	interface Props {
+		/** Draw the actions as a phone's inset list, for the settings sheet. */
+		inset?: boolean;
+	}
+
+	let { inset = false }: Props = $props();
 	import { fade } from 'svelte/transition';
 	import { toast } from 'svelte-sonner';
 
@@ -260,57 +269,79 @@
 	}
 </script>
 
-<div in:fade={{ duration: 150 }} class="space-y-12">
-	<SettingsGroup title="Conversations">
-		<SettingsChatImportExportSection
-			IconComponent={Download}
-			buttonText="Export conversations"
-			description="Download your conversations as a ZIP of JSONL files. This includes all messages, attachments, and conversation history."
-			onclick={handleExportClick}
-			summary={{ items: exportedConversations, show: showExportSummary, verb: 'Exported' }}
-			title="Export"
-		/>
+{#snippet group(title: string, children: Snippet)}
+	{#if inset}
+		<div class="flex flex-col gap-1.5">
+			<h3 class={INSET_GROUP_CAPTION_CLASS}>{title}</h3>
 
-		<SettingsChatImportExportSection
-			IconComponent={Upload}
-			buttonText="Import conversations"
-			description="Import one or more conversations from a previously exported ZIP or JSONL file. This will merge with your existing conversations."
-			onclick={handleImportClick}
-			summary={{ items: importedConversations, show: showImportSummary, verb: 'Imported' }}
-			title="Import"
-		/>
+			<section class={INSET_GROUP_CLASS}>{@render children()}</section>
+		</div>
+	{:else}
+		<SettingsGroup {title}>{@render children()}</SettingsGroup>
+	{/if}
+{/snippet}
 
-		<SettingsChatImportExportSection
-			IconComponent={Trash2}
-			buttonClass="justify-start justify-self-start md:w-auto"
-			buttonText="Delete all conversations"
-			buttonVariant="destructive"
-			description="Permanently delete all conversations and their messages. This action cannot be undone. Consider exporting your conversations first if you want to keep a backup."
-			onclick={handleDeleteAllClick}
-			title="Delete All"
-			titleClass="text-destructive"
-		/>
-	</SettingsGroup>
+{#snippet conversationActions()}
+	<SettingsChatImportExportSection
+		IconComponent={Download}
+		buttonText="Export conversations"
+		description="Download your conversations as a ZIP of JSONL files. This includes all messages, attachments, and conversation history."
+		{inset}
+		onclick={handleExportClick}
+		summary={{ items: exportedConversations, show: showExportSummary, verb: 'Exported' }}
+		title="Export"
+	/>
 
-	<SettingsGroup title="Settings">
-		<SettingsChatImportExportSection
-			IconComponent={Download}
-			buttonText="Export settings"
-			description="Export your chat settings and preferences as a JSON file."
-			onclick={handleSettingsExport}
-			summary={{ items: [], show: showSettingsExportSummary, verb: 'Exported' }}
-			title="Export"
-		/>
+	<SettingsChatImportExportSection
+		IconComponent={Upload}
+		buttonText="Import conversations"
+		description="Import one or more conversations from a previously exported ZIP or JSONL file. This will merge with your existing conversations."
+		{inset}
+		onclick={handleImportClick}
+		summary={{ items: importedConversations, show: showImportSummary, verb: 'Imported' }}
+		title="Import"
+	/>
 
-		<SettingsChatImportExportSection
-			IconComponent={Upload}
-			buttonText="Import settings"
-			description="Import chat settings from a previously exported JSON file. This will merge with your existing settings."
-			onclick={handleSettingsImport}
-			summary={{ items: [], show: showSettingsImportSummary, verb: 'Imported' }}
-			title="Import"
-		/>
-	</SettingsGroup>
+
+	<SettingsChatImportExportSection
+		IconComponent={Trash2}
+		buttonClass="justify-start justify-self-start md:w-auto"
+		buttonText="Delete all conversations"
+		buttonVariant="destructive"
+		description="Permanently delete all conversations and their messages. This action cannot be undone. Consider exporting your conversations first if you want to keep a backup."
+		{inset}
+		onclick={handleDeleteAllClick}
+		title="Delete All"
+		titleClass="text-destructive"
+	/>
+{/snippet}
+
+{#snippet settingsActions()}
+	<SettingsChatImportExportSection
+		IconComponent={Download}
+		buttonText="Export settings"
+		description="Export your chat settings and preferences as a JSON file."
+		{inset}
+		onclick={handleSettingsExport}
+		summary={{ items: [], show: showSettingsExportSummary, verb: 'Exported' }}
+		title="Export"
+	/>
+
+	<SettingsChatImportExportSection
+		IconComponent={Upload}
+		buttonText="Import settings"
+		description="Import chat settings from a previously exported JSON file. This will merge with your existing settings."
+		{inset}
+		onclick={handleSettingsImport}
+		summary={{ items: [], show: showSettingsImportSummary, verb: 'Imported' }}
+		title="Import"
+	/>
+{/snippet}
+
+<div in:fade={{ duration: 150 }} class={inset ? 'flex flex-col gap-8' : 'space-y-12'}>
+	{@render group('Conversations', conversationActions)}
+
+	{@render group('Settings', settingsActions)}
 </div>
 
 <DialogExportSettings
