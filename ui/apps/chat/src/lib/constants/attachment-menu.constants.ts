@@ -72,7 +72,6 @@ export const ATTACHMENT_MENU_TEXT = {
 	DESCRIPTION: 'Add files, system prompt or pick the tools the model may call',
 	MCP_SERVERS: 'MCP Servers',
 	NONE: 'None',
-	PHOTOS: 'Photos',
 	SYSTEM_MESSAGE: 'System Message',
 	TOOLS: 'Tools',
 	WORKING_DIRECTORY: 'Working directory'
