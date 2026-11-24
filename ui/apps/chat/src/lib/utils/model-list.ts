@@ -49,6 +49,30 @@ export function filterModelOptions(options: ModelOption[], searchTerm: string): 
 }
 
 /**
+ * The few models a phone's picker shows before its full list: the loaded ones, then favorites,
+ * then the recently picked, each once and in that order, up to `limit`. Recent ids are option ids.
+ */
+export function pickQuickModels(input: {
+	favoriteIds: Set<string>;
+	limit: number;
+	loadedIds: Set<string>;
+	options: ModelOption[];
+	recentIds: string[];
+}): ModelItem[] {
+	const { favoriteIds, limit, loadedIds, options, recentIds } = input;
+	const picked: ModelOption[] = [];
+	const add = (option: ModelOption | undefined) => {
+		if (option && picked.length < limit && !picked.includes(option)) picked.push(option);
+	};
+
+	for (const option of options) if (loadedIds.has(option.id)) add(option);
+	for (const option of options) if (favoriteIds.has(option.model)) add(option);
+	for (const id of recentIds) add(options.find((option) => option.id === id));
+
+	return picked.map((option) => ({ option }));
+}
+
+/**
  * Favorite models across every backend, in list order: the favorites tab spans
  * all backends, so they come from the full option list.
  */

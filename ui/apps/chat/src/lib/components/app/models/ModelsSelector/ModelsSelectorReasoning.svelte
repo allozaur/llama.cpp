@@ -1,7 +1,6 @@
 <!--
-	The chat's reasoning effort, at the foot of the model picker: one row with the level in use, which opens the levels
-	under it, sliding open and shut (CollapsibleSection). `menu` is the desktop dropdown's (its rows are menu items),
-	`list` the phone drawer's.
+	The chat's reasoning effort, at the foot of the desktop model picker: one row with the level in use, which opens
+	the levels under it, sliding open and shut (CollapsibleSection). A phone's picker has its own page for it.
 -->
 <script lang="ts">
 	import * as DropdownMenu from '@ggml-org/llama-ui/ui/dropdown-menu';
@@ -10,12 +9,6 @@
 	import { ICON_CLASS_DEFAULT, REASONING_EFFORT_LABELS } from '#lib/constants/index.ts';
 	import { useReasoningMenu } from '#lib/hooks/use-reasoning-menu.svelte.ts';
 	import type { ReasoningEffortLevel } from '#lib/types/index.ts';
-
-	interface Props {
-		variant?: 'menu' | 'list';
-	}
-
-	let { variant = 'menu' }: Props = $props();
 
 	const reasoning = useReasoningMenu();
 
@@ -50,38 +43,15 @@
 	{/if}
 {/snippet}
 
-{#if variant === 'menu'}
-	<DropdownMenu.Group class="px-2" data-slot="models-selector-reasoning">
-		<!-- its row is a menu item that opens the levels without closing the menu -->
-		<CollapsibleSection defaultOpen={false} inMenu trigger={header}>
-			<div class="flex flex-col">
-				{#each reasoning.levels as level (level.value)}
-					<DropdownMenu.Item class="gap-3 pl-4" onSelect={() => reasoning.select(level)}>
-						{@render levelLabel(level)}
-					</DropdownMenu.Item>
-				{/each}
-			</div>
-		</CollapsibleSection>
-	</DropdownMenu.Group>
-{:else}
-	<div class="flex flex-col px-2 pt-1" data-slot="models-selector-reasoning">
-		<CollapsibleSection
-			defaultOpen={false}
-			trigger={header}
-			triggerClass="flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-md px-3 text-left text-body-sm transition-colors hover:bg-accent"
-		>
-			<div class="flex flex-col">
-				{#each reasoning.levels as level (level.value)}
-					<button
-						aria-pressed={reasoning.isSelected(level)}
-						class="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-md pr-3 pl-6 text-left text-body-sm transition-colors hover:bg-accent"
-						onclick={() => reasoning.select(level)}
-						type="button"
-					>
-						{@render levelLabel(level)}
-					</button>
-				{/each}
-			</div>
-		</CollapsibleSection>
-	</div>
-{/if}
+<DropdownMenu.Group class="px-2" data-slot="models-selector-reasoning">
+	<!-- its row is a menu item that opens the levels without closing the menu -->
+	<CollapsibleSection defaultOpen={false} inMenu trigger={header}>
+		<div class="flex flex-col">
+			{#each reasoning.levels as level (level.value)}
+				<DropdownMenu.Item class="gap-3 pl-4" onSelect={() => reasoning.select(level)}>
+					{@render levelLabel(level)}
+				</DropdownMenu.Item>
+			{/each}
+		</div>
+	</CollapsibleSection>
+</DropdownMenu.Group>
