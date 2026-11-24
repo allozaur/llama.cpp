@@ -231,7 +231,6 @@ export type {
 	AgenticFlowParams,
 	AgenticFlowResult,
 	SteeringMessage,
-	PendingPermissionRequest,
 	AgenticSection,
 	ToolResultLine,
 	ContinueIntent
@@ -257,3 +256,13 @@ export type { ReasoningEffortLevel } from './reasoning';
 
 // Splash
 export type { SplashDimensions } from './splash';
+
+// Permissions types
+export type {
+	PermissionAnswer,
+	PermissionCheck,
+	PermissionRequest,
+	PermissionRule,
+	PermissionVerdict,
+	ShellCommandParts
+} from './permissions';

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ChatMessageToolCallBlock from './ChatMessage/ChatMessageToolCall/ChatMessageToolCallBlock.svelte';
 	import ChatMessageToolCallGroup from './ChatMessage/ChatMessageToolCall/ChatMessageToolCallGroup.svelte';
-	import { parseExecShellCommandMeta } from './ChatMessage/ChatMessageToolCall/parsers/exec-shell-command';
 	import { setToolCallElapsedContext } from './ChatMessage/ChatMessageToolCall/tool-call-elapsed';
 	import ChatMessageReasoningBlock from './ChatMessageReasoningBlock.svelte';
 	import { groupToolCallRuns, isToolCallStep } from '@ggml-org/llama-harness';
@@ -23,7 +22,8 @@
 		AgenticSection,
 		ChatMessageAgenticTimings,
 		ChatMessageAgenticTurnStats,
-		DatabaseMessage
+		DatabaseMessage,
+		PermissionAnswer
 	} from '#lib/types/index.ts';
 	import {
 		deriveAgenticSections,
@@ -86,9 +86,9 @@
 		pendingPermission && dismissedPermission !== pendingPermission ? pendingPermission : null
 	);
 
-	function handlePermission(decision: ToolPermissionDecision) {
+	function handlePermission(decision: ToolPermissionDecision, answer?: PermissionAnswer) {
 		dismissedPermission = pendingPermission;
-		agenticStore.resolvePermission(message.convId, decision);
+		agenticStore.resolvePermission(message.convId, decision, answer);
 	}
 
 	const pendingContinue = $derived(
@@ -114,17 +114,6 @@
 	}
 
 	const sections = $derived(deriveAgenticSections(message, toolMessages, [], isStreaming));
-
-	// The command the pending call would run, for the permission card: the gate
-	// names the call it is asking about, so an earlier call of the same tool
-	// whose result has not landed yet cannot be mistaken for it.
-	const pendingCommand = $derived.by(() => {
-		if (!visiblePermission) return undefined;
-
-		const pending = sections.find((section) => section.toolCallId === visiblePermission.toolCallId);
-
-		return pending ? parseExecShellCommandMeta(pending)?.command : undefined;
-	});
 
 	const currentlyExecutingToolCallId = $derived(
 		isStreaming ? agenticStore.getExecutingToolCallId(message.convId) : null
@@ -354,12 +343,13 @@
 	{/each}
 
 	{#if visiblePermission}
-		<ChatMessageActionCardPermissionRequest
-			command={pendingCommand}
-			onDecision={handlePermission}
-			serverLabel={visiblePermission.serverLabel}
-			toolName={visiblePermission.toolName}
-		/>
+		<!-- a new request gets a new card, so patterns edited for one never carry over -->
+		{#key visiblePermission}
+			<ChatMessageActionCardPermissionRequest
+				onDecision={handlePermission}
+				request={visiblePermission}
+			/>
+		{/key}
 	{/if}
 
 	{#if showContinue}

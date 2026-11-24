@@ -124,6 +124,8 @@ export {
 	ToolResponseField
 } from './tools.enums';
 
+export { PermissionEffect, PermissionMode } from './permissions.enums';
+
 export { SplashOrientation } from './splash.enums';
 
 export { ChatFormVoiceState, VoiceInputMode, VoiceMode, VoiceModelRole } from './voice.enums';

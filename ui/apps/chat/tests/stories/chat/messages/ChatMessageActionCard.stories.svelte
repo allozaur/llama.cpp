@@ -22,16 +22,28 @@
 		<StateGalleryItem label="Permission" note="MCP server tool">
 			<ChatMessageActionCardPermissionRequest
 				{onDecision}
-				serverLabel="GitHub"
-				toolName="create_issue"
+				request={{
+					patterns: [],
+					serverLabel: 'GitHub',
+					toolCallId: 'call-1',
+					toolKey: 'mcp:github:create_issue',
+					toolName: 'create_issue'
+				}}
 			/>
 		</StateGalleryItem>
 
-		<StateGalleryItem label="Permission, built-in tool">
+		<StateGalleryItem label="Permission, shell command" note="Pattern to remember, in a folder">
 			<ChatMessageActionCardPermissionRequest
 				{onDecision}
-				serverLabel=""
-				toolName={BuiltInTool.SERVER_EXEC_SHELL_COMMAND}
+				request={{
+					command: 'npm run test -- --run && git push origin main',
+					cwd: '/Users/me/code/llama.cpp',
+					patterns: ['npm run test *', 'git push *'],
+					serverLabel: '',
+					toolCallId: 'call-2',
+					toolKey: `server:${BuiltInTool.SERVER_EXEC_SHELL_COMMAND}`,
+					toolName: BuiltInTool.SERVER_EXEC_SHELL_COMMAND
+				}}
 			/>
 		</StateGalleryItem>
 
