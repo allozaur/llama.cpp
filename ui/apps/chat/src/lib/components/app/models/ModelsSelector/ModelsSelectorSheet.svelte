@@ -1,47 +1,58 @@
 <!--
 	A phone's model picker: a sheet in the settings sheet's patterns. It opens partway with the
-	few models in reach (loaded, favorite, recent), the reasoning effort and a row that opens all
-	models as a page. Swiping up stretches the sheet to the top, with the same rows; a search
-	shows its results in place. The search stays at the sheet's foot.
+	few models in reach (loaded, favorite, recent), each marked when it is the chat's or the
+	dictation's, the reasoning effort and a row that opens all models as a page, in groups of the
+	same rows. Tapping a model opens its details over the sheet, where it is put to use. A search
+	shows its results in place; it stays at the sheet's foot.
 -->
 <script lang="ts">
 	import ModelAvatar from '../ModelAvatar.svelte';
 	import ModelId from '../ModelId.svelte';
+	import ModelVoiceRole from '../ModelVoiceRole.svelte';
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
-	import { Check, ChevronLeft, ChevronRight, Lightbulb, Search, X } from '@lucide/svelte';
+	import { Check, ChevronLeft, ChevronRight, Lightbulb, Mic, Search, X } from '@lucide/svelte';
 	import {
 		ICON_CLASS_DEFAULT,
 		INSET_GROUP_CAPTION_CLASS,
 		INSET_GROUP_CLASS,
+		INSET_GROUP_TITLE_CLASS,
 		INSET_ROW_BODY_CLASS,
 		INSET_ROW_CLASS,
 		REASONING_EFFORT_LABELS,
+		SETTINGS_KEYS,
 		SHEET_CONTENT_CLASS,
 		SHEET_HEADER_BUTTON_CLASS,
 		SHEET_HEADER_CLASS
 	} from '#lib/constants/index.ts';
 	import { useReasoningMenu } from '#lib/hooks/use-reasoning-menu.svelte.ts';
 	import { useSheetPages } from '#lib/hooks/use-sheet-pages.svelte.ts';
-	import { uiStore } from '#lib/stores/index.ts';
-	import type { ModelItem } from '#lib/utils/index.ts';
-	import type { Snippet } from 'svelte';
+	import { settingsStore, uiStore, voiceStore } from '#lib/stores/index.ts';
+	import {
+		type GroupedModelOptions,
+		groupModelFamilies,
+		type ModelItem
+	} from '#lib/utils/index.ts';
 	import { tick } from 'svelte';
 
 	interface Props {
-		/** The model in use, checked among the quick rows. */
+		/** The chat's model, marked among the rows. */
 		activeId?: string | null;
-		/** Every model, in its sections: the All models page and the search results. */
-		children: Snippet;
 		emptyMessage?: string;
+		/** Favorite models, after the loaded ones on the All models page. */
+		favoriteItems?: ModelItem[];
+		/** The other models: grouped by family on the All models page, as the setting asks. */
+		groups?: GroupedModelOptions;
+		/** Hide the organization in the rows' model ids. */
+		hideOrgName?: boolean;
 		isEmpty?: boolean;
+		/** Loaded models, leading the All models page. */
+		loadedItems?: ModelItem[];
 		onOpenChange?: (open: boolean) => void;
 		onSearchChange?: (value: string) => void;
 		onSearchKeyDown?: (event: KeyboardEvent) => void;
-		open?: boolean;
-		/** Hide the organization in the quick rows' model ids. */
-		hideOrgName?: boolean;
-		/** Picks a model from the quick rows. */
+		/** A tapped row: a phone opens the model's details over the sheet. */
 		onSelect?: (modelId: string) => void;
+		open?: boolean;
 		/** The few models the sheet opens with; none leaves it to the full list. */
 		quickItems?: ModelItem[];
 		searchTerm?: string;
@@ -51,10 +62,12 @@
 
 	let {
 		activeId = null,
-		children,
 		emptyMessage = 'No models found.',
+		favoriteItems = [],
+		groups = { available: [] },
 		hideOrgName = false,
 		isEmpty = false,
+		loadedItems = [],
 		onOpenChange,
 		onSearchChange,
 		onSearchKeyDown,
@@ -73,48 +86,90 @@
 
 	const reasoning = useReasoningMenu();
 
-	// stretched to the top of the screen, by a swipe up or the All models page
-	let tall = $state(false);
 	let scrollEl = $state<HTMLDivElement>();
-	let touchStartY: number | null = null;
 
 	let isSearching = $derived(searchTerm.trim().length > 0);
 	// the full list: its own page, a search's results, or all there is with no quick rows
 	let showFull = $derived(page.id === 'all' || isSearching || quickItems.length === 0);
-	let isTall = $derived(tall || showFull);
 	let hasEffort = $derived(showReasoning && reasoning.levels.length > 0);
 	let effortLabel = $derived(REASONING_EFFORT_LABELS[reasoning.currentEffort] ?? '');
 
-	// each opening starts short, on the first page
-	$effect(() => {
-		if (open) {
-			pages.reset();
-			tall = false;
+	// the models past the loaded and favorite ones: a group per family, or one for them all
+	let otherGroups = $derived.by(() => {
+		const items = groups.available.flatMap((group) => group.items);
+
+		if (items.length === 0) return [];
+
+		if (!settingsStore.config[SETTINGS_KEYS.GROUP_MODELS_BY_FAMILY]) {
+			return [{ items, key: 'local', title: 'Local models' }];
 		}
+
+		return groupModelFamilies(items, (item) => item.option.model).map((family) => ({
+			items: family.entries,
+			key: `family-${family.key}`,
+			title: family.label
+		}));
+	});
+	let fullGroups = $derived([
+		...(loadedItems.length > 0 ? [{ items: loadedItems, key: 'loaded', title: 'Loaded' }] : []),
+		...(favoriteItems.length > 0
+			? [{ items: favoriteItems, key: 'favorites', title: 'Favorites' }]
+			: []),
+		...otherGroups
+	]);
+
+	// each opening starts on the first page
+	$effect(() => {
+		if (open) pages.reset();
 	});
 
 	function openPage(next: Page) {
 		pages.push(next);
 		void tick().then(() => scrollEl?.scrollTo({ top: 0 }));
 	}
-
-	// a swipe or wheel upward stretches the short sheet to the top, as dragging a native sheet does
-	function handleTouchStart(event: TouchEvent) {
-		touchStartY = event.touches[0]?.clientY ?? null;
-	}
-
-	function handleTouchMove(event: TouchEvent) {
-		if (tall || touchStartY === null) return;
-
-		const y = event.touches[0]?.clientY ?? touchStartY;
-
-		if (touchStartY - y > 12) tall = true;
-	}
-
-	function handleWheel(event: WheelEvent) {
-		if (!tall && event.deltaY > 0) tall = true;
-	}
 </script>
+
+{#snippet modelRow(item: ModelItem)}
+	{@const inChat = activeId === item.option.id}
+	{@const dictates = !inChat && voiceStore.isDictationModel(item.option.model)}
+
+	<button
+		class="{INSET_ROW_CLASS} [content-visibility:auto] [contain-intrinsic-size:auto_3rem]"
+		onclick={() => onSelect?.(item.option.id)}
+		type="button"
+	>
+		<ModelAvatar class="shrink-0" option={item.option} size="size-6" />
+
+		<span class="{INSET_ROW_BODY_CLASS} gap-3">
+			<span class="flex min-w-0 flex-1 items-center gap-1.5">
+				<ModelId
+					class="min-w-0"
+					draftSidecars={item.option.draftSidecars}
+					hideCapabilities
+					hideModalities
+					{hideOrgName}
+					modelId={item.option.model}
+					tags={item.option.tags}
+				/>
+
+				<ModelVoiceRole model={item.option.model} />
+			</span>
+
+			<!-- what the model does now: the chat's, or the one that transcribes dictation -->
+			{#if inChat}
+				<span class="flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
+					In chat
+					<Check class="size-4 text-(--action-primary)" />
+				</span>
+			{:else if dictates}
+				<span class="flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
+					Dictation
+					<Mic class="size-4 text-destructive" />
+				</span>
+			{/if}
+		</span>
+	</button>
+{/snippet}
 
 {#snippet effortRow()}
 	<section class={INSET_GROUP_CLASS}>
@@ -136,8 +191,8 @@
 <Drawer.Root bind:open {onOpenChange} shouldScaleBackground={false}>
 	<Drawer.Content
 		class={[
-			'gap-0 overflow-hidden transition-[height] duration-300 ease-sheet [interpolate-size:allow-keywords] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-var(--corner-control-top))]',
-			isTall
+			'gap-0 overflow-hidden data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-var(--corner-control-top))]',
+			showFull
 				? 'data-[vaul-drawer-direction=bottom]:h-[calc(100dvh-var(--corner-control-top))]'
 				: 'data-[vaul-drawer-direction=bottom]:h-auto',
 			SHEET_CONTENT_CLASS,
@@ -171,12 +226,7 @@
 
 		<div
 			bind:this={scrollEl}
-			aria-label="Models"
 			class="grid min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
-			ontouchmove={handleTouchMove}
-			ontouchstart={handleTouchStart}
-			onwheel={handleWheel}
-			role="region"
 		>
 			{#key page.id}
 				<div
@@ -223,35 +273,23 @@
 						{#if isEmpty}
 							<p class="px-4 py-3 text-body-sm text-muted-foreground">{emptyMessage}</p>
 						{:else}
-							<div class="-mx-2.5">{@render children()}</div>
+							{#each fullGroups as group (group.key)}
+								<div class="flex flex-col gap-1.5">
+									<h3 class={INSET_GROUP_TITLE_CLASS}>{group.title}</h3>
+
+									<section class={INSET_GROUP_CLASS}>
+										{#each group.items as item (item.option.id)}
+											{@render modelRow(item)}
+										{/each}
+									</section>
+								</div>
+							{/each}
 						{/if}
 					{:else}
 						<!-- plain rows in one rounded group, as the add sheet's -->
 						<section class={INSET_GROUP_CLASS}>
 							{#each quickItems as item (item.option.id)}
-								<button
-									aria-pressed={activeId === item.option.id}
-									class={INSET_ROW_CLASS}
-									onclick={() => onSelect?.(item.option.id)}
-									type="button"
-								>
-									<ModelAvatar class="shrink-0" option={item.option} size="size-6" />
-
-									<span class="{INSET_ROW_BODY_CLASS} gap-3">
-										<ModelId
-											class="min-w-0 flex-1"
-											hideCapabilities
-											hideModalities
-											{hideOrgName}
-											hideQuantization
-											modelId={item.option.model}
-										/>
-
-										{#if activeId === item.option.id}
-											<Check class="size-4 shrink-0 text-(--action-primary)" />
-										{/if}
-									</span>
-								</button>
+								{@render modelRow(item)}
 							{/each}
 						</section>
 
@@ -274,7 +312,7 @@
 		</div>
 
 		{#if page.id !== 'effort'}
-			<!-- the search stays at the sheet's foot, short or stretched; 16px, or iOS zooms in on it -->
+			<!-- the search stays at the sheet's foot; 16px, or iOS zooms in on it -->
 			<div
 				class="shrink-0 border-t border-border/60 px-4 pt-3 pb-[max(0.75rem,var(--safe-area-bottom))]"
 			>

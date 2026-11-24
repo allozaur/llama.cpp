@@ -248,7 +248,7 @@
 	>
 		<!-- over the page, which scrolls under it; the drag handle stays above it -->
 		<header
-			class="pointer-events-none absolute inset-x-0 top-0 isolate z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-3 pt-5.5 pb-5 *:pointer-events-auto"
+			class="pointer-events-none absolute inset-x-0 top-0 isolate z-10 grid grid-cols-[3rem_1fr_3rem] items-center px-3 pt-5.5 pb-7 *:pointer-events-auto"
 		>
 			<!-- the sheet's surface, blurred over what scrolls beneath, fading out below the title -->
 			<div
@@ -283,7 +283,7 @@
 				<div
 					in:pageTransition={{ incoming: true }}
 					out:pageTransition={{ incoming: false }}
-					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-14 pb-[max(1.5rem,var(--safe-area-bottom))]"
+					class="col-start-1 row-start-1 flex min-w-0 flex-col gap-8 px-4 pt-16 pb-[max(1.5rem,var(--safe-area-bottom))]"
 				>
 					{#if page.id === 'root'}
 						{@render rootPage()}

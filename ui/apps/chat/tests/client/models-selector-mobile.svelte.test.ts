@@ -52,10 +52,11 @@ describe('model picker drawer on a phone', () => {
 		await screen.getByRole('button').click();
 
 		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
-		await expect.element(screen.getByText('Local models')).toBeVisible();
+		await expect.element(screen.getByText('Q4_K_M')).toBeVisible();
+		await expect.element(screen.getByText('Q8_0')).toBeVisible();
 	});
 
-	it('opens on a recent model and grows to all of them', async () => {
+	it('opens on a recent model and lists them all on their page', async () => {
 		modelsStore.recentModelIds = [other.id];
 
 		const screen = render(ModelsSelector);
@@ -63,11 +64,12 @@ describe('model picker drawer on a phone', () => {
 		await screen.getByRole('button').click();
 
 		await expect.element(screen.getByRole('button', { name: 'All models' })).toBeVisible();
-		await expect.element(screen.getByText('Local models')).not.toBeInTheDocument();
+		await expect.element(screen.getByText('Q8_0')).toBeVisible();
+		await expect.element(screen.getByText('Q4_K_M')).not.toBeInTheDocument();
 		await expect.element(screen.getByPlaceholder('Search models')).toBeVisible();
 
 		await screen.getByRole('button', { name: 'All models' }).click();
 
-		await expect.element(screen.getByText('Local models')).toBeVisible();
+		await expect.element(screen.getByText('Q4_K_M')).toBeVisible();
 	});
 });
