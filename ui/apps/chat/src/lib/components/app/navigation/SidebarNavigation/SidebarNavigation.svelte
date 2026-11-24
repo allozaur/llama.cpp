@@ -12,6 +12,7 @@
 		DialogSettingsChat,
 		Logo,
 		ModelsManagerModelDrawer,
+		SettingsSheet,
 		SidebarNavigationActions,
 		SidebarNavigationConversationList,
 		SidebarNavigationFooter
@@ -173,6 +174,8 @@
 
 	let renameDialogOpen = $state(false);
 	let settingsDialogOpen = $state(false);
+	// a phone's settings: a sheet over the page, where a desktop or tablet opens the dialog
+	let settingsSheetOpen = $state(false);
 	let renameTargetConversationId = $state<string | null>(null);
 	let renameDraft = $state('');
 	let renameOriginalTitle = $state('');
@@ -543,7 +546,7 @@
 				break;
 			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
-				if (isOnMobile) navigateBehind(() => goto(ROUTES.SETTINGS));
+				if (isOnMobile) openDialog(() => (settingsSheetOpen = true));
 				else openDialog(() => (settingsDialogOpen = true));
 
 				break;
@@ -751,6 +754,10 @@
 />
 
 <DialogSettingsChat bind:open={settingsDialogOpen} />
+
+{#if isOnMobile}
+	<SettingsSheet bind:open={settingsSheetOpen} />
+{/if}
 
 <DialogSearch bind:open={searchOpen} onAction={handleSidebarAction} />
 
