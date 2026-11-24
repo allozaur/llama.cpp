@@ -3,7 +3,7 @@
 	import { Globe, Loader2 } from '@lucide/svelte';
 	import { CollapsibleContentBlock } from '#lib/components/app/index.ts';
 	import { AgenticSectionType } from '#lib/enums/index.ts';
-	import { mcpStore } from '#lib/stores/index.ts';
+	import { serverStore } from '#lib/stores/index.ts';
 	import type { AgenticSection, SearchResult } from '#lib/types/index.ts';
 	import {
 		buildProxiedIconUrl,
@@ -28,6 +28,9 @@
 
 	const results = $derived(extractSearchResults(section.toolResult));
 	const query = $derived(extractSearchQuery(section.toolArgs));
+
+	// favicons of the results go through the server's CORS proxy when it has one
+	const isProxyAvailable = $derived(serverStore.props?.cors_proxy_enabled ?? false);
 
 	// Verb reflects state: "Searching" while the call is in flight, "Searched"
 	// once results (or a definitive empty response) have arrived. Lets the
@@ -75,7 +78,7 @@
 </script>
 
 {#snippet pill(result: SearchResult)}
-	{@const faviconUrl = buildProxiedIconUrl(faviconForUrl(result.url), mcpStore.isProxyAvailable)}
+	{@const faviconUrl = buildProxiedIconUrl(faviconForUrl(result.url), isProxyAvailable)}
 	{@const safeUrl = sanitizeExternalUrl(result.url)}
 	{@const showHoverCard = safeUrl !== null && hasDetails(result)}
 	{#if safeUrl}

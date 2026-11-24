@@ -7,7 +7,6 @@
 		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
-		DialogMcpServers,
 		DialogSearch,
 		DialogSettingsChat,
 		Logo,
@@ -27,14 +26,13 @@
 		SIDEBAR_OVERSTRETCH_PX,
 		SIDEBAR_REVEAL_ACTION_DELAY_MS,
 		SIDEBAR_SETTLE_MS,
-		SIDEBAR_TOGGLE_MS,
-		sidebarFooterItems
+		SIDEBAR_TOGGLE_MS
 	} from '#lib/constants/index.ts';
 	import { SidebarAction, TooltipSide } from '#lib/enums/index.ts';
+	import { extensions, type NavigationItem } from '#lib/extensions/index.ts';
 	import { useKeyboardShortcuts } from '#lib/hooks/use-keyboard-shortcuts.svelte.ts';
 	import { useMarqueeSelection } from '#lib/hooks/use-marquee-selection.svelte.ts';
 	import { RouterService } from '#lib/services/router.service.ts';
-	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import {
 		chatStore,
 		conversationsStore,
@@ -42,7 +40,7 @@
 		settingsStore,
 		uiStore
 	} from '#lib/stores/index.ts';
-	import { buildConversationTree, remToPx } from '#lib/utils/index.ts';
+	import { buildConversationTree, remToPx, sidebarFooterItems } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -175,7 +173,6 @@
 
 	let renameDialogOpen = $state(false);
 	let settingsDialogOpen = $state(false);
-	let mcpDialogOpen = $state(false);
 	let renameTargetConversationId = $state<string | null>(null);
 	let renameDraft = $state('');
 	let renameOriginalTitle = $state('');
@@ -544,18 +541,28 @@
 				openDialog(() => uiStore.openModelsManager());
 
 				break;
-			// dialogs on a desktop or tablet; on a phone, pages of their own
-			case SidebarAction.MCP:
-				if (isOnMobile) navigateBehind(() => goto(resolve(ROUTES.MCP_SERVERS)));
-				else openDialog(() => (mcpDialogOpen = true));
-
-				break;
+			// a dialog on a desktop or tablet; on a phone, a page of its own
 			case SidebarAction.SETTINGS:
 				if (isOnMobile) navigateBehind(() => goto(resolve(ROUTES.SETTINGS)));
 				else openDialog(() => (settingsDialogOpen = true));
 
 				break;
 		}
+	}
+
+	const navigationItems = $derived(extensions.contributions('navigation'));
+	/** The extension's item whose dialog is open. Raw, so it compares by identity with the contributions. */
+	let dialogItem = $state.raw<NavigationItem | null>(null);
+
+	/** Opens an extension's item: its dialog on a desktop or tablet when it has one, its page otherwise. */
+	function openContributedItem(item: NavigationItem): void {
+		if (isOnMobile || !item.dialog) navigateBehind(() => goto(item.route));
+		else openDialog(() => (dialogItem = item));
+	}
+
+	function setItemDialogOpen(item: NavigationItem, open: boolean): void {
+		if (open) dialogItem = item;
+		else if (dialogItem === item) dialogItem = null;
 	}
 </script>
 
@@ -671,9 +678,10 @@
 				<SidebarNavigationActions
 					class="px-2 md:my-3"
 					items={isOnMobile
-						? [...SIDEBAR_ACTIONS_ITEMS, ...sidebarFooterItems(agenticMode.enabled)]
+						? [...SIDEBAR_ACTIONS_ITEMS, ...sidebarFooterItems(navigationItems)]
 						: undefined}
 					onAction={handleSidebarAction}
+					onContributed={openContributedItem}
 					onNavigate={navigateBehind}
 				/>
 
@@ -712,7 +720,10 @@
 				<!-- the footer, at the bottom of the sidebar and of its collapsed strip alike (a
 				     phone lists its items with the actions above) -->
 				{#if !isOnMobile}
-					<SidebarNavigationFooter onAction={handleSidebarAction} />
+					<SidebarNavigationFooter
+						onAction={handleSidebarAction}
+						onContributed={openContributedItem}
+					/>
 				{/if}
 			</div>
 		</div>
@@ -762,9 +773,18 @@
 
 <DialogSettingsChat bind:open={settingsDialogOpen} />
 
-<DialogSearch bind:open={searchOpen} onAction={handleSidebarAction} />
+<DialogSearch
+	bind:open={searchOpen}
+	onAction={handleSidebarAction}
+	onContributed={openContributedItem}
+/>
 
-<DialogMcpServers bind:open={mcpDialogOpen} />
+<!-- the dialogs of the extensions' items -->
+{#each navigationItems as item (item.id)}
+	{#if item.dialog}
+		<item.dialog bind:open={() => dialogItem === item, (open) => setItemDialogOpen(item, open)} />
+	{/if}
+{/each}
 
 <DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
 

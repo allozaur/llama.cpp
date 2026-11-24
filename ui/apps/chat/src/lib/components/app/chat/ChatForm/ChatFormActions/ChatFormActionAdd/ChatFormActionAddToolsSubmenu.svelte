@@ -6,11 +6,10 @@
 	import { Check, ChevronDown, ChevronRight, Info, Loader2, PencilRuler } from '@lucide/svelte';
 	import { ATTACHMENT_MENU_TEXT, CLI_FLAGS, ICON_CLASS_DEFAULT } from '#lib/constants/index.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
-	import { mcpStore, toolsStore, uiStore } from '#lib/stores/index.ts';
+	import { toolsStore } from '#lib/stores/index.ts';
 	import type { ToolGroup } from '#lib/types/index.ts';
 
 	const toolsPanel = useToolsPanel();
-	const hasMcpServersAvailable = $derived(mcpStore.getServers().length > 0);
 </script>
 
 <DropdownMenu.Sub onOpenChange={(open) => open && toolsPanel.handleOpen()}>
@@ -40,18 +39,17 @@
 						</span>
 					</span>
 
-					<!-- only while MCP shows: with it hidden, there is nowhere to add a server -->
-					{#if uiStore.isMcpShown}
+					{#each toolsPanel.providerHints as hint (hint.toolsLabel)}
 						<span class="flex gap-2">
 							<Info class="mt-0.5 {ICON_CLASS_DEFAULT} shrink-0" />
 
 							<span>
-								{hasMcpServersAvailable ? 'Enable' : 'Add'} MCP Server(s) to access
+								{hint.action}
 
-								<strong>MCP Tools</strong>.
+								<strong>{hint.toolsLabel}</strong>.
 							</span>
 						</span>
-					{/if}
+					{/each}
 				</div>
 			{:else if toolsStore.error}
 				<div class="px-3 py-4 text-center text-body-sm text-muted-foreground">
@@ -74,7 +72,7 @@
 					{@render groupRow(group)}
 				{/each}
 
-				{#each toolsPanel.mcpGroups as group (group.key)}
+				{#each toolsPanel.providerGroups as group (group.key)}
 					{@render groupRow(group)}
 				{/each}
 			</div>

@@ -15,6 +15,7 @@ struct server_tool {
     bool permission_write = false;
     bool support_stream = false; // if true, output can be streamed
     bool uses_cwd = false;       // if true, the tool resolves paths and runs against the working directory
+    std::string mcp_server;      // the MCP server the tool comes from, empty for a built-in tool
 
     virtual ~server_tool() = default;
     virtual json get_definition() const = 0;
