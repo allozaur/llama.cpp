@@ -14,6 +14,7 @@ export * from './background-tasks.constants';
 export * from './icons.constants';
 export * from './attachment-menu.constants';
 export * from './auto-scroll.constants';
+export * from './context-breakdown.constants';
 export * from './context-gauge-dial.constants';
 export * from './conversation-import.constants';
 export * from './conversation-search.constants';
