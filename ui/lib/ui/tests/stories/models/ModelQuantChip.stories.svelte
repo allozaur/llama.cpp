@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ModelQuantChip, ModelQuantRow } from '@ggml-org/llama-ui/models';
 	import { minMemoryTierGb } from '@ggml-org/llama-ui/models';
 

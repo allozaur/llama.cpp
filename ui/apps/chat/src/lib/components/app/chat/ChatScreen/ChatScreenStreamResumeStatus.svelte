@@ -1,3 +1,10 @@
+<!--
+	@component
+	The status line shown while the app reconnects to a reply that was still streaming, for example after a reload.
+	Reads the chat store itself and renders nothing otherwise.
+
+	@summary The status line while reconnecting to a stream.
+-->
 <script lang="ts">
 	import { Loader2 } from '@lucide/svelte';
 	import { StreamConnectionState } from '#lib/enums/index.ts';

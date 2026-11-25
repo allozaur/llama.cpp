@@ -1,3 +1,11 @@
+<!--
+	@component
+	Renders Markdown as the chat shows it, safely and while it streams: GFM, maths, Mermaid diagrams, highlighted
+	code with copy and preview actions, and file mentions. Everything Markdown in the app goes through it; do not
+	add another pipeline.
+
+	@summary Renders Markdown the way the chat shows it.
+-->
 <script lang="ts">
 	import '#lib/styles/katex-custom.scss';
 	import {

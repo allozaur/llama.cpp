@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ModelFamilyCard } from '@ggml-org/llama-ui/models';
 
 	// a model family as llama.app's catalog shows it: one card for every size and quant of the family, its capabilities

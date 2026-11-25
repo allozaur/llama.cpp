@@ -1,3 +1,11 @@
+<!--
+	@component
+	The card that asks whether the model may run a tool, shown in the conversation while it waits: the tool and the
+	server it belongs to, a key to allow it once, and a menu to always allow the tool or its whole server. The
+	choice comes back through `onDecision`.
+
+	@summary The card asking permission to run a tool.
+-->
 <script lang="ts">
 	import { Button, buttonVariants } from '@ggml-org/llama-ui/ui/button';
 	import * as ButtonGroup from '@ggml-org/llama-ui/ui/button-group';

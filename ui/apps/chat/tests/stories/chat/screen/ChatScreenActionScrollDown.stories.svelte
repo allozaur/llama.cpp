@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreenActionScrollDown from '#lib/components/app/chat/ChatScreen/ChatScreenActionScrollDown.svelte';
 
 	const { Story } = defineMeta({

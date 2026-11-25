@@ -1,3 +1,10 @@
+<!--
+	@component
+	A box that is checked, unchecked or indeterminate, for an option in a form or for selecting rows. Pair it with a
+	Label. For a setting that applies at once use Switch.
+
+	@summary A checkbox for a form option or a row selection.
+-->
 <script lang="ts">
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import MinusIcon from '@lucide/svelte/icons/minus';

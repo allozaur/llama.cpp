@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import * as Table from '@ggml-org/llama-ui/ui/table';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Table.Root,
+		component: Table.Table,
 		parameters: {
 			layout: 'centered'
 		},

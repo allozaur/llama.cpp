@@ -1,3 +1,11 @@
+<!--
+	@component
+	A section with a trigger and a chevron that shows and hides its content, for groups in the sidebar, in menus and
+	in settings. It owns its open state unless `open` is bound; `inMenu` makes the trigger a menu item so arrow keys
+	reach it.
+
+	@summary A collapsible section with a chevron trigger.
+-->
 <script lang="ts">
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import * as DropdownMenu from '@ggml-org/llama-ui/ui/dropdown-menu';

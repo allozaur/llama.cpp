@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { Clock, Gauge } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { BadgeInfo, BadgesModality } from '#lib/components/app/index.ts';
 	import { ModelModality } from '#lib/enums/index.ts';
 	import StateGallery from '$llama-ui-stories/helpers/StateGallery.svelte';

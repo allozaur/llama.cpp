@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreenForm from '#lib/components/app/chat/ChatScreen/ChatScreenForm.svelte';
 	import { attachmentTooltipText } from '#lib/constants/index.ts';
 	import { expect, screen, waitFor } from 'storybook/test';

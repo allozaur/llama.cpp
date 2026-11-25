@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import StateGallery from '../helpers/StateGallery.svelte';
 	import StateGalleryItem from '../helpers/StateGalleryItem.svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import { ModelCapabilityIcons } from '@ggml-org/llama-ui/models';
 
 	// what a model can do, as muted icons with a tooltip each: modalities (vision, audio, video) after capabilities

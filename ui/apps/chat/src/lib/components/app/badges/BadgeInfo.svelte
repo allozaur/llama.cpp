@@ -1,3 +1,10 @@
+<!--
+	@component
+	A small pressable chip for one fact about a thing, with an optional icon. The statistics badges under a message
+	and the model badge are built on it.
+
+	@summary A small pressable chip for one fact.
+-->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';

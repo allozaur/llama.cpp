@@ -1,3 +1,11 @@
+<!--
+	@component
+	The picker for the folder a conversation's tools work in: a chip with the current folder and a popover to type
+	or browse to another. The host owns `isOpen`, so the chip, the + menu and the `/cwd` command all open it the
+	same way.
+
+	@summary The picker for a conversation's working directory.
+-->
 <script lang="ts">
 	import ChatFormCurrentWorkingDirectoryChip from './ChatFormCurrentWorkingDirectoryChip.svelte';
 	import ChatFormCurrentWorkingDirectoryResultsList from './ChatFormCurrentWorkingDirectoryResultsList.svelte';

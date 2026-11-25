@@ -1,3 +1,10 @@
+<!--
+	@component
+	What a model takes in and can do, as a row of icons each named in its tooltip: its input modalities, thinking
+	and tool use. `asBadges` writes the names out in outline badges.
+
+	@summary A model's modalities and capabilities as icons.
+-->
 <script lang="ts">
 	import { Badge } from '../ui/badge';
 	import * as Tooltip from '../ui/tooltip';

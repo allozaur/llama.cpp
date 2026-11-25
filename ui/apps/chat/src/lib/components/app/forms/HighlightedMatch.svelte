@@ -1,3 +1,9 @@
+<!--
+	@component
+	Text with every occurrence of `query` marked, for search results and pickers. Matching ignores case.
+
+	@summary Text with the search query highlighted.
+-->
 <script lang="ts">
 	import { highlightMatch } from '#lib/utils/index.ts';
 

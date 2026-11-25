@@ -1,3 +1,11 @@
+<!--
+	@component
+	One message of a conversation in any role: a user bubble, an assistant reply with its reasoning, tool calls,
+	statistics and actions, or a system prompt. It picks the right parts from `message` and takes the edit, copy,
+	regenerate and branch actions as `chatActions`.
+
+	@summary One message of a conversation, in any role.
+-->
 <script lang="ts">
 	import {
 		ChatMessageAssistant,

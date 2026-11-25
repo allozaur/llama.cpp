@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreenGreeting from '#lib/components/app/chat/ChatScreen/ChatScreenGreeting.svelte';
 	import { serverStore } from '#lib/stores/index.ts';
 

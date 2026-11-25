@@ -1,3 +1,11 @@
+<!--
+	@component
+	The button for every action: `default` for a view's one main action, `secondary` and `tertiary` for the ones
+	beside it, `outline` and `ghost` for quiet ones, `destructive` for deleting. Renders a link when given `href`.
+	For an icon-only action with a tooltip, use ActionIcon.
+
+	@summary The button for any action, or a link styled as one.
+-->
 <script lang="ts" module>
 	import { cn, type WithElementRef } from '../utils';
 	import { tv } from '../utils';

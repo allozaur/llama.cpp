@@ -1,3 +1,11 @@
+<!--
+	@component
+	A collapsible block styled like a terminal line, with an icon, a title, an optional subtitle and the output as
+	its content. The reasoning and tool call blocks of a message are built on it. `shimmerTitle` marks work in
+	progress.
+
+	@summary A terminal-style collapsible block.
+-->
 <script lang="ts">
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import { cn } from '@ggml-org/llama-ui/utils';

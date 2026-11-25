@@ -1,3 +1,10 @@
+<!--
+	@component
+	The strip of open conversations above the chat, with a new-chat key; it scrolls sideways with faded edges when
+	the tabs do not fit and keeps the active one in view. Reads the open tabs and the route itself.
+
+	@summary The strip of open conversation tabs.
+-->
 <script lang="ts">
 	import ChatTabsItem from './ChatTabsItem.svelte';
 	import ChatTabsNewChatButton from './ChatTabsNewChatButton.svelte';

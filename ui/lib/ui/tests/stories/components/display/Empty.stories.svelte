@@ -2,10 +2,10 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Empty from '@ggml-org/llama-ui/ui/empty';
 	import { MessagesSquare } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Empty.Root,
+		component: Empty.Empty,
 		parameters: {
 			layout: 'centered'
 		},

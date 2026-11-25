@@ -1,3 +1,10 @@
+<!--
+	@component
+	A row of toggle keys where one (`type="single"`) or several (`type="multiple"`) are pressed, for switching a
+	view or a mode among a few short options. For choices in a form use RadioGroup or Select.
+
+	@summary A row of toggle keys for picking among a few options.
+-->
 <script lang="ts" module>
 	import type { ToggleSize } from '../toggle/index.js';
 	import { getContext, setContext } from 'svelte';

@@ -1,3 +1,9 @@
+<!--
+	@component
+	The full-screen overlay shown while files are dragged over the chat, inviting the user to drop them to attach.
+
+	@summary The overlay shown while dragging files over the chat.
+-->
 <script>
 	import { Upload } from '@lucide/svelte';
 </script>

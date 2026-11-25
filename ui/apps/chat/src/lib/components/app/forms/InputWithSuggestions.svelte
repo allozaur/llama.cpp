@@ -1,3 +1,11 @@
+<!--
+	@component
+	A text field with a list of suggestions under it, for a value the app can autocomplete, such as an argument of
+	an MCP resource template. The parent owns the suggestions and the highlighted one and gets the choice back in
+	`onSelectSuggestion`.
+
+	@summary A text field with autocomplete suggestions.
+-->
 <script lang="ts">
 	import { Input } from '@ggml-org/llama-ui/ui/input';
 	import { Label } from '@ggml-org/llama-ui/ui/label';

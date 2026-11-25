@@ -1,3 +1,10 @@
+<!--
+	@component
+	The chat form's text area: it grows with its content up to a limit, and reports input, key presses and pastes to
+	the form, which owns sending, attachments and the pickers. `value` is bindable.
+
+	@summary The chat form's growing text area.
+-->
 <script lang="ts">
 	import { fileMentionWidgets } from './mention-badge-widget';
 	import { EditorView } from '@codemirror/view';

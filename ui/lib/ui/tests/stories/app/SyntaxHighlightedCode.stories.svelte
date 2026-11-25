@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { SyntaxHighlightedCode } from '@ggml-org/llama-ui/app/content';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: SyntaxHighlightedCode,

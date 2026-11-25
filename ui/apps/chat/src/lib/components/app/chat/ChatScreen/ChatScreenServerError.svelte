@@ -1,3 +1,10 @@
+<!--
+	@component
+	The notice above the chat form when llama-server cannot be reached, with the error and a retry key, or while it
+	is still loading the model. Reads the server store itself and renders nothing when all is well.
+
+	@summary The notice for an unreachable or loading server.
+-->
 <script lang="ts">
 	import * as Alert from '@ggml-org/llama-ui/ui/alert';
 	import { AlertTriangle, Loader2, RefreshCw } from '@lucide/svelte';

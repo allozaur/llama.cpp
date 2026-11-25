@@ -1,3 +1,10 @@
+<!--
+	@component
+	One tab in ChatTabs: the conversation's title, a spinner with a stop key while it is generating, and a close
+	key.
+
+	@summary One conversation tab.
+-->
 <script lang="ts">
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { cn } from '@ggml-org/llama-ui/utils';

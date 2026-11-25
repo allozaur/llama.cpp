@@ -4,10 +4,10 @@
 	import type { ToggleSize } from '@ggml-org/llama-ui/ui/toggle';
 	import * as ToggleGroup from '@ggml-org/llama-ui/ui/toggle-group';
 	import { AlignCenter, AlignLeft, AlignRight } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: ToggleGroup.Root,
+		component: ToggleGroup.ToggleGroup,
 		parameters: {
 			layout: 'centered'
 		},

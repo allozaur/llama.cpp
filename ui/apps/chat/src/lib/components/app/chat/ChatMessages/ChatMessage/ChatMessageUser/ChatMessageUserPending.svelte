@@ -1,3 +1,10 @@
+<!--
+	@component
+	A user message that is queued while the model is still answering the one before: the bubble with keys to send it
+	right away, edit it or delete it.
+
+	@summary A queued user message waiting to be sent.
+-->
 <script lang="ts">
 	import { ArrowUp, Edit, Trash2 } from '@lucide/svelte';
 	import {

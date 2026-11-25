@@ -1,8 +1,11 @@
 <!--
+	@component
 	A model family as llama.app's catalog shows it, built on ModelCard: the maker's avatar with the publisher of the
 	GGUFs in the corner, the name over its sizes in one quiet line, what it can do as icons at the top right (each named
 	in its tooltip), the description, then the download and the memory it needs at the foot and the release month (or
 	Non-commercial, or a status such as "Downloaded") at the end. The whole card is one link or button.
+
+	@summary A model family as a catalog card.
 -->
 <script lang="ts">
 	import ModelCapabilityIcons from './ModelCapabilityIcons.svelte';

@@ -1,3 +1,11 @@
+<!--
+	@component
+	A message set into the page, with an icon, an Alert.Title and an Alert.Description: `default` for a notice,
+	`destructive` for an error. It does not interrupt; for a decision the user must make use AlertDialog, for a
+	passing confirmation a toast.
+
+	@summary An inline notice or error message.
+-->
 <script lang="ts" module>
 	import { tv } from '../utils';
 	import type { VariantProps } from 'tailwind-variants';

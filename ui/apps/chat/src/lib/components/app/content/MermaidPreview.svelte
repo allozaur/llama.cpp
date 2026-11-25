@@ -1,3 +1,10 @@
+<!--
+	@component
+	A rendered Mermaid diagram that can be zoomed with the wheel and panned, also with the arrow keys. Takes the
+	diagram as SVG markup.
+
+	@summary A zoomable view of a rendered Mermaid diagram.
+-->
 <script lang="ts">
 	import MermaidPreviewControls from './MermaidPreviewControls.svelte';
 	import { SVG } from '#lib/constants/index.ts';

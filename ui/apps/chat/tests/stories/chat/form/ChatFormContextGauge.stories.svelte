@@ -8,7 +8,7 @@
 		seedStores,
 		ServerRole
 	} from './fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatFormContextGauge from '#lib/components/app/chat/ChatForm/ChatFormContextGauge/ChatFormContextGauge.svelte';
 	import ContextGaugeDrawer from '#lib/components/app/chat/ChatForm/ChatFormContextGauge/ContextGaugeDrawer.svelte';
 	import { gaugePopupClose } from '#lib/components/app/chat/ChatForm/ChatFormContextGauge/gauge-popup.svelte.ts';

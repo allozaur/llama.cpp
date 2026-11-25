@@ -1,3 +1,10 @@
+<!--
+	@component
+	A round frosted-glass key for an action that floats over content: a phone's corner keys (menu, new chat) and the
+	scroll-down key. Takes an icon and a `label` that is read out in place of visible text.
+
+	@summary A round glass key that floats over content.
+-->
 <script lang="ts">
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { GLASS_KEY_CLASS } from '#lib/constants/index.ts';

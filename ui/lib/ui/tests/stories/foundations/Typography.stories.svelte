@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	// the type roles from ui/lib/ui/src/lib/styles/tokens/semantic.css: each sets size and line height, and labels,
 	// the title and the heading their weight too

@@ -1,3 +1,10 @@
+<!--
+	@component
+	The viewer for attachments: images, PDFs (as text or as page images), audio, video and text files, one at a time
+	with the others to step through. It also says when the active model cannot read a kind of file.
+
+	@summary The viewer for a message's or the form's attachments.
+-->
 <script lang="ts">
 	import {
 		ChatAttachmentsPreviewCurrentItem,

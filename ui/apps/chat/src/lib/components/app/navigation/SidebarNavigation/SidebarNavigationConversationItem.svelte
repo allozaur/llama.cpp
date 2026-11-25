@@ -1,3 +1,10 @@
+<!--
+	@component
+	One conversation row in the sidebar: its title, a spinner with a stop key while it generates, a menu to pin,
+	edit, export, group, select or delete it, and a checkbox in selection mode.
+
+	@summary One conversation row in the sidebar.
+-->
 <script lang="ts">
 	import SidebarNavigationGroupSubmenu from './SidebarNavigationGroupSubmenu.svelte';
 	import { Checkbox } from '@ggml-org/llama-ui/ui/checkbox';

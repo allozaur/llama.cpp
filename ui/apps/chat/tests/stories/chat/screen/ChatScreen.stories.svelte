@@ -6,28 +6,11 @@
 		SCREEN_CONVERSATION_ID,
 		seedNewChat
 	} from './chat-screen.fixtures';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import ChatScreen from '#lib/components/app/chat/ChatScreen/ChatScreen.svelte';
 	import { chatStore, conversationsStore, serverStore } from '#lib/stores/index.ts';
+	import { page } from '$app/state';
 	import { expect, waitFor, within } from 'storybook/test';
-
-	const newChatRoute = {
-		sveltekit_experimental: {
-			state: { page: { params: {}, route: { id: '/(chat)' }, url: new URL('http://localhost/#/') } }
-		}
-	};
-
-	const conversationRoute = {
-		sveltekit_experimental: {
-			state: {
-				page: {
-					params: { id: SCREEN_CONVERSATION_ID },
-					route: { id: '/(chat)/chat/[id]' },
-					url: new URL(`http://localhost/#/chat/${SCREEN_CONVERSATION_ID}`)
-				}
-			}
-		}
-	};
 
 	const { Story } = defineMeta({
 		component: ChatScreen,
@@ -40,7 +23,16 @@
 	// the streamed reply ends with this sentence, so it is on screen only once the stream is done
 	const REPLY_END = 'at a small cost in quality.';
 
-	/** Stores and the fake server for a story; async so the conversation is in IndexedDB before render. */
+	/** The route the screen is on: the seeded conversation's, or a new chat's. */
+	function setRoute(conversation: boolean) {
+		page.params = conversation ? { id: SCREEN_CONVERSATION_ID } : {};
+		page.route = { id: conversation ? '/(chat)/chat/[id]' : '/(chat)' };
+		page.url = new URL(
+			`http://localhost/#/${conversation ? `chat/${SCREEN_CONVERSATION_ID}` : ''}`
+		);
+	}
+
+	/** The route, stores and the fake server for a story; async so the conversation is in IndexedDB before render. */
 	function setup(
 		options: {
 			conversation?: boolean;
@@ -50,6 +42,8 @@
 		} = {}
 	) {
 		return async (context: { globals?: Record<string, unknown> }) => {
+			setRoute(options.conversation ?? false);
+
 			const pace = getPace(context);
 			const restoreStores = seedNewChat();
 			const restoreServer = installFakeServer({
@@ -86,7 +80,6 @@
 	args={{ showCenteredEmpty: true }}
 	beforeEach={setup()}
 	name="Default"
-	parameters={newChatRoute}
 	play={async (context) => {
 		const { canvas } = context;
 
@@ -100,7 +93,6 @@
 	args={{ showCenteredEmpty: true }}
 	beforeEach={setup()}
 	name="SendFirstMessage"
-	parameters={newChatRoute}
 	play={async (context) => {
 		const { canvas, step } = context;
 
@@ -131,7 +123,6 @@
 	args={{ showCenteredEmpty: false }}
 	beforeEach={setup({ conversation: true })}
 	name="Conversation"
-	parameters={conversationRoute}
 	play={async (context) => {
 		const { canvas } = context;
 
@@ -148,7 +139,6 @@
 	args={{ showCenteredEmpty: false }}
 	beforeEach={setup({ conversation: true })}
 	name="ContinueConversation"
-	parameters={conversationRoute}
 	play={async (context) => {
 		const { canvas } = context;
 
@@ -172,7 +162,6 @@
 	args={{ showCenteredEmpty: true }}
 	beforeEach={setup({ slowStream: 4 })}
 	name="StopGeneration"
-	parameters={newChatRoute}
 	play={async (context) => {
 		const { canvas, step, userEvent } = context;
 
@@ -201,7 +190,6 @@
 		server: { errorMessage: 'the request exceeds the available context size', status: 500 }
 	})}
 	name="ServerErrorReply"
-	parameters={newChatRoute}
 	play={async (context) => {
 		await send(context, 'Summarize this very long document');
 
@@ -231,7 +219,6 @@
 		};
 	}}
 	name="ServerUnavailable"
-	parameters={newChatRoute}
 	play={async (context) => {
 		const { canvas } = context;
 

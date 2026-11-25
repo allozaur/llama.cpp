@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 	import PwaRefreshAlert from '#lib/components/pwa/PwaRefreshAlert.svelte';
 	import { expect } from 'storybook/test';
 

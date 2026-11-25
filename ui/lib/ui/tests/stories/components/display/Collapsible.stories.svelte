@@ -4,10 +4,10 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
 	import { ChevronsUpDown } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
-		component: Collapsible.Root,
+		component: Collapsible.Collapsible,
 		parameters: {
 			layout: 'centered'
 		},

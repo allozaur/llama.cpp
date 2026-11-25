@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import { Separator } from '@ggml-org/llama-ui/ui/separator';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Separator,

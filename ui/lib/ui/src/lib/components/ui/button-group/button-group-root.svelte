@@ -1,3 +1,10 @@
+<!--
+	@component
+	Joins buttons that belong to one control into a single shape, such as a split button: a main action with a menu
+	key beside it. Put a ButtonGroup.Separator between the halves.
+
+	@summary Joins related buttons into one shape, e.g. a split button.
+-->
 <script lang="ts">
 	import { cn } from '../utils';
 	import type { Snippet } from 'svelte';

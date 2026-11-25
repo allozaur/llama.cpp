@@ -4,7 +4,7 @@
 	import type { ButtonSize, ButtonVariant } from '@ggml-org/llama-ui/ui/button';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { Plus, Trash2 } from '@lucide/svelte';
-	import { defineMeta } from '@storybook/addon-svelte-csf';
+	import { defineMeta } from '@storybook/sveltekit';
 
 	const { Story } = defineMeta({
 		component: Button,

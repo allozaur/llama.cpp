@@ -1,3 +1,10 @@
+<!--
+	@component
+	The text label of a form control. Give it `for` with the control's id so a click focuses the control and screen
+	readers name it.
+
+	@summary The label of a form control.
+-->
 <script lang="ts">
 	import { cn } from '../utils.js';
 	import { Label as LabelPrimitive } from 'bits-ui';

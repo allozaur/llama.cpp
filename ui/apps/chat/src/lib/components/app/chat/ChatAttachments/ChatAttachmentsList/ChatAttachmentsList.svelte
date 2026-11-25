@@ -1,3 +1,10 @@
+<!--
+	@component
+	The row of attachment thumbnails and chips, either files waiting in the chat form (`uploadedFiles`, removable)
+	or the ones sent with a message (`attachments`, `readonly`).
+
+	@summary The row of attachments on the chat form or a message.
+-->
 <script lang="ts">
 	import {
 		ChatAttachmentsListItem,
