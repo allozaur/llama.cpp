@@ -66,5 +66,8 @@ export { ModelDraftSidecars } from '@ggml-org/llama-ui/models';
 export { default as ModelDraftSubline } from './ModelDraftSubline.svelte';
 export * from './ModelsSelector';
 
+/** Discover Models button; asks before turning Discover on when it is off. */
+export { default as ModelsDiscoverButton } from './ModelsDiscoverButton.svelte';
+
 /** Model details drawer, mounted once and opened over any page through `uiStore.openModelDetails`. */
 export { default as ModelsManagerModelDrawer } from './ModelsManager/ModelsManagerModelDrawer.svelte';
