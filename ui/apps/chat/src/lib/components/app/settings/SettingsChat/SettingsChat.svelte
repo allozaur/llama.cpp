@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Collapsible from '@ggml-org/llama-ui/ui/collapsible';
-	import { ChevronDown, ChevronRight, RefreshCw } from '@lucide/svelte';
+	import { ChevronDown, ChevronRight, GraduationCap, RefreshCw } from '@lucide/svelte';
 	import {
 		SettingsChatDesktopSidebar,
 		SettingsChatFields,
@@ -22,7 +22,13 @@
 	} from '#lib/constants/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
 	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
-	import { deviceStore, modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
+	import {
+		deviceStore,
+		modelsStore,
+		serverStore,
+		settingsStore,
+		uiStore
+	} from '#lib/stores/index.ts';
 	import type { SettingsSection, SettingsSectionTitle } from '#lib/types/index.ts';
 	import { groupSettingsFields, isApiKeyFieldShown, isSettingShownOn } from '#lib/utils/index.ts';
 	import { page } from '$app/state';
@@ -259,6 +265,11 @@
 									<Button onclick={() => window.location.reload()} variant="outline">
 										<RefreshCw class="size-icon-md" />
 										Reload app
+									</Button>
+
+									<Button onclick={() => uiStore.openOnboarding()} variant="outline">
+										<GraduationCap class="size-icon-md" />
+										Show onboarding
 									</Button>
 								</div>
 							</SettingsGroup>
