@@ -28,7 +28,7 @@ const preview: Preview = {
 		},
 
 		options: {
-			// sidebar sections: the introduction and the guidelines for agents, then the two layers as the code has them.
+			// sidebar sections: the introduction, the guidelines for agents, the philosophy and the architecture, then the two layers as the code has them.
 			// Llama UI is the library (ui/lib/ui): its foundations, base components, app components, Model UI and mockups.
 			// Llama Chat is the app (ui/apps/chat): its own foundations, then one folder per src/lib/components/app/<area>,
 			// the full chat screen leading Chat. The brand and communications are in llama-brand's Storybook
@@ -37,6 +37,10 @@ const preview: Preview = {
 					'Introduction',
 					'Agents',
 					['Design guidelines'],
+					'Philosophy',
+					['Ideology', 'Product', 'Design'],
+					'Architecture',
+					['Stack', 'Chat', 'Extensions', 'Channels'],
 					'Llama UI',
 					[
 						'Foundations',

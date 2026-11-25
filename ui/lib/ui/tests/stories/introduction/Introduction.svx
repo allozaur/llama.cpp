@@ -11,7 +11,7 @@
 
 ## Where it comes from
 
-The package lives in llama.cpp, in `ui/lib/ui`, and Llama Chat, in `ui/apps/chat`, is built on it: its tokens, fonts and base components come from here. The stories of everything the package holds live here, next to it, and run as its tests. Llama Chat's Storybook shows the same stories under **Llama UI**, next to Llama Chat's own; the **Brand** and the **Communications** have their own Storybook, in llama-brand.
+The package lives in llama.cpp, in `ui/lib/ui`, and Llama Chat, in `ui/apps/chat`, is built on it: its tokens, fonts and base components come from here. The stories of everything the package holds live here, next to it, and run as its tests. Llama Chat's Storybook shows the same stories under **Llama UI**, next to Llama Chat's own, its **Philosophy** and its **Architecture**; the **Brand** and the **Communications** have their own Storybook, in llama-brand.
 
 The tokens, the fonts and the base components are changed here, and Llama Chat takes them as they are. What both still keep a copy of, the Model UI among them, flows one way for now, from `ui/apps/chat` to here.
 

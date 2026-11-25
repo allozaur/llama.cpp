@@ -747,7 +747,10 @@ conversations and traces, so the UI never assumes a cloud account or hides which
 The service need not be on the same machine: a server can be run by one person and shared by
 many (a family, a team, a community), so the UI should make clear which server a model runs on.
 
-This file is the how, written for agents first. Its principles, as rules to apply here:
+This file is the how, written for agents first. The why, written for people, is
+**Philosophy › Design** in Storybook (`tests/stories/philosophy/Design.svx`), next to
+**Philosophy › Ideology** (what we stand for) and **Philosophy › Product** (how the products fit together).
+Its principles, as rules to apply here:
 
 - **Function first.** Every element has a job and takes its measurements from a shared role
   (control heights, corners, icon sizes, type roles); never give one component its own.
