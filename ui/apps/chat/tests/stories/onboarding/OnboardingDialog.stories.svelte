@@ -70,4 +70,10 @@
 	name="Power-ups Mobile"
 />
 
+<Story
+	args={{ steps: [OnboardingStep.IMPORT, OnboardingStep.DONE] }}
+	globals={DESKTOP}
+	name="Import Chats"
+/>
+
 <Story args={{ steps: [OnboardingStep.DONE], tasks }} globals={DESKTOP} name="Done" />

@@ -2,6 +2,7 @@
 export enum OnboardingStep {
 	CONNECTION = 'connection',
 	DONE = 'done',
+	IMPORT = 'import',
 	INTRO_CHAT = 'intro-chat',
 	INTRO_TOOLS = 'intro-tools',
 	INTRO_VOICE = 'intro-voice',

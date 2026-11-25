@@ -15,6 +15,7 @@ export const ONBOARDING_STEP_ORDER: OnboardingStep[] = [
 	OnboardingStep.MODEL,
 	OnboardingStep.VOICE,
 	OnboardingStep.POWER_UPS,
+	OnboardingStep.IMPORT,
 	OnboardingStep.DONE
 ];
 
@@ -31,6 +32,8 @@ export const ONBOARDING_STEP_COPY: Record<OnboardingStep, string> = {
 		'This server asks for an API key. Enter it and I will connect. The key stays in this browser.',
 	[OnboardingStep.DONE]:
 		'You are all set. Start with a simple task to see how it works, or write your own.',
+	[OnboardingStep.IMPORT]:
+		'Used Claude Code on this machine? I can bring those chat sessions in. Pick its sessions folder, or do it later in Settings.',
 	[OnboardingStep.INTRO_CHAT]:
 		'Here you chat with models that run on your own machine, privately. A quick look at what that means, then we set things up.',
 	[OnboardingStep.INTRO_TOOLS]:

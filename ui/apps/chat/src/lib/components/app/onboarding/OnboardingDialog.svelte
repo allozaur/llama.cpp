@@ -7,6 +7,7 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Dialog from '@ggml-org/llama-ui/ui/dialog';
 	import { ArrowLeft } from '@lucide/svelte';
+	import { AgentImport } from '#lib/components/app/agent-import/index.ts';
 	import { ChatMessageUserBubble } from '#lib/components/app/index.ts';
 	import {
 		OnboardingConnection,
@@ -151,6 +152,8 @@
 							<OnboardingModels audioOnly onAnswer={(answer) => (answers[step] = answer)} />
 						{:else if step === OnboardingStep.POWER_UPS}
 							<OnboardingPowerUps onAnswer={(answer) => (answers[step] = answer)} />
+						{:else if step === OnboardingStep.IMPORT}
+							<AgentImport embedded onAnswer={(answer) => (answers[step] = answer)} />
 						{:else}
 							<OnboardingDone onPrompt={handlePrompt} {tasks} />
 						{/if}

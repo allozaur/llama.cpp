@@ -8,6 +8,8 @@ import {
 import { OnboardingStep } from '#lib/enums/onboarding.enums.ts';
 
 export interface OnboardingStepsInput {
+	/** The browser can pick a folder, so sessions of other AI apps can be imported. */
+	canImportChats: boolean;
 	/** The server answered 401 or 403: it wants an API key. */
 	apiKeyRequired: boolean;
 	/** The server props and the models list are in, so the fields below can be trusted. */
@@ -35,6 +37,7 @@ export function resolveOnboardingSteps(
 	const applies: Record<OnboardingStep, boolean> = {
 		[OnboardingStep.CONNECTION]: input.apiKeyRequired,
 		[OnboardingStep.DONE]: true,
+		[OnboardingStep.IMPORT]: input.canImportChats,
 		[OnboardingStep.INTRO_CHAT]: true,
 		[OnboardingStep.INTRO_TOOLS]: true,
 		[OnboardingStep.INTRO_VOICE]: true,
