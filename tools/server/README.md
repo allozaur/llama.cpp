@@ -2546,6 +2546,8 @@ Payload:
 
 `sidecars` lists the sidecar kinds pulled with the model, picked by the server the way `-hf` picks them: `mmproj`, and the draft heads `mtp`, `dflash`, `eagle3` and `dspark`. It defaults to `["mmproj"]`, as `-hf` does.
 
+`hf_token` is optional: a Hugging Face access token used for this download in place of the server's own (`--hf-token`), e.g. the token of the user asking for a gated model. It is used for this download only and is not stored, so a download resumed after a restart of the server needs it again.
+
 Posting a model that is already in the cache and not running downloads the sidecars it lacks and keeps the files already on disk.
 
 Response (download is started in the background):
