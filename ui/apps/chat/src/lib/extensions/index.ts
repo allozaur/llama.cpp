@@ -26,12 +26,15 @@ export type { SettingsAction, SettingsActionDialog } from './points/settings';
 export type {
 	FlowHook,
 	FlowInfo,
+	ToolCallPermission,
+	ToolCallPermissionDetail,
 	ToolGroupIdentityProps,
 	ToolProvider,
 	ToolProviderCall,
 	ToolProviderEmptyHint,
 	ToolProviderEntry
 } from './points/tools';
+export { toolCallPermissionDetail } from './points/tools';
 export { ExtensionRegistry, extensions } from './registry.svelte';
 export type {
 	Extension,

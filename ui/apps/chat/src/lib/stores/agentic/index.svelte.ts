@@ -747,9 +747,8 @@ class AgenticStore {
 		// Ask for permission before executing the tool
 		const permission = await this.gates.requestPermission(
 			conversationId,
-			toolName,
+			{ arguments: toolCall.function.arguments, id: toolCall.id, name: toolName },
 			serverLabel,
-			toolCall.id,
 			context.signal
 		);
 

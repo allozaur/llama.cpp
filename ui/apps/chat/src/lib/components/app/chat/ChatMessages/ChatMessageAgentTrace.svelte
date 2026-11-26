@@ -395,6 +395,7 @@
 		<ChatMessageActionCardPermissionRequest
 			command={pendingCommand}
 			onDecision={handlePermission}
+			permission={visiblePermission.permission}
 			serverLabel={visiblePermission.serverLabel}
 			toolName={visiblePermission.toolName}
 		/>
