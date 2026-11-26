@@ -47,7 +47,17 @@ describe('chat-only build', { timeout: 30_000 }, () => {
 
 		const chatOnly = await import('#lib/extensions/builtin.ts');
 
-		expect(chatOnly.BUILT_IN_EXTENSIONS).toEqual([]);
+		// what does not need the agentic loop stays
+		expect(chatOnly.BUILT_IN_EXTENSIONS.map((extension) => extension.id)).toEqual(['huggingface']);
+	});
+
+	it('is composed without the Hugging Face extension when the build leaves it out', async () => {
+		vi.resetModules();
+		vi.stubEnv('VITE_PUBLIC_HUGGING_FACE', 'false');
+
+		const { BUILT_IN_EXTENSIONS } = await import('#lib/extensions/builtin.ts');
+
+		expect(BUILT_IN_EXTENSIONS.map((extension) => extension.id)).toEqual(['mcp']);
 	});
 
 	it('has MCP available only in agent mode, once the server has answered', async () => {

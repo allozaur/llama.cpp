@@ -17,11 +17,11 @@
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
 	import { RefreshCw, RotateCcw } from '@lucide/svelte';
 	import {
+		SettingsChatConnectorsTab,
 		SettingsChatExtensionsTab,
 		SettingsChatFieldsInset,
 		SettingsChatImportExportTab,
-		SettingsChatVoiceTab,
-		SettingsHuggingFaceAccount
+		SettingsChatVoiceTab
 	} from '#lib/components/app/settings/index.ts';
 	import {
 		NUMERIC_FIELDS,
@@ -72,7 +72,14 @@
 	const toolsPanel = useToolsPanel();
 
 	// a plain chat has no Agent section, as in the settings dialog
-	const sections = $derived(settingsChatSections(agenticMode.enabled));
+	// Connectors shows while an extension adds one, as in the desktop settings
+	const sections = $derived(
+		settingsChatSections(agenticMode.enabled).filter(
+			(section) =>
+				section.slug !== SETTINGS_SECTION_SLUGS.CONNECTORS ||
+				extensions.contributions('connectors').length > 0
+		)
+	);
 	const allFields = SETTINGS_CHAT_SECTIONS.flatMap((entry) => entry.fields ?? []);
 
 	let config = $derived(settingsStore.config);
@@ -353,6 +360,9 @@
 		<InsetList class="px-4 py-4">
 			<SettingsChatExtensionsTab />
 		</InsetList>
+	{:else if slug === SETTINGS_SECTION_SLUGS.CONNECTORS}
+		<!-- each connector draws its own card -->
+		<SettingsChatConnectorsTab />
 	{:else if slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
 		<SettingsChatImportExportTab inset />
 	{:else if slug === SETTINGS_SECTION_SLUGS.VOICE}
@@ -373,8 +383,6 @@
 		/>
 
 		{#if slug === SETTINGS_SECTION_SLUGS.GENERAL}
-			<SettingsHuggingFaceAccount inset />
-
 			<InsetList title={SETTINGS_SHEET_TEXT.APP}>
 				<InsetListRow icon={RefreshCw} onclick={() => window.location.reload()}>
 					{SETTINGS_SHEET_TEXT.RELOAD_APP}

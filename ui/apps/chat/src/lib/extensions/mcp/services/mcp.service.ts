@@ -38,6 +38,7 @@ import {
 	MCPRefType,
 	MCPTransportType
 } from '#lib/enums/index.ts';
+import { extensions, type ServerAuth } from '#lib/extensions/index.ts';
 import type {
 	ClientCapabilities,
 	Implementation,
@@ -542,6 +543,11 @@ export class MCPService {
 		};
 	}
 
+	/** The connector whose sign-in is the one for a server, if an extension contributes one. */
+	static connectorFor(serverUrl: string): ServerAuth | undefined {
+		return extensions.contributions('serverAuth').find((connector) => connector.covers(serverUrl));
+	}
+
 	/**
 	 * The OAuth client of a server, for a server that may ask the user to sign
 	 * in: an HTTP server whose Authorization header the user did not set. A
@@ -561,7 +567,8 @@ export class MCPService {
 			(key) => key.trim().toLowerCase() === HEADERS.AUTHORIZATION.toLowerCase()
 		);
 
-		if (hasOwnAuthorization) return undefined;
+		// a connector signed in to the server's service covers it: no sign-in of the server's own
+		if (hasOwnAuthorization || this.connectorFor(config.url)) return undefined;
 
 		return new McpOAuthProvider({
 			onStep,
@@ -1140,6 +1147,15 @@ export class MCPService {
 
 				const startedAt = performance.now();
 				const requestHeaders = new Headers(baseInit.headers);
+				// a connector signed in to this server's service authenticates the request; asked
+				// each time, so a renewed token is used. The server's own headers come after and win
+				const connectorHeaders = (await this.connectorFor(config.url)?.headers(config.url)) ?? {};
+
+				for (const [key, value] of Object.entries(connectorHeaders)) {
+					if (!requestHeaders.has(key)) {
+						this.addRequestHeaders(requestHeaders, { [key]: value }, useProxy);
+					}
+				}
 
 				if (typeof Request !== 'undefined' && input instanceof Request) {
 					this.addRequestHeaders(requestHeaders, input.headers, useProxy);
@@ -1149,13 +1165,10 @@ export class MCPService {
 					this.addRequestHeaders(requestHeaders, init.headers, useProxy);
 				}
 
-				const request = this.createDiagnosticRequestDetails(
-					input,
-					init,
-					baseInit,
-					requestHeaders,
-					Object.keys(config.headers ?? {})
-				);
+				const request = this.createDiagnosticRequestDetails(input, init, baseInit, requestHeaders, [
+					...Object.keys(config.headers ?? {}),
+					...Object.keys(connectorHeaders)
+				]);
 				const { method, url } = request;
 
 				logIfEnabled(

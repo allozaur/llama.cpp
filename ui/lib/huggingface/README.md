@@ -7,7 +7,7 @@ It knows no app. The app says who it is, hands over what to share, and decides w
 | Entry                                | What it holds                                                                                                                                                                                  |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@ggml-org/llama-huggingface`        | Plain TypeScript, no dependencies: "Sign in with Hugging Face" (OAuth with PKCE and dynamic client registration, `HfOAuthSignIn`) and the Hub calls (`whoAmI`, `listDatasets`, `uploadTrace`). |
-| `@ggml-org/llama-huggingface/svelte` | The account as Svelte state (`HfAccount`) and the components that show it, built on `@ggml-org/llama-ui`: `HfAccountPanel`, `HfShareDialog`, `HfLogo`.                                         |
+| `@ggml-org/llama-huggingface/svelte` | The account as Svelte state (`HfAccount`) and the components that show it, built on `@ggml-org/llama-ui`: `HfAccountPanel`, `HfAccountDialog`, `HfShareDialog`, `HfLogo`.                      |
 
 ## Use
 

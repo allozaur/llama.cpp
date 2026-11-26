@@ -4,6 +4,8 @@
  */
 
 export { HfAccount } from './account.svelte.js';
+/** "Hugging Face account" in a dialog, with a line on why it is asked for. */
+export { default as HfAccountDialog } from './HfAccountDialog.svelte';
 /** Who is signed in, with Sign out; or the two ways to sign in. */
 export { default as HfAccountPanel } from './HfAccountPanel.svelte';
 /** The Hugging Face logo. */

@@ -10,6 +10,7 @@ import { FILE_GLOB_SEARCH_PICKERS } from './working-directory.constants';
 import { TOOL_CALL_SHOWN_ARG_DEFAULT } from '@ggml-org/llama-harness';
 import { VOICE_MICROPHONE_AUTO } from '@ggml-org/llama-voice';
 import AudioLines from '@lucide/svelte/icons/audio-lines';
+import Blocks from '@lucide/svelte/icons/blocks';
 import Code from '@lucide/svelte/icons/code';
 import Database from '@lucide/svelte/icons/database';
 import Funnel from '@lucide/svelte/icons/funnel';
@@ -36,6 +37,7 @@ import type {
 /** Settings sections — slug is the routing identity, title is the display label. */
 export const SETTINGS_SECTIONS = {
 	AGENTIC: { slug: 'agentic', title: 'Agentic' },
+	CONNECTORS: { slug: 'connectors', title: 'Connectors' },
 	DEVELOPER: { slug: 'developer', title: 'Developer' },
 	DISPLAY: { slug: 'display', title: 'Display' },
 	EXTENSIONS: { slug: 'extensions', title: 'Extensions' },
@@ -48,6 +50,7 @@ export const SETTINGS_SECTIONS = {
 
 export const SETTINGS_SECTION_SLUGS = {
 	AGENTIC: SETTINGS_SECTIONS.AGENTIC.slug,
+	CONNECTORS: SETTINGS_SECTIONS.CONNECTORS.slug,
 	DEVELOPER: SETTINGS_SECTIONS.DEVELOPER.slug,
 	DISPLAY: SETTINGS_SECTIONS.DISPLAY.slug,
 	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.slug,
@@ -60,6 +63,7 @@ export const SETTINGS_SECTION_SLUGS = {
 
 export const SETTINGS_SECTION_TITLES = {
 	AGENTIC: SETTINGS_SECTIONS.AGENTIC.title,
+	CONNECTORS: SETTINGS_SECTIONS.CONNECTORS.title,
 	DEVELOPER: SETTINGS_SECTIONS.DEVELOPER.title,
 	DISPLAY: SETTINGS_SECTIONS.DISPLAY.title,
 	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.title,
@@ -602,6 +606,13 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 		settings: [],
 		slug: SETTINGS_SECTION_SLUGS.IMPORT_EXPORT,
 		title: SETTINGS_SECTION_TITLES.IMPORT_EXPORT
+	},
+	// Connectors: the cards come from the extension registry; the section shows while there is one
+	{
+		icon: Blocks,
+		settings: [],
+		slug: SETTINGS_SECTION_SLUGS.CONNECTORS,
+		title: SETTINGS_SECTION_TITLES.CONNECTORS
 	},
 	// Sampling
 	{

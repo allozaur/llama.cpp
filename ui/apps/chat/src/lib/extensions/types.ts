@@ -4,7 +4,10 @@
  * same contract.
  */
 
+import type { ConversationAction, MessageAction, Overlay } from './points/actions';
 import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './points/composer';
+import type { Connector, ServerAuth } from './points/connectors';
+import type { ModelDownloadAuth, ModelNotice } from './points/models';
 import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
 import type { SettingsAction } from './points/settings';
 import type { FlowHook, ToolProvider } from './points/tools';
@@ -52,12 +55,26 @@ export interface ExtensionPoints {
 	composerCommands: ComposerCommand;
 	/** Popover pickers the chat form mounts, opened by a command. */
 	composerPickers: ComposerPicker;
+	/** Accounts and services in Settings > Connectors. */
+	connectors: Connector;
+	/** Actions in every conversation menu. */
+	conversationActions: ConversationAction;
 	/** Runs around every agentic flow. */
 	flow: FlowHook;
+	/** Actions under a message and in its context menu. */
+	messageActions: MessageAction;
+	/** The account a model download passes to llama-server. */
+	modelDownloadAuth: ModelDownloadAuth;
+	/** Lines above a model's download options in Discover Models. */
+	modelNotices: ModelNotice;
+	/** Components mounted once for the whole app, such as a dialog the extension opens itself. */
+	overlays: Overlay;
 	/** Draws the attachments it claims, in place of the default attachment chip. */
 	attachmentRenderers: AttachmentRenderer;
 	/** Draws the messages it claims, in place of the default message. */
 	messageRenderers: MessageRenderer;
+	/** A connector's sign-in for the servers of its service. */
+	serverAuth: ServerAuth;
 	/** Actions under the extension's settings, each opening what it manages from Settings. */
 	settingsActions: SettingsAction;
 	/** Tools the model can call, listed and run by the extension. */

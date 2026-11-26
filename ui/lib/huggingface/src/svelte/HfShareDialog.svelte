@@ -46,6 +46,7 @@
 		buildTrace: (scope: string, includeAttachments: boolean) => Promise<HfTraceFile>;
 		onShared?: (url: string) => void;
 		onCopyLink: (url: string) => void;
+		tokenAlsoSentTo?: string;
 	}
 
 	let {
@@ -56,7 +57,8 @@
 		onShared,
 		open = $bindable(),
 		scopes,
-		subject
+		subject,
+		tokenAlsoSentTo
 	}: Props = $props();
 
 	const DATASET_LABEL_ID = 'hf-dataset-label';
@@ -234,7 +236,7 @@
 				</Button>
 			</AlertDialog.Footer>
 		{:else if !user}
-			<HfAccountPanel {account} />
+			<HfAccountPanel {account} {tokenAlsoSentTo} />
 
 			<AlertDialog.Footer>
 				<AlertDialog.Cancel type="button">Cancel</AlertDialog.Cancel>

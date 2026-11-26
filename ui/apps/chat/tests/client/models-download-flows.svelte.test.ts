@@ -9,6 +9,7 @@ import {
 	ServerModelStatus,
 	ServerRole
 } from '#lib/enums/index.ts';
+import { extensions, type ModelDownloadAuth } from '#lib/extensions/index.ts';
 import { ModelsService } from '#lib/services/models.service.ts';
 import { modelsStore } from '#lib/stores/index.ts';
 import { serverStore } from '#lib/stores/llama-server.svelte.ts';
@@ -18,6 +19,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const REPO = 'org/model-GGUF';
 const TAG = `${REPO}:Q4_K_M`;
 const DRAFTS = [ModelAuxSidecar.MMPROJ, ModelDraftSidecar.DFLASH];
+// their own tags: the store is a singleton and keeps a started download in flight
+const GATED_TAG = 'org/gated-GGUF:Q4_K_M';
+const OTHER_TAG = 'org/other-GGUF:Q4_K_M';
 
 /** The listing entry a router reports once a tag is downloaded. */
 function entry(id: string, sidecars: string[] = [], status = ServerModelStatus.DOWNLOADED) {
@@ -31,6 +35,12 @@ function entry(id: string, sidecars: string[] = [], status = ServerModelStatus.D
 		sidecars,
 		status: { value: status }
 	} as unknown as ApiModelDataEntry;
+}
+
+/** Stands in for an extension that holds an account, e.g. Hugging Face. */
+function contributeAccount(account: ModelDownloadAuth) {
+	vi.spyOn(extensions, 'contributions').mockImplementation(((point: string) =>
+		point === 'modelDownloadAuth' ? [account] : []) as typeof extensions.contributions);
 }
 
 /** The download endpoints the store talks to; the feed is not live in these tests. */
@@ -70,7 +80,7 @@ describe('model download flows', () => {
 		await Promise.all([first, second]);
 
 		expect(post).toHaveBeenCalledTimes(1);
-		expect(post).toHaveBeenCalledWith(TAG, DRAFTS);
+		expect(post).toHaveBeenCalledWith(TAG, DRAFTS, undefined);
 	});
 
 	it('reads the chip as downloaded once the list reports the model', async () => {
@@ -110,6 +120,8 @@ describe('model download flows', () => {
 		expect(modelsStore.status.isDownloadInProgress(TAG)).toBe(true);
 		expect(modelsStore.status.isDownloadPaused(TAG)).toBe(false);
 
+		// the request goes out once the Hugging Face sign-in is read
+		await vi.waitFor(() => expect(post).toHaveBeenCalled());
 		release();
 		await started;
 	});
@@ -125,7 +137,7 @@ describe('model download flows', () => {
 		// the resume a chip sends names no kinds of its own
 		await modelsStore.status.downloadModel(TAG);
 
-		expect(post).toHaveBeenLastCalledWith(TAG, DRAFTS);
+		expect(post).toHaveBeenLastCalledWith(TAG, DRAFTS, undefined);
 		expect(modelsStore.status.isDownloadPaused(TAG)).toBe(false);
 	});
 
@@ -155,6 +167,24 @@ describe('model download flows', () => {
 		// and its resume keeps the kinds the incomplete listing reports
 		await modelsStore.status.downloadModel(TAG);
 
-		expect(post).toHaveBeenCalledWith(TAG, DRAFTS);
+		expect(post).toHaveBeenCalledWith(TAG, DRAFTS, undefined);
+	});
+
+	it('sends the token of an account an extension holds, so a gated model can be reached', async () => {
+		const { post } = stubEndpoints();
+
+		contributeAccount({ token: async () => 'hf_test' });
+		await modelsStore.status.downloadModel(GATED_TAG);
+
+		expect(post).toHaveBeenCalledWith(GATED_TAG, [ModelAuxSidecar.MMPROJ], 'hf_test');
+	});
+
+	it('still downloads when that account has no token to give', async () => {
+		const { post } = stubEndpoints();
+
+		contributeAccount({ token: async () => undefined });
+		await modelsStore.status.downloadModel(OTHER_TAG);
+
+		expect(post).toHaveBeenCalledWith(OTHER_TAG, [ModelAuxSidecar.MMPROJ], undefined);
 	});
 });

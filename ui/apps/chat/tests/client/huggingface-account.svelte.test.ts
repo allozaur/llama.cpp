@@ -4,8 +4,10 @@ import {
 	HF_STORAGE_KEY_TOKEN
 } from '@ggml-org/llama-huggingface';
 import { STORAGE_APP_NAME } from '#lib/constants/index.ts';
-import { huggingFace } from '#lib/stores/huggingface.svelte.ts';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
+import { huggingFace } from '#lib/extensions/huggingface/index.ts';
+import { extensions } from '#lib/extensions/index.ts';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // the sign-in itself is tested in ui/lib/huggingface; these cover what the account does around
 // it, as Llama Chat sets it up
@@ -85,6 +87,20 @@ async function signInWithHuggingFace() {
 	return huggingFace.completeSignInFromLocation(callback);
 }
 
+const EXTENSION_ID = 'huggingface';
+const HF_MCP_URL = 'https://huggingface.co/mcp';
+
+// the account reaches the app through the extension: switch it on as the app does at startup
+beforeAll(async () => {
+	for (const manifest of BUILT_IN_EXTENSIONS) {
+		if (manifest.id === EXTENSION_ID) extensions.register(manifest);
+	}
+
+	await extensions.setEnabled(EXTENSION_ID, true);
+});
+
+afterAll(() => extensions.setEnabled(EXTENSION_ID, false));
+
 beforeEach(() => {
 	localStorage.removeItem(HF_OAUTH_LOCALSTORAGE_KEY);
 	huggingFace.signOut();
@@ -110,19 +126,6 @@ describe('the Hugging Face account of Llama Chat', () => {
 		await vi.waitFor(() => expect(huggingFace.datasets).toHaveLength(1));
 		expect(huggingFace.user?.name).toBe('me');
 		expect(huggingFace.isSigningInWithHf).toBe(false);
-	});
-
-	it('says when the datasets of the signed-in account are listed, so a share can wait for them', async () => {
-		mockHub();
-		expect(huggingFace.hasListedDatasets).toBe(false);
-
-		await signInWithHuggingFace();
-		await vi.waitFor(() => expect(huggingFace.hasListedDatasets).toBe(true));
-		expect(huggingFace.datasets).toHaveLength(1);
-
-		huggingFace.signOut();
-
-		expect(huggingFace.hasListedDatasets).toBe(false);
 	});
 
 	it('points back to token sign-in when Hugging Face will not register the app', async () => {
@@ -178,6 +181,45 @@ describe('the Hugging Face account of Llama Chat', () => {
 		expect(
 			JSON.parse(localStorage.getItem(HF_OAUTH_LOCALSTORAGE_KEY) ?? '{}').tokens
 		).toBeUndefined();
+	});
+
+	it('signs the Hugging Face MCP server in with the same account, and no other server', async () => {
+		const [auth] = extensions.contributions('serverAuth');
+
+		expect(auth.covers(HF_MCP_URL)).toBe(false);
+
+		mockHub();
+		await huggingFace.signIn('hf_good');
+
+		expect(auth.account()).toBe('me');
+		expect(auth.covers(HF_MCP_URL)).toBe(true);
+		expect(auth.covers('https://mcp.exa.ai/mcp')).toBe(false);
+		expect(auth.covers('https://huggingface.co.example.com/mcp')).toBe(false);
+		expect(await auth.headers(HF_MCP_URL)).toEqual({ Authorization: 'Bearer hf_good' });
+
+		huggingFace.signOut();
+
+		expect(auth.account()).toBeNull();
+		expect(auth.covers(HF_MCP_URL)).toBe(false);
+	});
+
+	it('hands its token to model downloads, and nothing once it is switched off', async () => {
+		mockHub();
+		await huggingFace.signIn('hf_good');
+
+		const [account] = extensions.contributions('modelDownloadAuth');
+
+		expect(await account.token()).toBe('hf_good');
+
+		await extensions.setEnabled(EXTENSION_ID, false);
+
+		expect(extensions.contributions('modelDownloadAuth')).toEqual([]);
+		expect(extensions.contributions('conversationActions')).toEqual([]);
+		expect(extensions.contributions('connectors')).toEqual([]);
+
+		await extensions.setEnabled(EXTENSION_ID, true);
+
+		expect(extensions.contributions('connectors')).toHaveLength(1);
 	});
 
 	describe('the datasets a share can go to', () => {
