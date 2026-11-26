@@ -27,6 +27,7 @@ import {
 	type ToolProvider,
 	type ToolProviderCall
 } from '#lib/extensions/index.ts';
+import { SKILL_TOOL_DEFINITIONS, SkillToolsService } from '#lib/services/skill-tools.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
@@ -93,6 +94,10 @@ class ToolsStore {
 			const name = def.function.name;
 
 			push({
+				// a load asks for the skill it names, not for the tool
+				...(name === BuiltInTool.BROWSER_LOAD_SKILL && {
+					callPermission: (call: ToolProviderCall) => SkillToolsService.callPermission(call)
+				}),
 				definition: def,
 				key: this.getToolKey(ToolSource.BROWSER, name),
 				source: ToolSource.BROWSER
@@ -137,6 +142,9 @@ class ToolsStore {
 		const readMedia = this.readMediaTool();
 
 		if (readMedia) tools.push(readMedia);
+
+		// the skills of the machine's folders and of the extensions' sources, such as MCP servers
+		if (SkillToolsService.isOnOffer) tools.push(...SKILL_TOOL_DEFINITIONS);
 
 		// provide browser's get_info tool if server doesn't provide one
 		if (!this.hasServerTool(BuiltInTool.SERVER_GET_INFO)) {

@@ -7,6 +7,7 @@
 // (see ChatMessageToolCallBlockGetDatetime and
 // ChatMessageToolCallBlockSearchResults for prior art).
 
+import { SKILL_ICON } from './icons.constants';
 import Braces from '@lucide/svelte/icons/braces';
 import Clock from '@lucide/svelte/icons/clock';
 import Eye from '@lucide/svelte/icons/eye';
@@ -25,6 +26,16 @@ export const TOOL_UI: Readonly<Record<BuiltInTool, ToolUiEntry>> = {
 	[BuiltInTool.BROWSER_GET_DATETIME]: {
 		icon: Clock,
 		label: 'Current time',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_LIST_SKILLS]: {
+		icon: SKILL_ICON,
+		label: 'List skills',
+		source: ToolSource.BROWSER
+	},
+	[BuiltInTool.BROWSER_LOAD_SKILL]: {
+		icon: SKILL_ICON,
+		label: 'Load skill',
 		source: ToolSource.BROWSER
 	},
 	[BuiltInTool.BROWSER_READ_MEDIA]: { icon: Eye, label: 'Read media', source: ToolSource.BROWSER },

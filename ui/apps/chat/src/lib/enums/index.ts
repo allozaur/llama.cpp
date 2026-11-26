@@ -125,6 +125,7 @@ export {
 	SearchChatsMessageSelection,
 	SearchChatsOrder,
 	ServerToolType,
+	SkillToolArgument,
 	ToolSource,
 	ToolPermissionDecision,
 	ToolResponseField

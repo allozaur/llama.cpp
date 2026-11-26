@@ -86,6 +86,7 @@ export enum ChatFormCommandAction {
 	CWD = 'cwd',
 	MODEL = 'model',
 	PROMPT = 'prompt',
+	SKILL = 'skill',
 	SYSTEM_MESSAGE = 'system-message'
 }
 

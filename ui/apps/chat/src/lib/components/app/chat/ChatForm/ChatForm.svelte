@@ -13,6 +13,7 @@
 		ChatFormInputFileInputInvisible,
 		ChatFormPickerPrompts,
 		ChatFormPickers,
+		ChatFormPickerSkills,
 		ChatFormSystemMessageAttachment,
 		ChatFormSystemMessageChip
 	} from '#lib/components/app/index.ts';
@@ -23,6 +24,7 @@
 		OPEN_OVERLAY_SELECTOR,
 		PROMPTS_PICKER_ID,
 		SETTING_CONFIG_DEFAULT,
+		SKILLS_PICKER_ID,
 		SYSTEM_MESSAGE_PLACEHOLDER,
 		VOICE_EDITOR_SELECTOR
 	} from '#lib/constants/index.ts';
@@ -53,6 +55,7 @@
 		modelsStore,
 		serverStore,
 		settingsStore,
+		skillsStore,
 		toolsStore,
 		uiStore,
 		voiceTranscriptsStore
@@ -186,12 +189,18 @@
 		component: ChatFormPickerPrompts,
 		id: PROMPTS_PICKER_ID
 	};
+	// so is the skill picker, over every source of skills
+	const SKILLS_PICKER: ComposerPicker = {
+		component: ChatFormPickerSkills,
+		id: SKILLS_PICKER_ID
+	};
 
 	// what extensions add to the form: slash commands, the pickers they open, and
 	// attachments that wait outside the form's files
 	let contributedCommands = $derived(extensions.contributions('composerCommands'));
 	let contributedPickers = $derived([
 		PROMPTS_PICKER,
+		SKILLS_PICKER,
 		...extensions.contributions('composerPickers')
 	]);
 	let contributedAttachments = $derived(extensions.contributions('composerAttachments'));
@@ -226,6 +235,7 @@
 		getShowModelSelector: () => isModelSelectorShown,
 		getValue: () => value,
 		hasCwdTools: () => conversationsStore.preferences.hasEnabledCwdTools(),
+		hasSkills: () => skillsStore.hasAvailableSources,
 		onCompact: () => chatStore.compactConversation(),
 		onSystemMessage: () => onSystemPromptClick?.({ files: uploadedFiles, message: value }),
 		openModelSelector: () => chatFormActionsRef?.openModelSelector(),

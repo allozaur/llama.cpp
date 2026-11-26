@@ -39,6 +39,7 @@ function commandNames(): string[] {
 			canCompact: () => false,
 			canEditSystemMessage: () => false,
 			hasCwdTools: () => false,
+			hasSkills: () => false,
 			showModelSelector: false
 		},
 		extensions.contributions('composerCommands')
@@ -140,7 +141,15 @@ describe('Extensions settings', () => {
 
 		await expect.element(mcpSwitch).not.toBeChecked();
 		await vi.waitFor(() => expect(settingsActionLabels()).toEqual([]));
-		expect(commandNames()).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
+		// /skill is the app's own: it stays, for the skills of the machine's folders
+		expect(commandNames()).toEqual([
+			'prompt',
+			'skill',
+			'cwd',
+			'model',
+			'compact',
+			'system-message'
+		]);
 		expect(mcpToolNames()).toEqual([]);
 		// the live connections close and the resources waiting in the chat form are dropped
 		expect(mcpStore.shutdown).toHaveBeenCalledOnce();

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { PromptEntry, PromptSource } from '#lib/extensions/index.ts';
+	import type { Component } from 'svelte';
 
+	/** Where a prompt or a skill comes from, and the mark of its source. */
 	interface Props {
 		class?: string;
-		entry: PromptEntry;
-		source: PromptSource;
+		entry: { iconUrl?: string; origin: string };
+		source: { icon: Component<{ class?: string }> };
 	}
 
 	let { class: className = '', entry, source }: Props = $props();
 </script>
 
-<!-- where a prompt comes from: the library, or the MCP server that offers it -->
+<!-- where a prompt or a skill comes from: the library, a folder, or the MCP server that offers it -->
 <span class="flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground {className}">
 	{#if entry.iconUrl}
 		<img

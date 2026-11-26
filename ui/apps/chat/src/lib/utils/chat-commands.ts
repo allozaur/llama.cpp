@@ -16,7 +16,7 @@ function toChatFormCommand(command: ComposerCommand): ChatFormCommand {
 
 /**
  * The slash commands surfaced by the `/` command picker, in display order:
- * `/prompt` first, then the other built-in ones, with the ones extensions
+ * `/prompt` and `/skill` first, then the other built-in ones, with the ones extensions
  * contribute before or after those, as their `order` says.
  *
  * Availability is supplied as predicates rather than store imports: this
@@ -37,6 +37,14 @@ export function getChatCommands(
 			disabled: false,
 			keywords: ['library'],
 			name: 'prompt',
+			takesArgument: true
+		},
+		{
+			action: ChatFormCommandAction.SKILL,
+			description: 'Use a skill',
+			disabled: !options.hasSkills(),
+			keywords: ['library', 'mcp'],
+			name: 'skill',
 			takesArgument: true
 		},
 		...sorted.filter((command) => (command.order ?? 0) < 0).map(toChatFormCommand),

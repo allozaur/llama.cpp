@@ -1,4 +1,4 @@
-import { CWD_COMMAND_NAME, PROMPTS_PICKER_ID } from '#lib/constants/index.ts';
+import { CWD_COMMAND_NAME, PROMPTS_PICKER_ID, SKILLS_PICKER_ID } from '#lib/constants/index.ts';
 import { ChatFormCommandAction, KeyboardKey } from '#lib/enums/index.ts';
 import type { ComposerCommand, ComposerHandle } from '#lib/extensions/index.ts';
 import type { ChatFormCommand } from '#lib/types/index.ts';
@@ -39,6 +39,8 @@ export interface UseChatFormPickersOptions {
 	getShowModelSelector: () => boolean;
 	/** Gates `/cwd`. */
 	hasCwdTools: () => boolean;
+	/** Gates `/skill`. */
+	hasSkills: () => boolean;
 	/** Gates `/compact`. */
 	canCompact: () => boolean;
 	/** Runs `/compact`. */
@@ -96,6 +98,7 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 				canCompact: opts.canCompact,
 				canEditSystemMessage: opts.canEditSystemMessage,
 				hasCwdTools: opts.hasCwdTools,
+				hasSkills: opts.hasSkills,
 				showModelSelector: opts.getShowModelSelector()
 			},
 			opts.getContributedCommands()
@@ -196,6 +199,10 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 				break;
 			case ChatFormCommandAction.PROMPT:
 				openPicker(PROMPTS_PICKER_ID, token.args.trim());
+
+				break;
+			case ChatFormCommandAction.SKILL:
+				openPicker(SKILLS_PICKER_ID, token.args.trim());
 
 				break;
 			case ChatFormCommandAction.SYSTEM_MESSAGE:

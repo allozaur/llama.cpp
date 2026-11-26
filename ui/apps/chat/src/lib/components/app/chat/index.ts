@@ -298,7 +298,7 @@ export { default as ChatFormPickerMention } from './ChatForm/ChatFormPickers/Cha
 
 /**
  * `/`-triggered slash-command picker. Lists the available slash commands
- * (`/prompt`, `/cwd`, `/model`) filtered by the typed query; selection
+ * (`/prompt`, `/skill`, `/cwd`, `/model`) filtered by the typed query; selection
  * hands the command to the parent for dispatch.
  */
 export { default as ChatFormPickerCommand } from './ChatForm/ChatFormPickers/ChatFormPickerCommand.svelte';
@@ -309,6 +309,12 @@ export { default as ChatFormPickerCommand } from './ChatForm/ChatFormPickers/Cha
  * to the message being written.
  */
 export { default as ChatFormPickerPrompts } from './ChatForm/ChatFormPickers/ChatFormPickerPrompts.svelte';
+
+/**
+ * The skill picker `/skill` opens: the skills of the machine's folders and the ones
+ * extensions offer, such as an MCP server's, each with where it comes from.
+ */
+export { default as ChatFormPickerSkills } from './ChatForm/ChatFormPickers/ChatFormPickerSkills.svelte';
 
 /**
  * Where a prompt comes from, on its row in a list: the origin's icon and name.

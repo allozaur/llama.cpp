@@ -19,9 +19,7 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 const MCP_EXTENSION_ID = 'mcp';
-const BUILT_IN_COMMANDS = ['/prompt', '/cwd', '/model', '/compact', '/system-message'];
-/** With the MCP extension on: its `/skill` comes right after `/prompt`. */
-const COMMANDS_WITH_MCP = ['/prompt', '/skill', '/cwd', '/model', '/compact', '/system-message'];
+const BUILT_IN_COMMANDS = ['/prompt', '/skill', '/cwd', '/model', '/compact', '/system-message'];
 const LIBRARY_PROMPT = {
 	content: 'Reply like a pirate.',
 	id: 'p1',
@@ -155,12 +153,15 @@ describe('ChatForm with the MCP extension', () => {
 		localStorage.removeItem(EXTENSIONS_LOCALSTORAGE_KEY);
 	});
 
-	it('adds /skill right after /prompt', async () => {
+	it('offers /skill while a server in use publishes skills', async () => {
+		settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, JSON.stringify([SERVER]));
+		vi.spyOn(mcpStore, 'publishesSkills').mockReturnValue(true);
+
 		await renderForm();
 		await userEvent.keyboard('/');
 
-		await expect.poll(commandNames).toEqual(COMMANDS_WITH_MCP);
-		expect(pickerRows()[0].disabled).toBe(false);
+		await expect.poll(commandNames).toEqual(BUILT_IN_COMMANDS);
+		expect(pickerRows()[1].disabled).toBe(false);
 	});
 
 	it('lists the prompts of MCP servers after those of the library, each with its source', async () => {

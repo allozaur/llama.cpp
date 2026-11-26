@@ -40,6 +40,7 @@
 		getShowModelSelector: () => true,
 		getValue: () => value,
 		hasCwdTools: () => true,
+		hasSkills: () => true,
 		onCompact: () => {
 			calls.push('onCompact');
 		},
