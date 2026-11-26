@@ -56,6 +56,18 @@ export async function parseFilesToMessageExtras(
 			continue;
 		}
 
+		if (file.type === SpecialFileType.PROMPT && file.promptId) {
+			extras.push({
+				content: file.textContent ?? '',
+				name: file.name,
+				promptId: file.promptId,
+				size: file.size,
+				type: AttachmentType.PROMPT
+			});
+
+			continue;
+		}
+
 		if (getFileTypeCategory(file.type) === FileTypeCategory.IMAGE) {
 			if (file.preview) {
 				let base64Url = file.preview;

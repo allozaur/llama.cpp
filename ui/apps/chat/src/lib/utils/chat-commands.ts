@@ -16,8 +16,8 @@ function toChatFormCommand(command: ComposerCommand): ChatFormCommand {
 
 /**
  * The slash commands surfaced by the `/` command picker, in display order:
- * the built-in ones, with the ones extensions contribute before or after
- * them, as their `order` says.
+ * `/prompt` first, then the other built-in ones, with the ones extensions
+ * contribute before or after those, as their `order` says.
  *
  * Availability is supplied as predicates rather than store imports: this
  * module is re-exported through the `#lib/utils/index.ts` barrel, and importing
@@ -31,6 +31,14 @@ export function getChatCommands(
 	const sorted = [...contributed].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
 	return [
+		{
+			action: ChatFormCommandAction.PROMPT,
+			description: 'Insert a prompt',
+			disabled: false,
+			keywords: ['library'],
+			name: 'prompt',
+			takesArgument: true
+		},
 		...sorted.filter((command) => (command.order ?? 0) < 0).map(toChatFormCommand),
 		{
 			action: ChatFormCommandAction.CWD,

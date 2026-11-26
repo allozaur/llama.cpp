@@ -7,7 +7,7 @@
 	import { ScrollCarouselVariant } from '#lib/enums/index.ts';
 	import { extensions, findAttachmentRenderer } from '#lib/extensions/index.ts';
 	import { mediaGalleryStore } from '#lib/stores/index.ts';
-	import { getAttachmentDisplayItems, isMediaExtra } from '#lib/utils/index.ts';
+	import { getAttachmentDisplayItems, isMediaExtra, isPromptAttachment } from '#lib/utils/index.ts';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
@@ -66,9 +66,11 @@
 			return;
 		}
 
-		// items an extension draws stay out of the built-in preview, so they do not count
+		// items an extension draws and prompts stay out of the built-in preview, so they do not count
 		const renderers = extensions.contributions('attachmentRenderers');
-		const previewItems = displayItems.filter((i) => !findAttachmentRenderer(renderers, i));
+		const previewItems = displayItems.filter(
+			(i) => !findAttachmentRenderer(renderers, i) && !isPromptAttachment(i)
+		);
 		const index = previewItems.findIndex((i) => i.id === item.id);
 
 		previewFocusIndex = index >= 0 ? index : 0;

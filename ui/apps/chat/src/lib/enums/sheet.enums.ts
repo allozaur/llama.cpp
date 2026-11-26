@@ -1,6 +1,7 @@
-/** Pages of the phone's Add to chat sheet: its menu, the tool groups and one group's tools. */
+/** Pages of the phone's Add to chat sheet: its menu, the system message's prompts, the tool groups and one group's tools. */
 export enum AddSheetPage {
 	ROOT = 'root',
+	SYSTEM_MESSAGE = 'system-message',
 	TOOL_GROUP = 'tool-group',
 	TOOLS = 'tools'
 }

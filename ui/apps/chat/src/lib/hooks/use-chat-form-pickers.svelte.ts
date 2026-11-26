@@ -1,4 +1,4 @@
-import { CWD_COMMAND_NAME } from '#lib/constants/index.ts';
+import { CWD_COMMAND_NAME, PROMPTS_PICKER_ID } from '#lib/constants/index.ts';
 import { ChatFormCommandAction, KeyboardKey } from '#lib/enums/index.ts';
 import type { ComposerCommand, ComposerHandle } from '#lib/extensions/index.ts';
 import type { ChatFormCommand } from '#lib/types/index.ts';
@@ -192,6 +192,10 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 			}
 			case ChatFormCommandAction.MODEL:
 				opts.openModelSelector();
+
+				break;
+			case ChatFormCommandAction.PROMPT:
+				openPicker(PROMPTS_PICKER_ID, token.args.trim());
 
 				break;
 			case ChatFormCommandAction.SYSTEM_MESSAGE:

@@ -272,56 +272,35 @@ export { default as McpResourceTemplateForm } from './McpResourceTemplateForm.sv
  *
  * CHAT
  *
- * What MCP draws in the chat: the prompt picker, pending resources, and the
+ * What MCP draws in the chat: a prompt's arguments form, pending resources, and the
  * prompts and resources of a message. The wrappers in `contributions/` hand
  * them to the extension points.
  *
  */
 
 /**
- * **ChatFormPickerMcpPrompts** - MCP prompt selection interface
+ * **ChatFormPickerMcpPromptArguments** - The arguments of an MCP prompt
  *
- * Floating picker for browsing and selecting MCP Server Prompts.
- * Triggered by typing `/` in the chat input or choosing `MCP Prompt` option in ChatFormActionAddDropdown.
- * Loads prompts from connected MCP servers and allows users to select and configure them.
- *
- * **Architecture:**
- * - Fetches available prompts from mcpStore
- * - Manages selection state and keyboard navigation internally
- * - Delegates argument input to ChatFormPromptPickerArgumentForm
- * - Communicates prompt loading lifecycle via callbacks
- *
- * **Prompt Loading Flow:**
- * 1. User selects prompt → `onPromptLoadStart` called with placeholder ID
- * 2. Prompt content fetched from MCP server asynchronously
- * 3. On success → `onPromptLoadComplete` with full prompt data
- * 4. On failure → `onPromptLoadError` with error details
- *
- * **Features:**
- * - Search/filter prompts by name across all connected servers
- * - Keyboard navigation (↑/↓ to navigate, Enter to select, Esc to close)
- * - Argument input forms for prompts with required parameters
- * - Autocomplete suggestions for argument values
- * - Loading states with skeleton placeholders
- * - Server information header per prompt for visual identification
+ * Floating form by the chat form that asks for the arguments of one MCP prompt,
+ * with the autocomplete suggestions its server gives. Opened where such a prompt
+ * is picked: the chat form's prompt picker (`/prompt`) and its System message list,
+ * which list MCP prompts with the library's.
  *
  * **Exported API:**
  * - `handleKeydown(event): boolean` - Process keyboard events, returns true if handled
  *
  * @example
  * ```svelte
- * <ChatFormPickerMcpPrompts
+ * <ChatFormPickerMcpPromptArguments
  *   bind:this={pickerRef}
- *   isOpen={showPicker}
- *   searchQuery={promptQuery}
- *   onClose={() => showPicker = false}
- *   onPromptLoadStart={(id, info) => addPlaceholder(id, info)}
- *   onPromptLoadComplete={(id, result) => replacePlaceholder(id, result)}
- *   onPromptLoadError={(id, error) => handleError(id, error)}
+ *   isOpen={showForm}
+ *   prompt={prompt}
+ *   onClose={() => showForm = false}
+ *   onSubmit={(args) => usePrompt(prompt, args)}
  * />
  * ```
  */
-export { default as ChatFormPickerMcpPrompts } from './chat/ChatFormPickerMcpPrompts/ChatFormPickerMcpPrompts.svelte';
+export { default as ChatFormPickerMcpPromptArguments } from './chat/ChatFormPickerMcpPrompts/ChatFormPickerMcpPromptArguments.svelte';
 
 /**
  * Form for entering MCP prompt arguments. Displays input fields for each
@@ -353,7 +332,7 @@ export { default as ChatFormMcpResourcesList } from './chat/ChatFormMcpResources
 /**
  * Displays MCP Prompt attachment with expandable content preview.
  * Shows server name, prompt name, and allows expanding to view full prompt arguments
- * and content. Used when user selects a prompt from ChatFormPickerMcpPrompts.
+ * and content. Used when user selects an MCP prompt in the chat form's prompt picker.
  */
 export { default as ChatAttachmentsListItemMcpPrompt } from './chat/ChatAttachmentsListItemMcpPrompt.svelte';
 
@@ -366,7 +345,7 @@ export { default as ChatAttachmentsListItemMcpResource } from './chat/ChatAttach
 
 /**
  * MCP prompt display in user messages. Shows when user selected an MCP prompt
- * via ChatFormPickerMcpPrompts. Displays server name, prompt name, and expandable
+ * via the chat form's prompt picker. Displays server name, prompt name, and expandable
  * content preview. Stored in message.extra as DatabaseMessageExtraMcpPrompt.
  */
 export { default as ChatMessageMcpPrompt } from './chat/ChatMessageMcpPrompt/ChatMessageMcpPrompt.svelte';

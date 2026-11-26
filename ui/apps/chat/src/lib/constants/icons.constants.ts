@@ -12,12 +12,14 @@ import FileIcon from '@lucide/svelte/icons/file';
 import AudioIcon from '@lucide/svelte/icons/file-headphone';
 import FileTextIcon from '@lucide/svelte/icons/file-text';
 import ImageIcon from '@lucide/svelte/icons/image';
+import LibraryIcon from '@lucide/svelte/icons/library';
 import LoadingIcon from '@lucide/svelte/icons/loader-2';
 import ModelIcon from '@lucide/svelte/icons/package';
 import PauseDownloadIcon from '@lucide/svelte/icons/pause';
 import ResumeDownloadIcon from '@lucide/svelte/icons/play';
 import LoadIcon from '@lucide/svelte/icons/power';
 import RetryIcon from '@lucide/svelte/icons/rotate-cw';
+import PromptIcon from '@lucide/svelte/icons/scan-text';
 // the box with an arrow leaving it, not the three joined dots
 import ShareIcon from '@lucide/svelte/icons/share';
 import VideoIcon from '@lucide/svelte/icons/video';
@@ -54,6 +56,12 @@ export const SHARE_ACTION = { icon: SHARE_ICON, label: 'Share' } as const;
 
 /** The mark for the Discover Models surface and its entry points. */
 export const DISCOVER_ICON = DiscoverIcon;
+
+/** The Library, and what comes from it. */
+export const LIBRARY_ICON = LibraryIcon;
+
+/** A prompt, wherever it comes from. */
+export const PROMPT_ICON = PromptIcon;
 
 /** Boolean flag a modality drives on the ModelModalities type. */
 export type ModalityKey = (typeof MODALITY_FLAG_KEYS)[keyof typeof MODALITY_FLAG_KEYS];

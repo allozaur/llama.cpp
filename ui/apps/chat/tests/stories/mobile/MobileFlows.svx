@@ -7,7 +7,13 @@
 <script>
 	import Figure from '../editorial/Figure.svelte';
 	import SheetFlow from './SheetFlow.svelte';
-	import { ADD_FLOW, MODELS_FLOW, SETTINGS_FLOW, SETTINGS_TOOLS_FLOW } from './flows';
+	import {
+		ADD_FLOW,
+		ADD_SYSTEM_MESSAGE_FLOW,
+		MODELS_FLOW,
+		SETTINGS_FLOW,
+		SETTINGS_TOOLS_FLOW
+	} from './flows';
 </script>
 
 <p class="kicker">Llama Chat &middot; Mobile</p>
@@ -26,7 +32,7 @@
 
 ## The sidebar
 
-The sidebar slides in from the left. Search is a round key across from the logo. Two keys stay pinned under the conversations: **Settings** on the left and **New chat**, the one primary button, on the right. The conversations scroll and fade out above them.
+The sidebar slides in from the left. Search is a round key across from the logo, and a **Library** row above the conversations opens the Library page. Two keys stay pinned under the conversations: **Settings** on the left and **New chat**, the one primary button, on the right. The conversations scroll and fade out above them.
 
 Story: `Llama Chat/Navigation/SidebarNavigation`.
 
@@ -54,11 +60,17 @@ Stories: `Llama Chat/Settings/SettingsSheet`.
 
 The sheet is as tall as its menu, and the pages pushed over it keep that height so it does not jump. Files and the camera keep the sheet open while the system picker is up and close it once files arrive. Tools show how many are on, as `4/9`.
 
+<Figure n={4} caption="System Message: write one, or pick a prompt of the library or of an MCP server.">
+	<SheetFlow flow={ADD_SYSTEM_MESSAGE_FLOW} />
+</Figure>
+
+The System Message page lists the prompts of every source under the source's name. A tap makes the prompt the chat's system message and closes the sheet; a prompt that takes arguments asks for them by the chat form first.
+
 Stories: `Llama Chat/Chat/ChatForm/ChatFormActionAddDrawer`.
 
 ## Model picker
 
-<Figure n={4} caption="The model picker: the short view, then all models.">
+<Figure n={5} caption="The model picker: the short view, then all models.">
 	<SheetFlow flow={MODELS_FLOW} />
 </Figure>
 

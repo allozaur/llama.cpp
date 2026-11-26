@@ -11,6 +11,7 @@
 		ChatFormCurrentWorkingDirectory,
 		ChatFormInput,
 		ChatFormInputFileInputInvisible,
+		ChatFormPickerPrompts,
 		ChatFormPickers,
 		ChatFormSystemMessageAttachment,
 		ChatFormSystemMessageChip
@@ -20,6 +21,7 @@
 		CLIPBOARD_CONTENT_QUOTE_PREFIX,
 		ICON_CLASS_DEFAULT,
 		OPEN_OVERLAY_SELECTOR,
+		PROMPTS_PICKER_ID,
 		SETTING_CONFIG_DEFAULT,
 		SYSTEM_MESSAGE_PLACEHOLDER,
 		VOICE_EDITOR_SELECTOR
@@ -31,7 +33,13 @@
 		MimeTypeText,
 		SpecialFileType
 	} from '#lib/enums/index.ts';
-	import { type ComposerHandle, extensions } from '#lib/extensions/index.ts';
+	import {
+		type ComposerHandle,
+		type ComposerPicker,
+		extensions,
+		type PromptEntry,
+		type PromptSource
+	} from '#lib/extensions/index.ts';
 	import { useChatFormExpansion } from '#lib/hooks/use-chat-form-expansion.svelte.ts';
 	import { useChatFormPickers } from '#lib/hooks/use-chat-form-pickers.svelte.ts';
 	import {
@@ -173,10 +181,19 @@
 		showWorkingDirectory && (deviceStore.isMobile ? !conversationsStore.activeConversation : !cwd)
 	);
 
+	// the prompt picker is the form's own, mounted with the pickers extensions contribute
+	const PROMPTS_PICKER: ComposerPicker = {
+		component: ChatFormPickerPrompts,
+		id: PROMPTS_PICKER_ID
+	};
+
 	// what extensions add to the form: slash commands, the pickers they open, and
 	// attachments that wait outside the form's files
 	let contributedCommands = $derived(extensions.contributions('composerCommands'));
-	let contributedPickers = $derived(extensions.contributions('composerPickers'));
+	let contributedPickers = $derived([
+		PROMPTS_PICKER,
+		...extensions.contributions('composerPickers')
+	]);
 	let contributedAttachments = $derived(extensions.contributions('composerAttachments'));
 
 	const composer: ComposerHandle = {
@@ -569,6 +586,20 @@
 		}
 	}
 
+	/** A prompt picked in the System message list becomes the chat's system message. */
+	async function handleSystemPromptSelect(source: PromptSource, entry: PromptEntry) {
+		try {
+			const content = await source.resolve(entry, composer);
+
+			if (content) {
+				await chatStore.saveSystemPrompt(content, { name: entry.title, promptId: entry.id });
+			}
+		} catch (error) {
+			console.error('Failed to use the prompt as the system message:', error);
+			toast.error(`Could not load the prompt "${entry.title}"`);
+		}
+	}
+
 	// Deferred so the closing popover's focus scope tears down first -
 	// bits-ui yanks a synchronous focus() back into the still-mounted popover.
 	function refocusInput() {
@@ -686,7 +717,11 @@
 
 {#snippet systemMessageLeading()}
 	{#if systemMessageAttachment}
-		<ChatFormSystemMessageAttachment content={systemMessageAttachment} {disabled} />
+		<ChatFormSystemMessageAttachment
+			content={systemMessageAttachment}
+			{disabled}
+			promptName={chatStore.pendingSystemPrompt?.name}
+		/>
 	{/if}
 {/snippet}
 
@@ -870,6 +905,7 @@
 						{onStop}
 						onSystemPromptClick={() =>
 							onSystemPromptClick?.({ files: uploadedFiles, message: value })}
+						onSystemPromptSelect={handleSystemPromptSelect}
 						onWorkingDirectoryClick={isWorkingDirectoryInAddMenu
 							? pickers.handleWorkingDirectoryOpen
 							: undefined}

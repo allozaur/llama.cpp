@@ -90,18 +90,21 @@ export type {
 export type {
 	McpServerOverride,
 	DatabaseConversation,
+	DatabasePrompt,
 	DatabaseMessageExtraAudioFile,
 	DatabaseMessageExtraVideoFile,
 	DatabaseMessageExtraImageFile,
 	DatabaseMessageExtraLegacyContext,
 	DatabaseMessageExtraMcpPrompt,
+	DatabaseMessageExtraPrompt,
 	DatabaseMessageExtraMcpResource,
 	DatabaseMessageExtraPdfFile,
 	DatabaseMessageExtraTextFile,
 	DatabaseMessageExtra,
 	DatabaseMessage,
 	ExportedConversation,
-	ExportedConversations
+	ExportedConversations,
+	PromptLink
 } from './database';
 
 // Model types

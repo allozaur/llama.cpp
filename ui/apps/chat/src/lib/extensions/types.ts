@@ -8,6 +8,7 @@ import type { ConversationAction, MessageAction, Overlay } from './points/action
 import type { ComposerAttachments, ComposerCommand, ComposerPicker } from './points/composer';
 import type { Connector, ServerAuth } from './points/connectors';
 import type { ModelDownloadAuth, ModelNotice } from './points/models';
+import type { PromptSource } from './points/prompts';
 import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
 import type { SettingsAction } from './points/settings';
 import type { FlowHook, ToolProvider } from './points/tools';
@@ -69,6 +70,8 @@ export interface ExtensionPoints {
 	modelNotices: ModelNotice;
 	/** Components mounted once for the whole app, such as a dialog the extension opens itself. */
 	overlays: Overlay;
+	/** Prompts from somewhere other than the library, listed with the library's. */
+	promptSources: PromptSource;
 	/** Draws the attachments it claims, in place of the default attachment chip. */
 	attachmentRenderers: AttachmentRenderer;
 	/** Draws the messages it claims, in place of the default message. */

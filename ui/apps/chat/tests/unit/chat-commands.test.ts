@@ -27,13 +27,14 @@ const names = (contributed?: ComposerCommand[]) =>
 
 describe('getChatCommands', () => {
 	it('lists only the built-in commands without contributions', () => {
-		expect(names()).toEqual(['cwd', 'model', 'compact', 'system-message']);
-		expect(names([])).toEqual(['cwd', 'model', 'compact', 'system-message']);
+		expect(names()).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
+		expect(names([])).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
 	});
 
-	it('sorts a command with an order below zero before the built-in ones', () => {
-		expect(names([makeCommand({ name: 'prompt', order: -1 })])).toEqual([
+	it('sorts a command with an order below zero right after /prompt, before the other built-in ones', () => {
+		expect(names([makeCommand({ name: 'skill', order: -1 })])).toEqual([
 			'prompt',
+			'skill',
 			'cwd',
 			'model',
 			'compact',
@@ -42,7 +43,14 @@ describe('getChatCommands', () => {
 	});
 
 	it('sorts a command without an order after the built-in ones', () => {
-		expect(names([makeCommand()])).toEqual(['cwd', 'model', 'compact', 'system-message', 'extra']);
+		expect(names([makeCommand()])).toEqual([
+			'prompt',
+			'cwd',
+			'model',
+			'compact',
+			'system-message',
+			'extra'
+		]);
 	});
 
 	it('sorts contributed commands among themselves by order', () => {
@@ -54,6 +62,7 @@ describe('getChatCommands', () => {
 		];
 
 		expect(names(contributed)).toEqual([
+			'prompt',
 			'first',
 			'second',
 			'cwd',
@@ -79,7 +88,8 @@ describe('getChatCommands', () => {
 
 	it('carries what a contributed command shows and does', () => {
 		const run = vi.fn();
-		const [command] = getChatCommands(OPTIONS, [
+		// right after /prompt
+		const [, command] = getChatCommands(OPTIONS, [
 			makeCommand({ keywords: ['more'], order: -1, run })
 		]);
 		const composer = {} as ComposerHandle;

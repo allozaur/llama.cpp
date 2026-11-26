@@ -338,6 +338,16 @@ export class ChatService {
 			});
 		}
 
+		// a prompt of the library sent with the message; a system message's link has no text
+		for (const prompt of message.extra) {
+			if (prompt.type !== AttachmentType.PROMPT || !prompt.content) continue;
+
+			contentParts.push({
+				text: formatAttachmentText(AttachmentLabel.PROMPT, prompt.name, prompt.content),
+				type: ContentPartType.TEXT
+			});
+		}
+
 		const mcpResources = message.extra.filter(
 			(extra: DatabaseMessageExtra): extra is DatabaseMessageExtraMcpResource =>
 				extra.type === AttachmentType.MCP_RESOURCE

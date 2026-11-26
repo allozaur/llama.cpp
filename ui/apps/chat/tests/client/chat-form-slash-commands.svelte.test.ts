@@ -5,25 +5,10 @@
 // selection consumes the token.
 
 import ChatFormPickersHarness from './components/ChatFormPickersHarness.svelte';
-import { ExtensionRegistry } from '#lib/extensions/index.ts';
-import { contributeComposer, MCP_PROMPTS_PICKER_ID } from '#lib/extensions/mcp/composer.ts';
+import { PROMPTS_PICKER_ID } from '#lib/constants/index.ts';
 import { tick } from 'svelte';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-
-// `/prompt` is MCP's command: the form gets it as a contribution
-const registry = new ExtensionRegistry();
-
-beforeAll(async () => {
-	registry.register({
-		description: 'What MCP adds to the chat form',
-		id: 'mcp-composer',
-		load: async () => ({ default: { activate: contributeComposer } }),
-		name: 'MCP composer'
-	});
-
-	await registry.activateEnabled();
-});
 
 describe('slash command dispatch', () => {
 	it('does not dispatch or clear the buffer when a space follows the name', async () => {
@@ -85,9 +70,7 @@ describe('slash command dispatch', () => {
 	});
 
 	it('seeds the prompt picker search from the token args on selection', async () => {
-		const screen = render(ChatFormPickersHarness, {
-			commands: registry.contributions('composerCommands')
-		});
+		const screen = render(ChatFormPickersHarness);
 
 		await tick();
 
@@ -106,7 +89,7 @@ describe('slash command dispatch', () => {
 		await tick();
 
 		expect(screen.component.getValue()).toBe('');
-		expect(pickers.openPickerId).toBe(MCP_PROMPTS_PICKER_ID);
+		expect(pickers.openPickerId).toBe(PROMPTS_PICKER_ID);
 		expect(pickers.pickerQuery).toBe('weather');
 	});
 

@@ -12,6 +12,16 @@ export interface McpServerOverride {
 	enabled: boolean;
 }
 
+/** A prompt kept in the library, to send in a chat or to use as a system message. */
+export interface DatabasePrompt {
+	id: string;
+	name: string;
+	content: string;
+	/** Epoch ms of the last edit to the name, description or content. */
+	lastModified: number;
+	description?: string;
+}
+
 export interface DatabaseConversation {
 	currNode: string | null;
 	id: string;
@@ -110,6 +120,22 @@ export interface DatabaseMessageExtraMcpResource {
 	mimeType?: string;
 }
 
+/**
+ * A prompt on a message. Sent with a message it carries the prompt's text. On a system
+ * message made from a prompt it is a link: the message holds the text, and `promptId` names
+ * the prompt in the library or, with the id its source gave it, the prompt of an extension.
+ */
+export interface DatabaseMessageExtraPrompt {
+	type: AttachmentType.PROMPT;
+	name: string;
+	size?: number;
+	promptId: string;
+	content?: string;
+}
+
+/** What a system message keeps of the prompt it is made from. */
+export type PromptLink = Pick<DatabaseMessageExtraPrompt, 'name' | 'promptId'>;
+
 export type DatabaseMessageExtra =
 	| DatabaseMessageExtraImageFile
 	| DatabaseMessageExtraTextFile
@@ -118,6 +144,7 @@ export type DatabaseMessageExtra =
 	| DatabaseMessageExtraPdfFile
 	| DatabaseMessageExtraMcpPrompt
 	| DatabaseMessageExtraMcpResource
+	| DatabaseMessageExtraPrompt
 	| DatabaseMessageExtraLegacyContext;
 
 export interface DatabaseMessage {

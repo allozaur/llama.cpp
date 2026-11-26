@@ -14,6 +14,7 @@
 		VOICE_MODE_MESSAGE
 	} from '#lib/constants/index.ts';
 	import { setChatFormActionsContext } from '#lib/contexts/index.ts';
+	import type { PromptEntry, PromptSource } from '#lib/extensions/index.ts';
 	import { useChatFormModel } from '#lib/hooks/use-chat-form-model.svelte.ts';
 	import { useShowContextGauge } from '#lib/hooks/use-context-gauge.svelte.ts';
 	import { ChatService } from '#lib/services/index.ts';
@@ -54,6 +55,7 @@
 		onMicClick?: () => void;
 		onStop?: () => void;
 		onSystemPromptClick?: () => void;
+		onSystemPromptSelect?: (source: PromptSource, entry: PromptEntry) => void;
 		onWorkingDirectoryClick?: () => void;
 	}
 
@@ -72,6 +74,7 @@
 		onMicClick,
 		onStop,
 		onSystemPromptClick,
+		onSystemPromptSelect,
 		onWorkingDirectoryClick,
 		showAddButton = true,
 		showModelSelector = true,
@@ -142,6 +145,9 @@
 		},
 		get onSystemPromptClick() {
 			return onSystemPromptClick;
+		},
+		get onSystemPromptSelect() {
+			return onSystemPromptSelect;
 		},
 		get onWorkingDirectoryClick() {
 			return onWorkingDirectoryClick;

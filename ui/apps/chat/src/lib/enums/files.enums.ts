@@ -16,7 +16,8 @@ export enum FileTypeCategory {
  * Special file types for internal use (not MIME types)
  */
 export enum SpecialFileType {
-	MCP_PROMPT = 'mcp-prompt'
+	MCP_PROMPT = 'mcp-prompt',
+	PROMPT = 'prompt'
 }
 
 // Specific file type enums for each category

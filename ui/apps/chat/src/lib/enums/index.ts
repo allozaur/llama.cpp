@@ -135,3 +135,5 @@ export { SplashOrientation } from './splash.enums';
 export { ChatFormVoiceState, VoiceInputMode, VoiceMode, VoiceModelRole } from './voice.enums';
 
 export { AddSheetPage, ModelsSheetPage, SettingsSheetPage } from './sheet.enums';
+
+export { PromptDrift } from './prompt.enums';

@@ -45,14 +45,10 @@ export function addLoadingPrompt(
 	composer.focusInput();
 }
 
-/** Put the text of the loaded prompt into its chip. */
-export function fillLoadedPrompt(
-	composer: ComposerHandle,
-	placeholderId: string,
-	result: GetPromptResult
-): void {
-	const promptText = result.messages
-		?.map((msg: PromptMessage) => {
+/** The text of a prompt as a server returns it: the text of its messages, the other parts left out. */
+export function promptText(result: GetPromptResult): string {
+	return (result.messages ?? [])
+		.map((msg: PromptMessage) => {
 			if (typeof msg.content === 'string') {
 				return msg.content;
 			}
@@ -65,15 +61,24 @@ export function fillLoadedPrompt(
 		})
 		.filter(Boolean)
 		.join(PROMPT_CONTENT_SEPARATOR);
+}
+
+/** Put the text of the loaded prompt into its chip. */
+export function fillLoadedPrompt(
+	composer: ComposerHandle,
+	placeholderId: string,
+	result: GetPromptResult
+): void {
+	const text = promptText(result);
 
 	composer.updateUploadedFile(placeholderId, (f) => ({
 		...f,
-		file: new File([promptText], `${f.name}${FileExtensionText.TXT}`, {
+		file: new File([text], `${f.name}${FileExtensionText.TXT}`, {
 			type: MimeTypeText.PLAIN
 		}),
 		isLoading: false,
-		size: promptText.length,
-		textContent: promptText
+		size: text.length,
+		textContent: text
 	}));
 }
 

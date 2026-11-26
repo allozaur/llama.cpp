@@ -18,6 +18,8 @@ export const URL_PARAMS = {
 export const ROUTES = {
 	/** A conversation. */
 	CHAT: '/(chat)/chat/[id]',
+	/** Library: the prompts kept in the app. */
+	LIBRARY: '/library',
 	/** Models manager. */
 	MODELS: '/models',
 	/** Search — mobile-only full-page conversation search. */
