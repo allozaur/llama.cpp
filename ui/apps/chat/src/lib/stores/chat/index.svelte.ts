@@ -82,6 +82,8 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 	pendingSystemMessage = $state<string | null>(null);
 	/** The prompt the pending system message is made from, if any. */
 	pendingSystemPrompt = $state<PromptLink | null>(null);
+	/** A message its conversation opens at, in place of the bottom, the next time it is opened. */
+	scrollTarget = $state<{ convId: string; messageId: string } | null>(null);
 	// resumable stream connection state for the active conversation
 	// streaming -> bytes flowing normally, resuming -> waiting on /v1/stream reconnect, lost -> unrecoverable
 	streamConnectionState = $state<StreamConnectionState>(StreamConnectionState.STREAMING);

@@ -47,6 +47,9 @@ export { modelsStore } from './models/index.svelte';
 // MODELS DISCOVER (HuggingFace browse state for the discover dialog)
 export { modelsDiscoverStore } from './models-discover/index.svelte';
 
+// LIBRARY ATTACHMENTS (the files of every conversation, read a page at a time)
+export { libraryAttachmentsStore } from './library-attachments.svelte';
+
 // PROMPTS (the library's prompts, and every source of prompts)
 export { promptsStore } from './prompts.svelte';
 

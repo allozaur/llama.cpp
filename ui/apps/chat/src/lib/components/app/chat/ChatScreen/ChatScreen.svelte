@@ -41,6 +41,7 @@
 		uiStore
 	} from '#lib/stores/index.ts';
 	import { parseFilesToMessageExtras } from '#lib/utils/browser-only.ts';
+	import { findMessageRowId, messageRow, scrollToMessageRow } from '#lib/utils/index.ts';
 	import { disableScrollHandling, onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { tick, untrack } from 'svelte';
@@ -181,8 +182,55 @@
 		if (!id || id === lastScrolledConversationId) return;
 
 		lastScrolledConversationId = id;
+
+		// taken by the first conversation that opens: one meant for another conversation
+		// (deleted since, say) is dropped, not kept for a later one
+		const target = chatStore.scrollTarget;
+
+		chatStore.scrollTarget = null;
+
+		if (target && target.convId === id) {
+			await landOnMessage(id, target.messageId);
+
+			return;
+		}
+
 		await tick();
 		stick.scrollToBottom();
+	}
+
+	/**
+	 * Lands on one message in place of the bottom, e.g. the one that holds a file picked in
+	 * the Library. A message of another branch switches the conversation to that branch
+	 * first. A message that is gone lands at the bottom after all.
+	 */
+	async function landOnMessage(convId: string, messageId: string) {
+		if (!conversationsStore.activeMessages.some((message) => message.id === messageId)) {
+			const all = await conversationsStore.getConversationMessages(convId);
+
+			// only a message the conversation still holds names a branch to switch to
+			if (all.some((message) => message.id === messageId)) {
+				await conversationsStore.navigateToSibling(messageId);
+			}
+		}
+
+		await tick();
+
+		const rowId = findMessageRowId(
+			conversationsStore.activeMessages,
+			messageId,
+			(id) => messageRow(id) !== null
+		);
+		const row = rowId ? messageRow(rowId) : null;
+
+		if (!row) {
+			stick.scrollToBottom();
+
+			return;
+		}
+
+		stick.release();
+		scrollToMessageRow(row);
 	}
 
 	/**

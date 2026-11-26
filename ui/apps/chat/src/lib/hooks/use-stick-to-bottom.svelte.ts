@@ -211,6 +211,14 @@ export class StickToBottom {
 		this.measure();
 	}
 
+	/** Stops following, for a landing somewhere else than the bottom: a jump to a message. */
+	release(): void {
+		this.stopGlide();
+		this.glideSettleUntil = 0;
+		this.stick = false;
+		this.syncAnchor();
+	}
+
 	scrollToBottom(behavior: ScrollBehavior = 'auto'): void {
 		const el = this.container;
 

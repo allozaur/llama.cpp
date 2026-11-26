@@ -614,6 +614,28 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Reads the messages `holds` accepts, newest first, a page at a time, so a long history
+	 * is never read as a whole.
+	 *
+	 * @param holds - Whether a message belongs in the result
+	 * @param limit - How many messages to return at most
+	 * @param upTo - Only messages this old or older, to go on from the last one of a page
+	 */
+	static async getMessagesHolding(
+		holds: (message: DatabaseMessage) => boolean,
+		limit: number,
+		upTo?: number
+	): Promise<DatabaseMessage[]> {
+		const messages = db[IDXDB_TABLES.messages];
+		const range =
+			upTo === undefined
+				? messages.orderBy('timestamp')
+				: messages.where('timestamp').belowOrEqual(upTo);
+
+		return await range.reverse().filter(holds).limit(limit).toArray();
+	}
+
+	/**
 	 * Gets the messages written at or after `timestamp`, in any conversation.
 	 *
 	 * @param timestamp - Epoch ms
