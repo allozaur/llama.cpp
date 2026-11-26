@@ -269,6 +269,7 @@ export class MCPHealthCheckManager {
 							subscribe: serverCaps.resources.subscribe
 						}
 					: undefined,
+				skills: MCPService.declaresSkills(serverCaps),
 				tasks: !!serverCaps?.tasks,
 				tools: serverCaps?.tools ? { listChanged: serverCaps.tools.listChanged } : undefined
 			}

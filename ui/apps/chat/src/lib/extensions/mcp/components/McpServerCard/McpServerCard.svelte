@@ -8,6 +8,7 @@
 	import McpServerCardEditForm from './McpServerCardEditForm.svelte';
 	import McpServerCardHeader from './McpServerCardHeader.svelte';
 	import McpServerCardSignIn from './McpServerCardSignIn.svelte';
+	import McpServerCardSkillsList from './McpServerCardSkillsList.svelte';
 	import McpServerCardToolsList from './McpServerCardToolsList.svelte';
 	import * as Card from '@ggml-org/llama-ui/ui/card';
 	import { Skeleton } from '@ggml-org/llama-ui/ui/skeleton';
@@ -178,6 +179,11 @@
 
 				{#if tools.length > 0}
 					<McpServerCardToolsList {tools} />
+				{/if}
+
+				<!-- listed over a live connection, which only a server that is on has -->
+				{#if capabilities?.server.skills && (enabled ?? server.enabled)}
+					<McpServerCardSkillsList serverId={server.id} />
 				{/if}
 
 				{#if connectionLogs.length > 0}

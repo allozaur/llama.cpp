@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isSkillManifest } from '../../skills/format';
 	import { mcpStore } from '../../stores/index.svelte';
 	import * as Tooltip from '@ggml-org/llama-ui/ui/tooltip';
 	import { AlertCircle, Loader2 } from '@lucide/svelte';
@@ -18,6 +19,12 @@
 
 	const ResourceIcon = $derived(
 		getResourceIcon(attachment.resource.mimeType, attachment.resource.uri)
+	);
+	// a skill's file is SKILL.md whatever the skill: its attachment says which skill in its title
+	const displayName = $derived(
+		isSkillManifest(attachment.resource.uri) && attachment.resource.title
+			? attachment.resource.title
+			: getResourceDisplayName(attachment.resource)
 	);
 	const serverName = $derived(mcpStore.getServerDisplayName(attachment.resource.serverName));
 	const favicon = $derived(mcpStore.getServerFavicon(attachment.resource.serverName));
@@ -53,7 +60,7 @@
 			{/if}
 
 			<span class="max-w-37.5 truncate text-caption">
-				{getResourceDisplayName(attachment.resource)}
+				{displayName}
 			</span>
 
 			{#if onRemove}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { MCP_SKILL_ICON } from '../skills/icon';
 	import { Badge } from '@ggml-org/llama-ui/ui/badge';
 	import {
 		Database,
@@ -58,6 +59,14 @@
 			<MessageSquare class="size-icon-xs text-purple-600 dark:text-purple-400" />
 
 			Prompts
+		</Badge>
+	{/if}
+
+	{#if capabilities.server.skills}
+		<Badge class="h-5 gap-1 bg-amber-50 px-1.5 text-caption-sm dark:bg-amber-950" variant="outline">
+			<MCP_SKILL_ICON class="size-icon-xs text-amber-600 dark:text-amber-400" />
+
+			Skills
 		</Badge>
 	{/if}
 

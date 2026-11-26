@@ -124,7 +124,14 @@ describe('Extensions settings', () => {
 		const mcpSwitch = settings.getByRole('switch', { name: 'MCP' });
 
 		await vi.waitFor(() => expect(settingsActionLabels()).toEqual([MANAGE_MCP_SERVERS_LABEL]));
-		expect(commandNames()).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
+		expect(commandNames()).toEqual([
+			'prompt',
+			'skill',
+			'cwd',
+			'model',
+			'compact',
+			'system-message'
+		]);
 		expect(mcpToolNames()).toEqual(['search']);
 
 		mcpStore.resources.addAttachment(RESOURCE);
@@ -147,7 +154,14 @@ describe('Extensions settings', () => {
 
 		await expect.element(mcpSwitch).toBeChecked();
 		await vi.waitFor(() => expect(settingsActionLabels()).toEqual([MANAGE_MCP_SERVERS_LABEL]));
-		expect(commandNames()).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
+		expect(commandNames()).toEqual([
+			'prompt',
+			'skill',
+			'cwd',
+			'model',
+			'compact',
+			'system-message'
+		]);
 		expect(mcpToolNames()).toEqual(['search']);
 	});
 

@@ -15,7 +15,7 @@
 </script>
 
 <SettingsConnectorCard
-	description="One sign-in for Hugging Face tools in chats, sharing conversations as agent traces, and gated model downloads."
+	description="One sign-in for Hugging Face tools and skills in chats, sharing conversations as agent traces, and gated model downloads."
 	isConnected={!!huggingFace.user}
 	name="Hugging Face"
 >
@@ -32,11 +32,12 @@
 				{#if huggingFaceTools.isAvailable && extensions.isActive(MCP_EXTENSION_ID)}
 					<li class="flex items-start gap-3">
 						<div class="flex min-w-0 flex-1 flex-col">
-							<span>Hugging Face tools</span>
+							<span>Hugging Face tools and skills</span>
 
 							<span class="text-caption text-muted-foreground">
-								Search models, datasets, Spaces and docs from a chat, through the Hugging Face MCP
-								server. It is signed in with this account.
+								Search models, datasets, Spaces and docs from a chat, and use the skills Hugging
+								Face publishes, through the Hugging Face MCP server. It is signed in with this
+								account.
 							</span>
 						</div>
 
