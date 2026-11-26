@@ -1,15 +1,17 @@
 <script lang="ts">
 	import ModelsManagerModelConfigurationActions from './ModelsManagerModelConfigurationActions.svelte';
+	import { Badge } from '@ggml-org/llama-ui/ui/badge';
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { X } from '@lucide/svelte';
 	import { ModelAvatar, ModelId } from '#lib/components/app/index.ts';
-	import { ServerModelStatus } from '#lib/enums/index.ts';
+	import { ModelCapability, ServerModelStatus } from '#lib/enums/index.ts';
 	import { deviceStore } from '#lib/stores/index.ts';
 	import type { ModelOption } from '#lib/types/models.js';
 
 	interface Props {
 		isDownload?: boolean;
 		isDownloadPaused?: boolean;
+		isCustomized: boolean;
 		isLoaded: boolean;
 		onClose: () => void;
 		/** Opens the manager dialog on the Discover view, focused on this model's repo. */
@@ -25,6 +27,7 @@
 	}
 
 	let {
+		isCustomized,
 		isDownload = false,
 		isDownloadPaused = false,
 		isLoaded,
@@ -38,6 +41,8 @@
 		option,
 		status
 	}: Props = $props();
+	let supportsToolUse = $derived(option.capabilities.includes(ModelCapability.TOOL_USE));
+	let supportsThinking = $derived(option.capabilities.includes(ModelCapability.REASONING));
 
 	let isMobile = $derived(deviceStore.isMobile);
 	let isLoading = $derived(status === ServerModelStatus.LOADING);
@@ -89,16 +94,26 @@
 
 			<div class="min-w-0">
 				<!-- a phone gives the id a row of its own, with its badges and icons under it -->
-				<ModelId
-					aliases={option.aliases}
-					class="min-w-0"
-					modalities={option.modalities}
-					modelId={option.model}
-					stackId={deviceStore.isMobile}
-					tags={option.tags}
-					title={option.model}
-				/>
+				<div class="flex items-center gap-2">
+					<ModelId
+						aliases={option.aliases}
+						class="min-w-0"
+						modalities={option.modalities}
+						modelId={option.model}
+						stackId={deviceStore.isMobile}
+						{supportsThinking}
+						{supportsToolUse}
+						tags={option.tags}
+						title={option.model}
+					/>
 
+					{#if isCustomized}
+						<Badge class="h-5 shrink-0 px-1.5 text-caption-sm" variant="secondary">CUSTOMIZED</Badge
+						>
+					{/if}
+				</div>
+
+				<!-- one line, one voice: the state -->
 				<p class="mt-1 flex items-center gap-x-2 text-caption text-muted-foreground">
 					<span class="flex shrink-0 items-center gap-1">
 						<span class="size-2 shrink-0 rounded-full {statusDot}"></span>

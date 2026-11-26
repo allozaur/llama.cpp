@@ -43,6 +43,8 @@ export const CONVERSATION_TABS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.conversat
 export const SIDEBAR_EXPANDED_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.sidebarExpanded`;
 export const SIDEBAR_WIDTH_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.sidebarWidth`;
 export const USER_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.userOverrides`;
+/** The load and sampling settings saved per model, in the Models page's configuration pane. */
+export const MODEL_OVERRIDES_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.modelOverrides`;
 export const DISMISSED_RECOMMENDED_MCP_SERVERS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.dismissedRecommendedMcpServers`;
 
 /** Key prefix for per-conversation resumable stream state, conversationId is appended */
