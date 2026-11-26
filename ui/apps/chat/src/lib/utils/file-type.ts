@@ -52,6 +52,7 @@ export function getFileTypeCategory(mimeType: string): FileTypeCategory | null {
 		// Video
 		case MimeTypeVideo.MP4:
 		case MimeTypeVideo.OGG:
+		case MimeTypeVideo.QUICKTIME:
 		case MimeTypeVideo.WEBM:
 			return FileTypeCategory.VIDEO;
 
@@ -216,6 +217,27 @@ export function getFileTypeByExtension(filename: string): string | null {
 	for (const [key, type] of Object.entries(TEXT_FILE_TYPES)) {
 		if ((type.extensions as readonly string[]).includes(extension)) {
 			return `${FileTypeCategory.TEXT}:${key}`;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * MIME type of a file that is attached as it is, told by its extension: an image, audio clip,
+ * video or PDF. Null for anything else.
+ */
+export function getAttachableMimeTypeByExtension(filename: string): string | null {
+	const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+
+	for (const types of [
+		IMAGE_FILE_TYPES,
+		AUDIO_FILE_TYPES,
+		VIDEO_FILE_TYPES,
+		PDF_FILE_TYPES
+	]) {
+		for (const type of Object.values(types)) {
+			if ((type.extensions as readonly string[]).includes(extension)) return type.mimeTypes[0];
 		}
 	}
 

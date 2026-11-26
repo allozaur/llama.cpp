@@ -18,6 +18,7 @@
 		DialogMcpResourcesBrowser
 	} from '#lib/components/app/index.ts';
 	import {
+		CHAT_FORM_ATTACHMENT_IMAGE_HEIGHT_CLASS,
 		CHAT_FORM_SINGLE_ROW_MAX_TEXT_LINES,
 		CLIPBOARD_CONTENT_QUOTE_PREFIX,
 		ICON_CLASS_DEFAULT,
@@ -26,11 +27,13 @@
 		PROMPT_CONTENT_SEPARATOR,
 		SETTING_CONFIG_DEFAULT,
 		SYSTEM_MESSAGE_PLACEHOLDER,
+		UI_DATA_ATTRS,
 		VOICE_EDITOR_SELECTOR
 	} from '#lib/constants/index.ts';
 	import {
 		ContentPartType,
 		FileExtensionText,
+		FileMentionEntryType,
 		KeyboardKey,
 		MessageRole,
 		MimeTypeText,
@@ -96,6 +99,8 @@
 
 		// Event Handlers
 		onAttachmentRemove?: (index: number) => void;
+		/** A file was picked with an `@` mention, by its path on the server. */
+		onFileMention?: (path: string) => void;
 		onFilesAdd?: (files: File[]) => void;
 		onStop?: () => void;
 		onSubmit?: () => void;
@@ -115,6 +120,7 @@
 		expandable = false,
 		isLoading = false,
 		onAttachmentRemove,
+		onFileMention,
 		onFilesAdd,
 		onStop,
 		onSubmit,
@@ -438,6 +444,66 @@
 		return true;
 	}
 
+	// A mention and the attachment it added point at each other: hovering either one dims
+	// the rest of the message and the other attachments
+	let focusedMentionPath = $state<string | null>(null);
+
+	function handleMentionHover(event: MouseEvent) {
+		const target = event.target instanceof Element ? event.target : null;
+		const path =
+			target
+				?.closest(`[${UI_DATA_ATTRS.MENTION_PATH}]`)
+				?.getAttribute(UI_DATA_ATTRS.MENTION_PATH) ?? null;
+		const isAttached = uploadedFiles.some((file) => file.mentionPath === path);
+
+		focusedMentionPath = path && isAttached ? path : null;
+	}
+
+	$effect(() => {
+		const path = focusedMentionPath;
+
+		if (!cardEl || !path) return;
+
+		const card = cardEl;
+		const mark = () => {
+			for (const element of card.querySelectorAll(`[${UI_DATA_ATTRS.MENTION_PATH}]`)) {
+				element.toggleAttribute(
+					UI_DATA_ATTRS.MENTION_ACTIVE,
+					element.getAttribute(UI_DATA_ATTRS.MENTION_PATH) === path
+				);
+			}
+		};
+		// the editor redraws its badges as it likes: a new one is marked too
+		const observer = new MutationObserver(mark);
+
+		mark();
+		observer.observe(card, { childList: true, subtree: true });
+
+		return () => {
+			observer.disconnect();
+
+			for (const element of card.querySelectorAll(`[${UI_DATA_ATTRS.MENTION_ACTIVE}]`)) {
+				element.removeAttribute(UI_DATA_ATTRS.MENTION_ACTIVE);
+			}
+		};
+	});
+
+	// listened for on the card as a whole: the badges are drawn by the editor
+	$effect(() => {
+		if (!cardEl) return;
+
+		const card = cardEl;
+		const clear = () => (focusedMentionPath = null);
+
+		card.addEventListener('mouseover', handleMentionHover);
+		card.addEventListener('mouseleave', clear);
+
+		return () => {
+			card.removeEventListener('mouseover', handleMentionHover);
+			card.removeEventListener('mouseleave', clear);
+		};
+	});
+
 	function handleFileSelect(files: File[]) {
 		onFilesAdd?.(files);
 	}
@@ -672,6 +738,8 @@
 
 		// one undoable edit; the input reports the new value like typing
 		inputRef?.replaceText(built.newValue, built.caretOffset);
+
+		if (entry.type === FileMentionEntryType.FILE) onFileMention?.(entry.path);
 	}
 
 	function handleMicClick() {
@@ -846,6 +914,7 @@
 				'!bg-muted !outline-2 -outline-offset-2 !outline-dashed !outline-border/50 [--glass-edge-focus:transparent] [--glass-edge:transparent]',
 			disabled && 'cursor-not-allowed opacity-60'
 		]}
+		{...{ [UI_DATA_ATTRS.MENTION_FOCUS]: focusedMentionPath !== null || undefined }}
 		data-single-row={isSingleRow || undefined}
 		data-slot="input-area"
 	>
@@ -859,17 +928,6 @@
 				tooltip={isExpanded ? 'Collapse editor' : 'Expand editor'}
 			/>
 		{/if}
-
-		<ChatAttachmentsList
-			bind:uploadedFiles
-			activeModelId={activeModelId ?? undefined}
-			{attachments}
-			class={isExpanded ? 'py-5 max-md:px-(--chat-form-side-inset)' : 'py-5'}
-			leading={systemMessageAttachment ? systemMessageLeading : undefined}
-			limitToSingleRow
-			onFileRemove={handleFileRemove}
-			style="scroll-padding: 1rem;"
-		/>
 
 		<div
 			class={[
@@ -913,6 +971,20 @@
 					}}
 				/>
 			{/if}
+
+			<!-- under the text, above the actions: the message reads first, what goes with it after.
+			     Never in a single row, which the form leaves while anything is attached -->
+			<ChatAttachmentsList
+				bind:uploadedFiles
+				activeModelId={activeModelId ?? undefined}
+				{attachments}
+				class="pt-2 pb-3"
+				imageHeight={CHAT_FORM_ATTACHMENT_IMAGE_HEIGHT_CLASS}
+				leading={systemMessageAttachment ? systemMessageLeading : undefined}
+				limitToSingleRow
+				onFileRemove={handleFileRemove}
+				style="scroll-padding: 1rem;"
+			/>
 
 			<!-- its own box, so the phone sheet can hold it by the bottom edge while it moves -->
 			<div bind:this={actionsEl} class={isSingleRow ? 'contents' : 'relative mt-auto'}>
@@ -1027,3 +1099,25 @@
 	}}
 	preSelectedUri={preSelectedResourceUri}
 />
+
+<style>
+	/* While a mention or the attachment it added is hovered (see handleMentionHover), the
+	   pair stays as it is and the rest of the message and the other attachments step back */
+	.chat-form-surface :global(.cm-content),
+	.chat-form-surface :global([data-mention-path]),
+	.chat-form-surface :global([data-attachment] > *) {
+		transition:
+			color 150ms ease-out,
+			opacity 150ms ease-out;
+	}
+
+	.chat-form-surface[data-mention-focus] :global(.cm-content) {
+		color: color-mix(in oklab, currentColor 40%, transparent);
+	}
+
+	.chat-form-surface[data-mention-focus]
+		:global(.cm-content [data-mention-path]:not([data-mention-active])),
+	.chat-form-surface[data-mention-focus] :global([data-attachment]:not([data-mention-active]) > *) {
+		opacity: 0.4;
+	}
+</style>
