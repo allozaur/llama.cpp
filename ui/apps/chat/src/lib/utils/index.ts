@@ -261,6 +261,9 @@ export {
 	type LibraryAttachment
 } from './library-attachments';
 
+// A SKILL.md: what it says about its skill, and its instructions
+export { parseSkillFrontmatter, skillInstructions, type SkillFrontmatter } from './skill-manifest';
+
 // A jump to a message of the open conversation
 export {
 	findMessageRowId,

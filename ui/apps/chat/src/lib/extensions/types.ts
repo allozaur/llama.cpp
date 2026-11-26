@@ -11,6 +11,7 @@ import type { ModelDownloadAuth, ModelNotice } from './points/models';
 import type { PromptSource } from './points/prompts';
 import type { AttachmentRenderer, MessageRenderer } from './points/renderers';
 import type { SettingsAction } from './points/settings';
+import type { SkillSource } from './points/skills';
 import type { FlowHook, ToolProvider } from './points/tools';
 
 /** What the app knows about an extension before its code is loaded. */
@@ -78,6 +79,8 @@ export interface ExtensionPoints {
 	messageRenderers: MessageRenderer;
 	/** A connector's sign-in for the servers of its service. */
 	serverAuth: ServerAuth;
+	/** Skills from somewhere other than the machine's folders, listed with those in the Library. */
+	skillSources: SkillSource;
 	/** Actions under the extension's settings, each opening what it manages from Settings. */
 	settingsActions: SettingsAction;
 	/** Tools the model can call, listed and run by the extension. */

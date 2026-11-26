@@ -14,6 +14,7 @@ import { contributePrompts } from './prompts';
 import { contributeRenderers } from './renderers';
 import { contributeSettings } from './settings';
 import { contributeSignIn } from './sign-in';
+import { contributeSkillSource } from './skills/source';
 import { contributeStartup } from './startup.svelte';
 import { contributeTools } from './tools';
 
@@ -24,6 +25,7 @@ const mcp: Extension = {
 		contributeRenderers(ctx);
 		contributeSettings(ctx);
 		contributeSignIn(ctx);
+		contributeSkillSource(ctx);
 		contributeStartup(ctx);
 		contributeTools(ctx);
 	}

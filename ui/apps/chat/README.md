@@ -157,9 +157,11 @@ sequenceDiagram
 
 ### Extensions (`src/lib/extensions/`)
 
-An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, settings actions, slash commands, pickers, pending attachments, message and attachment renderers, and sources of prompts.
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, settings actions, slash commands, pickers, pending attachments, message and attachment renderers, and sources of prompts and of skills.
 
 A prompt is one kind of item whatever it comes from. The library (`promptsStore`, the Library page) is the app's own source of prompts, and an extension adds another through `promptSources`: MCP lists the prompts of its servers. `/prompt` and the System message list in the chat form's + menu show the prompts of every source together, each with where it comes from, and either sends a prompt with a message or makes it the chat's system message.
+
+Skills are listed the same way, to browse and read: the Library's Skills tab shows the skills found in `~/.agents/skills` and `~/.claude/skills` on the machine llama-server runs on, read through llama-server's file tools (`skillsStore`, `LocalSkillsService`), and an extension adds another source through `skillSources`: MCP lists the skills its servers publish.
 
 The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
 
