@@ -1,4 +1,4 @@
-import { MODEL_ICON } from './icons.constants';
+import { LIBRARY_ICON, MODEL_ICON } from './icons.constants';
 import {
 	SHORTCUT_MODELS,
 	SHORTCUT_NEW_CHAT,
@@ -167,7 +167,7 @@ export const ROW_LONG_PRESS_SLOP_PX = 8;
 /** Max height for tool-result code blocks (json / source / diff / streaming code). */
 export const MAX_HEIGHT_CODE_BLOCK = '22rem';
 
-/** The sidebar's actions at its top: starting, finding and organizing chats. */
+/** The sidebar's actions at its top: starting and finding chats, and what is kept for them. */
 export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 	{
 		action: SidebarAction.NEW_CHAT,
@@ -175,7 +175,13 @@ export const SIDEBAR_ACTIONS_ITEMS: DesktopIconStripItem[] = [
 		keys: SHORTCUT_NEW_CHAT,
 		tooltip: 'New chat'
 	},
-	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' }
+	{ action: SidebarAction.SEARCH, icon: Search, keys: SHORTCUT_SEARCH, tooltip: 'Search' },
+	{
+		action: SidebarAction.LIBRARY,
+		activeRouteId: ROUTES.LIBRARY,
+		icon: LIBRARY_ICON,
+		tooltip: 'Library'
+	}
 ];
 
 /** The sidebar's footer: managing the app around the chats. */

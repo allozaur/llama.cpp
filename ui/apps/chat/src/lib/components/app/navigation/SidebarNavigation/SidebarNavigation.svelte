@@ -531,6 +531,10 @@
 				openSearch();
 
 				break;
+			case SidebarAction.LIBRARY:
+				navigateBehind(() => goto(resolve(ROUTES.LIBRARY)));
+
+				break;
 			case SidebarAction.MANAGE_MODELS:
 				openDialog(() => uiStore.openModelsManager());
 
@@ -654,14 +658,13 @@
 					: ''}"
 				inert={isStripHidden}
 			>
-				<!-- a phone has New chat and Settings pinned under the conversations instead -->
-				{#if !isOnMobile}
-					<SidebarNavigationActions
-						class="px-2 md:my-3"
-						onAction={handleSidebarAction}
-						onNavigate={navigateBehind}
-					/>
-				{/if}
+				<!-- a phone has New chat and Settings pinned under the conversations and Search across
+				     from the logo, so only the Library is listed here -->
+				<SidebarNavigationActions
+					class="px-2 md:my-3"
+					onAction={handleSidebarAction}
+					onNavigate={navigateBehind}
+				/>
 
 				<!-- on a phone only the conversations scroll, fading out above the pinned keys -->
 				<div

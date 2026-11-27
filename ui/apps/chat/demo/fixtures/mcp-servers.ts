@@ -1,8 +1,8 @@
 /**
  * Fixture MCP servers for demo recordings.
  *
- * Serves a few stateless Streamable HTTP MCP servers with canned tools, so
- * demos show MCP groups without depending on real third-party servers.
+ * Serves a few stateless Streamable HTTP MCP servers with canned tools and
+ * prompts, so demos show MCP without depending on real third-party servers.
  *
  * Usage: node demo/fixtures/mcp-servers.ts
  */
@@ -21,6 +21,35 @@ function buildServer(fixture: DemoMcpServer): McpServer {
 			tool.name,
 			{ description: tool.description, inputSchema: z.object({ query: z.string().optional() }) },
 			async () => ({ content: [{ text: tool.result, type: 'text' }] })
+		);
+	}
+
+	for (const prompt of fixture.prompts ?? []) {
+		const args = prompt.arguments ?? [];
+
+		server.registerPrompt(
+			prompt.name,
+			{
+				argsSchema: z.object(
+					Object.fromEntries(args.map((arg) => [arg.name, z.string().describe(arg.description)]))
+				),
+				description: prompt.description,
+				title: prompt.title
+			},
+			(values: Record<string, string>) => ({
+				messages: [
+					{
+						content: {
+							text: args.reduce(
+								(text, arg) => text.replaceAll(`{${arg.name}}`, values[arg.name] ?? ''),
+								prompt.text
+							),
+							type: 'text' as const
+						},
+						role: 'user' as const
+					}
+				]
+			})
 		);
 	}
 

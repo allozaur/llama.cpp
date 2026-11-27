@@ -16,6 +16,7 @@
 		isAudioFile,
 		isImageFile,
 		isPdfFile,
+		isPromptAttachment,
 		isTextFile,
 		isVideoFile
 	} from '#lib/utils/index.ts';
@@ -50,11 +51,13 @@
 		uploadedFiles = []
 	}: Props = $props();
 
-	// items an extension draws are shown by that extension, not here
+	// items an extension draws are shown by that extension, not here; a prompt's card shows its text
 	let attachmentRenderers = $derived(extensions.contributions('attachmentRenderers'));
 	let allItems = $derived(
 		getAttachmentDisplayItems({ attachments, uploadedFiles })
-			.filter((item) => !findAttachmentRenderer(attachmentRenderers, item))
+			.filter(
+				(item) => !findAttachmentRenderer(attachmentRenderers, item) && !isPromptAttachment(item)
+			)
 			.map(
 				(item): PreviewItem => ({
 					...item,

@@ -47,7 +47,8 @@ import type {
 	ChatStreamCallbacks,
 	DatabaseMessage,
 	DatabaseMessageExtra,
-	ErrorDialogState
+	ErrorDialogState,
+	PromptLink
 } from '#lib/types/index.ts';
 import {
 	canCompactMessages,
@@ -58,6 +59,7 @@ import {
 	getConversationModel,
 	isAbortError,
 	normalizeModelName,
+	promptLinkExtra,
 	sliceAtLastCompaction
 } from '#lib/utils/index.ts';
 import { SvelteMap } from 'svelte/reactivity';
@@ -78,6 +80,8 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 	pendingEditMessageId = $state<string | null>(null);
 	/** A system message written on the new-chat screen, stored with the conversation on its first send. */
 	pendingSystemMessage = $state<string | null>(null);
+	/** The prompt the pending system message is made from, if any. */
+	pendingSystemPrompt = $state<PromptLink | null>(null);
 	// resumable stream connection state for the active conversation
 	// streaming -> bytes flowing normally, resuming -> waiting on /v1/stream reconnect, lost -> unrecoverable
 	streamConnectionState = $state<StreamConnectionState>(StreamConnectionState.STREAMING);
@@ -691,6 +695,7 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 	async removeSystemPrompt(): Promise<void> {
 		if (!conversationsStore.activeConversation) {
 			this.pendingSystemMessage = null;
+			this.pendingSystemPrompt = null;
 
 			return;
 		}
@@ -752,12 +757,18 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 	}
 
 	/**
-	 * Saves the system message written in the chat form or its dialog. A new chat keeps it
-	 * pending until the first message is sent, so no empty conversation is created.
+	 * Saves the system message written in the chat form or its dialog, or made from a prompt.
+	 * A new chat keeps it pending until the first message is sent, so no empty conversation is
+	 * created.
+	 *
+	 * @param prompt - The prompt the text comes from. The message keeps it, to show where it
+	 *   came from; without one, a message keeps the prompt it had.
 	 */
-	async saveSystemPrompt(content: string): Promise<void> {
+	async saveSystemPrompt(content: string, prompt?: PromptLink): Promise<void> {
 		if (!conversationsStore.activeConversation) {
 			this.pendingSystemMessage = content;
+
+			if (prompt) this.pendingSystemPrompt = prompt;
 
 			return;
 		}
@@ -770,11 +781,13 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 
 		if (!id) return;
 
-		await DatabaseService.updateMessage(id, { content });
+		const updates = prompt ? { content, extra: [promptLinkExtra(prompt)] } : { content };
+
+		await DatabaseService.updateMessage(id, updates);
 
 		const index = conversationsStore.findMessageIndex(id);
 
-		if (index !== -1) conversationsStore.updateMessageAtIndex(index, { content });
+		if (index !== -1) conversationsStore.updateMessageAtIndex(index, updates);
 	}
 
 	async sendMessage(content: string, extras?: DatabaseMessageExtra[]): Promise<void> {
@@ -828,8 +841,11 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 				const systemPrompt = (
 					this.pendingSystemMessage ?? currentConfig.systemMessage?.toString()
 				)?.trim();
+				// only a system message written or picked for this chat can come from a prompt
+				const systemPromptLink = this.pendingSystemMessage ? this.pendingSystemPrompt : null;
 
 				this.pendingSystemMessage = null;
+				this.pendingSystemPrompt = null;
 
 				let sysOrRootId = rootId;
 
@@ -837,7 +853,8 @@ class ChatStore implements ChatStreamHost, ChatFlowsHost {
 					const systemMessage = await DatabaseService.createSystemMessage(
 						currentConv.id,
 						systemPrompt,
-						rootId
+						rootId,
+						systemPromptLink ? [promptLinkExtra(systemPromptLink)] : undefined
 					);
 
 					conversationsStore.addMessageToActive(systemMessage);

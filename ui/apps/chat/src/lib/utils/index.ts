@@ -250,6 +250,10 @@ export {
 
 export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
 
+// Library prompts: as attachments of the chat form, and against the system messages made from them
+export { isPromptAttachment, promptLinkExtra, promptToUploadedFile } from './prompt-attachment';
+export { getPromptDrift } from './prompt-drift';
+
 // Shared `file_glob_search` runner with a short-lived result cache
 export { runFolderSearch, runGlobSearch, runGlobSearchWithChildren } from './glob-search';
 

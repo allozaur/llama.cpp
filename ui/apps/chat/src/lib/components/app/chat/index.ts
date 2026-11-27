@@ -66,6 +66,12 @@ export { default as ChatAttachmentsListItem } from './ChatAttachments/ChatAttach
 export { default as ChatAttachmentsListItemThumbnailFile } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItemThumbnailFile.svelte';
 
 /**
+ * A prompt of the library as an attachment: its name and its text in a small card,
+ * removable in the chat form. Its text shows on the card, so it has no preview.
+ */
+export { default as ChatAttachmentsListItemPrompt } from './ChatAttachments/ChatAttachmentsList/ChatAttachmentsListItem/ChatAttachmentsListItemPrompt.svelte';
+
+/**
  * An audio attachment drawn as a clip: a playable waveform (peaks computed from
  * the audio when it was stored without them) and, for a voice message, its
  * transcript under it on hover, focus or a tap, with the transcribing and failed
@@ -222,6 +228,12 @@ export { default as ChatFormActionReasoning } from './ChatForm/ChatFormActions/C
 export { default as ChatFormActionAddToolsSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddToolsSubmenu.svelte';
 
 /**
+ * System message submenu of the add dropdown: write one, or pick a prompt of the
+ * library or of an extension's source (an MCP server's) to be the chat's system message.
+ */
+export { default as ChatFormActionAddSystemMessageSubmenu } from './ChatForm/ChatFormActions/ChatFormActionAdd/ChatFormActionAddSystemMessageSubmenu.svelte';
+
+/**
  * Compact context-usage gauge with per-turn and cumulative breakdown in the tooltip.
  */
 export { default as ChatFormContextGauge } from './ChatForm/ChatFormContextGauge/ChatFormContextGauge.svelte';
@@ -290,6 +302,18 @@ export { default as ChatFormPickerMention } from './ChatForm/ChatFormPickers/Cha
  * hands the command to the parent for dispatch.
  */
 export { default as ChatFormPickerCommand } from './ChatForm/ChatFormPickers/ChatFormPickerCommand.svelte';
+
+/**
+ * The prompt picker `/prompt` opens: the library's prompts with the ones extensions
+ * offer (an MCP server's), each with where it comes from. Picking one attaches it
+ * to the message being written.
+ */
+export { default as ChatFormPickerPrompts } from './ChatForm/ChatFormPickers/ChatFormPickerPrompts.svelte';
+
+/**
+ * Where a prompt comes from, on its row in a list: the origin's icon and name.
+ */
+export { default as ChatFormPickerPromptOrigin } from './ChatForm/ChatFormPickers/ChatFormPickerPromptOrigin.svelte';
 
 /**
  * Hosts the chat-form pickers (slash-command, file mention and the ones
@@ -467,6 +491,13 @@ export { default as ChatMessageSynthetic } from './ChatMessages/ChatMessage/Chat
  * later requests slice the branch at this node.
  */
 export { default as ChatMessageCompaction } from './ChatMessages/ChatMessage/ChatMessageCompaction.svelte';
+
+/**
+ * A prompt of the library drawn like an MCP prompt: its name above, with an optional
+ * status (e.g. "Modified"), and its text in a card. A system message made from a prompt
+ * shows as one, and so does a prompt attached to a message.
+ */
+export { default as ChatMessagePromptContent } from './ChatMessages/ChatMessage/ChatMessagePrompt/ChatMessagePromptContent.svelte';
 
 /**
  * Assistant message display component. Renders assistant responses with left-aligned styling.

@@ -30,14 +30,18 @@
 	let { class: className, items = SIDEBAR_ACTIONS_ITEMS, onAction, onNavigate }: Props = $props();
 
 	// the models manager stays desktop-only: a phone picks its models in the selector; a phone
-	// reaches search from the round key at the top of the sidebar instead. Models and MCP
-	// wait behind their settings
+	// reaches search from the round key at the top of the sidebar and a new chat from the key
+	// pinned at its bottom instead. Models and MCP wait behind their settings
+	const PHONE_HIDDEN_ACTIONS: SidebarAction[] = [
+		SidebarAction.MANAGE_MODELS,
+		SidebarAction.NEW_CHAT,
+		SidebarAction.SEARCH
+	];
 	const actions = $derived(
 		items.filter(
 			(item) =>
 				uiStore.isSidebarActionShown(item.action) &&
-				(!deviceStore.isMobile ||
-					(item.action !== SidebarAction.MANAGE_MODELS && item.action !== SidebarAction.SEARCH))
+				!(deviceStore.isMobile && item.action && PHONE_HIDDEN_ACTIONS.includes(item.action))
 		)
 	);
 	let initialized = $state(false);

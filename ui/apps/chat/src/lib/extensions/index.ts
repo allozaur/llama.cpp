@@ -15,6 +15,7 @@ export type {
 } from './points/composer';
 export type { Connector, ServerAuth } from './points/connectors';
 export type { ModelDownloadAuth, ModelNotice } from './points/models';
+export type { PromptCardProps, PromptEntry, PromptSource } from './points/prompts';
 export { findAttachmentRenderer, findMessageRenderer } from './points/renderers';
 export type {
 	AttachmentRenderer,

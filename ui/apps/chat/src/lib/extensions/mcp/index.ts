@@ -10,6 +10,7 @@
 
 import type { Extension } from '../types';
 import { contributeComposer } from './composer';
+import { contributePrompts } from './prompts';
 import { contributeRenderers } from './renderers';
 import { contributeSettings } from './settings';
 import { contributeSignIn } from './sign-in';
@@ -19,6 +20,7 @@ import { contributeTools } from './tools';
 const mcp: Extension = {
 	activate(ctx) {
 		contributeComposer(ctx);
+		contributePrompts(ctx);
 		contributeRenderers(ctx);
 		contributeSettings(ctx);
 		contributeSignIn(ctx);

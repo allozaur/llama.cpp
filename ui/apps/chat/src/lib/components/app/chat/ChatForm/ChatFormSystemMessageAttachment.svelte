@@ -8,9 +8,11 @@
 		class?: string;
 		content: string;
 		disabled?: boolean;
+		/** The name of the prompt the message is made from, if any. */
+		promptName?: string;
 	}
 
-	let { class: className = '', content, disabled = false }: Props = $props();
+	let { class: className = '', content, disabled = false, promptName }: Props = $props();
 
 	let isOpen = $state(false);
 </script>
@@ -18,10 +20,12 @@
 <div
 	class="group relative flex max-w-75 min-w-50 flex-shrink-0 flex-col gap-2 first:ml-4 last:mr-4 {className}"
 >
-	<div class="inline-flex items-center gap-1.25 text-caption text-muted-foreground">
+	<div class="inline-flex min-w-0 items-center gap-1.25 text-caption text-muted-foreground">
 		<MessageSquareText class="size-3.5 shrink-0" />
 
-		<span>Custom system message</span>
+		<span class="truncate">
+			{promptName ? `System message: ${promptName}` : 'Custom system message'}
+		</span>
 	</div>
 
 	<button

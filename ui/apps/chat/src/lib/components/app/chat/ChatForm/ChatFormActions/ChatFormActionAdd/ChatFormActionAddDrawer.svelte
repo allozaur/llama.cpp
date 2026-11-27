@@ -20,8 +20,10 @@
 		Loader2,
 		MessageSquare,
 		PencilRuler,
+		Plus,
 		Server
 	} from '@lucide/svelte';
+	import { ChatFormPickerPromptOrigin } from '#lib/components/app/index.ts';
 	import {
 		ATTACHMENT_FILE_ITEMS,
 		ATTACHMENT_MENU_TEXT,
@@ -34,6 +36,7 @@
 	import { AttachmentAction, AttachmentItemEnabledWhen } from '#lib/enums/attachment.enums.ts';
 	import { AddSheetPage, ModelModality, ToolSource } from '#lib/enums/index.ts';
 	import { useAttachmentMenu } from '#lib/hooks/use-attachment-menu.svelte.ts';
+	import { usePromptList } from '#lib/hooks/use-prompt-list.svelte.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
 	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import { toolsStore } from '#lib/stores/index.ts';
@@ -49,9 +52,10 @@
 
 	const chatFormActions = getChatFormActionsContext();
 
-	/** The sheet's pages: the root menu, the tools list, and one tool group's tools. */
+	/** The sheet's pages: the root menu, the system message's prompts, the tools list, and one tool group's tools. */
 	type Page =
 		| { id: AddSheetPage.ROOT }
+		| { id: AddSheetPage.SYSTEM_MESSAGE }
 		| { id: AddSheetPage.TOOLS }
 		| { groupKey: string; id: AddSheetPage.TOOL_GROUP };
 
@@ -112,6 +116,7 @@
 	// the camera only makes sense for a model that can see what it gives
 	const canUseCamera = $derived(chatFormActions.hasVisionModality && canPickFiles);
 
+	const prompts = usePromptList();
 	const toolsPanel = useToolsPanel();
 	const allGroups = $derived([...toolsPanel.categoryGroups, ...toolsPanel.providerGroups]);
 	const enabledToolCount = $derived(
@@ -124,6 +129,8 @@
 	);
 
 	const title = $derived.by(() => {
+		if (page.id === AddSheetPage.SYSTEM_MESSAGE) return ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE;
+
 		if (page.id === AddSheetPage.TOOLS) return ATTACHMENT_MENU_TEXT.TOOLS;
 
 		if (page.id === AddSheetPage.TOOL_GROUP)
@@ -138,6 +145,9 @@
 	}
 
 	function push(next: Page) {
+		// opening a page is the need for what it lists
+		if (next.id === AddSheetPage.SYSTEM_MESSAGE) void prompts.load();
+
 		if (next.id === AddSheetPage.TOOLS) toolsPanel.handleOpen();
 
 		pages.push(next);
@@ -194,6 +204,8 @@
 			>
 				{#if page.id === AddSheetPage.ROOT}
 					{@render rootPage()}
+				{:else if page.id === AddSheetPage.SYSTEM_MESSAGE}
+					{@render systemMessagePage()}
 				{:else if page.id === AddSheetPage.TOOLS}
 					{@render toolsPage()}
 				{:else if currentGroup}
@@ -227,10 +239,11 @@
 
 	<InsetList>
 		<InsetListRow
+			chevron
 			icon={MessageSquare}
-			onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
+			onclick={() => push({ id: AddSheetPage.SYSTEM_MESSAGE })}
 		>
-			{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}
+			<span class="flex-1">{ATTACHMENT_MENU_TEXT.SYSTEM_MESSAGE}</span>
 		</InsetListRow>
 
 		{#if chatFormActions.onWorkingDirectoryClick}
@@ -263,6 +276,44 @@
 			</InsetListRow>
 		{/if}
 	</InsetList>
+{/snippet}
+
+{#snippet systemMessagePage()}
+	<InsetList>
+		<InsetListRow
+			icon={Plus}
+			onclick={() => attachmentMenu.callbacks[AttachmentAction.SYSTEM_PROMPT_CLICK]()}
+		>
+			{ATTACHMENT_MENU_TEXT.WRITE_SYSTEM_MESSAGE}
+		</InsetListRow>
+	</InsetList>
+
+	{#each prompts.groups as group (group.source.id)}
+		<InsetList title={group.source.label}>
+			{#each group.entries as entry (entry.id)}
+				<InsetListRow
+					bodyClass="flex-col items-start gap-0.5 py-2.5"
+					onclick={() => {
+						drawerOpen = false;
+						chatFormActions.onSystemPromptSelect?.(group.source, entry);
+					}}
+				>
+					<!-- the library's prompts sit under its own title: only another origin is named -->
+					{#if entry.origin !== group.source.label}
+						<ChatFormPickerPromptOrigin {entry} source={group.source} />
+					{/if}
+
+					<span class="line-clamp-1 text-left">{entry.title}</span>
+
+					{#if entry.description}
+						<span class="line-clamp-2 text-left text-body-sm text-muted-foreground">
+							{entry.description}
+						</span>
+					{/if}
+				</InsetListRow>
+			{/each}
+		</InsetList>
+	{/each}
 {/snippet}
 
 {#snippet toolsPage()}

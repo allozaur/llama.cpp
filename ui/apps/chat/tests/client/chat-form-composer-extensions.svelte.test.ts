@@ -1,7 +1,7 @@
 // Guards the chat form's extension points. Without extensions the form works with its
-// built-in commands alone; with the MCP extension on, `/prompt` leads the commands and
-// opens MCP's prompt picker, a picked prompt becomes a chip, and attached resources show
-// under the input. Switching the extension off takes all of that away again.
+// built-in commands alone, and `/prompt` lists the library's prompts; with the MCP extension
+// on, the same picker lists MCP's prompts too, a picked prompt becomes a chip, and attached
+// resources show under the input. Switching the extension off takes all of that away again.
 
 import ChatFormTestWrapper from './components/ChatFormTestWrapper.svelte';
 import { EditorView } from '@codemirror/view';
@@ -10,6 +10,7 @@ import { MimeTypeText } from '#lib/enums/index.ts';
 import { BUILT_IN_EXTENSIONS } from '#lib/extensions/builtin.ts';
 import { extensions } from '#lib/extensions/index.ts';
 import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
+import { promptsStore } from '#lib/stores/prompts.svelte.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import type { GetPromptResult, MCPPromptInfo, MCPResourceInfo } from '#lib/types/index.ts';
 import { tick } from 'svelte';
@@ -18,9 +19,15 @@ import { page, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 
 const MCP_EXTENSION_ID = 'mcp';
-const BUILT_IN_COMMANDS = ['/cwd', '/model', '/compact', '/system-message'];
-/** What the MCP extension adds, listed before the built-in commands. */
-const MCP_COMMANDS = ['/prompt', '/skill'];
+const BUILT_IN_COMMANDS = ['/prompt', '/cwd', '/model', '/compact', '/system-message'];
+/** With the MCP extension on: its `/skill` comes right after `/prompt`. */
+const COMMANDS_WITH_MCP = ['/prompt', '/skill', '/cwd', '/model', '/compact', '/system-message'];
+const LIBRARY_PROMPT = {
+	content: 'Reply like a pirate.',
+	id: 'p1',
+	lastModified: 1,
+	name: 'Pirate'
+};
 const SERVER = { enabled: true, id: 'github', name: 'GitHub', url: 'https://mcp.example.com/mcp' };
 const PROMPTS: MCPPromptInfo[] = [
 	{ description: 'Review a pull request', name: 'code_review', serverName: 'github' },
@@ -75,7 +82,7 @@ function seedPrompts() {
 	vi.spyOn(mcpStore, 'getAllPrompts').mockResolvedValue(PROMPTS);
 }
 
-/** Type `/prompt <query>`, pick the command, and wait for MCP's prompt picker. */
+/** Type `/prompt <query>`, pick the command, and wait for the prompt picker. */
 async function openPromptPicker(query: string) {
 	await userEvent.keyboard(`/prompt ${query}`);
 	await expect.poll(commandNames).toEqual(['/prompt', '/system-message']);
@@ -85,6 +92,7 @@ async function openPromptPicker(query: string) {
 
 afterEach(() => {
 	vi.restoreAllMocks();
+	promptsStore.prompts = [];
 	mcpStore.resources.clearAttachments();
 	settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, '[]');
 });
@@ -95,6 +103,25 @@ describe('ChatForm without extensions', () => {
 		await userEvent.keyboard('/');
 
 		await expect.poll(commandNames).toEqual(BUILT_IN_COMMANDS);
+	});
+
+	it('lists the prompts of the library with /prompt, and turns the picked one into a chip', async () => {
+		promptsStore.prompts = [LIBRARY_PROMPT];
+		vi.spyOn(promptsStore, 'initialize').mockResolvedValue();
+
+		const { container, editor, isInputFocused } = await renderForm();
+
+		await openPromptPicker('pir');
+
+		expect(editor.state.doc.toString()).toBe('');
+		expect(pickerRows()[0].textContent).toContain('Library');
+		expect(pickerRows()[0].textContent).toContain('Pirate');
+
+		await userEvent.keyboard('{Enter}');
+
+		await expect.poll(pickerRows).toHaveLength(0);
+		await expect.poll(() => container.textContent).toContain('Reply like a pirate.');
+		await expect.poll(isInputFocused).toBe(true);
 	});
 
 	it('draws no pending attachments and still sends', async () => {
@@ -128,22 +155,30 @@ describe('ChatForm with the MCP extension', () => {
 		localStorage.removeItem(EXTENSIONS_LOCALSTORAGE_KEY);
 	});
 
-	it('lists /prompt first, disabled while no MCP server is usable', async () => {
+	it('adds /skill right after /prompt', async () => {
 		await renderForm();
 		await userEvent.keyboard('/');
 
-		await expect.poll(commandNames).toEqual([...MCP_COMMANDS, ...BUILT_IN_COMMANDS]);
-		expect(pickerRows()[0].disabled).toBe(true);
-		expect(pickerRows()[0].textContent).toContain('Insert an MCP prompt');
+		await expect.poll(commandNames).toEqual(COMMANDS_WITH_MCP);
+		expect(pickerRows()[0].disabled).toBe(false);
 	});
 
-	it('enables /prompt once an MCP server is usable', async () => {
+	it('lists the prompts of MCP servers after those of the library, each with its source', async () => {
 		seedPrompts();
-		await renderForm();
-		await userEvent.keyboard('/');
+		promptsStore.prompts = [LIBRARY_PROMPT];
+		vi.spyOn(promptsStore, 'initialize').mockResolvedValue();
 
-		await expect.poll(commandNames).toEqual([...MCP_COMMANDS, ...BUILT_IN_COMMANDS]);
-		expect(pickerRows()[0].disabled).toBe(false);
+		await renderForm();
+		await userEvent.keyboard('/prompt');
+		await expect.poll(commandNames).toEqual(['/prompt', '/system-message']);
+		await userEvent.keyboard('{Enter}');
+
+		await expect.poll(pickerRows).toHaveLength(PROMPTS.length + 1);
+		expect(pickerRows().map((row) => row.textContent)).toEqual([
+			expect.stringMatching(/Library.*Pirate/s),
+			expect.stringMatching(/GitHub.*code_review/s),
+			expect.stringMatching(/GitHub.*Issue summary/s)
+		]);
 	});
 
 	it('opens the prompt picker with the typed arguments and turns the picked prompt into a chip', async () => {

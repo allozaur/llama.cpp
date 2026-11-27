@@ -40,6 +40,14 @@ export const ADD_FLOW: Flow = {
 	trigger: '+ in the chat form'
 };
 
+export const ADD_SYSTEM_MESSAGE_FLOW: Flow = {
+	pages: [
+		{ note: 'The System Message row', title: 'Add to chat' },
+		{ note: 'Write new, then the prompts of each source', title: 'System Message' }
+	],
+	trigger: '+ in the chat form, then System Message'
+};
+
 export const MODELS_FLOW: Flow = {
 	pages: [
 		{ note: "The chat's model and those in reach", title: 'Select model' },

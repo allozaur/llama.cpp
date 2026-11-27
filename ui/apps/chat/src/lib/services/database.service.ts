@@ -1,9 +1,9 @@
 /**
- * DatabaseService - IndexedDB persistence for conversations, messages and groups
+ * DatabaseService - IndexedDB persistence for conversations, messages, groups and prompts
  *
- * Thin Dexie layer over the conversations/messages/groups tables: CRUD, tree
+ * Thin Dexie layer over the conversations/messages/groups/prompts tables: CRUD, tree
  * navigation (descendants, reparenting) and cascading deletes. No reactive
- * state; consumed by conversationsStore, groupsStore and the chat flows.
+ * state; consumed by conversationsStore, groupsStore, promptsStore and the chat flows.
  */
 
 import {
@@ -11,11 +11,16 @@ import {
 	IDXDB_STORES_V1,
 	IDXDB_TABLES,
 	IDXDB_VERSION,
+	IDXDB_VERSION_GROUPS,
 	STORAGE_APP_NAME
 } from '#lib/constants/index.ts';
 import { MessageRole } from '#lib/enums/index.ts';
-import type { McpServerOverride } from '#lib/types/database.js';
-import type { ExportedConversation } from '#lib/types/database.js';
+import type {
+	DatabaseMessageExtra,
+	DatabasePrompt,
+	ExportedConversation,
+	McpServerOverride
+} from '#lib/types/database.js';
 import type { Group } from '#lib/types/groups.js';
 import { filterByLeafNodeId, findDescendantMessages, uuid } from '#lib/utils/index.ts';
 import Dexie, { type EntityTable } from 'dexie';
@@ -24,13 +29,17 @@ class LlamaUiDatabase extends Dexie {
 	[IDXDB_TABLES.conversations]!: EntityTable<DatabaseConversation, string>;
 	[IDXDB_TABLES.groups]!: EntityTable<Group, 'id'>;
 	[IDXDB_TABLES.messages]!: EntityTable<DatabaseMessage, string>;
+	[IDXDB_TABLES.prompts]!: EntityTable<DatabasePrompt, 'id'>;
 
 	constructor() {
 		super(STORAGE_APP_NAME);
 
 		this.version(1).stores(IDXDB_STORES_V1);
-		this.version(IDXDB_VERSION).stores({
+		this.version(IDXDB_VERSION_GROUPS).stores({
 			[IDXDB_TABLES.groups]: IDXDB_STORE_SCHEMAS.groups
+		});
+		this.version(IDXDB_VERSION).stores({
+			[IDXDB_TABLES.prompts]: IDXDB_STORE_SCHEMAS.prompts
 		});
 	}
 }
@@ -218,6 +227,17 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Creates a prompt in the library.
+	 *
+	 * @returns The created prompt
+	 */
+	static async createPrompt(prompt: DatabasePrompt): Promise<DatabasePrompt> {
+		await db[IDXDB_TABLES.prompts].add(prompt);
+
+		return prompt;
+	}
+
+	/**
 	 * Creates a root message for a new conversation.
 	 * Root messages are not displayed but serve as the tree root for branching.
 	 *
@@ -248,13 +268,15 @@ export class DatabaseService {
 	 * @param convId - Conversation ID
 	 * @param systemPrompt - The system prompt content (must be non-empty)
 	 * @param parentId - Parent message ID (typically the root message)
+	 * @param extra - Extras of the message, e.g. the prompt it is made from
 	 * @returns The created system message
 	 * @throws Error if systemPrompt is empty or the parent message does not exist
 	 */
 	static async createSystemMessage(
 		convId: string,
 		systemPrompt: string,
-		parentId: string
+		parentId: string,
+		extra?: DatabaseMessageExtra[]
 	): Promise<DatabaseMessage> {
 		const trimmedPrompt = systemPrompt.trim();
 
@@ -273,6 +295,7 @@ export class DatabaseService {
 				children: [],
 				content: trimmedPrompt,
 				convId,
+				extra,
 				id: uuid(),
 				parent: parentId,
 				role: MessageRole.SYSTEM,
@@ -399,6 +422,15 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Deletes a prompt from the library. Messages made from it keep their content.
+	 *
+	 * @param id - Prompt ID
+	 */
+	static async deletePrompt(id: string): Promise<void> {
+		await db[IDXDB_TABLES.prompts].delete(id);
+	}
+
+	/**
 	 * Forks a conversation at a specific message, creating a new conversation
 	 * containing all messages from the root up to (and including) the target message.
 	 *
@@ -507,6 +539,15 @@ export class DatabaseService {
 		const groups = await db[IDXDB_TABLES.groups].toArray();
 
 		return groups.sort((a, b) => b.createdAt - a.createdAt);
+	}
+
+	/**
+	 * Gets all prompts in the library, most recently edited first.
+	 *
+	 * @returns Array of prompts
+	 */
+	static async getAllPrompts(): Promise<DatabasePrompt[]> {
+		return await db[IDXDB_TABLES.prompts].orderBy('lastModified').reverse().toArray();
 	}
 
 	/**
@@ -730,6 +771,19 @@ export class DatabaseService {
 		updates: Partial<Omit<DatabaseMessage, 'id'>>
 	): Promise<void> {
 		await db[IDXDB_TABLES.messages].update(id, updates);
+	}
+
+	/**
+	 * Updates a prompt in the library.
+	 *
+	 * @param id - Prompt ID
+	 * @param updates - Partial updates to apply
+	 */
+	static async updatePrompt(
+		id: string,
+		updates: Partial<Omit<DatabasePrompt, 'id'>>
+	): Promise<void> {
+		await db[IDXDB_TABLES.prompts].update(id, updates);
 	}
 
 	/**

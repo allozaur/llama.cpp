@@ -94,7 +94,7 @@ The app imports the library as `@ggml-org/llama-ui/ui/<name>` and compiles its s
 
 | Layer          | Lives in                  | What it holds                                                                                             |
 | -------------- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Routes         | `src/routes`              | `/`, `/chat/[id]`, `/models`, `/mcp-servers`, `/settings`, `/search`                                      |
+| Routes         | `src/routes`              | `/`, `/chat/[id]`, `/library`, `/models`, `/mcp-servers`, `/settings`, `/search`                          |
 | App components | `src/lib/components/app`  | Chat, navigation, models, settings and dialogs, grouped by area                                           |
 | UI components  | `ui/lib/ui`               | shadcn-svelte on bits-ui, from Llama UI                                                                   |
 | Voice          | `ui/lib/voice`            | Microphone capture, transcription and dictation, from Llama Voice (`@ggml-org/llama-voice`)               |
@@ -157,7 +157,9 @@ sequenceDiagram
 
 ### Extensions (`src/lib/extensions/`)
 
-An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, settings actions, slash commands, pickers, pending attachments, and message and attachment renderers.
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, settings actions, slash commands, pickers, pending attachments, message and attachment renderers, and sources of prompts.
+
+A prompt is one kind of item whatever it comes from. The library (`promptsStore`, the Library page) is the app's own source of prompts, and an extension adds another through `promptSources`: MCP lists the prompts of its servers. `/prompt` and the System message list in the chat form's + menu show the prompts of every source together, each with where it comes from, and either sends a prompt with a message or makes it the chat's system message.
 
 The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
 
@@ -170,7 +172,7 @@ MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
 | `index.ts` and glue        | The extension: what MCP adds to each extension point (`tools.ts`, `composer.ts`, `settings.ts`, ...) |
 | `stores/` (`mcpStore`)     | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources`    |
 | `services/` (`MCPService`) | MCP protocol: transports, connect, list/execute tools, prompts, resources                            |
-| `components/`              | Server cards and forms, resource browser, dialogs, the prompt picker and the chat renderers          |
+| `components/`              | Server cards and forms, resource browser, dialogs, a prompt's arguments form, the chat renderers     |
 
 A server that answers 401 and publishes an OAuth authorization server shows **Sign in** on its card: the browser registers the app with it (dynamic client registration, or the client ID of an app the user registered there by hand), opens the authorization page in a popup, and keeps the tokens per server in localStorage (`oauth/`), apart from the settings, so a settings export never carries them. An Authorization header set on the server wins over a sign-in. With **Use llama-server proxy** on, the discovery, registration and token requests go through the proxy too.
 

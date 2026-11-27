@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { VoiceWaveformSize } from '@ggml-org/llama-ui/voice';
 	import {
+		ChatAttachmentsListItemPrompt,
 		ChatAttachmentsListItemThumbnailFile,
 		ChatAttachmentsListItemThumbnailImage,
 		ChatAttachmentsListItemVoice
@@ -8,7 +9,7 @@
 	import { AttachmentType } from '#lib/enums/index.ts';
 	import { extensions, findAttachmentRenderer } from '#lib/extensions/index.ts';
 	import type { ChatAttachmentDisplayItem } from '#lib/types/index.ts';
-	import { isAudioFile, isPdfFile } from '#lib/utils/index.ts';
+	import { isAudioFile, isPdfFile, isPromptAttachment } from '#lib/utils/index.ts';
 
 	interface Props {
 		class?: string;
@@ -50,6 +51,13 @@
 		class="{className} {scrollClasses}"
 		{item}
 		onRemove={onFileRemove ? () => onFileRemove(item.id) : undefined}
+		{readonly}
+	/>
+{:else if isPromptAttachment(item)}
+	<ChatAttachmentsListItemPrompt
+		class="{className} {scrollClasses}"
+		{item}
+		onRemove={onFileRemove}
 		{readonly}
 	/>
 {:else if isAudioFile(item.attachment, item.uploadedFile)}

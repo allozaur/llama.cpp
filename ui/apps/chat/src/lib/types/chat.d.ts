@@ -10,6 +10,7 @@ import type {
 	MessageRole
 } from '#lib/enums/index.ts';
 import type { ComposerCommand } from '#lib/extensions/points/composer.ts';
+import type { PromptEntry, PromptSource } from '#lib/extensions/points/prompts.ts';
 import type { Component } from 'svelte';
 
 /**
@@ -47,6 +48,8 @@ export interface ChatUploadedFile {
 		promptName: string;
 		arguments?: Record<string, string>;
 	};
+	/** The library prompt a chip holds. */
+	promptId?: string;
 	isLoading?: boolean;
 	loadError?: string;
 	/** A voice message recorded in the chat form. */
@@ -389,6 +392,8 @@ export interface ChatFormActionsContext {
 	/** Adds files picked outside the form's own file input, such as the camera or photo library. */
 	onFilesSelect?: (files: File[]) => void;
 	onSystemPromptClick?: () => void;
+	/** A prompt was picked in the System message list, to be the chat's system message. */
+	onSystemPromptSelect?: (source: PromptSource, entry: PromptEntry) => void;
 	/** Opens the working directory picker; set where the + menu offers it. */
 	onWorkingDirectoryClick?: () => void;
 	/** The working directory's name in the + menu, or what sets one. */

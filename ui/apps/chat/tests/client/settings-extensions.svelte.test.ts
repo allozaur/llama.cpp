@@ -140,7 +140,7 @@ describe('Extensions settings', () => {
 
 		await expect.element(mcpSwitch).not.toBeChecked();
 		await vi.waitFor(() => expect(settingsActionLabels()).toEqual([]));
-		expect(commandNames()).toEqual(['cwd', 'model', 'compact', 'system-message']);
+		expect(commandNames()).toEqual(['prompt', 'cwd', 'model', 'compact', 'system-message']);
 		expect(mcpToolNames()).toEqual([]);
 		// the live connections close and the resources waiting in the chat form are dropped
 		expect(mcpStore.shutdown).toHaveBeenCalledOnce();

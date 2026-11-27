@@ -79,7 +79,8 @@ export const ATTACHMENT_MENU_TEXT = {
 	SYSTEM_MESSAGE: 'System Message',
 	TOOLS: 'Tools',
 	TOOLS_FAILED: 'Failed to load tools',
-	WORKING_DIRECTORY: 'Working directory'
+	WORKING_DIRECTORY: 'Working directory',
+	WRITE_SYSTEM_MESSAGE: 'Write new'
 } as const;
 
 /** Modality labels behind the file-upload row's enabled-when flags, both surfaces. */

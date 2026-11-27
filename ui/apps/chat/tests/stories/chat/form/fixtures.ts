@@ -18,6 +18,7 @@ import { ToolsService } from '#lib/services/tools.service.ts';
 import {
 	conversationsStore,
 	modelsStore,
+	promptsStore,
 	serverStore,
 	settingsStore,
 	toolsStore
@@ -26,6 +27,7 @@ import type {
 	ChatFormCommand,
 	DatabaseConversation,
 	DatabaseMessage,
+	DatabasePrompt,
 	FileMentionEntry,
 	GlobEntry,
 	MCPPromptInfo,
@@ -96,6 +98,22 @@ export const loadingAttachment: ChatUploadedFile = {
 export const mcpServers: MCPServerSettingsEntry[] = [
 	{ enabled: true, id: 'github', name: 'GitHub', url: 'https://api.githubcopilot.com/mcp/' },
 	{ enabled: true, id: 'docs', name: 'Docs', url: 'https://docs.example.com/mcp' }
+];
+
+export const libraryPrompts: DatabasePrompt[] = [
+	{
+		content: 'Review this change for bugs first, then for style. Be brief.',
+		description: 'A short review of a change',
+		id: 'prompt-review',
+		lastModified: Date.UTC(2026, 10, 20),
+		name: 'Review a change'
+	},
+	{
+		content: 'Answer in French, in plain words.',
+		id: 'prompt-french',
+		lastModified: Date.UTC(2026, 10, 12),
+		name: 'French'
+	}
 ];
 
 export const mcpPrompts: MCPPromptInfo[] = [
@@ -282,6 +300,7 @@ export interface StoreSeed {
 	activeMessages?: DatabaseMessage[];
 	config?: Record<string, unknown>;
 	globSearch?: (params: Record<string, unknown>) => Promise<Record<string, unknown>>;
+	libraryPrompts?: DatabasePrompt[];
 	mcpPrompts?: MCPPromptInfo[];
 	mcpResources?: MCPResourceInfo[];
 	mcpServers?: MCPServerSettingsEntry[];
@@ -409,6 +428,11 @@ export function seedStores(seed: StoreSeed): Restore {
 				return globSearch(params);
 			})
 		);
+	}
+
+	if (seed.libraryPrompts) {
+		set(promptsStore, 'prompts', seed.libraryPrompts);
+		restores.push(override(promptsStore, 'initialize', async () => {}));
 	}
 
 	if (seed.mcpPrompts) {
