@@ -146,6 +146,23 @@ jobs:
               data: await fs.readFileSync('./nightly-tag.txt')
             });
 
+      - name: Publish the prebuilt UI under the release version
+        if: ${{ github.event.inputs.dry_run == 'false' && steps.desc.outputs.nightly_tag != '' }}
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN_UI_STATIC_OUTPUT }}
+          HF_BUCKET_NAME: ${{ vars.HF_BUCKET_UI_STATIC_OUTPUT }}
+        run: |
+          # A shallow clone of the release tag cannot count commits, so its build asks for
+          # the UI by the release version: copy the nightly's archive there.
+          VERSION="${{ steps.checks.outputs.version }}"
+          NIGHTLY_TAG="${{ steps.desc.outputs.nightly_tag }}"
+          BUCKET="hf://buckets/ggml-org/${HF_BUCKET_NAME}"
+
+          pip install -U huggingface_hub
+          for file in dist.tar.gz dist.tar.gz.sha256; do
+            hf buckets cp "${BUCKET}/${NIGHTLY_TAG}/${file}" "${BUCKET}/${VERSION}/${file}"
+          done
+
       - name: Re-tag container images with release version
         if: ${{ github.event.inputs.dry_run == 'false' && github.event.inputs.require_docker != 'false' && steps.desc.outputs.nightly_tag != '' }}
         env:
