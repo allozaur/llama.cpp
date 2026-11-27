@@ -3,6 +3,7 @@
 	import { MessageType } from '#lib/enums/index.ts';
 	import { chatStore } from '#lib/stores/index.ts';
 	import type { ChatMessageActions } from '#lib/types/index.ts';
+	import { MESSAGE_ROW_ATTRIBUTE } from '#lib/utils/index.ts';
 
 	interface Props {
 		chatActions: ChatMessageActions;
@@ -78,6 +79,7 @@
 
 <div
 	bind:this={wrapperEl}
+	{...{ [MESSAGE_ROW_ATTRIBUTE]: message.id }}
 	class={[
 		'chat-message',
 		eager && 'chat-message--eager',
@@ -108,6 +110,14 @@
 		--chat-message-intrinsic-size: 500px;
 		content-visibility: auto;
 		contain-intrinsic-size: auto var(--chat-message-intrinsic-size);
+		/* a jump to the row lands it below the tabs, or on a phone below the corner controls */
+		scroll-margin-top: calc(var(--chat-tabs-offset, 0px) + 1rem);
+	}
+
+	@media (width < 48rem) {
+		.chat-message {
+			scroll-margin-top: var(--page-top);
+		}
 	}
 
 	/*

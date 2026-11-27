@@ -250,6 +250,25 @@ export {
 
 export { resolveTabTarget, resolveTabView, type TabView } from './chat-tabs';
 
+// The files of conversations as the Library lists them
+export {
+	attachmentBlob,
+	attachmentImage,
+	attachmentText,
+	downloadAttachment,
+	isFileAttachment,
+	libraryAttachmentsOf,
+	type LibraryAttachment
+} from './library-attachments';
+
+// A jump to a message of the open conversation
+export {
+	findMessageRowId,
+	MESSAGE_ROW_ATTRIBUTE,
+	messageRow,
+	scrollToMessageRow
+} from './message-jump';
+
 // Library prompts: as attachments of the chat form, and against the system messages made from them
 export { isPromptAttachment, promptLinkExtra, promptToUploadedFile } from './prompt-attachment';
 export { getPromptDrift } from './prompt-drift';

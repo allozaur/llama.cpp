@@ -137,3 +137,5 @@ export { ChatFormVoiceState, VoiceInputMode, VoiceMode, VoiceModelRole } from '.
 export { AddSheetPage, ModelsSheetPage, SettingsSheetPage } from './sheet.enums';
 
 export { PromptDrift } from './prompt.enums';
+
+export { LibraryTab } from './library.enums';

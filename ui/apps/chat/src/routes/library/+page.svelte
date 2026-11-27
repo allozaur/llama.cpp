@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { Button } from '@ggml-org/llama-ui/ui/button';
+	import * as Tabs from '@ggml-org/llama-ui/ui/tabs';
 	import { Plus } from '@lucide/svelte';
-	import { LibraryPrompts, SearchInput } from '#lib/components/app/index.ts';
-	import { APP_NAME } from '#lib/constants/index.ts';
+	import { LibraryAttachments, LibraryPrompts, SearchInput } from '#lib/components/app/index.ts';
+	import { APP_NAME, LIBRARY_TABS } from '#lib/constants/index.ts';
+	import { LibraryTab } from '#lib/enums/index.ts';
 
+	let tab = $state(LibraryTab.PROMPTS);
 	let query = $state('');
 	let creatingPrompt = $state(false);
+
+	const searchPlaceholder = $derived(LIBRARY_TABS.find((entry) => entry.value === tab)?.search);
 </script>
 
 <svelte:head>
@@ -20,18 +25,45 @@
 			<h1 class="text-heading tracking-tight">Library</h1>
 
 			<p class="text-body-sm text-muted-foreground">
-				The prompts you reuse: send one in a chat, or use it as a chat's system message.
+				The prompts you reuse and the files of your chats, in one place.
 			</p>
 		</div>
 
-		<Button class="ml-auto shrink-0 gap-1.5" onclick={() => (creatingPrompt = true)} size="sm">
-			<Plus class="size-icon-md" />
+		{#if tab === LibraryTab.PROMPTS}
+			<Button class="ml-auto shrink-0 gap-1.5" onclick={() => (creatingPrompt = true)} size="sm">
+				<Plus class="size-icon-md" />
 
-			New prompt
-		</Button>
+				New prompt
+			</Button>
+		{/if}
 	</div>
 
-	<SearchInput bind:value={query} class="w-full sm:w-64" placeholder="Search prompts" size="sm" />
+	<Tabs.Root class="gap-6" onValueChange={(value) => (tab = value as LibraryTab)} value={tab}>
+		<div class="flex flex-wrap items-center gap-2">
+			<Tabs.List>
+				{#each LIBRARY_TABS as entry (entry.value)}
+					<Tabs.Trigger value={entry.value}>{entry.label}</Tabs.Trigger>
+				{/each}
+			</Tabs.List>
 
-	<LibraryPrompts bind:creating={creatingPrompt} {query} />
+			<SearchInput
+				bind:value={query}
+				class="ml-auto w-full sm:w-64"
+				placeholder={searchPlaceholder}
+				size="sm"
+			/>
+		</div>
+
+		<Tabs.Content value={LibraryTab.PROMPTS}>
+			<LibraryPrompts bind:creating={creatingPrompt} {query} />
+		</Tabs.Content>
+
+		<!-- a panel stays in the page while its tab is not shown, so what it holds is mounted only
+		     while it is: the files are read when the tab opens and dropped when it closes -->
+		<Tabs.Content value={LibraryTab.ATTACHMENTS}>
+			{#if tab === LibraryTab.ATTACHMENTS}
+				<LibraryAttachments {query} />
+			{/if}
+		</Tabs.Content>
+	</Tabs.Root>
 </div>
