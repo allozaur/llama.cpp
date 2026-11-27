@@ -19,6 +19,8 @@ import { render } from 'vitest-browser-svelte';
 
 const MCP_EXTENSION_ID = 'mcp';
 const BUILT_IN_COMMANDS = ['/cwd', '/model', '/compact', '/system-message'];
+/** What the MCP extension adds, listed before the built-in commands. */
+const MCP_COMMANDS = ['/prompt', '/skill'];
 const SERVER = { enabled: true, id: 'github', name: 'GitHub', url: 'https://mcp.example.com/mcp' };
 const PROMPTS: MCPPromptInfo[] = [
 	{ description: 'Review a pull request', name: 'code_review', serverName: 'github' },
@@ -130,7 +132,7 @@ describe('ChatForm with the MCP extension', () => {
 		await renderForm();
 		await userEvent.keyboard('/');
 
-		await expect.poll(commandNames).toEqual(['/prompt', ...BUILT_IN_COMMANDS]);
+		await expect.poll(commandNames).toEqual([...MCP_COMMANDS, ...BUILT_IN_COMMANDS]);
 		expect(pickerRows()[0].disabled).toBe(true);
 		expect(pickerRows()[0].textContent).toContain('Insert an MCP prompt');
 	});
@@ -140,7 +142,7 @@ describe('ChatForm with the MCP extension', () => {
 		await renderForm();
 		await userEvent.keyboard('/');
 
-		await expect.poll(commandNames).toEqual(['/prompt', ...BUILT_IN_COMMANDS]);
+		await expect.poll(commandNames).toEqual([...MCP_COMMANDS, ...BUILT_IN_COMMANDS]);
 		expect(pickerRows()[0].disabled).toBe(false);
 	});
 

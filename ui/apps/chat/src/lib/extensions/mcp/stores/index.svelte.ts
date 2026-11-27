@@ -15,6 +15,7 @@ import { MCPService } from '../services/mcp.service';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { MCPHealthCheckManager, type McpHealthHost } from './health.svelte';
 import { mcpResourceStore } from './resources.svelte';
+import { type McpSkillsHost, McpSkillsStore } from './skills.svelte';
 import type { ListChangedHandlers } from '@modelcontextprotocol/client';
 import { SETTINGS_KEYS } from '#lib/constants/index.ts';
 import {
@@ -58,7 +59,7 @@ import {
 import { browser } from '$app/env';
 import { mode } from 'mode-watcher';
 
-class MCPStore implements McpHealthHost {
+class MCPStore implements McpHealthHost, McpSkillsHost {
 	private _error = $state<string | null>(null);
 	private _isInitializing = $state(false);
 	private _toolCount = $state(0);
@@ -73,6 +74,8 @@ class MCPStore implements McpHealthHost {
 	private reconnectingServers = new Set<string>(); // Guard against concurrent reconnections
 	private serverConfigs = new Map<string, MCPServerConfig>(); // Store configs for reconnection
 	private serversCache: { raw: unknown; servers: MCPServerSettingsEntry[] } | null = null;
+	// the skills the servers publish: listings, approvals and verified reads
+	private skillsStore = new McpSkillsStore(this);
 	private toolsIndex = new Map<string, string>();
 
 	get availableTools(): string[] {
@@ -119,6 +122,11 @@ class MCPStore implements McpHealthHost {
 	/** Resource state, composed here so consumers have a single MCP scope. */
 	get resources() {
 		return mcpResourceStore;
+	}
+
+	/** Skill state, composed here so consumers have a single MCP scope. */
+	get skills() {
+		return this.skillsStore;
 	}
 
 	get toolCount(): number {
@@ -317,6 +325,18 @@ class MCPStore implements McpHealthHost {
 	}
 
 	/**
+	 * A live connection to an enabled server, opened when there is none.
+	 * Undefined when the server is off or cannot be reached.
+	 */
+	async connectionFor(serverId: string): Promise<MCPConnection | undefined> {
+		const existing = this.connections.get(serverId);
+
+		if (existing) return existing;
+
+		return (await this.ensureInitialized()) ? this.connections.get(serverId) : undefined;
+	}
+
+	/**
 	 * Convert current resource attachments to DatabaseMessageExtra[] and clear them.
 	 * Called during message send to persist resources with the user message.
 	 */
@@ -340,6 +360,8 @@ class MCPStore implements McpHealthHost {
 		if (!connection) return;
 
 		this.connections.delete(serverId);
+		// another account may be shown other skills
+		this.skillsStore.clearListings(serverId);
 
 		for (const [toolName, ownerServer] of this.toolsIndex.entries()) {
 			if (ownerServer === serverId) this.toolsIndex.delete(toolName);
@@ -897,6 +919,17 @@ class MCPStore implements McpHealthHost {
 		});
 	}
 
+	/** Whether a server publishes skills, by its live connection or its last health check. */
+	publishesSkills(serverId: string): boolean {
+		const connection = this.connections.get(serverId);
+
+		if (connection) return MCPService.supportsSkills(connection);
+
+		const health = this.health.getState(serverId);
+
+		return health.status === HealthCheckStatus.SUCCESS && !!health.capabilities?.server.skills;
+	}
+
 	/**
 	 * Read resource content from a server.
 	 * Caches the result in mcpResourceStore.
@@ -1014,6 +1047,7 @@ class MCPStore implements McpHealthHost {
 			JSON.stringify(servers.filter((s) => s.id !== id))
 		);
 		this.clearHealthCheck(id);
+		this.skillsStore.forgetServer(id);
 	}
 
 	async runHealthCheck(server: HealthCheckParams, promoteToActive = false): Promise<void> {
@@ -1038,6 +1072,9 @@ class MCPStore implements McpHealthHost {
 			await this.initPromise.catch(() => {});
 			this.initPromise = null;
 		}
+
+		// the servers connect afresh, maybe as another account: their skills are listed again
+		this.skillsStore.clearListings();
 
 		if (this.connections.size === 0) {
 			// nothing to close, but a reconnect loop may still be waiting on these

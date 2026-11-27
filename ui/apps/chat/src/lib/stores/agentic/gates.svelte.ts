@@ -8,6 +8,7 @@
  */
 
 import { ToolPermissionDecision } from '#lib/enums/index.ts';
+import type { ToolProviderCall } from '#lib/extensions/index.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { permissionsStore } from '#lib/stores/permissions.svelte.ts';
 import { toolsStore } from '#lib/stores/tools.svelte.ts';
@@ -128,20 +129,32 @@ export class AgenticGates {
 		});
 	}
 
+	/**
+	 * Ask the user before a tool call runs, unless it was allowed for good. A
+	 * call whose provider gives it a permission of its own (one skill, where
+	 * the tool loads any) is asked for that, and the provider keeps the answer.
+	 */
 	async requestPermission(
 		conversationId: string,
-		toolName: string,
+		call: ToolProviderCall,
 		serverLabel: string,
-		toolCallId: string,
 		signal?: AbortSignal
 	): Promise<ToolPermissionDecision> {
+		const toolName = call.name;
+		const permission = await toolsStore.callPermission(call);
 		const permissionKey = toolsStore.getPermissionKey(toolName);
+		const isGranted = permission
+			? permission.isGranted
+			: permissionKey !== null && permissionsStore.hasTool(permissionKey);
 
-		if (permissionKey && permissionsStore.hasTool(permissionKey)) {
-			return ToolPermissionDecision.ONCE;
-		}
+		if (isGranted) return ToolPermissionDecision.ONCE;
 
-		this.pendingPermissions.set(conversationId, { serverLabel, toolCallId, toolName });
+		this.pendingPermissions.set(conversationId, {
+			permission,
+			serverLabel: permission?.source ?? serverLabel,
+			toolCallId: call.id,
+			toolName
+		});
 
 		return new Promise<ToolPermissionDecision>((resolve) => {
 			if (signal?.aborted) {
@@ -154,7 +167,11 @@ export class AgenticGates {
 			this.permissionResolvers.set(conversationId, (decision) => {
 				this.pendingPermissions.set(conversationId, null);
 
-				if (decision === ToolPermissionDecision.ALWAYS && permissionKey) {
+				if (permission) {
+					if (decision !== ToolPermissionDecision.DENY) {
+						permission.allow(decision !== ToolPermissionDecision.ONCE);
+					}
+				} else if (decision === ToolPermissionDecision.ALWAYS && permissionKey) {
 					permissionsStore.allowTool(permissionKey);
 				} else if (decision === ToolPermissionDecision.ALWAYS_SERVER) {
 					const serverToolKeys = toolsStore.allTools

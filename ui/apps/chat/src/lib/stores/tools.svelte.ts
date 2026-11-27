@@ -22,8 +22,10 @@ import {
 import { BuiltInTool, GlobSearchType, type ServerToolType, ToolSource } from '#lib/enums/index.ts';
 import {
 	extensions,
+	type ToolCallPermission,
 	type ToolGroupIdentityProps,
-	type ToolProvider
+	type ToolProvider,
+	type ToolProviderCall
 } from '#lib/extensions/index.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
@@ -98,10 +100,11 @@ class ToolsStore {
 		}
 
 		for (const provider of this.providers) {
-			for (const { definition, groupId, groupLabel } of provider.entries()) {
+			for (const { callPermission, definition, groupId, groupLabel } of provider.entries()) {
 				const name = definition.function.name;
 
 				push({
+					callPermission,
 					definition,
 					key: this.getToolKey(provider.source, name, groupId),
 					serverId: groupId,
@@ -241,6 +244,20 @@ class ToolsStore {
 		}
 
 		return groups;
+	}
+
+	/**
+	 * The permission this call needs in place of its tool's, when its provider has one.
+	 * A provider that fails to say leaves the call to the tool permission.
+	 */
+	async callPermission(call: ToolProviderCall): Promise<ToolCallPermission | undefined> {
+		try {
+			return await this.findEntryByName(call.name)?.callPermission?.(call);
+		} catch (error) {
+			console.warn(`[ToolsStore] No call permission for ${call.name}:`, error);
+
+			return undefined;
+		}
 	}
 
 	/** Enable several tools or tool groups by key, in one write */

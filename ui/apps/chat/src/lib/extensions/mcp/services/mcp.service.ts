@@ -12,6 +12,7 @@ import {
 	McpOAuthProvider,
 	McpSignInRequiredError
 } from '../oauth/provider';
+import { MCP_SKILLS_EXTENSION_ID } from '../skills/constants';
 import type {
 	Client,
 	GetPromptResult,
@@ -21,6 +22,12 @@ import type {
 	Tool,
 	Transport
 } from '@modelcontextprotocol/client';
+import type {
+	Skill,
+	SkillFile,
+	SkillListing,
+	SkillVerificationReason
+} from '@modelcontextprotocol/client/ext/skills';
 import {
 	CORS_PROXY,
 	CORS_PROXY_ENDPOINT,
@@ -52,6 +59,7 @@ import type {
 	MCPResourceTemplate,
 	MCPServerConfig,
 	MCPServerInfo,
+	ServerCapabilities,
 	ToolCallParams,
 	ToolExecutionResult
 } from '#lib/types/index.ts';
@@ -73,10 +81,14 @@ import {
 } from '#lib/utils/index.ts';
 
 type McpSdk = typeof import('./mcp-sdk');
+type McpSkillsSdk = typeof import('./mcp-skills-sdk');
 
 // the SDK's runtime, set once loadSdk() resolved: a connection exists only after that
 let sdk: McpSdk | undefined;
 let sdkLoading: Promise<McpSdk> | undefined;
+// the Skills extension of the SDK, loaded for the first server that publishes skills
+let skillsSdk: McpSkillsSdk | undefined;
+let skillsSdkLoading: Promise<McpSkillsSdk> | undefined;
 
 function loadedSdk(): McpSdk {
 	if (!sdk) throw new Error('The MCP SDK is not loaded yet, call MCPService.loadSdk() first');
@@ -729,6 +741,16 @@ export class MCPService {
 	}
 
 	/**
+	 * Whether a server's capabilities declare the Skills extension. Reads the capability
+	 * only, so asking does not load the SDK's skills module.
+	 */
+	static declaresSkills(capabilities: ServerCapabilities | undefined): boolean {
+		const declared = capabilities?.extensions?.[MCP_SKILLS_EXTENSION_ID];
+
+		return typeof declared === 'object' && declared !== null;
+	}
+
+	/**
 	 * Disconnect from a server.
 	 * Clears the `onclose` handler to prevent reconnection attempts on voluntary disconnect.
 	 *
@@ -786,6 +808,23 @@ export class MCPService {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * Get the entry of one skill by the URI of its SKILL.md, listed or not.
+	 *
+	 * @param connection - The MCP connection to use
+	 * @param uri - The URI of the skill's SKILL.md
+	 * @returns The skill's entry
+	 * @throws {Error} If the server serves no skill at the URI
+	 */
+	static async getSkill(connection: MCPConnection, uri: string): Promise<Skill> {
+		const { SkillsClient } = await this.loadSkillsSdk();
+		const { skill } = await new SkillsClient(connection.client).get(uri, {
+			timeout: connection.requestTimeoutMs
+		});
+
+		return skill;
 	}
 
 	/**
@@ -924,6 +963,22 @@ export class MCPService {
 	}
 
 	/**
+	 * List the skills a server publishes (handles pagination automatically).
+	 * An entry the SDK finds invalid is left out, so it does not hide the others.
+	 *
+	 * @param connection - The MCP connection to query
+	 * @returns The valid entries, with the `ttlMs` the server set where it set one
+	 * @throws {Error} If the listing fails
+	 */
+	static async listSkills(connection: MCPConnection): Promise<SkillListing> {
+		const { SkillsClient } = await this.loadSkillsSdk();
+
+		return new SkillsClient(connection.client, { skipInvalid: true }).list(undefined, {
+			timeout: connection.requestTimeoutMs
+		});
+	}
+
+	/**
 	 * List tools from a connection.
 	 * Silently returns empty array on failure (logged as warning).
 	 *
@@ -965,6 +1020,25 @@ export class MCPService {
 		);
 
 		return sdkLoading;
+	}
+
+	/**
+	 * Load the SDK's Skills extension, once: only a server that publishes skills needs it.
+	 *
+	 * @returns The skills client and its verification error
+	 */
+	static loadSkillsSdk(): Promise<McpSkillsSdk> {
+		skillsSdkLoading ??= import('./mcp-skills-sdk').then(
+			(module) => (skillsSdk = module),
+			(error) => {
+				// a failed chunk download may succeed on the next call
+				skillsSdkLoading = undefined;
+
+				throw error;
+			}
+		);
+
+		return skillsSdkLoading;
 	}
 
 	/**
@@ -1021,6 +1095,29 @@ export class MCPService {
 	}
 
 	/**
+	 * Read one file of a skill and verify it against the skill's entry: the file is listed
+	 * there, its size and digest match, and for SKILL.md the frontmatter equals the entry's.
+	 * The file is asked from this connection only, so a skill cannot reach another server.
+	 *
+	 * @param connection - The connection to the server the skill came from
+	 * @param skill - The skill's entry, from a listing or from getSkill()
+	 * @param ref - A file of the skill, by its path in the skill or its URI; SKILL.md when left out
+	 * @returns The verified file
+	 * @throws {SkillVerificationError} If a check fails, see unverifiedSkillFile()
+	 */
+	static async readSkillFile(
+		connection: MCPConnection,
+		skill: Skill,
+		ref?: string
+	): Promise<SkillFile> {
+		const { SkillsClient } = await this.loadSkillsSdk();
+
+		return new SkillsClient(connection.client).read(skill, ref, {
+			timeout: connection.requestTimeoutMs
+		});
+	}
+
+	/**
 	 * Subscribe to updates for a resource.
 	 * The server will send notifications/resources/updated when the resource changes.
 	 * @param connection - The MCP connection to use
@@ -1069,6 +1166,16 @@ export class MCPService {
 	}
 
 	/**
+	 * Check if a connection's server publishes skills (the Skills extension, SEP-2640).
+	 *
+	 * @param connection - The MCP connection to check
+	 * @returns Whether the server declares the extension
+	 */
+	static supportsSkills(connection: MCPConnection): boolean {
+		return this.declaresSkills(connection.serverCapabilities);
+	}
+
+	/**
 	 * Unsubscribe from updates for a resource.
 	 * @param connection - The MCP connection to use
 	 * @param uri - The URI of the resource to unsubscribe from
@@ -1093,6 +1200,17 @@ export class MCPService {
 
 			throw error;
 		}
+	}
+
+	/**
+	 * Why a skill file was refused, when the error is a failed verification: the file is not
+	 * listed in the skill (`unlisted`), or it is not what the entry says (`size`, `digest`,
+	 * `frontmatter`). Undefined for any other error.
+	 */
+	static unverifiedSkillFile(error: unknown): SkillVerificationReason | undefined {
+		return skillsSdk && error instanceof skillsSdk.SkillVerificationError
+			? error.reason
+			: undefined;
 	}
 
 	private static addRequestHeaders(

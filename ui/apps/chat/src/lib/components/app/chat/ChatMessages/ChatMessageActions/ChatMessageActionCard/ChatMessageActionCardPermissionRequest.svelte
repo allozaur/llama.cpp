@@ -7,6 +7,7 @@
 	import { ChatMessageActionCard } from '#lib/components/app/index.ts';
 	import { TOOL_SERVER_LABELS } from '#lib/constants/index.ts';
 	import { ToolPermissionDecision, ToolSource } from '#lib/enums/index.ts';
+	import type { ToolCallPermission } from '#lib/extensions/index.ts';
 	import { toolsStore } from '#lib/stores/index.ts';
 
 	interface Props {
@@ -17,15 +18,21 @@
 		 * show the model's own description of it, which is not what gets executed.
 		 */
 		command?: string;
+		/**
+		 * What the call asks for in place of its tool, e.g. one skill: the card
+		 * names it, shows its detail, and offers to allow it for good.
+		 */
+		permission?: ToolCallPermission;
 		onDecision: (decision: ToolPermissionDecision) => void;
 	}
 
-	let { command, onDecision, serverLabel, toolName }: Props = $props();
+	let { command, onDecision, permission, serverLabel, toolName }: Props = $props();
 </script>
 
 <ChatMessageActionCard icon={ShieldQuestion}>
 	{#snippet message()}
-		Allow use of <span class="font-semibold">{toolName}</span>{#if serverLabel}
+		Allow use of <span class="font-semibold">{permission?.subject ?? toolName}</span
+		>{#if serverLabel}
 			&nbsp;from <span class="font-semibold">{serverLabel}</span>{/if}?
 	{/snippet}
 
@@ -33,6 +40,14 @@
 		{#if command}
 			<pre
 				class="mb-3 max-h-40 overflow-auto rounded-md bg-(--surface-code) px-3 py-2 font-mono text-caption whitespace-pre-wrap break-words">{command}</pre>
+		{/if}
+
+		{#if permission?.detail}
+			{@const Detail = permission.detail.component}
+
+			<div class="mb-3">
+				<Detail {...permission.detail.props} />
+			</div>
 		{/if}
 	{/snippet}
 
@@ -57,26 +72,33 @@
 			</ButtonGroup.Root>
 
 			<DropdownMenu.Content align="start" class="min-w-32">
-				<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS)}>
-					Always allow <pre>{toolName}</pre>
-					tool
-				</DropdownMenu.Item>
-
-				{#if serverLabel}
-					<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS_SERVER)}>
-						Always allow all tools from {serverLabel}
+				{#if permission}
+					<!-- asked for one by one: nothing here allows the whole tool or its server -->
+					<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS)}>
+						{permission.alwaysLabel}
 					</DropdownMenu.Item>
 				{:else}
-					{@const source = toolsStore.getToolSource(toolName)}
-					{@const providerName =
-						source === ToolSource.SERVER
-							? TOOL_SERVER_LABELS[ToolSource.SERVER]
-							: source === ToolSource.CUSTOM
-								? TOOL_SERVER_LABELS[ToolSource.CUSTOM]
-								: 'MCP Tools'}
-					<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS_SERVER)}>
-						Approve all tools from {providerName}
+					<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS)}>
+						Always allow <pre>{toolName}</pre>
+						tool
 					</DropdownMenu.Item>
+
+					{#if serverLabel}
+						<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS_SERVER)}>
+							Always allow all tools from {serverLabel}
+						</DropdownMenu.Item>
+					{:else}
+						{@const source = toolsStore.getToolSource(toolName)}
+						{@const providerName =
+							source === ToolSource.SERVER
+								? TOOL_SERVER_LABELS[ToolSource.SERVER]
+								: source === ToolSource.CUSTOM
+									? TOOL_SERVER_LABELS[ToolSource.CUSTOM]
+									: 'MCP Tools'}
+						<DropdownMenu.Item onclick={() => onDecision(ToolPermissionDecision.ALWAYS_SERVER)}>
+							Approve all tools from {providerName}
+						</DropdownMenu.Item>
+					{/if}
 				{/if}
 			</DropdownMenu.Content>
 		</DropdownMenu.Root>

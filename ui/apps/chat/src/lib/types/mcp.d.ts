@@ -52,6 +52,8 @@ export interface MCPCapabilitiesInfo {
 		tools?: { listChanged?: boolean };
 		prompts?: { listChanged?: boolean };
 		resources?: { subscribe?: boolean; listChanged?: boolean };
+		/** The server publishes skills (the Skills extension, SEP-2640). */
+		skills?: boolean;
 		logging?: boolean;
 		completions?: boolean;
 		tasks?: boolean;

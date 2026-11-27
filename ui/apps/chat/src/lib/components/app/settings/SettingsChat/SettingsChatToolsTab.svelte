@@ -120,17 +120,20 @@
 								</div>
 
 								<div class="flex w-20 shrink-0 justify-center">
-									<Checkbox
-										checked={isAlwaysAllowed}
-										class={ICON_CLASS_DEFAULT}
-										onCheckedChange={() => {
-											if (isAlwaysAllowed) {
-												permissionsStore.revokeTool(permissionKey);
-											} else {
-												permissionsStore.allowTool(permissionKey);
-											}
-										}}
-									/>
+									<!-- a tool whose calls each ask for what they load has no permission to set -->
+									{#if !entry.callPermission}
+										<Checkbox
+											checked={isAlwaysAllowed}
+											class={ICON_CLASS_DEFAULT}
+											onCheckedChange={() => {
+												if (isAlwaysAllowed) {
+													permissionsStore.revokeTool(permissionKey);
+												} else {
+													permissionsStore.allowTool(permissionKey);
+												}
+											}}
+										/>
+									{/if}
 								</div>
 
 								<div class="w-32 shrink-0">

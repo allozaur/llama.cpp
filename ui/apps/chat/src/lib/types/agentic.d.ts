@@ -17,6 +17,7 @@ import type {
 } from './database';
 import type { MessageRole, ToolSource } from '#lib/enums/index.ts';
 import { AgenticSectionType, ContinueIntentKind, ToolCallType } from '#lib/enums/index.ts';
+import type { ToolCallPermission } from '#lib/extensions/points/tools.ts';
 
 /**
  * Agentic orchestration configuration.
@@ -72,6 +73,8 @@ export type AgenticChatCompletionRequest = Omit<ApiChatCompletionRequest, 'messa
  * card can show what would run, not a same-named call sitting next to it.
  */
 export interface PendingPermissionRequest {
+	/** What the call asks for in place of its tool, when its provider says so: one skill, say. */
+	permission?: ToolCallPermission;
 	serverLabel: string;
 	toolCallId: string;
 	toolName: string;

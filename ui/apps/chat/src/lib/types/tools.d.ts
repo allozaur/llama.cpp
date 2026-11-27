@@ -1,5 +1,6 @@
 import type { OpenAIToolDefinition } from './mcp';
 import type { ToolSource } from '#lib/enums/index.ts';
+import type { ToolProviderEntry } from '#lib/extensions/points/tools.ts';
 import type { Component } from 'svelte';
 
 /**
@@ -13,6 +14,8 @@ export interface ToolUiEntry {
 
 export interface ToolEntry {
 	source: ToolSource;
+	/** The permission one call needs, in place of the tool's own: no tool permission to ask or to set */
+	callPermission?: ToolProviderEntry['callPermission'];
 	/** For a tool listed under a group, the group's display name (an MCP server's label) */
 	serverName?: string;
 	/** For a tool listed under a group, the group's id (an MCP server's id), part of the keys */
