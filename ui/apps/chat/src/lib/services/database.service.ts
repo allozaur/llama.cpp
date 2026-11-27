@@ -8,14 +8,17 @@
 
 import {
 	IDXDB_STORE_SCHEMAS,
+	IDXDB_STORES_MEMORY,
 	IDXDB_STORES_V1,
 	IDXDB_TABLES,
 	IDXDB_VERSION,
 	IDXDB_VERSION_GROUPS,
+	IDXDB_VERSION_PROMPTS,
 	STORAGE_APP_NAME
 } from '#lib/constants/index.ts';
 import { MessageRole } from '#lib/enums/index.ts';
 import type {
+	DatabaseMemoryEntry,
 	DatabaseMessageExtra,
 	DatabasePrompt,
 	ExportedConversation,
@@ -28,6 +31,7 @@ import Dexie, { type EntityTable } from 'dexie';
 class LlamaUiDatabase extends Dexie {
 	[IDXDB_TABLES.conversations]!: EntityTable<DatabaseConversation, string>;
 	[IDXDB_TABLES.groups]!: EntityTable<Group, 'id'>;
+	[IDXDB_TABLES.memoryEntries]!: EntityTable<DatabaseMemoryEntry, 'name'>;
 	[IDXDB_TABLES.messages]!: EntityTable<DatabaseMessage, string>;
 	[IDXDB_TABLES.prompts]!: EntityTable<DatabasePrompt, 'id'>;
 
@@ -38,9 +42,10 @@ class LlamaUiDatabase extends Dexie {
 		this.version(IDXDB_VERSION_GROUPS).stores({
 			[IDXDB_TABLES.groups]: IDXDB_STORE_SCHEMAS.groups
 		});
-		this.version(IDXDB_VERSION).stores({
+		this.version(IDXDB_VERSION_PROMPTS).stores({
 			[IDXDB_TABLES.prompts]: IDXDB_STORE_SCHEMAS.prompts
 		});
+		this.version(IDXDB_VERSION).stores(IDXDB_STORES_MEMORY);
 	}
 }
 
@@ -140,6 +145,13 @@ export class DatabaseService {
 		});
 
 		return result;
+	}
+
+	/**
+	 * Removes every memory entry.
+	 */
+	static async clearMemoryEntries(): Promise<void> {
+		await db[IDXDB_TABLES.memoryEntries].clear();
 	}
 
 	/**
@@ -372,6 +384,21 @@ export class DatabaseService {
 					});
 			}
 		);
+	}
+
+	/**
+	 * Removes one memory entry.
+	 *
+	 * @returns False when the entry did not exist
+	 */
+	static async deleteMemoryEntry(name: string): Promise<boolean> {
+		const entry = await db[IDXDB_TABLES.memoryEntries].get(name);
+
+		if (!entry) return false;
+
+		await db[IDXDB_TABLES.memoryEntries].delete(name);
+
+		return true;
 	}
 
 	/**
@@ -646,6 +673,20 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Returns every memory entry, sorted by name.
+	 */
+	static async getMemoryEntries(): Promise<DatabaseMemoryEntry[]> {
+		return db[IDXDB_TABLES.memoryEntries].orderBy('name').toArray();
+	}
+
+	/**
+	 * Returns one memory entry, or undefined when it does not exist.
+	 */
+	static async getMemoryEntry(name: string): Promise<DatabaseMemoryEntry | undefined> {
+		return db[IDXDB_TABLES.memoryEntries].get(name);
+	}
+
+	/**
 	 * Imports multiple conversations and their messages.
 	 * Skips conversations that already exist.
 	 *
@@ -723,6 +764,21 @@ export class DatabaseService {
 	}
 
 	/**
+	 * Runs a scope in a read-write transaction on the memory entries table,
+	 * keeping a read-modify-write atomic under parallel tool calls.
+	 */
+	static async memoryTransaction<T>(scope: () => Promise<T>): Promise<T> {
+		return db.transaction('rw', db[IDXDB_TABLES.memoryEntries], scope);
+	}
+
+	/**
+	 * Creates or replaces one memory entry.
+	 */
+	static async putMemoryEntry(entry: DatabaseMemoryEntry): Promise<void> {
+		await db[IDXDB_TABLES.memoryEntries].put(entry);
+	}
+
+	/**
 	 * Toggles the pinned status of a conversation.
 	 *
 	 * @param id - Conversation ID
@@ -741,6 +797,14 @@ export class DatabaseService {
 
 		return newPinnedState;
 	}
+
+	/**
+	 *
+	 *
+	 * Memory entries
+	 *
+	 *
+	 */
 
 	/**
 	 * Updates a conversation. `lastModified` is never stamped implicitly;

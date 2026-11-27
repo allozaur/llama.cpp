@@ -2,6 +2,7 @@ import { DEFAULT_AGENTIC_CONFIG } from './agentic.constants';
 import { CLI_FLAGS } from './cli-flags.constants';
 import { COMPACTION } from './compaction.constants';
 import { DEFAULT_MCP_CONFIG } from './mcp.constants';
+import { MEMORY_ENTRY_LIMIT_BYTES_DEFAULT, MEMORY_GROUPS_DEFAULT } from './memory';
 import { SETTINGS_KEYS } from './settings-keys.constants';
 import { PDF_RENDERING } from './supported-file-types.constants';
 import { TITLE_GENERATION } from './title-generation.constants';
@@ -11,6 +12,7 @@ import { TOOL_CALL_SHOWN_ARG_DEFAULT } from '@ggml-org/llama-harness';
 import { VOICE_MICROPHONE_AUTO } from '@ggml-org/llama-voice';
 import AudioLines from '@lucide/svelte/icons/audio-lines';
 import Blocks from '@lucide/svelte/icons/blocks';
+import Brain from '@lucide/svelte/icons/brain';
 import Code from '@lucide/svelte/icons/code';
 import Database from '@lucide/svelte/icons/database';
 import Funnel from '@lucide/svelte/icons/funnel';
@@ -43,6 +45,7 @@ export const SETTINGS_SECTIONS = {
 	EXTENSIONS: { slug: 'extensions', title: 'Extensions' },
 	GENERAL: { slug: 'general', title: 'General' },
 	IMPORT_EXPORT: { slug: 'import-export', title: 'Import/Export' },
+	MEMORY: { slug: 'memory', title: 'Memory' },
 	SAMPLING_PENALTIES: { slug: 'sampling-penalties', title: 'Sampling & Penalties' },
 	TOOLS: { slug: 'tools', title: 'Tools' },
 	VOICE: { slug: 'voice', title: 'Voice' }
@@ -56,6 +59,7 @@ export const SETTINGS_SECTION_SLUGS = {
 	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.slug,
 	GENERAL: SETTINGS_SECTIONS.GENERAL.slug,
 	IMPORT_EXPORT: SETTINGS_SECTIONS.IMPORT_EXPORT.slug,
+	MEMORY: SETTINGS_SECTIONS.MEMORY.slug,
 	SAMPLING_PENALTIES: SETTINGS_SECTIONS.SAMPLING_PENALTIES.slug,
 	TOOLS: SETTINGS_SECTIONS.TOOLS.slug,
 	VOICE: SETTINGS_SECTIONS.VOICE.slug
@@ -69,6 +73,7 @@ export const SETTINGS_SECTION_TITLES = {
 	EXTENSIONS: SETTINGS_SECTIONS.EXTENSIONS.title,
 	GENERAL: SETTINGS_SECTIONS.GENERAL.title,
 	IMPORT_EXPORT: SETTINGS_SECTIONS.IMPORT_EXPORT.title,
+	MEMORY: SETTINGS_SECTIONS.MEMORY.title,
 	SAMPLING_PENALTIES: SETTINGS_SECTIONS.SAMPLING_PENALTIES.title,
 	TOOLS: SETTINGS_SECTIONS.TOOLS.title,
 	VOICE: SETTINGS_SECTIONS.VOICE.title
@@ -599,6 +604,40 @@ export const SETTINGS_REGISTRY: SettingsSectionEntry[] = [
 		settings: [],
 		slug: SETTINGS_SECTION_SLUGS.EXTENSIONS,
 		title: SETTINGS_SECTION_TITLES.EXTENSIONS
+	},
+	// Memory
+	{
+		icon: Brain,
+		settings: [
+			{
+				defaultValue: false,
+				help: 'Expose memory_open, memory_write and memory_drop tools to the model. Entries persist in the browser IndexedDB and are shared across conversations.',
+				key: SETTINGS_KEYS.MEMORY_ENABLED,
+				label: 'Memory tools',
+				type: SettingsFieldType.CHECKBOX
+			},
+			{
+				defaultValue: MEMORY_GROUPS_DEFAULT,
+				dependsOn: SETTINGS_KEYS.MEMORY_ENABLED,
+				help: 'Comma separated list of entry groups. An entry name is group/slug, lowercase alphanumerics and dashes.',
+				key: SETTINGS_KEYS.MEMORY_GROUPS,
+				label: 'Groups',
+				placeholder: MEMORY_GROUPS_DEFAULT,
+				type: SettingsFieldType.INPUT
+			},
+			{
+				defaultValue: MEMORY_ENTRY_LIMIT_BYTES_DEFAULT,
+				dependsOn: SETTINGS_KEYS.MEMORY_ENABLED,
+				help: 'A write that would push an entry past this size is refused.',
+				isPositiveInteger: true,
+				key: SETTINGS_KEYS.MEMORY_ENTRY_LIMIT_BYTES,
+				label: 'Entry size limit (bytes)',
+				placeholder: `${MEMORY_ENTRY_LIMIT_BYTES_DEFAULT}`,
+				type: SettingsFieldType.INPUT
+			}
+		],
+		slug: SETTINGS_SECTION_SLUGS.MEMORY,
+		title: SETTINGS_SECTION_TITLES.MEMORY
 	},
 	// Import/Export
 	{

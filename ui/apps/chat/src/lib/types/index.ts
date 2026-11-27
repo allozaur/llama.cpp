@@ -90,6 +90,7 @@ export type {
 export type {
 	McpServerOverride,
 	DatabaseConversation,
+	DatabaseMemoryEntry,
 	DatabasePrompt,
 	DatabaseMessageExtraAudioFile,
 	DatabaseMessageExtraVideoFile,
@@ -104,6 +105,7 @@ export type {
 	DatabaseMessage,
 	ExportedConversation,
 	ExportedConversations,
+	ExportedMemory,
 	PromptLink
 } from './database';
 

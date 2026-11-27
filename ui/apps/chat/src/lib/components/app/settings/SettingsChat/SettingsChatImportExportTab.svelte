@@ -72,6 +72,7 @@
 	let messageCountMap = $state<Map<string, number>>(new Map());
 
 	let showDeleteDialog = $state(false);
+	let showMemoryDeleteDialog = $state(false);
 
 	async function handleExport() {
 		try {
@@ -335,4 +336,16 @@
 	onConfirm={handleDeleteAllConfirm}
 	title={TEXT.DELETE_ALL}
 	variant="destructive"
+/>
+
+<DialogConfirmation
+	bind:open={showMemoryDeleteDialog}
+	title="Delete all memory"
+	description="Are you sure you want to delete all memory entries? This action cannot be undone and will permanently remove everything the model has memorized."
+	confirmText="Delete All"
+	cancelText="Cancel"
+	variant="destructive"
+	icon={Trash2}
+	onConfirm={handleMemoryDeleteAllConfirm}
+	onCancel={handleMemoryDeleteAllCancel}
 />

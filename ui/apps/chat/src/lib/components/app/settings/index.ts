@@ -51,6 +51,7 @@ export { default as SettingsResetButton } from './SettingsResetButton.svelte';
  * Provides UI for importing and exporting chat conversations.
  */
 export { default as SettingsChatImportExportTab } from './SettingsChat/SettingsChatImportExportTab.svelte';
+export { default as SettingsChatMemoryEntries } from './SettingsChat/SettingsChatMemoryEntries.svelte';
 
 /**
  * Settings Connectors panel.
