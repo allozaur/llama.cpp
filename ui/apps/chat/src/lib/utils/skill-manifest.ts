@@ -18,6 +18,10 @@ const CARRIAGE_RETURN = '\r';
 const BLOCK_SCALAR_MARKS = ['>', '|'];
 const QUOTES = ['"', "'"];
 const READ_KEYS: readonly (keyof SkillFrontmatter)[] = ['description', 'name'];
+/** The hash a SKILL.md is bound to an approval by. */
+const DIGEST_ALGORITHM = 'SHA-256';
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
 
 /** The lines of the frontmatter, and the line the instructions start at. Without a frontmatter, none and 0. */
 function frontmatterOf(lines: string[]): { end: number; frontmatter: string[] } {
@@ -90,4 +94,23 @@ export function skillInstructions(text: string): string {
 	const lines = linesOf(text);
 
 	return lines.slice(frontmatterOf(lines).end).join(LINE_BREAK).trim();
+}
+
+/**
+ * The digest of a SKILL.md, as hex: what an approval of the skill is bound to, so
+ * a skill whose text changed is asked for again. Throws where the page has no
+ * WebCrypto, which it has only on https or localhost.
+ */
+export async function skillDigest(text: string): Promise<string> {
+	if (!globalThis.crypto?.subtle) {
+		throw new Error(
+			'Skills need a page served over https or from localhost: this browser cannot verify them here.'
+		);
+	}
+
+	const hash = await crypto.subtle.digest(DIGEST_ALGORITHM, new TextEncoder().encode(text));
+
+	return [...new Uint8Array(hash)]
+		.map((byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, '0'))
+		.join('');
 }

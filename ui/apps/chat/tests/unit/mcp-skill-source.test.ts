@@ -1,6 +1,7 @@
 // MCP servers are a source of skills through the skillSources extension point: the
 // skills they publish are listed with their server, and one's SKILL.md is read
-// verified, without loading it for the model.
+// verified, without loading it for the model. A chat attaches one, and the core's
+// skill tools ask for one and load it, through the same source.
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,14 +9,20 @@ vi.mock('#lib/extensions/mcp/stores/index.svelte.ts', () => ({
 	mcpStore: {
 		ensureInitialized: vi.fn(),
 		getServerDisplayName: vi.fn(),
-		skills: { list: vi.fn(), read: vi.fn() }
+		getServerFavicon: vi.fn(),
+		skills: { allow: vi.fn(), list: vi.fn(), load: vi.fn(), permissionFor: vi.fn(), read: vi.fn() }
 	}
 }));
 vi.mock('#lib/extensions/mcp/tools.ts', () => ({ skillServersInUse: vi.fn() }));
 vi.mock('#lib/extensions/mcp/components/McpLogo.svelte', () => ({ default: () => {} }));
+vi.mock('#lib/extensions/mcp/components/skills/McpSkillPermissionDetail.svelte', () => ({
+	default: () => {}
+}));
+vi.mock('#lib/extensions/mcp/composer-skills.ts', () => ({ attachSkill: vi.fn() }));
 
 import type { Skill } from '@modelcontextprotocol/client/ext/skills';
 import type { ExtensionContext, SkillSource } from '#lib/extensions/index.ts';
+import { attachSkill } from '#lib/extensions/mcp/composer-skills.ts';
 import { contributeSkillSource } from '#lib/extensions/mcp/skills/source.ts';
 import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { skillServersInUse } from '#lib/extensions/mcp/tools.ts';
@@ -26,6 +33,8 @@ function skill(name: string, uri: string): Skill {
 
 const HF_MEM = skill('hf-mem', 'skill://hf-mem');
 const HF_CLI = skill('hf-cli', 'skill://hf-cli');
+// its files are made on demand: listed, but not offered to the model
+const DAILY = { ...skill('daily', 'skill://daily'), resources: 'dynamic' } as Skill;
 // the same URI on another server is another skill
 const OTHER = skill('hf-mem', 'skill://hf-mem');
 
@@ -59,23 +68,90 @@ describe('MCP as a source of skills', () => {
 		);
 	});
 
+	it('is on offer while a server in use publishes skills', () => {
+		const source = activate();
+
+		expect(source.isAvailable()).toBe(true);
+
+		vi.mocked(skillServersInUse).mockReturnValue([]);
+
+		expect(source.isAvailable()).toBe(false);
+	});
+
+	it('marks a skill whose files are made on demand as one that cannot be verified', async () => {
+		vi.mocked(mcpStore.skills.list).mockResolvedValue([DAILY]);
+
+		expect((await activate().list()).map((entry) => entry.isUnverified)).toEqual([true, true]);
+	});
+
+	it('attaches a picked skill from its own server', async () => {
+		const source = activate();
+		const entries = await source.list();
+
+		await source.attach(entries[2], {} as Parameters<SkillSource['attach']>[1]);
+
+		expect(attachSkill).toHaveBeenCalledWith('docs', OTHER);
+	});
+
+	it('asks for a skill as its server knows it now, and keeps the answer there', async () => {
+		vi.mocked(mcpStore.skills.permissionFor).mockResolvedValue({
+			hasChanged: true,
+			isAllowed: false,
+			skill: HF_MEM
+		});
+
+		const source = activate();
+		const [hfMem] = await source.list();
+		const permission = await source.permission(hfMem);
+
+		expect(mcpStore.skills.permissionFor).toHaveBeenCalledWith('hf', 'skill://hf-mem');
+		expect(permission).toMatchObject({ hasChanged: true, isAllowed: false });
+		expect(permission.detail?.props).toEqual({ hasChanged: true, serverId: 'hf', skill: HF_MEM });
+
+		permission.allow(true);
+
+		expect(mcpStore.skills.allow).toHaveBeenCalledWith('hf', HF_MEM, true);
+	});
+
+	it('loads a file of a skill from its own server, under a line that names the server', async () => {
+		vi.mocked(mcpStore.skills.load).mockResolvedValue({
+			file: { body: 'Measure first.', text: '---\nname: hf-mem\n---\nMeasure first.' },
+			skill: HF_MEM
+		} as Awaited<ReturnType<typeof mcpStore.skills.load>>);
+
+		const source = activate();
+		const entries = await source.list();
+		const text = await source.load(entries[2], 'references/guide.md');
+
+		expect(mcpStore.skills.load).toHaveBeenCalledWith(
+			'docs',
+			'skill://hf-mem',
+			'references/guide.md'
+		);
+		expect(text).toContain('Skill "hf-mem" from the MCP server "Docs"');
+		expect(text).toContain('Measure first.');
+	});
+
 	it('lists the skills of the servers in use, in their order, each under its server', async () => {
 		expect(await activate().list()).toEqual([
 			{
 				description: 'What hf-mem is for',
 				id: 'hf skill://hf-mem',
+				isUnverified: false,
 				name: 'hf-mem',
 				origin: 'Hugging Face'
 			},
 			{
 				description: 'What hf-cli is for',
 				id: 'hf skill://hf-cli',
+				isUnverified: false,
 				name: 'hf-cli',
 				origin: 'Hugging Face'
 			},
 			{
 				description: 'What hf-mem is for',
 				id: 'docs skill://hf-mem',
+				isUnverified: false,
 				name: 'hf-mem',
 				origin: 'Docs'
 			}

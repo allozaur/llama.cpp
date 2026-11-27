@@ -21,21 +21,5 @@ export const MCP_SKILL_MANIFEST_NAME = 'SKILL.md';
 /** Where the approved skills are remembered, in localStorage. */
 export const MCP_SKILL_APPROVALS_LOCALSTORAGE_KEY = `${STORAGE_APP_NAME}.mcpSkillApprovals`;
 
-export const MCP_SKILLS_PICKER_ID = 'mcp-skills';
-
-/** The group the skill tools are listed under and switched off with. */
-export const MCP_SKILLS_TOOL_GROUP_ID = 'skills';
-export const MCP_SKILLS_TOOL_GROUP_LABEL = 'MCP Skills';
-
-/** The tools the model reaches skills through. */
-export enum McpSkillTool {
-	LIST = 'list_skills',
-	LOAD = 'load_skill'
-}
-
-/** The arguments of {@link McpSkillTool.LOAD}. */
-export enum McpSkillToolArgument {
-	FILE = 'file',
-	SERVER = 'server',
-	URI = 'uri'
-}
+/** What one of the source's origins is, in the model's listing of skills. */
+export const MCP_SKILLS_ORIGIN_KIND = 'MCP server';

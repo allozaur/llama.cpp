@@ -2,6 +2,7 @@
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import ChatMessageActionCardContinueRequest from '#lib/components/app/chat/ChatMessages/ChatMessageActions/ChatMessageActionCard/ChatMessageActionCardContinueRequest.svelte';
 	import ChatMessageActionCardPermissionRequest from '#lib/components/app/chat/ChatMessages/ChatMessageActions/ChatMessageActionCard/ChatMessageActionCardPermissionRequest.svelte';
+	import ChatMessageActionCardSkillDetail from '#lib/components/app/chat/ChatMessages/ChatMessageActions/ChatMessageActionCard/ChatMessageActionCardSkillDetail.svelte';
 	import { BuiltInTool } from '#lib/enums/index.ts';
 	import { type ToolCallPermission, toolCallPermissionDetail } from '#lib/extensions/index.ts';
 	import McpSkillPermissionDetail from '#lib/extensions/mcp/components/skills/McpSkillPermissionDetail.svelte';
@@ -40,6 +41,20 @@
 		source: 'Hugging Face',
 		subject: 'the skill hf-mem'
 	};
+	// the same for a skill of a folder on the machine llama-server runs on
+	const localSkillPermission: ToolCallPermission = {
+		allow: () => {},
+		alwaysLabel: 'Always allow this skill',
+		detail: toolCallPermissionDetail(ChatMessageActionCardSkillDetail, {
+			description:
+				'Build multiple genuinely different versions of a UI piece, rendered behind a visual picker.',
+			hasChanged: false,
+			path: '~/.agents/skills/prototype/SKILL.md'
+		}),
+		isGranted: false,
+		source: '~/.agents/skills',
+		subject: 'the skill prototype'
+	};
 </script>
 
 <Story asChild name="States">
@@ -65,7 +80,16 @@
 				{onDecision}
 				permission={skillPermission}
 				serverLabel={skillPermission.source}
-				toolName="load_skill"
+				toolName={BuiltInTool.BROWSER_LOAD_SKILL}
+			/>
+		</StateGalleryItem>
+
+		<StateGalleryItem label="Permission for what a call loads" note="a skill of a folder">
+			<ChatMessageActionCardPermissionRequest
+				{onDecision}
+				permission={localSkillPermission}
+				serverLabel={localSkillPermission.source}
+				toolName={BuiltInTool.BROWSER_LOAD_SKILL}
 			/>
 		</StateGalleryItem>
 

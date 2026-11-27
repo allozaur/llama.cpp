@@ -251,6 +251,8 @@ export interface ChatCommandsOptions {
 	hasCwdTools: () => boolean;
 	/** Gates `/system-message`. */
 	canEditSystemMessage: () => boolean;
+	/** Gates `/skill`. */
+	hasSkills: () => boolean;
 }
 
 /** Protocol-level verbs accepted by the realtime inference control endpoint. Mirrors `CONTROL_ACTION`. */

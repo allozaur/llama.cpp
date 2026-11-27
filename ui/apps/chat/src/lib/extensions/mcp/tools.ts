@@ -1,9 +1,10 @@
 /**
  * MCP's side of the `tools` and `flow` extension points: the tools of the MCP
  * servers the browser connects to, listed and run through mcpStore, the tools
- * of the MCP servers llama-server runs (see `llama-server.ts`), the tools that
- * list and load the skills servers publish (see `skills/tools.ts`), and the
- * hold an agentic flow takes on the connections.
+ * of the MCP servers llama-server runs (see `llama-server.ts`), and the hold
+ * an agentic flow takes on the connections. The skills servers publish are
+ * listed and loaded by the core's skill tools, through the skill source (see
+ * `skills/source.ts`).
  */
 
 import type { FlowHook, ToolProvider, ToolProviderEntry } from '../points/tools';
@@ -14,7 +15,6 @@ import {
 	isLlamaServerMcpTool,
 	llamaServerMcpServers
 } from './llama-server';
-import { executeSkillTool, isSkillTool, skillToolEntries } from './skills/tools';
 import { mcpStore } from './stores/index.svelte';
 import {
 	HealthCheckStatus,
@@ -218,15 +218,10 @@ const toolProvider: ToolProvider = {
 					toolsLabel: 'MCP Tools'
 				}
 			: undefined,
-	entries: () => [...listTools(), ...skillToolEntries(skillServersInUse())],
+	entries: listTools,
 	async execute(call, signal) {
 		if (isLlamaServerMcpTool(call.name)) {
 			return executeLlamaServerMcpTool(call.name, call.arguments, signal);
-		}
-
-		// a server's own tool of the same name is listed first, so the call is that server's
-		if (isSkillTool(call.name) && !mcpStore.hasTool(call.name)) {
-			return executeSkillTool(call, skillServersInUse());
 		}
 
 		const result = await mcpStore.executeTool(

@@ -24,7 +24,7 @@ export type {
 	MessageRendererProps
 } from './points/renderers';
 export type { SettingsAction, SettingsActionDialog } from './points/settings';
-export type { SkillEntry, SkillSource } from './points/skills';
+export type { SkillEntry, SkillPermission, SkillSource } from './points/skills';
 export type {
 	FlowHook,
 	FlowInfo,

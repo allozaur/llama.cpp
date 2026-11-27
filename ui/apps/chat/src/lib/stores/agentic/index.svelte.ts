@@ -44,6 +44,7 @@ import { ChatService } from '#lib/services/index.ts';
 import { ReadMediaService } from '#lib/services/read-media.service.ts';
 import { SandboxService } from '#lib/services/sandbox.service.ts';
 import { SearchChatsService } from '#lib/services/search-chats.service.ts';
+import { SkillToolsService } from '#lib/services/skill-tools.service.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
 import { AgenticGates } from '#lib/stores/agentic/gates.svelte.ts';
@@ -489,6 +490,13 @@ class AgenticStore {
 			if (toolName === BuiltInTool.BROWSER_GET_DATETIME) return executeGetDatetimeTool();
 
 			if (toolName === BuiltInTool.SERVER_GET_INFO) return executeBrowserInfoTool();
+
+			if (
+				toolName === BuiltInTool.BROWSER_LIST_SKILLS ||
+				toolName === BuiltInTool.BROWSER_LOAD_SKILL
+			) {
+				return SkillToolsService.execute(toolCall.function);
+			}
 
 			if (toolName === BuiltInTool.BROWSER_SEARCH_CHATS) {
 				return SearchChatsService.executeTool(args, conversationId);

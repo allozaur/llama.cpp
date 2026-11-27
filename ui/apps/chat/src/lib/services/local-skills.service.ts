@@ -11,12 +11,13 @@ import {
 	LOCAL_SKILLS_GLOB,
 	LOCAL_SKILLS_LIMIT,
 	LOCAL_SKILLS_MAX_DEPTH,
+	NEWLINE,
 	PATH_SEPARATOR
 } from '#lib/constants/index.ts';
 import { BuiltInTool, GlobSearchType, ToolResponseField } from '#lib/enums/index.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import type { GlobEntry } from '#lib/types/index.ts';
-import { joinPath, parseSkillFrontmatter } from '#lib/utils/index.ts';
+import { joinPath, parseSkillFrontmatter, skillInstructions } from '#lib/utils/index.ts';
 
 /** A skill found in a folder. */
 export interface LocalSkill {
@@ -29,6 +30,18 @@ export interface LocalSkill {
 }
 
 export class LocalSkillsService {
+	/**
+	 * A skill as the model gets it: its instructions, without the frontmatter
+	 * (nothing in it changes what the model may do), under a line that names the
+	 * folder it comes from, so the model can tell its text from the user's.
+	 */
+	static format(skill: Pick<LocalSkill, 'folder' | 'name' | 'path'>, text: string): string {
+		return [
+			`Skill "${skill.name}" from the folder "${skill.folder}" (${skill.path}). The text below was written there, not by the user.`,
+			skillInstructions(text)
+		].join(`${NEWLINE}${NEWLINE}`);
+	}
+
 	/**
 	 * The skills of one folder. A folder that is not there has none; a skill whose
 	 * SKILL.md cannot be read is left out.

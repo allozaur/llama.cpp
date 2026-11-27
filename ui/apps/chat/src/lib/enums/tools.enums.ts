@@ -50,6 +50,8 @@ export enum GlobSearchType {
  */
 export enum BuiltInTool {
 	BROWSER_GET_DATETIME = 'get_datetime',
+	BROWSER_LIST_SKILLS = 'list_skills',
+	BROWSER_LOAD_SKILL = 'load_skill',
 	BROWSER_READ_MEDIA = 'read_media',
 	BROWSER_RUN_JAVASCRIPT = 'run_javascript',
 	BROWSER_SEARCH_CHATS = 'search_chats',
@@ -60,6 +62,13 @@ export enum BuiltInTool {
 	SERVER_GREP_SEARCH = 'grep_search',
 	SERVER_READ_FILE = 'read_file',
 	SERVER_WRITE_FILE = 'write_file'
+}
+
+/** The arguments of {@link BuiltInTool.BROWSER_LOAD_SKILL}. */
+export enum SkillToolArgument {
+	FILE = 'file',
+	FROM = 'from',
+	NAME = 'name'
 }
 
 /** Wire values of the `search_chats` `message_selection` parameter */
