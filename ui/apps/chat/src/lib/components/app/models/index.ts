@@ -56,6 +56,10 @@ export { default as ModelsSection } from './ModelsSection.svelte';
 /** **ModelVoiceRole** - a model's part in voice input (dictation, speech to text, voice), as a badge. */
 export { default as ModelVoiceRole } from './ModelVoiceRole.svelte';
 
+/** Card surface of a model, local or on the Hub, styled like the MCP server cards. */
+export { default as ModelCard } from './ModelCard.svelte';
+export { default as ModelCardSkeleton } from './ModelCardSkeleton.svelte';
+
 /** Capability and modality icon row, shared by every model-id surface. */
 export { ModelCapabilityIcons } from '@ggml-org/llama-ui/models';
 

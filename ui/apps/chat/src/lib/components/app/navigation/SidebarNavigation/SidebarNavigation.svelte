@@ -5,7 +5,6 @@
 		DialogConnectServer,
 		DialogConversationDelete,
 		DialogConversationRename,
-		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
 		DialogProject,
@@ -19,6 +18,7 @@
 		SidebarNavigationConversationList,
 		SidebarNavigationFooter
 	} from '#lib/components/app/index.ts';
+	import { ModelsDiscoverDetailsDrawer } from '#lib/components/app/models/discover/index.ts';
 	import {
 		ROUTES,
 		SIDEBAR_ACTIONS_ITEMS,
@@ -803,7 +803,7 @@
 	{/if}
 {/each}
 
-<DialogDiscoverModels bind:open={uiStore.discoverModelsOpen} />
+<ModelsDiscoverDetailsDrawer />
 
 <DialogGroup />
 
