@@ -81,6 +81,7 @@ The dev server forwards the API (`/v1`, `/props`, `/models`, `/tools`, `/slots`,
 | `npm run test:e2e`    | End-to-end tests (Playwright, `tests/e2e`), with a llama-server |
 | `npm run storybook`   | Storybook on its own                                            |
 | `npm run space`       | Deploys this branch to its preview Space (see below)            |
+| `npm run space:app`   | Deploys Llama Chat to its own Space (see below)                 |
 
 Locally the browser tests run in your installed Google Chrome; CI uses Playwright's bundled Chromium.
 
@@ -107,6 +108,12 @@ To redeploy on every push, turn on the `UI Preview Space` workflow in your fork:
 The Spaces stay on your account: ggml-org hosts none and holds no Hugging Face token. A deploy of a pushed commit is recorded as a deployment on your fork (with `GITHUB_TOKEN`, or the `gh` login). On a pull request, the `UI Preview Space link` workflow reads that record for the pull request's commit, and links your public or protected Space as a deployment with a View deployment button, retired when the pull request closes. Only who can push to your fork can record a deploy there, so nobody else can pass their Space for your preview. A private Space and a `--wip` deploy get no link.
 
 Reviewing a preview: start llama-server on its default port, 9931, and open the link. The page is `https://`, so it reaches a server on `http://localhost` in Chrome, Edge and Firefox (Chrome asks once for local network access), and Safari needs the server on HTTPS. Start llama-server with `--cors-origins <the preview's address>` when it restricts origins, as it does with tools or MCP enabled. A preview runs the branch's code in your browser, with access to the server you add to it.
+
+### The app on its own Space
+
+Llama Chat can be hosted by itself: the app alone on a static Hugging Face Space, with no llama-server, for anyone to open or install and connect to a server of their own. `npm run space:app` builds it and deploys it to the Space that `HF_SPACE_UI_CHAT` names (`<owner>/<name>`, or pass `--space`), creating the Space if needed. `--server <url>` names a llama-server in its `config.json`; without it the app has none until one is connected. It only deploys to a Space it made, which it knows by its `llama-ui-app` tag, so it never takes a preview Space or any other.
+
+The `UI Chat Space` workflow does this on every UI change on master, in a repository that sets the variable `HF_SPACE_UI_CHAT` and a secret with a token that can write to the Space (`HF_TOKEN_UI_CHAT`, or `HF_TOKEN_UI_STATIC_OUTPUT`). The build runs in a job of its own, without the token. A custom domain, such as chat.llama.app, is set in the Space's settings: the build uses relative paths, so it needs no change.
 
 ## Architecture
 

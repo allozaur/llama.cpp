@@ -6,29 +6,38 @@
  *   node scripts/space.ts rm         delete the Space of this branch
  *   node scripts/space.ts prune      delete preview Spaces whose branch is gone, or whose pull request is closed
  *
- * It uses the `hf` CLI and its login, or HF_TOKEN. Settings come from ui/apps/chat/.env (see .env.example).
+ * It uses the `hf` CLI and its login, or HF_TOKEN (see hf-space.ts). Settings come from ui/apps/chat/.env (see .env.example).
  */
 
-import { execFileSync } from 'node:child_process';
+import {
+	assertCleanUi,
+	build,
+	DEFAULT_VISIBILITY,
+	deleteSpace,
+	getSpace,
+	hub,
+	run,
+	runMain,
+	SERVER_URL_REGEX,
+	SHORT_SHA_LENGTH,
+	type Space,
+	SPACE_ID_REGEX,
+	spaceReadme,
+	spaceUrl,
+	staticSpaceCard,
+	tryRun,
+	uploadSpace,
+	VISIBILITIES
+} from './hf-space.ts';
 import { createHash } from 'node:crypto';
-import { appendFileSync, cpSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { appendFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-const UI_DIR = resolve(import.meta.dirname, '..');
-const UI_ROOT = resolve(UI_DIR, '../..');
-const DIST_DIR = join(UI_DIR, 'dist');
-const HF_ENDPOINT = 'https://huggingface.co';
 const SPACE_PREFIX = 'llama-ui-';
 const SPACE_NAME_MAX_LENGTH = 96;
 const BRANCH_HASH_LENGTH = 8;
-const SHORT_SHA_LENGTH = 10;
 const DEFAULT_SPACE_TITLE = 'Llama Chat preview';
-const SPACE_ID_REGEX = /^[\w.-]+\/[\w.-]+$/;
-const SERVER_URL_REGEX = /^https?:\/\/[^/]/;
 // marks the Spaces this script made: it never deploys to or deletes any other
 const PREVIEW_TAG = 'llama-ui-preview';
 // the card's machine-readable line: what the Space was built from
@@ -43,10 +52,6 @@ const GITHUB_REMOTE_REGEX = /github\.com[:/](.+?)(?:\.git)?$/;
 const BRANCH_REF_PREFIX = 'refs/heads/';
 // `branch.<name>.remote` of a branch that tracks a local one
 const LOCAL_REMOTE = '.';
-// not handed to the build, which runs the branch's code and its dependencies
-const TOKEN_VARIABLES = ['HF_TOKEN', 'GITHUB_TOKEN', 'GH_TOKEN'];
-const DEFAULT_VISIBILITY = 'public';
-const VISIBILITIES = [DEFAULT_VISIBILITY, 'protected', 'private'];
 const COMMANDS = ['deploy', 'status', 'rm', 'prune'];
 
 export const USAGE = `Usage: npm run space -- [deploy|status|rm|prune] [options]
@@ -88,14 +93,6 @@ export interface SpaceOptions {
 	visibility: string;
 	wip: boolean;
 	yes: boolean;
-}
-
-interface Space {
-	host?: string;
-	id: string;
-	lastModified?: string;
-	private?: boolean;
-	tags?: string[];
 }
 
 export interface PullRequest {
@@ -230,7 +227,6 @@ export function isPrunable(
 	);
 }
 
-/** The README of the Space. Its headers are the ones llama-server serves the UI with (cross-origin isolation). */
 export function spaceCard(info: SpaceSource & { server?: string; title?: string }): string {
 	const source = info.repo ? `[${info.repo}](https://github.com/${info.repo})` : 'llama.cpp';
 	const server = info.server
@@ -238,25 +234,15 @@ export function spaceCard(info: SpaceSource & { server?: string; title?: string 
 		: 'It has no server of its own.';
 	const meta = JSON.stringify({ branch: info.branch, repo: info.repo, sha: info.sha });
 
-	return `---
-title: ${info.title ?? DEFAULT_SPACE_TITLE}
-colorFrom: gray
-colorTo: gray
-sdk: static
-pinned: false
-tags:
-  - ${PREVIEW_TAG}
-custom_headers:
-  cross-origin-embedder-policy: require-corp
-  cross-origin-opener-policy: same-origin
----
-
-A preview of Llama Chat, built from the branch \`${info.branch}\` of ${source} at ${info.sha.slice(0, SHORT_SHA_LENGTH)}.
+	return staticSpaceCard({
+		body: `A preview of Llama Chat, built from the branch \`${info.branch}\` of ${source} at ${info.sha.slice(0, SHORT_SHA_LENGTH)}.
 
 ${server}
 
-<!-- llama-ui-preview-source ${meta} -->
-`;
+<!-- llama-ui-preview-source ${meta} -->`,
+		tag: PREVIEW_TAG,
+		title: info.title ?? DEFAULT_SPACE_TITLE
+	});
 }
 
 /** What a Space was built from, read back from its card; null for a card without it. */
@@ -286,54 +272,6 @@ export function pullRequestsDone(pulls: PullRequest[], deployedAt: string | unde
 	return pulls.some(
 		(pull) => pull.closed_at && Date.parse(pull.closed_at) > Date.parse(deployedAt)
 	);
-}
-
-function run(cmd: string, args: string[]): string {
-	return execFileSync(cmd, args, { cwd: UI_DIR, encoding: 'utf8' }).trim();
-}
-
-function tryRun(cmd: string, args: string[]): string | null {
-	try {
-		return execFileSync(cmd, args, {
-			cwd: UI_DIR,
-			encoding: 'utf8',
-			stdio: ['ignore', 'pipe', 'ignore']
-		}).trim();
-	} catch {
-		return null;
-	}
-}
-
-function exec(cmd: string, args: string[], env = process.env): void {
-	execFileSync(cmd, args, { cwd: UI_DIR, env, stdio: 'inherit' });
-}
-
-function withoutTokens(): NodeJS.ProcessEnv {
-	return Object.fromEntries(
-		Object.entries(process.env).filter(([name]) => !TOKEN_VARIABLES.includes(name))
-	);
-}
-
-let token: string | undefined;
-
-function hfHeaders(): { Authorization: string } {
-	token ??= process.env.HF_TOKEN || tryRun('hf', ['auth', 'token']) || '';
-
-	if (!token)
-		throw new Error('not logged in to Hugging Face: run `hf auth login`, or set HF_TOKEN');
-
-	return { Authorization: `Bearer ${token}` };
-}
-
-/** A GET on the Hub API; null when there is no such thing. */
-async function hub<T>(path: string): Promise<T | null> {
-	const response = await fetch(`${HF_ENDPOINT}/api/${path}`, { headers: hfHeaders() });
-
-	if (response.status === 404) return null;
-
-	if (!response.ok) throw new Error(`Hugging Face answered ${response.status} for ${path}`);
-
-	return (await response.json()) as T;
 }
 
 /** A call on the GitHub API of a repository: a POST when it has a body. */
@@ -369,29 +307,6 @@ function currentBranch(opts: SpaceOptions): string {
 	if (!branch) throw new Error('no branch is checked out: pass --branch <name>');
 
 	return branch;
-}
-
-async function getSpace(id: string): Promise<Space | null> {
-	const space = await hub<Space>(`spaces/${id}`);
-
-	if (space && !space.tags?.includes(PREVIEW_TAG)) {
-		throw new Error(`${id} exists and is not a preview Space: it was not made by this script`);
-	}
-
-	return space;
-}
-
-function spaceUrl(id: string, space: Space | null): string {
-	return space?.host ?? `${HF_ENDPOINT}/spaces/${id}`;
-}
-
-/** The card of a Space, as text; '' when it cannot be read. */
-async function spaceReadme(id: string): Promise<string> {
-	const response = await fetch(`${HF_ENDPOINT}/spaces/${id}/raw/main/README.md`, {
-		headers: hfHeaders()
-	});
-
-	return response.ok ? response.text() : '';
 }
 
 /**
@@ -436,9 +351,7 @@ function checkoutRepos(opts: SpaceOptions): string[] {
  * the branch as it is pushed. Gives the remote that has it.
  */
 function pushedRemote(branch: string, remotes: string[]): string {
-	if (run('git', ['status', '--porcelain', '--', UI_ROOT])) {
-		throw new Error('the UI has uncommitted changes: commit them, or pass --wip');
-	}
+	assertCleanUi(', or pass --wip');
 
 	const head = run('git', ['rev-parse', 'HEAD']);
 	const remote = remotes.find(
@@ -468,10 +381,10 @@ interface Target {
 async function target(opts: SpaceOptions): Promise<Target> {
 	const branch = currentBranch(opts);
 
-	if (opts.space) return { branch, id: opts.space, space: await getSpace(opts.space) };
+	if (opts.space) return { branch, id: opts.space, space: await getSpace(opts.space, PREVIEW_TAG) };
 
 	const id = spaceId(branch, await spaceOwner(opts));
-	const space = await getSpace(id);
+	const space = await getSpace(id, PREVIEW_TAG);
 	const built = space && readSpaceSource(await spaceReadme(id));
 
 	if (!space || (built && isSpaceOf(built, branch, checkoutRepos(opts)))) {
@@ -535,52 +448,20 @@ async function deploy(opts: SpaceOptions): Promise<void> {
 	const pushed = !!process.env.CI || !opts.wip;
 	const remote = process.env.CI || opts.wip ? remotes[0] : pushedRemote(branch, remotes);
 
-	if (!opts.built) exec('npm', ['run', 'build'], withoutTokens());
+	if (!opts.built) build();
 
-	// staged in a copy, so the card does not end up in dist, which llama-server embeds
-	const staged = mkdtempSync(join(tmpdir(), 'llama-ui-space-'));
 	const source = { branch, repo: sourceRepo(remote), sha: run('git', ['rev-parse', 'HEAD']) };
 	const short = source.sha.slice(0, SHORT_SHA_LENGTH);
 
-	try {
-		cpSync(DIST_DIR, staged, { recursive: true });
-		writeFileSync(
-			join(staged, 'README.md'),
-			spaceCard({ ...source, server: opts.server, title: opts.title })
-		);
-		// the app reads config.json on start: the build ships it empty, for its own origin
-		writeFileSync(join(staged, 'config.json'), `${JSON.stringify({ server: opts.server })}\n`);
+	uploadSpace({
+		card: spaceCard({ ...source, server: opts.server, title: opts.title }),
+		id,
+		message: `${branch} at ${short}${pushed ? '' : ' (work in progress)'}`,
+		server: opts.server,
+		visibility: space ? undefined : opts.visibility
+	});
 
-		if (!space) {
-			exec('hf', [
-				'repos',
-				'create',
-				id,
-				'--repo-type',
-				'space',
-				'--space-sdk',
-				'static',
-				`--${opts.visibility}`
-			]);
-		}
-
-		exec('hf', [
-			'upload',
-			id,
-			staged,
-			'.',
-			'--repo-type',
-			'space',
-			'--delete',
-			'*',
-			'--commit-message',
-			`${branch} at ${short}${pushed ? '' : ' (work in progress)'}`
-		]);
-	} finally {
-		rmSync(staged, { force: true, recursive: true });
-	}
-
-	const deployed = await getSpace(id);
+	const deployed = await getSpace(id, PREVIEW_TAG);
 	const url = spaceUrl(id, deployed);
 
 	// a private Space is no use to a reviewer
@@ -600,10 +481,6 @@ async function status(opts: SpaceOptions): Promise<void> {
 
 	// a workflow reads this to skip the build of a branch without a Space
 	if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `exists=${!!space}\n`);
-}
-
-function deleteSpace(id: string): void {
-	exec('hf', ['repos', 'delete', id, '--repo-type', 'space', '--yes']);
 }
 
 async function remove(opts: SpaceOptions): Promise<void> {
@@ -700,10 +577,6 @@ async function prune(opts: SpaceOptions): Promise<void> {
 }
 
 export async function main(argv: string[]): Promise<void> {
-	const envFile = join(UI_DIR, '.env');
-
-	if (existsSync(envFile)) process.loadEnvFile(envFile);
-
 	const opts = parseSpaceArgs(argv);
 
 	if (opts.help) {
@@ -715,9 +588,4 @@ export async function main(argv: string[]): Promise<void> {
 	await { deploy, prune, rm: remove, status }[opts.command]!(opts);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-	main(process.argv.slice(2)).catch((error: Error) => {
-		console.error(`space: ${error.message}`);
-		process.exit(1);
-	});
-}
+runMain(import.meta.url, 'space', main);

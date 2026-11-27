@@ -71,7 +71,8 @@
 		"build-storybook": "svelte-kit sync && storybook build",
 		"cleanup": "rm -rf .svelte-kit build node_modules test-results dist dev-dist debug-storybook.log static/pwa-*.png static/maskable-icon-*.png static/apple-touch-icon-*.png static/apple-splash-*.png static/favicon*.ico",
 		"start": "node bin/cli.js",
-		"space": "node scripts/space.ts"
+		"space": "node scripts/space.ts",
+		"space:app": "node scripts/app-space.ts"
 	},
 	"devDependencies": {
 		"@chromatic-com/storybook": "5.5.1",
