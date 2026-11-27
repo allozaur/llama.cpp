@@ -502,7 +502,8 @@ export class ModelStatusManager {
 		return this.loadingStates.get(modelId) ?? false;
 	}
 
-	async load(modelId: string): Promise<void> {
+	/** Loads a model; `extraArgs` are llama-server arguments for this load only. */
+	async load(modelId: string, extraArgs?: string[]): Promise<void> {
 		if (this.host.isModelLoaded(modelId)) return;
 
 		if (this.loadingStates.get(modelId)) return;
@@ -518,7 +519,7 @@ export class ModelStatusManager {
 		reachedLoaded.catch(() => {});
 
 		try {
-			await ModelsService.load(modelId);
+			await ModelsService.load(modelId, extraArgs);
 			await reachedLoaded;
 			toast.success(`Model loaded: ${this.host.toDisplayName(modelId)}`);
 		} catch (error) {
