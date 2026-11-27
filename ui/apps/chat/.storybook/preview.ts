@@ -3,6 +3,7 @@ import { MEDIA_QUERIES } from '#lib/constants/pwa.constants.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 // the docs pages' styles, shared with the library's Storybook
 import '../../../lib/ui/.storybook/docs.css';
+import { activateBuiltInExtensions } from '../tests/stories/helpers/extensions';
 import { applyColorScheme } from './color-scheme';
 import ModeWatcherDecorator from './decorators/ModeWatcherDecorator.svelte';
 import TooltipProviderDecorator from './decorators/TooltipProviderDecorator.svelte';
@@ -15,6 +16,8 @@ applyColorScheme();
 window.matchMedia(MEDIA_QUERIES.PREFERS_DARK).addEventListener('change', applyColorScheme);
 
 const preview: Preview = {
+	// the app switches its extensions on at startup; the stories get them the same way, once
+	beforeAll: activateBuiltInExtensions,
 	parameters: {
 		controls: {
 			matchers: {

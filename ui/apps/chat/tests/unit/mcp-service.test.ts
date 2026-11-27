@@ -1,9 +1,9 @@
-import { Client } from '@modelcontextprotocol/sdk/client';
+import { Client, SdkErrorCode, SdkHttpError } from '@modelcontextprotocol/client';
 import { CORS_PROXY } from '#lib/constants/index.ts';
 import { MCPConnectionPhase, MCPTransportType } from '#lib/enums/index.ts';
-import { MCPService } from '#lib/services/mcp.service.ts';
+import { MCPService } from '#lib/extensions/mcp/services/mcp.service.ts';
 import type { MCPConnection, MCPConnectionLog, MCPServerConfig } from '#lib/types/index.ts';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 type DiagnosticFetchFactory = (
 	serverName: string,
@@ -25,6 +25,9 @@ const createDiagnosticFetch = (
 	).createDiagnosticFetch('test-server', config, baseInit, new URL(config.url), useProxy, onLog);
 
 describe('MCPService', () => {
+	// connect() loads the SDK on demand; tests that skip connect() need it loaded too
+	beforeAll(() => MCPService.loadSdk());
+
 	afterEach(() => {
 		vi.restoreAllMocks();
 		vi.unstubAllGlobals();
@@ -328,6 +331,29 @@ describe('MCPService', () => {
 					log.message === 'Protocol error: runtime protocol error'
 			)
 		).toHaveLength(0);
+	});
+
+	it('treats a 404 as an expired session only on a connection with a session', async () => {
+		const notFound = new SdkHttpError(SdkErrorCode.ClientHttpNotImplemented, 'Not Found', {
+			status: 404,
+			statusText: 'Not Found'
+		});
+		const connectionWith = (sessionId?: string) =>
+			({
+				client: { callTool: vi.fn().mockRejectedValue(notFound) },
+				requestTimeoutMs: 9000,
+				serverName: 'test-server',
+				transport: { sessionId }
+			}) as unknown as MCPConnection;
+		const params = { arguments: {}, name: 'tool' };
+
+		// propagates as it is, the store reconnects on it
+		await expect(MCPService.callTool(connectionWith('session-1'), params)).rejects.toBe(notFound);
+		await expect(MCPService.callTool(connectionWith(), params)).rejects.toThrow(
+			'Tool "tool" execution failed on server "test-server": Not Found'
+		);
+		expect(MCPService.isSessionExpiredError(notFound, connectionWith('session-1'))).toBe(true);
+		expect(MCPService.isSessionExpiredError(notFound, connectionWith())).toBe(false);
 	});
 
 	it('falls back to structuredContent when content array is empty', async () => {

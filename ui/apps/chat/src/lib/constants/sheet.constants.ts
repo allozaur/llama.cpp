@@ -51,7 +51,6 @@ export const SETTINGS_SHEET_TEXT = {
 	CANCEL: 'Cancel',
 	CUSTOM_JSON_INVALID: 'Custom JSON is not valid JSON, so it was not saved',
 	DESCRIPTION: 'How the app looks, chats and talks to the server.',
-	MCP_SERVERS: 'MCP servers',
 	NEEDS_NUMBER: (label: string) => `${label} needs a number`,
 	RELOAD_APP: 'Reload app',
 	RESET: 'Reset settings to default',

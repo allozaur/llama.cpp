@@ -1,5 +1,6 @@
 import { CWD_COMMAND_NAME } from '#lib/constants/index.ts';
 import { ChatFormCommandAction, KeyboardKey } from '#lib/enums/index.ts';
+import type { ComposerCommand, ComposerHandle } from '#lib/extensions/index.ts';
 import type { ChatFormCommand } from '#lib/types/index.ts';
 import {
 	abbreviateHome,
@@ -36,8 +37,6 @@ export interface UseChatFormPickersOptions {
 	editsCwdInline: () => boolean;
 	/** Gates `/model`. */
 	getShowModelSelector: () => boolean;
-	/** Gates `/prompt`. */
-	hasPrompts: () => boolean;
 	/** Gates `/cwd`. */
 	hasCwdTools: () => boolean;
 	/** Gates `/compact`. */
@@ -51,6 +50,10 @@ export interface UseChatFormPickersOptions {
 	getCwd: () => string | null;
 	/** Mention search fallback scope. */
 	getServerHome: () => string | null;
+	/** The slash commands extensions contribute. */
+	getContributedCommands: () => ComposerCommand[];
+	/** What a contributed command gets to act on the form. */
+	getComposer: () => ComposerHandle;
 	openModelSelector: () => void;
 	/** Delegate a keydown to the mounted pickers component, if any. */
 	getPickersRef: () => { handleKeydown(event: KeyboardEvent): boolean } | undefined;
@@ -64,8 +67,9 @@ export interface UseChatFormPickersOptions {
 export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 	let isCommandPickerOpen = $state(false);
 	let commandQuery = $state('');
-	let isPromptPickerOpen = $state(false);
-	let promptSearchQuery = $state('');
+	// the picker an extension contributes that is open, and what it was opened with
+	let openPickerId = $state<string | null>(null);
+	let pickerQuery = $state('');
 	let isMentionPickerOpen = $state(false);
 	let mentionQuery = $state('');
 	let isWorkingDirectoryPickerOpen = $state(false);
@@ -87,13 +91,15 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 	// before a cwd is set.
 	const mentionScopePath = $derived(opts.getCwd() ?? opts.getServerHome() ?? null);
 	const availableCommands = $derived(
-		getChatCommands({
-			canCompact: opts.canCompact,
-			canEditSystemMessage: opts.canEditSystemMessage,
-			hasCwdTools: opts.hasCwdTools,
-			hasPrompts: opts.hasPrompts,
-			showModelSelector: opts.getShowModelSelector()
-		})
+		getChatCommands(
+			{
+				canCompact: opts.canCompact,
+				canEditSystemMessage: opts.canEditSystemMessage,
+				hasCwdTools: opts.hasCwdTools,
+				showModelSelector: opts.getShowModelSelector()
+			},
+			opts.getContributedCommands()
+		)
 	);
 	// only the commands that take an argument read the words after them
 	const commandNames = $derived(
@@ -132,12 +138,32 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		setValueAndCaret(next.value, next.caret);
 	}
 
+	function openPicker(id: string, query = '') {
+		openPickerId = id;
+		pickerQuery = query;
+	}
+
+	function closePicker() {
+		openPickerId = null;
+		pickerQuery = '';
+	}
+
 	// Dispatch a slash command picked from the list, wherever it is in the message: take the
 	// token out and open the target picker, seeding its search with `args`. Runs only on
 	// explicit selection (Enter/click), so nothing is cleared mid-typing.
 	function dispatchCommand(command: ChatFormCommand, token: CommandToken) {
 		isCommandPickerOpen = false;
 		commandQuery = '';
+
+		// a contributed command: the form takes its token out, the rest is up to the command
+		if ('run' in command) {
+			isWorkingDirectoryPickerOpen = false;
+			cwdCommand = null;
+			consumeCommand(token);
+			command.run(opts.getComposer(), token.args);
+
+			return;
+		}
 
 		if (command.action !== ChatFormCommandAction.CWD) {
 			isWorkingDirectoryPickerOpen = false;
@@ -148,11 +174,6 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		switch (command.action) {
 			case ChatFormCommandAction.COMPACT:
 				opts.onCompact();
-
-				break;
-			case ChatFormCommandAction.PROMPT:
-				isPromptPickerOpen = true;
-				promptSearchQuery = token.args.trim();
 
 				break;
 			case ChatFormCommandAction.CWD: {
@@ -216,8 +237,7 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		if (command) {
 			isMentionPickerOpen = false;
 			mentionQuery = '';
-			isPromptPickerOpen = false;
-			promptSearchQuery = '';
+			closePicker();
 
 			// Dismissed token stays literal until it changes.
 			const isDismissedSticky = isCommandDismissed(commandDismissedSnapshot, command);
@@ -266,16 +286,14 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 					mentionDismissedSnapshot = null;
 					isMentionPickerOpen = true;
 					mentionQuery = token.query;
-					isPromptPickerOpen = false;
-					promptSearchQuery = '';
+					closePicker();
 
 					return;
 				}
 			}
 		}
 
-		isPromptPickerOpen = false;
-		promptSearchQuery = '';
+		closePicker();
 		isMentionPickerOpen = false;
 		mentionQuery = '';
 
@@ -290,9 +308,8 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 			return true;
 		}
 
-		if (event.key === KeyboardKey.ESCAPE && isPromptPickerOpen) {
-			isPromptPickerOpen = false;
-			promptSearchQuery = '';
+		if (event.key === KeyboardKey.ESCAPE && openPickerId !== null) {
+			closePicker();
 
 			return true;
 		}
@@ -322,7 +339,7 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		commandQuery = '';
 
 		// Target picker manages its own focus: don't yank it back to the input.
-		if (!isPromptPickerOpen && !isMentionPickerOpen && !isWorkingDirectoryPickerOpen) {
+		if (openPickerId === null && !isMentionPickerOpen && !isWorkingDirectoryPickerOpen) {
 			opts.focusInput();
 		}
 	}
@@ -340,9 +357,8 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		opts.focusInput();
 	}
 
-	function handlePromptPickerClose() {
-		isPromptPickerOpen = false;
-		promptSearchQuery = '';
+	function handlePickerClose() {
+		closePicker();
 		opts.focusInput();
 	}
 
@@ -423,10 +439,7 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		get availableCommands() {
 			return availableCommands;
 		},
-		closePromptPicker() {
-			isPromptPickerOpen = false;
-			promptSearchQuery = '';
-		},
+		closePicker,
 		get commandQuery() {
 			return commandQuery;
 		},
@@ -441,7 +454,7 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		// True when a picker consumed the event, so the form skips submit.
 		handleKeydown,
 		handleMentionPickerClose,
-		handlePromptPickerClose,
+		handlePickerClose,
 		handleWorkingDirectoryClose,
 		handleWorkingDirectoryOpen,
 		isCaretInCwdCommand,
@@ -456,12 +469,6 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		},
 		set isMentionPickerOpen(v: boolean) {
 			isMentionPickerOpen = v;
-		},
-		get isPromptPickerOpen() {
-			return isPromptPickerOpen;
-		},
-		set isPromptPickerOpen(v: boolean) {
-			isPromptPickerOpen = v;
 		},
 		get isWorkingDirectoryInline() {
 			return isWorkingDirectoryInline;
@@ -481,14 +488,12 @@ export function useChatFormPickers(opts: UseChatFormPickersOptions) {
 		get mentionScopePath() {
 			return mentionScopePath;
 		},
-		openPromptPicker() {
-			isPromptPickerOpen = true;
+		openPicker,
+		get openPickerId() {
+			return openPickerId;
 		},
-		get promptSearchQuery() {
-			return promptSearchQuery;
-		},
-		set promptSearchQuery(v: string) {
-			promptSearchQuery = v;
+		get pickerQuery() {
+			return pickerQuery;
 		},
 		get workingDirectoryQuery() {
 			return workingDirectoryQuery;

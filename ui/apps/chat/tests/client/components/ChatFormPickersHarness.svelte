@@ -1,19 +1,30 @@
 <script lang="ts">
+	import type { ComposerCommand, ComposerHandle } from '#lib/extensions/index.ts';
 	import {
 		useChatFormPickers,
 		type UseChatFormPickersReturn
 	} from '#lib/hooks/use-chat-form-pickers.svelte.ts';
 
 	interface Props {
+		/** The slash commands extensions contribute. */
+		commands?: ComposerCommand[];
 		cwd?: string | null;
 		serverHome?: string | null;
 	}
 
-	let { cwd = null, serverHome = null }: Props = $props();
+	let { commands = [], cwd = null, serverHome = null }: Props = $props();
 
 	let value = $state('');
 	let caretOffset = $state(0);
 	const calls: string[] = [];
+
+	const composer: ComposerHandle = {
+		addUploadedFile: () => {},
+		closePicker: () => pickers.closePicker(),
+		focusInput: () => {},
+		openPicker: (id, query) => pickers.openPicker(id, query),
+		updateUploadedFile: () => {}
+	};
 
 	const pickers = useChatFormPickers({
 		canCompact: () => true,
@@ -21,13 +32,14 @@
 		editsCwdInline: () => true,
 		focusInput: () => {},
 		getCaretOffset: () => caretOffset,
+		getComposer: () => composer,
+		getContributedCommands: () => commands,
 		getCwd: () => cwd,
 		getPickersRef: () => undefined,
 		getServerHome: () => serverHome,
 		getShowModelSelector: () => true,
 		getValue: () => value,
 		hasCwdTools: () => true,
-		hasPrompts: () => true,
 		onCompact: () => {
 			calls.push('onCompact');
 		},

@@ -95,14 +95,15 @@ The app imports the library as `@ggml-org/llama-ui/ui/<name>` and compiles its s
 | Layer          | Lives in                  | What it holds                                                                                             |
 | -------------- | ------------------------- | --------------------------------------------------------------------------------------------------------- |
 | Routes         | `src/routes`              | `/`, `/chat/[id]`, `/models`, `/mcp-servers`, `/settings`, `/search`                                      |
-| App components | `src/lib/components/app`  | Chat, navigation, models, MCP, settings and dialogs, grouped by area                                      |
+| App components | `src/lib/components/app`  | Chat, navigation, models, settings and dialogs, grouped by area                                           |
 | UI components  | `ui/lib/ui`               | shadcn-svelte on bits-ui, from Llama UI                                                                   |
 | Voice          | `ui/lib/voice`            | Microphone capture, transcription and dictation, from Llama Voice (`@ggml-org/llama-voice`)               |
 | Hugging Face   | `ui/lib/huggingface`      | A Hugging Face account: sign-in and sharing conversations as agent traces (`@ggml-org/llama-huggingface`) |
 | Hooks          | `src/lib/hooks`           | View logic between components and stores: scroll, drag and drop, pickers, keyboard                        |
 | Stores         | `src/lib/stores`          | Application state as Svelte 5 runes: chat, conversations, the agentic loop, tools, models, settings       |
 | Agentic loop   | `ui/lib/harness`          | Llama Harness: streams a turn, runs the tools the model called, repeats until it answers without one      |
-| Services       | `src/lib/services`        | Stateless I/O: the llama-server API, IndexedDB, MCP, the Hugging Face Hub, the tool sandbox               |
+| Services       | `src/lib/services`        | Stateless I/O: the llama-server API, IndexedDB, the Hugging Face Hub, the tool sandbox                    |
+| Extensions     | `src/lib/extensions`      | Features that can be switched off, MCP first: what they add to the app's extension points                 |
 | Storage + API  | the browser, llama-server | IndexedDB and localStorage; llama-server's `/v1`, `/props`, `/models`, `/tools`, `/slots`                 |
 
 ```mermaid
@@ -115,6 +116,7 @@ flowchart LR
     Services --> DB[("IndexedDB, localStorage")]
     Services --> API["llama-server"]
     Components -. "imports" .-> UI["Llama UI"]
+    Ext["Extensions, such as MCP"] -. "extension points" .-> Stores
     Stores -. "reactive state" .-> Components
 ```
 
@@ -152,6 +154,33 @@ sequenceDiagram
 - **Server role**: one codebase serves MODEL and ROUTER mode; `serverStore` reads the role from `/props`, and ROUTER-only UI shows only there.
 - **Modalities**: attachments a model cannot read (images for a text-only model, say) are refused before sending, from the model's `/props`.
 - **Storage**: conversations and messages in IndexedDB (Dexie), settings and model preferences in localStorage, server state and Hub details in memory only.
+
+### Extensions (`src/lib/extensions/`)
+
+An extension is a feature the app is composed with and that can be switched off. The registry (`registry.svelte.ts`) knows the built-in extensions (`builtin.ts`), activates the ones that are on at startup, and holds what they add to each extension point (`points/`): tools, flow hooks, settings actions, slash commands, pickers, pending attachments, and message and attachment renderers.
+
+The core never imports an extension's own code; an extension may import the core. ESLint enforces this: a file outside `src/lib/extensions/<id>/` cannot import from that folder.
+
+Extensions are switched on and off in Settings, in the Extensions section. A switch takes effect at once: the extension's contributions go away and its cleanups run (MCP closes its connections). The choice is kept in localStorage and read at startup.
+
+MCP is the first extension. All of its code is in `src/lib/extensions/mcp/`:
+
+| Part                       | Responsibility                                                                                       |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `index.ts` and glue        | The extension: what MCP adds to each extension point (`tools.ts`, `composer.ts`, `settings.ts`, ...) |
+| `stores/` (`mcpStore`)     | MCP host role: multi-server lifecycle, tool routing, server icons; composes `health`, `resources`    |
+| `services/` (`MCPService`) | MCP protocol: transports, connect, list/execute tools, prompts, resources                            |
+| `components/`              | Server cards and forms, resource browser, dialogs, the prompt picker and the chat renderers          |
+
+A server that answers 401 and publishes an OAuth authorization server shows **Sign in** on its card: the browser registers the app with it (dynamic client registration, or the client ID of an app the user registered there by hand), opens the authorization page in a popup, and keeps the tokens per server in localStorage (`oauth/`), apart from the settings, so a settings export never carries them. An Authorization header set on the server wins over a sign-in. With **Use llama-server proxy** on, the discovery, registration and token requests go through the proxy too.
+
+MCP's shared data stays in the core: types, enums, constants, `utils/mcp.ts`, settings keys and the stored message formats.
+
+MCP servers come two ways. A remote server (Streamable HTTP, SSE or WebSocket) is one the browser connects to by URL, added in Settings under Manage MCP servers. A local server that runs as a command (stdio) is one llama-server starts from `--mcp-servers-config`, since a page cannot start a process: llama-server lists its tools in `/tools` with the type `mcp` and the server's name in `mcp_server`, and runs them on `POST /tools`. The MCP extension takes those tools over from the core's server tools (`serverToolType` on its tool provider, see `llama-server.ts`), so both kinds show up the same way, one group per server, in the MCP servers list and in the tools menu. With the extension off, the core lists them as server tools again.
+
+A setting can name the extension it belongs to (`extension` in `SETTINGS_REGISTRY`): its field shows only while that extension is on, and the stored value stays either way.
+
+llama-server embeds the app as a single bundle, so an extension's code ships whether it is on or off; nothing of it runs while it is off.
 
 ### Cross-origin isolation
 

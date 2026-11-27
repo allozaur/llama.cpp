@@ -10,13 +10,13 @@ import {
 	MimeTypeText,
 	ReasoningEffort,
 	ServerRole,
-	SpecialFileType,
-	ToolSource
+	ServerToolType,
+	SpecialFileType
 } from '#lib/enums/index.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
 import { ToolsService } from '#lib/services/tools.service.ts';
 import {
 	conversationsStore,
-	mcpStore,
 	modelsStore,
 	serverStore,
 	settingsStore,
@@ -148,10 +148,11 @@ export const mcpResources: MCPResourceInfo[] = [
 
 export const chatCommands: ChatFormCommand[] = [
 	{
-		action: ChatFormCommandAction.PROMPT,
 		description: 'Insert an MCP prompt',
 		disabled: false,
-		name: 'prompt'
+		name: 'prompt',
+		run: () => {},
+		takesArgument: true
 	},
 	{
 		action: ChatFormCommandAction.CWD,
@@ -209,7 +210,7 @@ export const cwdServerTools: ServerToolInfo[] = [
 	display_name: tool,
 	permissions: { write: false },
 	tool,
-	type: ToolSource.SERVER,
+	type: ServerToolType.SERVER,
 	uses_cwd: true
 }));
 

@@ -7,16 +7,15 @@
 	import * as Select from '@ggml-org/llama-ui/ui/select';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
 	import { FlaskConical, RotateCcw } from '@lucide/svelte';
-	import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
 	import { SettingsChatParameterSourceIndicator } from '#lib/components/app/settings/index.ts';
 	import {
 		ICON_CLASS_DEFAULT,
 		ICON_CLASS_SM,
-		MANAGE_MCP_SERVERS_LABEL,
 		SETTING_CONFIG_INFO,
 		SETTINGS_KEYS
 	} from '#lib/constants/index.ts';
 	import { SettingsFieldType } from '#lib/enums/settings.enums.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import { useSettingsFieldDefaults } from '#lib/hooks/use-settings-field-defaults.svelte.ts';
 	import { settingsStore, uiStore } from '#lib/stores/index.ts';
 	import { normalizeFloatingPoint } from '#lib/utils/precision.ts';
@@ -33,9 +32,17 @@
 
 	const fieldDefaults = useSettingsFieldDefaults(() => localConfig);
 	let currentModelParams = $derived(fieldDefaults.serverDefaults);
+
+	// what extensions manage from Settings, each under the setting that switches it on
+	let settingsActions = $derived(extensions.contributions('settingsActions'));
+
+	// a field that belongs to an extension shows only while that extension is on
+	let visibleFields = $derived(
+		fields.filter((field) => !field.extension || extensions.isActive(field.extension))
+	);
 </script>
 
-{#each fields as field (field.key)}
+{#each visibleFields as field (field.key)}
 	{#if !field.dependsOn || Boolean(localConfig[field.dependsOn])}
 		<div class={field.dependsOn ? 'space-y-2 pl-6' : 'space-y-2'}>
 			{#if field.type === SettingsFieldType.INPUT}
@@ -298,17 +305,19 @@
 							</p>
 						{/if}
 
-						{#if field.key === SETTINGS_KEYS.ENABLE_MCP && Boolean(localConfig[field.key])}
-							<Button
-								class="mt-2"
-								onclick={() => uiStore.openMcpServers()}
-								size="sm"
-								variant="outline"
-							>
-								<McpLogo class="size-icon-md" />
+						{#if Boolean(localConfig[field.key])}
+							{#each settingsActions.filter((action) => action.settingKey === field.key) as action (action.id)}
+								<Button
+									class="mt-2"
+									onclick={() => uiStore.openSettingsAction(action.id)}
+									size="sm"
+									variant="outline"
+								>
+									<action.icon class="size-icon-md" />
 
-								{MANAGE_MCP_SERVERS_LABEL}
-							</Button>
+									{action.label}
+								</Button>
+							{/each}
 						{/if}
 					</div>
 				</div>

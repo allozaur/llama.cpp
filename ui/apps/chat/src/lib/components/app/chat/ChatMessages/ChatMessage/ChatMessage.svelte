@@ -2,7 +2,6 @@
 	import {
 		ChatMessageAssistant,
 		ChatMessageCompaction,
-		ChatMessageMcpPrompt,
 		ChatMessageSynthetic,
 		ChatMessageSystem,
 		ChatMessageUser
@@ -15,22 +14,15 @@
 		SYSTEM_MESSAGE_PLACEHOLDER
 	} from '#lib/constants/index.ts';
 	import { setChatMessageActionsContext, setChatMessageEditContext } from '#lib/contexts/index.ts';
-	import {
-		AgenticSectionType,
-		AttachmentType,
-		MessageRole,
-		MessageType
-	} from '#lib/enums/index.ts';
+	import { AgenticSectionType, MessageRole, MessageType } from '#lib/enums/index.ts';
+	import { extensions, findMessageRenderer } from '#lib/extensions/index.ts';
 	import { DatabaseService } from '#lib/services/database.service.ts';
 	import { chatStore, conversationsStore, deviceStore, uiStore } from '#lib/stores/index.ts';
-	import type {
-		ChatMessageActions,
-		ChatMessageDeletionInfo,
-		DatabaseMessageExtraMcpPrompt
-	} from '#lib/types/index.ts';
+	import type { ChatMessageActions, ChatMessageDeletionInfo } from '#lib/types/index.ts';
 	import { parseFilesToMessageExtras } from '#lib/utils/browser-only.ts';
 	import { deriveAgenticSections } from '#lib/utils/index.ts';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		class?: string;
@@ -186,9 +178,10 @@
 			return deletionInfo;
 		},
 		get forkConversation() {
-			const isForkableUser = message.role === MessageRole.USER && !mcpPromptExtra;
+			const isForkableRole =
+				message.role === MessageRole.USER || message.role === MessageRole.ASSISTANT;
 
-			return isForkableUser || message.role === MessageRole.ASSISTANT
+			return isForkableRole && messageRenderer?.forkable !== false
 				? handleForkConversation
 				: undefined;
 		},
@@ -210,21 +203,10 @@
 		}
 	});
 
-	let mcpPromptExtra = $derived.by(() => {
-		if (message.role !== MessageRole.USER) return null;
-
-		if (message.content.trim()) return null;
-
-		if (!message.extra || message.extra.length !== 1) return null;
-
-		const extra = message.extra[0];
-
-		if (extra.type === AttachmentType.MCP_PROMPT) {
-			return extra as DatabaseMessageExtraMcpPrompt;
-		}
-
-		return null;
-	});
+	// an extension can claim a message and draw it in place of the default
+	let messageRenderer = $derived(
+		findMessageRenderer(extensions.contributions('messageRenderers'), message)
+	);
 
 	$effect(() => {
 		const pendingId = chatStore.pendingEditMessageId;
@@ -243,7 +225,7 @@
 			const conversationDeleted = await chatStore.removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
-				goto(ROUTES.START);
+				goto(resolve(ROUTES.START));
 			}
 
 			return;
@@ -284,7 +266,7 @@
 			const conversationDeleted = await chatStore.removeSystemPromptPlaceholder(message.id);
 
 			if (conversationDeleted) {
-				goto(ROUTES.START);
+				goto(resolve(ROUTES.START));
 			}
 		} else {
 			chatActions.delete(message);
@@ -372,7 +354,7 @@
 				isEditing = false;
 
 				if (conversationDeleted) {
-					goto(ROUTES.START);
+					goto(resolve(ROUTES.START));
 				} else {
 					focusMainChatForm();
 				}
@@ -435,8 +417,8 @@
 <div>
 	{#if message.role === MessageRole.SYSTEM}
 		<ChatMessageSystem bind:textareaElement class={className} {message} />
-	{:else if mcpPromptExtra}
-		<ChatMessageMcpPrompt class={className} mcpPrompt={mcpPromptExtra} {message} />
+	{:else if messageRenderer}
+		<messageRenderer.component class={className} {message} />
 	{:else if isCompaction}
 		<ChatMessageCompaction class={className} {message} onRegenerate={handleRegenerateCompaction} />
 	{:else if isSynthetic}

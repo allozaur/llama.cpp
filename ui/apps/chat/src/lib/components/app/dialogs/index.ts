@@ -11,21 +11,6 @@
  */
 
 /**
- * **DialogMcpServerAddNew** - Add new MCP server dialog
- *
- * Modal dialog for adding a new MCP server with URL and optional headers.
- * Validates URL format and integrates with mcpStore and conversationsStore.
- */
-export { default as DialogMcpServerAddNew } from './DialogMcpServerAddNew.svelte';
-
-/**
- * **DialogMcpServers** - MCP servers dialog, opened with `uiStore.openMcpServers`
- *
- * Lists the MCP servers, to add, edit, turn on and remove them.
- */
-export { default as DialogMcpServers } from './DialogMcpServers.svelte';
-
-/**
  * **DialogSettingsChat** - Chat settings shown in a modal dialog
  *
  * Wraps the full SettingsChat layout (sidebar, mobile header, fields, footer)
@@ -482,60 +467,6 @@ export { default as DialogImportConversationPreview } from './DialogImportConver
  * ```
  */
 export { default as DialogImportConversationsResult } from './DialogImportConversationsResult.svelte';
-
-/**
- * **DialogMcpResourcesBrowser** - MCP resources browser dialog
- *
- * Dialog for browsing and attaching MCP resources to chat context.
- * Displays resources from connected MCP servers in a tree structure
- * with preview panel and multi-select support.
- *
- * **Architecture:**
- * - Uses ShadCN Dialog with two-panel layout
- * - Left panel: McpResourcesBrowser with tree navigation
- * - Right panel: McpResourcePreview for selected resource
- * - Integrates with mcpStore for resource fetching and attachment
- *
- * **Features:**
- * - Tree-based resource navigation by server and path
- * - Single and multi-select with shift+click
- * - Resource preview with content display
- * - Quick attach button per resource
- * - Batch attach for multiple selections
- *
- * @example
- * ```svelte
- * <DialogMcpResourcesBrowser
- *   bind:open={showResources}
- *   onAttach={handleResourceAttach}
- * />
- * ```
- */
-export { default as DialogMcpResourcesBrowser } from './DialogMcpResourcesBrowser.svelte';
-
-/**
- * **DialogMcpResourcePreview** - MCP resource content preview
- *
- * Dialog for previewing the content of a stored MCP resource attachment.
- * Displays the resource content with syntax highlighting for code,
- * image rendering for images, and plain text for other content.
- *
- * **Features:**
- * - Syntax highlighted code preview
- * - Image rendering for image resources
- * - Copy to clipboard and download actions
- * - Server name and favicon display
- * - MIME type badge
- *
- * @example
- * ```svelte
- * <DialogMcpResourcePreview
- *   bind:open={previewOpen}
- *   extra={mcpResourceExtra}
- * />
- * ```
- */
-export { default as DialogMcpResourcePreview } from './DialogMcpResourcePreview.svelte';
 
 /**
  * **DialogMermaidPreview** - Full-screen diagram preview with zoom and pan

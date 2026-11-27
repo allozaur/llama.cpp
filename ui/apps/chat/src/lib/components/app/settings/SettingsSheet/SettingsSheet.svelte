@@ -17,11 +17,11 @@
 	import * as Drawer from '@ggml-org/llama-ui/ui/drawer';
 	import { RefreshCw, RotateCcw } from '@lucide/svelte';
 	import {
+		SettingsChatExtensionsTab,
 		SettingsChatFieldsInset,
 		SettingsChatImportExportTab,
 		SettingsChatVoiceTab,
-		SettingsHuggingFaceAccount,
-		SettingsMcpServers
+		SettingsHuggingFaceAccount
 	} from '#lib/components/app/settings/index.ts';
 	import {
 		NUMERIC_FIELDS,
@@ -36,6 +36,7 @@
 	} from '#lib/constants/index.ts';
 	import { SettingsSheetPage } from '#lib/enums/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import { useToolsPanel } from '#lib/hooks/use-tools-panel.svelte.ts';
 	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import {
@@ -59,7 +60,7 @@
 	type Page =
 		| { id: SettingsSheetPage.ROOT }
 		| { id: SettingsSheetPage.SECTION; slug: string }
-		| { id: SettingsSheetPage.MCP_SERVERS }
+		| { actionId: string; id: SettingsSheetPage.SETTINGS_ACTION }
 		| SettingsToolsView;
 
 	/** The smallest value a positive whole number setting takes when its field names none. */
@@ -90,12 +91,19 @@
 		)
 	);
 
+	// the page an extension's settings action opens, e.g. the MCP servers
+	let settingsAction = $derived(
+		page.id === SettingsSheetPage.SETTINGS_ACTION
+			? extensions.contributions('settingsActions').find((action) => action.id === page.actionId)
+			: undefined
+	);
+
 	const title = $derived.by(() => {
 		switch (page.id) {
 			case SettingsSheetPage.SECTION:
 				return section?.title ?? SETTINGS_SHEET_TEXT.TITLE;
-			case SettingsSheetPage.MCP_SERVERS:
-				return SETTINGS_SHEET_TEXT.MCP_SERVERS;
+			case SettingsSheetPage.SETTINGS_ACTION:
+				return settingsAction?.title ?? SETTINGS_SHEET_TEXT.TITLE;
 			case SettingsSheetPage.TOOLS:
 				return SETTINGS_SHEET_TEXT.TOOLS;
 			case SettingsSheetPage.TOOL_GROUP:
@@ -238,8 +246,10 @@
 				{#if section}
 					{@render sectionPage(section.slug)}
 				{/if}
-			{:else if page.id === SettingsSheetPage.MCP_SERVERS}
-				<SettingsMcpServers />
+			{:else if page.id === SettingsSheetPage.SETTINGS_ACTION}
+				{#if settingsAction}
+					<settingsAction.page />
+				{/if}
 			{:else}
 				<SettingsSheetTools onOpen={openPage} view={page} />
 			{/if}
@@ -338,7 +348,12 @@
 {/snippet}
 
 {#snippet sectionPage(slug: string)}
-	{#if slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
+	{#if slug === SETTINGS_SECTION_SLUGS.EXTENSIONS}
+		<!-- the list comes from the extension registry, not from settings fields -->
+		<InsetList class="px-4 py-4">
+			<SettingsChatExtensionsTab />
+		</InsetList>
+	{:else if slug === SETTINGS_SECTION_SLUGS.IMPORT_EXPORT}
 		<SettingsChatImportExportTab inset />
 	{:else if slug === SETTINGS_SECTION_SLUGS.VOICE}
 		<SettingsChatVoiceTab
@@ -352,7 +367,8 @@
 			fields={sectionFields}
 			localConfig={config}
 			onConfigChange={commit}
-			onManageMcpServers={() => openPage({ id: SettingsSheetPage.MCP_SERVERS })}
+			onSettingsAction={(action) =>
+				openPage({ actionId: action.id, id: SettingsSheetPage.SETTINGS_ACTION })}
 			onThemeChange={setTheme}
 		/>
 

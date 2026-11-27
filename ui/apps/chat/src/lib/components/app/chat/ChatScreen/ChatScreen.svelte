@@ -369,7 +369,7 @@
 			{/if}
 
 			<div class="pointer-events-none flex flex-col gap-6 items-center w-full">
-				{#if stick.farFromBottom && page.url.hash.includes(ROUTES.CHAT) && page.params.id}
+				{#if stick.farFromBottom && page.route.id === ROUTES.CHAT && page.params.id}
 					<ChatScreenActionScrollDown onclick={() => stick.scrollToBottom('smooth')} />
 				{/if}
 			</div>

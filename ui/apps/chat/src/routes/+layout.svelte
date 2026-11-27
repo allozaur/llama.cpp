@@ -19,7 +19,6 @@
 		FAVICON_PATHS,
 		FAVICON_SELECTORS,
 		HEADERS,
-		MODELS_ROUTE_ID,
 		NEW_CHAT_TAB_ID,
 		ROUTES,
 		SETTINGS_KEYS,
@@ -35,7 +34,6 @@
 		chatStore,
 		conversationsStore,
 		deviceStore,
-		mcpStore,
 		modelsStore,
 		serverStore,
 		settingsStore,
@@ -188,9 +186,9 @@
 
 		untrack(() => {
 			if (
-				(page.route.id === '/(chat)' ||
-					page.route.id === '/(chat)/chat/[id]' ||
-					page.route.id === MODELS_ROUTE_ID) &&
+				(page.route.id === ROUTES.START ||
+					page.route.id === ROUTES.CHAT ||
+					page.route.id === ROUTES.MODELS) &&
 				page.status !== 401 &&
 				page.status !== 403
 			) {
@@ -296,38 +294,6 @@
 		};
 	});
 
-	// Background MCP server health checks on app load.
-	// Health-check every configured server with a URL - including disabled ones -
-	// so the MCP servers dialog can display health metadata for servers that are
-	// currently turned off. Disabled servers never get promoted to active
-	// connections (see runHealthCheck), so their tools/prompts/resources stay
-	// out of the chat-side stores.
-	// Only IDLE servers are checked; already-resolved (SUCCESS / ERROR) servers
-	// keep their existing state, so adding or removing a server does not flash
-	// every other card back through skeleton state.
-	$effect(() => {
-		if (!browser) return;
-
-		// Enable MCP off: no server is checked or connected, open connections close
-		if (!mcpStore.isFeatureEnabled) {
-			untrack(() => void mcpStore.shutdown());
-
-			return;
-		}
-
-		const mcpServers = mcpStore.getServers();
-		const serversWithUrls = mcpServers.filter((s) => s.url.trim());
-
-		if (serversWithUrls.length > 0) {
-			untrack(() => {
-				// Run health checks in background (don't await)
-				mcpStore.runHealthChecksForServers(serversWithUrls, true).catch((error) => {
-					console.warn('[layout] MCP health checks failed:', error);
-				});
-			});
-		}
-	});
-
 	// Monitor API key changes and redirect to error page if removed or changed when required
 	$effect(() => {
 		checkApiKey();
@@ -415,7 +381,7 @@
 
 			<!-- the phone sidebar sits under the page, so its toggle rides on the page; it steps
 			     aside while the expanded chat form covers the screen -->
-			{#if deviceStore.isMobile && !page.url.hash.includes(ROUTES.SEARCH) && !uiStore.isComposerExpanded}
+			{#if deviceStore.isMobile && page.route.id !== ROUTES.SEARCH && !uiStore.isComposerExpanded}
 				<div transition:fade={{ duration: CHAT_FORM_CHROME_FADE_MS }}>
 					<GlassKey
 						class="sidebar-reveal-pin-top fixed top-(--corner-control-top) left-4 z-30"

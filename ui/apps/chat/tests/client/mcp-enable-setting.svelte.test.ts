@@ -1,8 +1,8 @@
 // Enable MCP is a real switch: while it is off, an added and enabled server is not usable.
 
 import { SETTINGS_KEYS } from '#lib/constants/index.ts';
-import { conversationsStore } from '#lib/stores/conversations/index.svelte.ts';
-import { mcpStore } from '#lib/stores/mcp/index.svelte.ts';
+import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
+import { policyEnabledServerIds } from '#lib/extensions/mcp/tools.ts';
 import { settingsStore } from '#lib/stores/settings/index.svelte.ts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -17,7 +17,7 @@ describe('Enable MCP setting', () => {
 		expect(mcpStore.isFeatureEnabled).toBe(false);
 		expect(mcpStore.hasEnabledServers()).toBe(false);
 		expect(mcpStore.hasAvailableServers()).toBe(false);
-		expect(conversationsStore.preferences.policyEnabledServerIds()).toEqual([]);
+		expect(policyEnabledServerIds()).toEqual([]);
 	});
 
 	it('makes the server usable once it is on', () => {
@@ -25,7 +25,7 @@ describe('Enable MCP setting', () => {
 
 		expect(mcpStore.hasEnabledServers()).toBe(true);
 		expect(mcpStore.hasAvailableServers()).toBe(true);
-		expect(conversationsStore.preferences.policyEnabledServerIds()).toHaveLength(1);
+		expect(policyEnabledServerIds()).toHaveLength(1);
 	});
 
 	it('keeps the server in the list either way, to manage it', () => {

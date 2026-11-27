@@ -1,13 +1,16 @@
 /**
- * RouterService - Builds app route paths
+ * RouterService - Builds app URLs
  *
- * Returns chat route strings from a single source of truth (ROUTES). No state.
+ * Resolves the route ids in ROUTES with their params into typed URLs (`#/…` with the hash
+ * router). No state.
  */
 
 import { ROUTES } from '#lib/constants/index.ts';
+import { resolve } from '$app/paths';
+import type { ResolvedPathname } from '$app/types';
 
 export class RouterService {
-	static chat(id: string): string {
-		return `${ROUTES.CHAT}/${id}`;
+	static chat(id: string): ResolvedPathname {
+		return resolve(ROUTES.CHAT, { id });
 	}
 }

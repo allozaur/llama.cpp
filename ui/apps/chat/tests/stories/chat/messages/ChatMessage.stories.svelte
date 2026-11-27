@@ -36,6 +36,7 @@
 	import { MessageRole } from '#lib/enums/index.ts';
 	import { chatActivityStore } from '#lib/stores/chat/activity.svelte.ts';
 	import { chatStore } from '#lib/stores/index.ts';
+	import { expect } from 'storybook/test';
 
 	const { Story } = defineMeta({
 		args: {
@@ -254,7 +255,16 @@
 
 <Story args={{ message: cwdClearedMessage }} beforeEach={() => seedChatStory()} name="CwdCleared" />
 
-<Story args={{ message: mcpPromptMessage }} beforeEach={() => seedChatStory()} name="McpPrompt" />
+<Story
+	args={{ message: mcpPromptMessage }}
+	beforeEach={() => seedChatStory()}
+	name="McpPrompt"
+	play={async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole('group', { name: 'MCP Prompt message with actions' })
+		).toBeInTheDocument();
+	}}
+/>
 
 <Story
 	args={{ message: userWithAttachmentsMessage }}

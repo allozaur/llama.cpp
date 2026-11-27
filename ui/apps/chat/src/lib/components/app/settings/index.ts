@@ -59,6 +59,15 @@ export { default as SettingsResetButton } from './SettingsResetButton.svelte';
 export { default as SettingsChatImportExportTab } from './SettingsChat/SettingsChatImportExportTab.svelte';
 
 /**
+ * **SettingsChatExtensionsTab** - Extensions section of the settings
+ *
+ * Lists the extensions the app knows (name, description) with a switch for
+ * each. A switch takes effect at once and the choice is remembered. An
+ * extension that failed to load or activate shows why.
+ */
+export { default as SettingsChatExtensionsTab } from './SettingsChat/SettingsChatExtensionsTab.svelte';
+
+/**
  * **SettingsChatVoiceTab** - Voice section of the settings
  *
  * The registry's voice fields, with the transcription model picker between them:
@@ -72,12 +81,6 @@ export { default as SettingsChatVoiceTab } from './SettingsChat/SettingsChatVoic
  * icon button, and optional summary of recent actions.
  */
 export { default as SettingsChatImportExportSection } from './SettingsChat/SettingsChatImportExportSection.svelte';
-
-/**
- * MCP Servers configuration panel.
- * Provides UI for managing Model Context Protocol (MCP) server connections.
- */
-export { default as SettingsMcpServers } from './SettingsMcpServers.svelte';
 
 /**
  * Form fields renderer for individual settings. Generates appropriate input

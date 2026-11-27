@@ -9,15 +9,14 @@
 	import { Switch } from '@ggml-org/llama-ui/ui/switch';
 	import { Textarea } from '@ggml-org/llama-ui/ui/textarea';
 	import { Check, FlaskConical, RotateCcw } from '@lucide/svelte';
-	import McpLogo from '#lib/components/app/mcp/McpLogo.svelte';
 	import {
-		MANAGE_MCP_SERVERS_LABEL,
 		NUMERIC_FIELDS,
 		SETTING_CONFIG_INFO,
 		SETTINGS_KEYS,
 		SETTINGS_SHEET_TEXT
 	} from '#lib/constants/index.ts';
 	import { SettingsFieldBlock, SettingsFieldType } from '#lib/enums/settings.enums.ts';
+	import { extensions, type SettingsAction } from '#lib/extensions/index.ts';
 	import { useSettingsFieldDefaults } from '#lib/hooks/use-settings-field-defaults.svelte.ts';
 	import { settingsStore, uiStore } from '#lib/stores/index.ts';
 	import { normalizeFloatingPoint } from '#lib/utils/precision.ts';
@@ -29,13 +28,16 @@
 		fields: SettingsFieldConfig[];
 		localConfig: SettingsConfigType;
 		onConfigChange: (key: string, value: string | boolean) => void;
-		/** Opens the MCP servers as a page of the sheet; without it, they open in their dialog */
-		onManageMcpServers?: () => void;
+		/** Opens an extension's settings action as a page of the sheet; without it, in its dialog */
+		onSettingsAction?: (action: SettingsAction) => void;
 		onThemeChange?: (theme: string) => void;
 	}
 
-	let { fields, localConfig, onConfigChange, onManageMcpServers, onThemeChange, title }: Props =
+	let { fields, localConfig, onConfigChange, onSettingsAction, onThemeChange, title }: Props =
 		$props();
+
+	// what extensions manage from Settings, each under the setting that switches it on
+	let settingsActions = $derived(extensions.contributions('settingsActions'));
 
 	/** Rows share a group; a prompt or a choice of one gets a group of its own. */
 	type Block =
@@ -44,8 +46,13 @@
 
 	const fieldDefaults = useSettingsFieldDefaults(() => localConfig);
 
+	// a field that belongs to an extension shows only while that extension is on
 	let visibleFields = $derived(
-		fields.filter((field) => !field.dependsOn || Boolean(localConfig[field.dependsOn]))
+		fields.filter(
+			(field) =>
+				(!field.extension || extensions.isActive(field.extension)) &&
+				(!field.dependsOn || Boolean(localConfig[field.dependsOn]))
+		)
 	);
 
 	let blocks = $derived.by(() => {
@@ -126,18 +133,22 @@
 								{@render numberRow(field)}
 							{/if}
 
-							{#if field.key === SETTINGS_KEYS.ENABLE_MCP && Boolean(localConfig[field.key])}
-								<InsetListRow
-									chevron
-									onclick={() =>
-										onManageMcpServers ? onManageMcpServers() : uiStore.openMcpServers()}
-								>
-									{#snippet leading()}
-										<McpLogo class="size-icon-md shrink-0" />
-									{/snippet}
+							{#if Boolean(localConfig[field.key])}
+								{#each settingsActions.filter((action) => action.settingKey === field.key) as action (action.id)}
+									<InsetListRow
+										chevron
+										onclick={() =>
+											onSettingsAction
+												? onSettingsAction(action)
+												: uiStore.openSettingsAction(action.id)}
+									>
+										{#snippet leading()}
+											<action.icon class="size-icon-md shrink-0" />
+										{/snippet}
 
-									<span class="flex-1">{MANAGE_MCP_SERVERS_LABEL}</span>
-								</InsetListRow>
+										<span class="flex-1">{action.label}</span>
+									</InsetListRow>
+								{/each}
 							{/if}
 						{/each}
 					</InsetList>
