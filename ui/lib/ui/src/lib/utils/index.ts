@@ -6,3 +6,4 @@ export {
   resolveHighlightLanguage,
   trimCodePadding,
 } from "./code";
+export { type CommandWord, splitCommand } from "./command";

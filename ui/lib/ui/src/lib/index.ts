@@ -2,7 +2,7 @@
 // Styles are separate entry points: @ggml-org/llama-ui/theme.css (everything), tokens.css, fonts.css, surfaces.css.
 export { cn, tv, type WithElementRef, type WithoutChild, type WithoutChildren, type WithoutChildrenOrChild } from './components/ui/utils.js';
 export { ActionIcon } from './components/app/actions/index.js';
-export { SyntaxHighlightedCode } from './components/app/content/index.js';
+export { CommandBox, SyntaxHighlightedCode } from './components/app/content/index.js';
 export { NativeSelect, SearchInput } from './components/app/forms/index.js';
 export { Logo } from './components/app/misc/index.js';
 export { InsetList, InsetListRow, InsetListSplitRow, SheetHeader, SheetPages, type SheetPagesState, useSheetPages } from './components/app/sheets/index.js';
