@@ -1,5 +1,6 @@
 <script lang="ts" module>
 	import { AI_TUTORIAL_MD } from '../fixtures/ai-tutorial.js';
+	import { MARKDOWN_TABLES_MD } from '../fixtures/markdown-tables.js';
 	import { MERMAID_DIAGRAMS_MD } from '../fixtures/mermaid-diagrams.js';
 	import { defineMeta } from '@storybook/addon-svelte-csf';
 	import { MarkdownContent } from '#lib/components/app/index.ts';
@@ -17,6 +18,25 @@
 <Story
 	args={{ class: 'max-w-[56rem] w-[calc(100vw-2rem)]', content: AI_TUTORIAL_MD }}
 	name="Default"
+/>
+
+<Story
+	args={{ class: 'max-w-[56rem] w-[calc(100vw-2rem)]', content: MARKDOWN_TABLES_MD }}
+	name="Tables"
+	play={async ({ canvasElement }) => {
+		const header = await waitFor(() => {
+			const el = canvasElement.querySelector('th');
+
+			expect(el).not.toBeNull();
+
+			return el!;
+		});
+		// a right-aligned column keeps its alignment in the header
+		const sizeHeader = canvasElement.querySelectorAll('th')[1];
+
+		await expect(getComputedStyle(sizeHeader).textAlign).toBe('end');
+		await expect(getComputedStyle(header).backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
+	}}
 />
 
 <Story
