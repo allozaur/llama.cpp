@@ -46,7 +46,8 @@
 			</Dialog.Description>
 		</Dialog.Header>
 
-		<div class="grid min-h-0 flex-1 overflow-hidden" style="grid-template-columns: auto 1fr;">
+		<!-- one column on a phone, where Discover shows its list or a model's details -->
+		<div class="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-[auto_1fr]">
 			<ModelsDiscover />
 		</div>
 	</Dialog.Content>
