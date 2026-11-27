@@ -33,3 +33,12 @@ export enum PointerType {
 	PEN = 'pen',
 	TOUCH = 'touch'
 }
+
+/** What a word of a shell command is, for CommandBox's highlighting. */
+export enum CommandWordKind {
+	ARGUMENT = 'argument',
+	FLAG = 'flag',
+	PIPE = 'pipe',
+	PROGRAM = 'program',
+	SPACE = 'space'
+}

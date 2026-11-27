@@ -10,3 +10,6 @@ export const SYNTAX_CODE_SCROLL_AT_BOTTOM_THRESHOLD_PX = 32;
 
 /** How long a collapsible's body takes to expand or collapse; matches the region's CSS transition. */
 export const COLLAPSIBLE_TRANSITION_MS = 200;
+
+/** How long CommandBox shows its check after copying, before the copy icon comes back. */
+export const COMMAND_COPIED_FEEDBACK_MS = 2000;
