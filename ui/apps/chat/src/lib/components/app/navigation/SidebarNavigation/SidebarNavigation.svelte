@@ -5,7 +5,6 @@
 		ActionIcon,
 		DialogConversationDelete,
 		DialogConversationRename,
-		DialogConversationShare,
 		DialogDiscoverModels,
 		DialogGroup,
 		DialogGroupPicker,
@@ -799,7 +798,10 @@
 
 <DialogGroupPicker />
 
-<DialogConversationShare />
+<!-- what the extensions mount for the whole app, such as a dialog they open themselves -->
+{#each extensions.contributions('overlays') as Overlay (Overlay)}
+	<Overlay />
+{/each}
 
 <ModelsManagerModelDrawer />
 

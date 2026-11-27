@@ -18,6 +18,7 @@ import {
 	ServerModelsSseEventType,
 	ServerModelStatus
 } from '#lib/enums/index.ts';
+import { extensions } from '#lib/extensions/index.ts';
 import { HuggingFaceService } from '#lib/services/huggingface.service.ts';
 import { ModelsService } from '#lib/services/models.service.ts';
 // direct imports between stores, not via the barrel, to avoid circular deps
@@ -344,7 +345,9 @@ export class ModelStatusManager {
 		this.downloadProgress.set(model, snapshot ?? emptyDownloadProgress());
 
 		try {
-			const res = await ModelsService.downloadModel(model, sidecars);
+			// an account an extension holds signs the download in, so a gated repo can be reached
+			const [account] = extensions.contributions('modelDownloadAuth');
+			const res = await ModelsService.downloadModel(model, sidecars, await account?.token());
 
 			if (!res.success) {
 				throw new Error(res.error?.message ?? 'Server rejected the download request');

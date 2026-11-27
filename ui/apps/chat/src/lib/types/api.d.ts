@@ -185,6 +185,8 @@ export interface ApiModelsDownloadRequest {
 	model: string;
 	/** Sidecar kinds pulled with the model, picked by the server as -hf picks them */
 	sidecars: ModelSidecar[];
+	/** The Hugging Face token this download uses, e.g. to reach a gated repo; the server's own when omitted */
+	hf_token?: string;
 }
 
 /**

@@ -141,13 +141,16 @@ static bool is_valid_repo_id(const std::string & repo_id) {
     return !special && slash == 1;
 }
 
+// a user access token is "hf_" and alphanumerics; the access token of an OAuth
+// sign-in is "hf_oauth_" and a JWS, so longer and with '_', '-' and '.'
 static bool is_valid_hf_token(const std::string & token) {
-    if (token.length() < 37 || token.length() > 256 ||
+    if (token.length() < 37 || token.length() > 2048 ||
         !string_starts_with(token, "hf_")) {
         return false;
     }
     for (size_t i = 3; i < token.length(); ++i) {
-        if (!is_alphanum(token[i])) {
+        const char c = token[i];
+        if (!is_alphanum(c) && c != '_' && c != '-' && c != '.') {
             return false;
         }
     }

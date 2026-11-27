@@ -347,6 +347,8 @@ public:
         // the partial files the download plan writes
         std::vector<std::string>             sidecars;
         std::vector<common_download_partial> partials;
+        // download mode: the Hugging Face token of this request, in place of the router's
+        std::string hf_token;
     };
 
     // load and unload model instances

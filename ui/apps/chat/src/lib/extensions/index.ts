@@ -1,4 +1,10 @@
 export type {
+	ConversationAction,
+	MessageAction,
+	MessageActionTarget,
+	Overlay
+} from './points/actions';
+export type {
 	ComposerAttachments,
 	ComposerAttachmentsProps,
 	ComposerCommand,
@@ -7,6 +13,8 @@ export type {
 	ComposerPickerExports,
 	ComposerPickerProps
 } from './points/composer';
+export type { Connector, ServerAuth } from './points/connectors';
+export type { ModelDownloadAuth, ModelNotice } from './points/models';
 export { findAttachmentRenderer, findMessageRenderer } from './points/renderers';
 export type {
 	AttachmentRenderer,

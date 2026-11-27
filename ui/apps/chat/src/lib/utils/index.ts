@@ -39,13 +39,6 @@ export {
 	buildSiblingInfoMap
 } from './branching';
 
-// Conversation traces (sharing to Hugging Face)
-export {
-	buildConversationTrace,
-	buildTracePreview,
-	type ConversationTraceOptions
-} from './conversation-trace';
-
 // Code
 export {
 	highlightCode,

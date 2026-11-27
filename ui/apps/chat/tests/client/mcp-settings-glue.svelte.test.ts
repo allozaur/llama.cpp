@@ -4,7 +4,7 @@
 // Enable MCP is off.
 
 import { MANAGE_MCP_SERVERS_LABEL, SETTINGS_KEYS } from '#lib/constants/index.ts';
-import type { ExtensionContext, SettingsAction } from '#lib/extensions/index.ts';
+import { type ExtensionContext, extensions, type SettingsAction } from '#lib/extensions/index.ts';
 import { contributeSettings } from '#lib/extensions/mcp/settings.ts';
 import { contributeStartup } from '#lib/extensions/mcp/startup.svelte.ts';
 import { mcpStore } from '#lib/extensions/mcp/stores/index.svelte.ts';
@@ -132,6 +132,54 @@ describe('MCP settings glue', () => {
 		} finally {
 			for (const cleanup of cleanups) await cleanup();
 
+			runHealthChecks.mockRestore();
+			shutdown.mockRestore();
+			settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, original);
+			settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, wasEnabled);
+		}
+	});
+
+	it('connects the servers again when the account of a connector changes', async () => {
+		const original = settingsStore.config[SETTINGS_KEYS.MCP_SERVERS];
+		const wasEnabled = settingsStore.config[SETTINGS_KEYS.ENABLE_MCP];
+		const runHealthChecks = vi
+			.spyOn(mcpStore, 'runHealthChecksForServers')
+			.mockResolvedValue(undefined);
+		const shutdown = vi.spyOn(mcpStore, 'shutdown').mockResolvedValue();
+		const { cleanups, ctx } = makeContext();
+
+		let account = $state<string | null>(null);
+
+		// stands in for a connector, e.g. Hugging Face, that lends its sign-in to its MCP server
+		const contributions = vi
+			.spyOn(extensions, 'contributions')
+			.mockImplementation(((point: string) =>
+				point === 'serverAuth'
+					? [{ account: () => account, covers: () => true, headers: async () => null }]
+					: []) as typeof extensions.contributions);
+
+		try {
+			settingsStore.updateConfig(SETTINGS_KEYS.ENABLE_MCP, true);
+			setServers([{ enabled: true, id: 'on', url: 'http://localhost:9001/mcp' }]);
+			contributeStartup(ctx);
+			flushSync();
+			runHealthChecks.mockClear();
+
+			// nothing to connect again while the account is the same
+			expect(shutdown).not.toHaveBeenCalled();
+
+			account = 'me';
+			flushSync();
+
+			expect(shutdown).toHaveBeenCalledOnce();
+			await vi.waitFor(() => expect(runHealthChecks).toHaveBeenCalledOnce());
+			expect(runHealthChecks.mock.calls[0][0].map((server) => server.id)).toEqual(['on']);
+			// checked again, not skipped as already checked
+			expect(runHealthChecks.mock.calls[0][1]).toBe(false);
+		} finally {
+			for (const cleanup of [...cleanups].reverse()) await cleanup();
+
+			contributions.mockRestore();
 			runHealthChecks.mockRestore();
 			shutdown.mockRestore();
 			settingsStore.updateConfig(SETTINGS_KEYS.MCP_SERVERS, original);

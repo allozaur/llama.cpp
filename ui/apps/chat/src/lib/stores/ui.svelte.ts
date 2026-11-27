@@ -27,12 +27,6 @@ import { page } from '$app/state';
 import type { ResolvedPathname } from '$app/types';
 import { SvelteSet } from 'svelte/reactivity';
 
-interface ConversationShareOptions {
-	conversationId: string;
-	/** The message a share can end at, when it was started from one. */
-	messageId?: string;
-}
-
 interface GroupDialogOptions {
 	/** Group to rename; without it the dialog creates a new one. */
 	groupId?: string;
@@ -86,9 +80,6 @@ class UiStore {
 
 	/** Conversation the rename dialog edits, `null` while closed. */
 	conversationRenameId = $state<string | null>(null);
-
-	/** The share the share dialog is open for, `null` while closed. */
-	conversationShare = $state<ConversationShareOptions | null>(null);
 
 	/** Repo the Discover dialog selects when it opens, set by a model row. */
 	discoverModelFocus = $state<string | null>(null);
@@ -220,11 +211,6 @@ class UiStore {
 	/** Rename a conversation, from any of its menus. */
 	openConversationRename(conversationId: string): void {
 		this.conversationRenameId = conversationId;
-	}
-
-	/** Share a conversation to Hugging Face, from any of its menus or from a message. */
-	openConversationShare(options: ConversationShareOptions): void {
-		this.conversationShare = options;
 	}
 
 	/** Open the group dialog to create a group, or to rename `groupId`. */

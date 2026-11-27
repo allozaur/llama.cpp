@@ -5,6 +5,7 @@
 	import ModelsDiscoverDetailsSkeleton from './ModelsDiscoverDetailsSkeleton.svelte';
 	import { OTHER_BIT_DEPTH } from '#lib/constants/index.ts';
 	import { ModelAuxSidecar } from '#lib/enums/index.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import { HuggingFaceService } from '#lib/services/index.ts';
 	import type { HfModelDetailInfo, HfModelSibling, ModelBitDepthRow } from '#lib/types/index.ts';
 	import { detectThinkingSupport, detectToolUseSupport } from '#lib/utils/index.ts';
@@ -105,6 +106,10 @@
 			{modalities}
 			{modelId}
 		/>
+
+		{#each extensions.contributions('modelNotices') as Notice (Notice)}
+			<Notice isGated={!!details.gated} {modelId} />
+		{/each}
 
 		<ModelsDiscoverDetailsDownloadOptions {bitDepthRows} {modelId} />
 

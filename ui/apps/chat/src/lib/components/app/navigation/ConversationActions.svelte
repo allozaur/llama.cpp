@@ -12,13 +12,12 @@
 		Unlink
 	} from '@lucide/svelte';
 	import {
-		HUGGING_FACE_ENABLED,
-		SHARE_ACTION,
 		SHORTCUT_DELETE_CONVERSATION,
 		SHORTCUT_EDIT_CONVERSATION,
 		SHORTCUT_EXPORT_CONVERSATION
 	} from '#lib/constants/index.ts';
 	import type { MenuKind } from '#lib/enums/index.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import {
 		conversationsStore,
 		groupsStore,
@@ -111,14 +110,11 @@
 			onclick: run(() => void conversationsStore.downloadConversation(conversation.id)),
 			shortcut: isActive ? SHORTCUT_EXPORT_CONVERSATION : undefined
 		},
-		...(HUGGING_FACE_ENABLED
-			? [
-					{
-						...SHARE_ACTION,
-						onclick: run(() => uiStore.openConversationShare({ conversationId: conversation.id }))
-					}
-				]
-			: []),
+		...extensions.contributions('conversationActions').map((action) => ({
+			icon: action.icon,
+			label: action.label,
+			onclick: run(() => action.run(conversation.id))
+		})),
 		...(onEnterSelectionMode
 			? [{ icon: ListChecks, label: 'Select', onclick: run(onEnterSelectionMode) }]
 			: []),

@@ -27,7 +27,7 @@ const LLAMA_HARNESS_CHAT_ONLY_ENTRY = resolve(
 	__dirname,
 	'src/lib/stores/agentic/harness-chat-only.ts'
 );
-// what a build without sharing to Hugging Face (a build that is not asked for it with
+// what a build without the Hugging Face extension (a build that is not asked for it with
 // VITE_PUBLIC_HUGGING_FACE=true) gets in place of the package's Svelte entry: an account that is
 // never signed in, and components that draw nothing
 const LLAMA_HUGGINGFACE_DISABLED_ENTRY = resolve(
@@ -53,7 +53,7 @@ const outDir = process.env.LLAMA_UI_OUT_DIR ?? './dist';
 export default defineConfig(({ command, mode }) => {
 	const env = loadEnv(mode, process.cwd(), 'VITE_PUBLIC_');
 	const SERVER_ORIGIN = env.VITE_PUBLIC_SERVER_ORIGIN || 'http://localhost:9931';
-	// A build has sharing to Hugging Face only when asked for: VITE_PUBLIC_HUGGING_FACE=true. The
+	// A build has the Hugging Face extension only when asked for: VITE_PUBLIC_HUGGING_FACE=true. The
 	// dev server, the tests and Storybook have it unless told otherwise (=false).
 	const huggingFace = env.VITE_PUBLIC_HUGGING_FACE
 		? env.VITE_PUBLIC_HUGGING_FACE === 'true'

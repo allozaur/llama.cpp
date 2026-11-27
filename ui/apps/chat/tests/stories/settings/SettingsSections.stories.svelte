@@ -30,6 +30,8 @@
 	name="Import/Export"
 />
 
+<Story args={{ initialSection: SETTINGS_SECTIONS.CONNECTORS.slug, open: true }} name="Connectors" />
+
 <Story
 	args={{ initialSection: SETTINGS_SECTIONS.SAMPLING_PENALTIES.slug, open: true }}
 	name="Sampling & Penalties"

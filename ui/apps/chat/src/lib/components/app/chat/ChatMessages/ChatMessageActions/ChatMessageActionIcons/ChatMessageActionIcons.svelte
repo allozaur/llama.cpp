@@ -9,7 +9,6 @@
 		ChatMessageActionIconsBranchingControls,
 		DialogConfirmation
 	} from '#lib/components/app/index.ts';
-	import { SHARE_ACTION } from '#lib/constants/index.ts';
 	import { getChatMessageActionsContext, getChatMessageEditContext } from '#lib/contexts/index.ts';
 	import { conversationsStore } from '#lib/stores/index.ts';
 	import { untrack } from 'svelte';
@@ -98,13 +97,9 @@
 				/>
 			{/if}
 
-			{#if messageActions.share}
-				<ActionIcon
-					icon={SHARE_ACTION.icon}
-					onclick={messageActions.share}
-					tooltip={SHARE_ACTION.label}
-				/>
-			{/if}
+			{#each messageActions.extensionActions as action (action.label)}
+				<ActionIcon icon={action.icon} onclick={action.onclick} tooltip={action.label} />
+			{/each}
 
 			<ActionIcon icon={Trash2} onclick={messageActions.requestDelete} tooltip="Delete" />
 		</div>

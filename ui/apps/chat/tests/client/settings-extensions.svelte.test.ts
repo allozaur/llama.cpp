@@ -162,7 +162,10 @@ describe('Extensions settings', () => {
 
 		const off = await reloadedRegistry();
 
-		expect(off.extensions).toMatchObject([{ enabled: false, id: MCP_ID, state: 'inactive' }]);
+		expect(off.extensions.find((extension) => extension.id === MCP_ID)).toMatchObject({
+			enabled: false,
+			state: 'inactive'
+		});
 		expect(off.contributions('settingsActions')).toEqual([]);
 		expect(off.contributions('tools')).toEqual([]);
 
@@ -178,7 +181,10 @@ describe('Extensions settings', () => {
 		const on = await reloadedRegistry();
 
 		try {
-			expect(on.extensions).toMatchObject([{ enabled: true, id: MCP_ID, state: 'active' }]);
+			expect(on.extensions.find((extension) => extension.id === MCP_ID)).toMatchObject({
+				enabled: true,
+				state: 'active'
+			});
 			expect(on.contributions('settingsActions')).toHaveLength(1);
 		} finally {
 			await on.setEnabled(MCP_ID, false);

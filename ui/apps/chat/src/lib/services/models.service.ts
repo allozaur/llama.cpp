@@ -64,13 +64,15 @@ export class ModelsService {
 	 * Start a model download from HuggingFace (ROUTER mode only). The response
 	 * returns immediately; progress arrives over /models/sse. The server picks
 	 * the model file matching the tag and the files of the sidecar kinds, as -hf
-	 * does; posting a cached model again adds the sidecars it lacks.
+	 * does; posting a cached model again adds the sidecars it lacks. A Hugging Face
+	 * token rides along when the user is signed in, so a gated repo can be reached.
 	 */
 	static async downloadModel(
 		model: string,
-		sidecars: ModelSidecar[]
+		sidecars: ModelSidecar[],
+		hfToken?: string
 	): Promise<ApiModelsDownloadResponse> {
-		const payload: ApiModelsDownloadRequest = { model, sidecars };
+		const payload: ApiModelsDownloadRequest = { hf_token: hfToken, model, sidecars };
 
 		return apiPost<ApiModelsDownloadResponse>(API_MODELS.DOWNLOAD, payload);
 	}

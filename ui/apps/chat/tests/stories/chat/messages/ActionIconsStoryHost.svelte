@@ -47,6 +47,7 @@
 		get deletionInfo() {
 			return deletionInfo;
 		},
+		extensionActions: [],
 		get forkConversation() {
 			return forkable ? () => {} : undefined;
 		},

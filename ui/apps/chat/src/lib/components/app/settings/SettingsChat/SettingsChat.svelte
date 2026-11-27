@@ -2,6 +2,7 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import { RefreshCw } from '@lucide/svelte';
 	import {
+		SettingsChatConnectorsTab,
 		SettingsChatDesktopSidebar,
 		SettingsChatExtensionsTab,
 		SettingsChatFields,
@@ -10,7 +11,6 @@
 		SettingsChatToolsTab,
 		SettingsChatVoiceTab,
 		SettingsFooter,
-		SettingsHuggingFaceAccount,
 		SettingsResetButton
 	} from '#lib/components/app/settings/index.ts';
 	import {
@@ -21,6 +21,7 @@
 		settingsChatSections
 	} from '#lib/constants/index.ts';
 	import { ColorMode } from '#lib/enums/ui.enums.ts';
+	import { extensions } from '#lib/extensions/index.ts';
 	import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 	import { deviceStore, modelsStore, serverStore, settingsStore } from '#lib/stores/index.ts';
 	import type { SettingsSection, SettingsSectionTitle } from '#lib/types/index.ts';
@@ -38,7 +39,14 @@
 
 	let { initialSection, mobileHeaderClass, onClose, onSectionChange }: Props = $props();
 
-	const sections = $derived(settingsChatSections(agenticMode.enabled));
+	// Connectors shows while an extension adds one
+	const sections = $derived(
+		settingsChatSections(agenticMode.enabled).filter(
+			(section) =>
+				section.slug !== SETTINGS_SECTION_SLUGS.CONNECTORS ||
+				extensions.contributions('connectors').length > 0
+		)
+	);
 
 	let activeSlug = $derived(initialSection ?? SETTINGS_SECTION_SLUGS.GENERAL);
 
@@ -219,6 +227,8 @@
 							{localConfig}
 							onConfigChange={handleConfigChange}
 						/>
+					{:else if currentSection.slug === SETTINGS_SECTION_SLUGS.CONNECTORS}
+						<SettingsChatConnectorsTab />
 					{:else if currentSection.fields}
 						<div class="space-y-6">
 							<SettingsChatFields
@@ -229,8 +239,6 @@
 							/>
 
 							{#if currentSection.slug === SETTINGS_SECTION_SLUGS.GENERAL}
-								<SettingsHuggingFaceAccount />
-
 								<div class="flex justify-end gap-2">
 									<SettingsResetButton onReset={handleReset} />
 

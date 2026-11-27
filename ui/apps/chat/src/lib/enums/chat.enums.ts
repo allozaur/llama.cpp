@@ -80,12 +80,6 @@ export enum PdfViewMode {
 	TEXT = 'text'
 }
 
-/** How much of a conversation a share uploads. */
-export enum ConversationShareScope {
-	ALL = 'all',
-	UP_TO_MESSAGE = 'up-to-message'
-}
-
 /** What a built-in slash command of the chat form does. */
 export enum ChatFormCommandAction {
 	COMPACT = 'compact',

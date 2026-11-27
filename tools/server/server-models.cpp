@@ -534,10 +534,11 @@ static std::vector<std::string> parse_sidecars(const json & body) {
     return sidecars;
 }
 
-// the download options of a model with its sidecars, the plan a removal purges partials from
-static common_download_opts sidecar_download_opts(const common_params & params, const std::vector<std::string> & sidecars) {
+// the download options of a model with its sidecars, the plan a removal purges partials from;
+// a request can bring its own Hugging Face token, which then replaces the router's
+static common_download_opts sidecar_download_opts(const common_params & params, const std::vector<std::string> & sidecars, const std::string & hf_token = "") {
     common_download_opts opts;
-    opts.bearer_token = params.hf_token;
+    opts.bearer_token = hf_token.empty() ? params.hf_token : hf_token;
     for (const auto & kind : sidecars) {
         common_download_opts_add_sidecar(opts, kind);
     }
@@ -1268,6 +1269,11 @@ void server_models::load(const std::string & name, const load_options & opts) {
             }
             set_child_env(child_env, "LLAMA_ARG_MMPROJ_AUTO", mmproj ? "1" : "0");
             set_child_env(child_env, "LLAMA_ARG_SPEC_TYPE", spec_types.empty() ? "none" : spec_types);
+
+            // through the environment, never the arguments: those are logged and listed
+            if (!opts.hf_token.empty()) {
+                set_child_env(child_env, "HF_TOKEN", opts.hf_token);
+            }
         }
 
         SRV_INF("%s", "spawning server instance with args:\n");
@@ -2372,6 +2378,9 @@ void server_models_routes::init_routes() {
             throw std::invalid_argument("model must be a non-empty string");
         }
         const auto sidecars = parse_sidecars(body);
+        // optional: the caller's own Hugging Face token, e.g. to reach a gated repo;
+        // used for this download only and never stored
+        const std::string hf_token = json_value(body, "hf_token", std::string());
 
         common_params_model model;
         model.hf_repo = name;
@@ -2379,7 +2388,7 @@ void server_models_routes::init_routes() {
         // validate by fetching metadata, through the plan the download follows
         common_download_hf_plan plan;
         try {
-            plan = common_download_get_hf_plan(model, sidecar_download_opts(params, sidecars));
+            plan = common_download_get_hf_plan(model, sidecar_download_opts(params, sidecars, hf_token));
         } catch (...) {
             SRV_ERR("unknown error while validating model '%s'\n", name.c_str());
             // other exceptions will be handled by the outer ex_wrapper()
@@ -2401,6 +2410,7 @@ void server_models_routes::init_routes() {
             load_opts.custom_meta->name   = name;
             load_opts.sidecars            = sidecars;
             load_opts.partials            = common_download_plan_partials(plan);
+            load_opts.hf_token            = hf_token;
             models.load(name, load_opts);
         }
 

@@ -18,9 +18,11 @@
 		account: HfAccount;
 		/** Locks the account while something uses it, e.g. a share on its way. */
 		disabled?: boolean;
+		/** Where else the token goes besides huggingface.co, to tell the user, e.g. `your llama-server`. */
+		tokenAlsoSentTo?: string;
 	}
 
-	let { account, disabled = false }: Props = $props();
+	let { account, disabled = false, tokenAlsoSentTo }: Props = $props();
 
 	let token = $state('');
 	let tokenError = $state<string | null>(null);
@@ -139,7 +141,9 @@
 			<p class="text-caption text-muted-foreground">
 				<a class="underline" href={HF_NEW_TOKEN_URL} rel="noopener noreferrer" target="_blank">
 					Create a token with write access
-				</a>. It stays in this browser and goes to huggingface.co.
+				</a>. It stays in this browser and goes to huggingface.co{tokenAlsoSentTo
+					? ` and ${tokenAlsoSentTo}`
+					: ''}.
 			</p>
 
 			{#if tokenError}

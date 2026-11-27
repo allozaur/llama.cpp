@@ -1,6 +1,9 @@
 import { HF_PREVIEW_LINES_MAX, HF_PREVIEW_TEXT_MAX } from '@ggml-org/llama-huggingface';
+import {
+	buildConversationTrace,
+	buildTracePreview
+} from '#lib/extensions/huggingface/conversation-trace.ts';
 import { ConversationTransferService } from '#lib/services/conversation-transfer.service.ts';
-import { buildConversationTrace, buildTracePreview } from '#lib/utils/conversation-trace.ts';
 import { describe, expect, it } from 'vitest';
 
 function message(

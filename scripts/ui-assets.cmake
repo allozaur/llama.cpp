@@ -16,9 +16,9 @@ set(HF_VERSION        "" CACHE STRING "Version to download (empty = resolve from
 set(HF_ENABLED        "" CACHE STRING "Whether to allow HF Bucket download (ON/OFF)")
 set(BUILD_UI          "" CACHE STRING "Build UI via npm (ON/OFF)")
 set(LLAMA_UI_GZIP     "" CACHE STRING "Apply gzip compress to assets to save bandwidth")
-# OFF unless it is turned on: a UI built here has sharing conversations to Hugging Face in it
-# only when asked for (the prebuilt one, which releases are made of, has it)
-set(LLAMA_UI_HUGGING_FACE OFF CACHE STRING "Whether the UI built here has sharing to Hugging Face (ON/OFF)")
+# OFF unless it is turned on: a UI built here has the Hugging Face extension in it only when
+# asked for (the prebuilt one, which releases are made of, has it)
+set(LLAMA_UI_HUGGING_FACE OFF CACHE STRING "Whether the UI built here has the Hugging Face extension (ON/OFF)")
 
 set(DIST_DIR     "${UI_BINARY_DIR}/dist")
 set(SRC_DIST_DIR "${UI_SOURCE_DIR}/dist")

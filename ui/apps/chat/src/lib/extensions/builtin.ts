@@ -1,5 +1,5 @@
 import type { ExtensionManifest } from './types';
-import { AGENTIC_ENABLED } from '#lib/constants/app.constants.ts';
+import { AGENTIC_ENABLED, HUGGING_FACE_ENABLED } from '#lib/constants/app.constants.ts';
 import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
 
 /**
@@ -11,7 +11,23 @@ import { agenticMode } from '#lib/stores/agentic-mode.svelte.ts';
  * composed without MCP, and a full build leaves MCP's contributions out
  * until llama-server offers the agentic features.
  */
-export const BUILT_IN_EXTENSIONS: ExtensionManifest[] = AGENTIC_ENABLED
+/**
+ * Hugging Face is in a build made with VITE_PUBLIC_HUGGING_FACE=true, and in
+ * the dev server, the tests and Storybook.
+ */
+const HUGGING_FACE: ExtensionManifest[] = HUGGING_FACE_ENABLED
+	? [
+			{
+				description:
+					'Connect a Hugging Face account: share conversations as agent traces, sign the Hugging Face MCP server in, and download gated models.',
+				id: 'huggingface',
+				load: () => import('./huggingface'),
+				name: 'Hugging Face'
+			}
+		]
+	: [];
+/** MCP needs the agentic loop, so a chat-only build is composed without it. */
+const MCP: ExtensionManifest[] = AGENTIC_ENABLED
 	? [
 			{
 				available: () =>
@@ -23,3 +39,5 @@ export const BUILT_IN_EXTENSIONS: ExtensionManifest[] = AGENTIC_ENABLED
 			}
 		]
 	: [];
+
+export const BUILT_IN_EXTENSIONS: ExtensionManifest[] = [...MCP, ...HUGGING_FACE];
