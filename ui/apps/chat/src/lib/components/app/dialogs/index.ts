@@ -140,6 +140,14 @@ export { default as DialogConversationRename } from './DialogConversationRename.
 export { default as DialogPromptUpdate } from './DialogPromptUpdate.svelte';
 
 /**
+ * **DialogSkill** - Read a skill's SKILL.md
+ *
+ * Opened from a row of the Library's Skills tab: the skill's name, where it comes
+ * from and its description, then its instructions, read when the dialog opens.
+ */
+export { default as DialogSkill } from './DialogSkill.svelte';
+
+/**
  * **DialogPrompt** - Name, describe and write a library prompt
  *
  * Adds a prompt to the library, from a system message (its text shown as is)

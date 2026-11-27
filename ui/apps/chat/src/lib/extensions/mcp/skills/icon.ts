@@ -1,2 +1,2 @@
-/** The one icon for skills, wherever the app shows them. */
-export { default as MCP_SKILL_ICON } from '@lucide/svelte/icons/graduation-cap';
+/** The app's one icon for skills. */
+export { SKILL_ICON as MCP_SKILL_ICON } from '#lib/constants/index.ts';

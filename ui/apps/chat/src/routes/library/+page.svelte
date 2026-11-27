@@ -2,7 +2,12 @@
 	import { Button } from '@ggml-org/llama-ui/ui/button';
 	import * as Tabs from '@ggml-org/llama-ui/ui/tabs';
 	import { Plus } from '@lucide/svelte';
-	import { LibraryAttachments, LibraryPrompts, SearchInput } from '#lib/components/app/index.ts';
+	import {
+		LibraryAttachments,
+		LibraryPrompts,
+		LibrarySkills,
+		SearchInput
+	} from '#lib/components/app/index.ts';
 	import { APP_NAME, LIBRARY_TABS } from '#lib/constants/index.ts';
 	import { LibraryTab } from '#lib/enums/index.ts';
 
@@ -25,7 +30,7 @@
 			<h1 class="text-heading tracking-tight">Library</h1>
 
 			<p class="text-body-sm text-muted-foreground">
-				The prompts you reuse and the files of your chats, in one place.
+				The prompts you reuse, the files of your chats and the skills at hand, in one place.
 			</p>
 		</div>
 
@@ -59,10 +64,16 @@
 		</Tabs.Content>
 
 		<!-- a panel stays in the page while its tab is not shown, so what it holds is mounted only
-		     while it is: the files are read when the tab opens and dropped when it closes -->
+		     while it is: the files and the skills are read when their tab opens -->
 		<Tabs.Content value={LibraryTab.ATTACHMENTS}>
 			{#if tab === LibraryTab.ATTACHMENTS}
 				<LibraryAttachments {query} />
+			{/if}
+		</Tabs.Content>
+
+		<Tabs.Content value={LibraryTab.SKILLS}>
+			{#if tab === LibraryTab.SKILLS}
+				<LibrarySkills {query} />
 			{/if}
 		</Tabs.Content>
 	</Tabs.Root>

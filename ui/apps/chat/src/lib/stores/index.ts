@@ -53,6 +53,9 @@ export { libraryAttachmentsStore } from './library-attachments.svelte';
 // PROMPTS (the library's prompts, and every source of prompts)
 export { promptsStore } from './prompts.svelte';
 
+// SKILLS (every source of skills: the machine's folders, and what extensions add)
+export { skillsStore } from './skills.svelte';
+
 // SERVER
 export { serverStore } from './llama-server.svelte';
 

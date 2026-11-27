@@ -9,7 +9,8 @@ import type { Component } from 'svelte';
 /** The Library's tabs, in order. */
 export const LIBRARY_TABS: { label: string; search: string; value: LibraryTab }[] = [
 	{ label: 'Prompts', search: 'Search prompts', value: LibraryTab.PROMPTS },
-	{ label: 'Attachments', search: 'Search attachments', value: LibraryTab.ATTACHMENTS }
+	{ label: 'Attachments', search: 'Search attachments', value: LibraryTab.ATTACHMENTS },
+	{ label: 'Skills', search: 'Search skills', value: LibraryTab.SKILLS }
 ];
 
 /** The mark of a file in the Library's attachments, by its kind. */

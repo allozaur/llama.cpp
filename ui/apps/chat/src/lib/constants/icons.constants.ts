@@ -11,6 +11,7 @@ import FileIcon from '@lucide/svelte/icons/file';
 // not a microphone: that one is for recording and dictation
 import AudioIcon from '@lucide/svelte/icons/file-headphone';
 import FileTextIcon from '@lucide/svelte/icons/file-text';
+import SkillIcon from '@lucide/svelte/icons/graduation-cap';
 import ImageIcon from '@lucide/svelte/icons/image';
 import LibraryIcon from '@lucide/svelte/icons/library';
 import LoadingIcon from '@lucide/svelte/icons/loader-2';
@@ -62,6 +63,9 @@ export const LIBRARY_ICON = LibraryIcon;
 
 /** A prompt, wherever it comes from. */
 export const PROMPT_ICON = PromptIcon;
+
+/** The one icon for skills, wherever the app shows them. */
+export const SKILL_ICON = SkillIcon;
 
 /** Boolean flag a modality drives on the ModelModalities type. */
 export type ModalityKey = (typeof MODALITY_FLAG_KEYS)[keyof typeof MODALITY_FLAG_KEYS];
